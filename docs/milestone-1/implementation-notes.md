@@ -37,3 +37,9 @@ Where implementation diverged from [plan.md](plan.md), or something surprising w
 **We did:** `original_event_id` is derived from the game and action ids (`"g1-e0003"`), not stored. Direction flipping is a `left_to_right=True` option on `to_spadl_frame` and `to_snapshot_frame`, not a separate function. The possession rule is written up in `docs/event-schema.md`.
 **Why:** the fewest moving parts; the flag keeps every flip inside `frames.py`, as planned.
 **Affects:** nothing.
+
+## Editor setup (2026-10-07)
+**Plan said:** nothing about editor configuration; `.vscode/` was gitignored in T1.
+**We did:** committed `.vscode/settings.json` and `.vscode/extensions.json`; everything else in `.vscode/` stays ignored.
+**Why:** with the repo root open, VS Code used a system Python and global Flake8/Pylint, which don't know the project lives in `backend/` or read its ruff and pyright settings. That gave false "line too long" and "import could not be resolved" errors. Committed settings also prepare the future Codespace.
+**Affects:** the dev container milestone can reuse these settings.

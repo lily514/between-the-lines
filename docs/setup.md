@@ -27,6 +27,19 @@ Every step needed to get from a clean machine to a working environment, in order
    uv run btl --help
    ```
 
+## Editor (VS Code)
+
+The repo includes workspace settings in `.vscode/`. Open the repo root as the workspace.
+
+1. Install the recommended extensions when VS Code prompts you: Python, Pylance, and Ruff. Or install Ruff directly:
+   ```sh
+   code --install-extension charliermarsh.ruff
+   ```
+2. Run `uv sync` in `backend/` first (step 4 above), so the interpreter the settings point to exists.
+3. If imports still show as unresolved, run **Python: Select Interpreter** and choose `backend/.venv/bin/python`.
+
+The settings make ruff the formatter and linter, and turn off Flake8 and Pylint for this workspace, because they don't read the project's ruff configuration. They also mirror the pyright settings from `backend/pyproject.toml`: Pylance only reads configuration from the workspace root.
+
 ## Continuous integration
 
 `.github/workflows/ci.yml` runs the same checks on every push, to any branch, using `uv sync --locked` so CI fails if `uv.lock` is out of date.

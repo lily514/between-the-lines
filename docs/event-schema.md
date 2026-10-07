@@ -47,7 +47,18 @@ Kept outside the SPADL frame because the schema is strict:
 
 ## Snapshots
 
-The positions of all players at the start of an action. Each row is `game_id, action_id, player_id, team_id, x, y, is_actor, is_goalkeeper`, stored in the same direction as the events. Snapshots are optional per action in the schema. The simulator records one for every event.
+The positions of the tracked players at the start of an action.
+
+- **In code** (`btl/schema/snapshot.py`), a match stores them as one `Positions` array of shape `(actions, players, 2)`, indexed by action id, plus a `PlayerSlot` for each column (player, team, goalkeeper or not). `NaN` means a position is unknown, so a data source can give partial snapshots, or none at all for some actions. The simulator tracks all 22 players at every event. `Match.snapshot(action_id)` builds a readable `Snapshot` for one moment, marking the player on the ball.
+- **As a frame** (`to_snapshot_frame`), each row is `game_id, action_id, player_id, team_id, x, y, is_actor, is_goalkeeper`, in the same direction as the events. Unknown positions are left out.
+
+## Possessions
+
+SPADL has no possession column, so `btl/schema/possession.py` derives possessions from the events. It ignores the simulator's own `possession_id`, so anything built on it also works for data the simulator didn't produce.
+
+- A possession is an unbroken spell on the ball by one team.
+- A new possession starts at the start of each period, and whenever the other team makes an action that **wins the ball**.
+- These actions by the other team do *not* win the ball, so they stay inside the current possession: fouls, and failed defensive actions (tackle, interception, clearance, and the goalkeeper actions).
 
 ## Expected Threat notes
 

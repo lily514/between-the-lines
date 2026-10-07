@@ -25,3 +25,15 @@ Where implementation diverged from [plan.md](plan.md), or something surprising w
 **We did:** also set `reportMissingTypeStubs = false` project-wide.
 **Why:** socceraction has inline type hints but no `py.typed` marker. Without this setting, every import of it is an error, even in files that are otherwise fully typed. It's narrower than switching whole files to basic mode.
 **Affects:** nothing.
+
+## T3 — Schema (2026-10-07)
+**Plan said:** `Match` holds meta, teams, events, the position array, and planted moments; the position array is events × 22 × 2.
+**We did:** `Match` holds only the game id, the two team ids, the events, and optional positions. Positions cover any number of tracked players, each described by a `PlayerSlot`, with `NaN` for unknown positions.
+**Why:** the league, its clubs, and planted moments don't exist yet. Each will be added to `Match` by the task that creates it (T4 and T13). A fixed 22 would rule out the partial snapshots the plan says other data sources may supply, and would make small test fixtures needlessly large.
+**Affects:** T4 and T13 extend `Match`.
+
+## T3 — Smaller schema choices (2026-10-07)
+**Plan said:** no detail on these.
+**We did:** `original_event_id` is derived from the game and action ids (`"g1-e0003"`), not stored. Direction flipping is a `left_to_right=True` option on `to_spadl_frame` and `to_snapshot_frame`, not a separate function. The possession rule is written up in `docs/event-schema.md`.
+**Why:** the fewest moving parts; the flag keeps every flip inside `frames.py`, as planned.
+**Affects:** nothing.

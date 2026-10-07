@@ -2,10 +2,10 @@
 
 Values are the SPADL ids, so ``ActionType.PASS == 0`` matches socceraction's ``type_id``.
 socceraction keeps these as plain lists in ``socceraction.spadl.config``; a test checks that
-the enums stay in step with them.
+the enums stay in step with them. ``Phase`` is our own addition.
 """
 
-from enum import IntEnum
+from enum import IntEnum, StrEnum
 
 
 class ActionType(IntEnum):
@@ -72,3 +72,11 @@ class BodyPart(IntEnum):
         """The name socceraction uses for this body part."""
         # SPADL's only name that isn't a valid identifier.
         return "head/other" if self is BodyPart.HEAD_OTHER else self.name.lower()
+
+
+class Phase(StrEnum):
+    """The kind of play an action belongs to. Not part of SPADL."""
+
+    OPEN_PLAY = "open_play"
+    SET_PIECE = "set_piece"
+    TRANSITION = "transition"

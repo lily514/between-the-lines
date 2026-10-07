@@ -43,3 +43,46 @@ Where implementation diverged from [plan.md](plan.md), or something surprising w
 **We did:** committed `.vscode/settings.json` and `.vscode/extensions.json`; everything else in `.vscode/` stays ignored.
 **Why:** with the repo root open, VS Code used a system Python and global Flake8/Pylint, which don't know the project lives in `backend/` or read its ruff and pyright settings. That gave false "line too long" and "import could not be resolved" errors. Committed settings also prepare the future Codespace.
 **Affects:** the dev container milestone can reuse these settings.
+
+## T4 — No real names in the repo (2026-10-07)
+**Plan said:** a denylist test of real clubs and well-known players.
+**We did:** no list of real club, player, or league names in any committed file. A private list in `backend/private/real-names.txt` (gitignored) drives `tests/league/test_real_names.py`, which is skipped when the file is absent. It checks the name pools themselves, so no seed can produce a listed full name, and also scans 200 generated leagues. Before the first push, we also reworded the plan and CLAUDE.md so they don't name the league the hackathon is associated with.
+**Why:** real names in the repo, even in a list of names to avoid, could conflict with the hackathon rules.
+**Affects:** CI can't run the real-name check; it's a local step in `docs/setup.md`.
+
+## T4 — Real towns and first names, invented surnames (2026-10-07)
+**Plan said:** a fictional league built by a small name generator.
+**We did:** after trying names built entirely from invented syllables, we switched to:
+- clubs named after real English market towns with no professional club, plus invented nicknames ("Kendal Kestrels");
+- real common first names from birth registries for each style;
+- invented surnames, so a full player name is never a real person's on purpose.
+
+Sources, and which pools were checked against registry data, are in `docs/name-sources.md`. Checking the five largest pools against registry rows confirmed 145 of 150 names; the other 5, plus one spelling in each of two pools, were replaced.
+**Why:** syllable-built names read as fake. Real surnames were ruled out because common first names and common surnames together rebuild real players, ordinary squad members as well as stars, and blocking them would need a private list of every recent top-flight player.
+**Affects:** nothing downstream; `League` and `Player` are unchanged.
+
+## T4 — League details (2026-10-07)
+**Plan said:** `generate_league(seed)`; 10 clubs × 20 players with positions and shirt numbers.
+**We did:** `generate_league(rng)` takes a `numpy` Generator, as CLAUDE.md requires for all randomness; tests build one from a seed. Each club also gets a three-letter short name and a `strength` between 0.85 and 1.15 for the simulator to use. Squad roles are GK/DF/MF/FW with traditional shirt numbers. Player names come in nine styles, weighted to roughly match the real league the hackathon is about (see the next note). No two clubs share a town or a nickname, and no club has two players with the same first name or the same surname. `season_fixtures` builds a double round robin (90 matches) for batch runs. The league name is fixed: "Meridian League".
+**Why:** CLAUDE.md's randomness rule; strength and fixtures are what T6 and T9 need from a league.
+**Affects:** T6 uses `strength`; T9 can fit Expected Threat on a season of fixtures.
+
+## T4 — Name style weights (2026-10-07)
+**Plan said:** nothing; names were to be fictional.
+**We did:** weighted the nine name styles to roughly match the nationalities in the real top-flight English league, 2025/26:
+
+| Style | Weight | Mainly standing in for |
+|---|---|---|
+| British | 28% | England, Scotland, Wales, Northern Ireland, Ireland, other English-speaking countries |
+| Dutch and German | 16% | Netherlands, Germany, Flemish Belgium, Austria, Switzerland |
+| French | 12% | France, French-speaking Belgium |
+| Portuguese-speaking | 12% | Brazil, Portugal |
+| Spanish-speaking | 12% | Spain, Argentina, Uruguay, Colombia, Ecuador, Mexico |
+| West African | 8% | Nigeria, Senegal, Côte d'Ivoire, Ghana, Cameroon, Mali, DR Congo |
+| Nordic | 6% | Denmark, Norway, Sweden, Iceland, Finland |
+| Slavic | 3% | Serbia, Croatia, Poland, Czechia, Ukraine |
+| North African | 3% | Morocco, Algeria, Egypt, Tunisia |
+
+**Sources and estimates:** the season's counts for the largest groups come from Transfermarkt figures reported in the press (France 40 of about 390 players, Netherlands 36, Brazil 31, Spain 21, Germany 15, Argentina and Portugal 14 each, Belgium 12; 65 nationalities). Smaller nations aren't in that list, so their sizes are estimated from the league's own all-time count of players by nation, scaled to this season. No current count of English players was available; the British share is the remainder, consistent with squad rules that cap non-homegrown players at 17 of 25. Italian, Greek, Turkish, and East Asian players (a few percent together) have no style of their own.
+**Why:** Lily asked for squads that sound like a real league's, not mostly English.
+**Affects:** nothing; `pick_style` is tested to produce these proportions.

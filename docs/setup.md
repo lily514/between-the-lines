@@ -27,6 +27,14 @@ Every step needed to get from a clean machine to a working environment, in order
    uv run btl --help
    ```
 
+## Optional: check generated names against real ones
+
+The committed repo contains no real club, player, place, or league names, not even as a list of names to avoid. To check that generated leagues never produce one, keep a private list at `backend/private/real-names.txt`. The whole `backend/private/` folder is gitignored, so the list is visible in your editor but never committed.
+
+- One real name per line, `#` for comments. Matching ignores case and looks for the name anywhere inside each generated name.
+- `uv run pytest` fails if any name style could produce a listed full name, and also scans 200 generated leagues for listed names. Without the file (in CI or a fresh clone), these tests are skipped.
+- Source lists for the name pools are in `docs/name-sources.md`.
+
 ## Editor (VS Code)
 
 The repo includes workspace settings in `.vscode/`. Open the repo root as the workspace.

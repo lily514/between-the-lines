@@ -5,6 +5,9 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 
+# Private, never committed: real names used only to check generated names
+backend/private/
+
 # Generated match data and models (regenerable from seeds)
 backend/data/
 backend/runs/

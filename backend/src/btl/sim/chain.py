@@ -8,7 +8,8 @@ in that team's own direction, so the engine can hand straight over.
 """
 
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
+from enum import Enum
 
 from numpy.random import Generator
 
@@ -28,16 +29,28 @@ from btl.sim.pitch import (
     goal_angle,
     in_penalty_area,
     mirror,
+    on_pitch,
+    where_it_leaves,
     zone_of,
 )
 from btl.sim.shape import Formation, team_shape
 
 CENTRE_SPOT = Point(PITCH_LENGTH / 2, PITCH_WIDTH / 2)
 KEEPER_ACTIONS = frozenset({ActionType.KEEPER_SAVE, ActionType.KEEPER_CLAIM})
-# Passes and dribbles stop this far inside the lines; there are no throw-ins yet.
+CROSSES = frozenset({ActionType.CROSS, ActionType.CORNER_CROSSED})
+# A successful pass or dribble stops this far inside the lines.
 EDGE_MARGIN = 1.0
 SIX_YARD_DEPTH = 5.5
 SIX_YARD_HALF_WIDTH = 9.16
+
+
+class Restart(Enum):
+    """The ways play starts again after it stops."""
+
+    KICKOFF = "kickoff"
+    THROW_IN = "throw_in"
+    GOAL_KICK = "goal_kick"
+    CORNER = "corner"
 
 
 @dataclass(frozen=True, slots=True)
@@ -52,15 +65,21 @@ class Side:
 class Start:
     """How a possession begins, in the team's own attacking direction.
 
-    A start with ``won_with`` opens with that ball-winning action. One without is a restart
-    (a kickoff, or the keeper's kick after a missed shot), so its first action is a set piece.
+    Exactly one of ``won_with`` (the possession opens with that ball-winning action) and
+    ``restart`` (its first action is a set piece) is set. ``delay`` is the dead-ball time
+    before it.
     """
 
     ball: Point
     slot: int
     won_with: ActionType | None = None
-    kickoff: bool = False
+    restart: Restart | None = None
     delay: float = 0.0
+
+    def __post_init__(self) -> None:
+        """Check the possession starts in exactly one way."""
+        if (self.won_with is None) == (self.restart is None):
+            raise ValueError("a possession starts with either a ball-winning action or a restart")
 
 
 @dataclass(frozen=True, slots=True)
@@ -101,20 +120,22 @@ class _Play:
 
 @dataclass(frozen=True, slots=True)
 class _Outcome:
-    """One action, then who has the ball next, or how the other team's possession starts."""
+    """One action, then what happens next.
+
+    Play goes on with ``receiver`` on the ball, unless ``corner`` gives the same team a corner
+    or ``handover`` says how the other team's possession starts.
+    """
 
     step: Step
     receiver: int
+    corner: Start | None = None
     handover: Start | None = None
 
 
 def kickoff(side: Side, delay: float = 0.0) -> Start:
     """A kickoff from the centre spot, taken by the outfield player nearest it."""
     return Start(
-        CENTRE_SPOT,
-        _nearest(side.formation, CENTRE_SPOT, in_possession=True),
-        kickoff=True,
-        delay=delay,
+        CENTRE_SPOT, _taker(side.formation, CENTRE_SPOT), restart=Restart.KICKOFF, delay=delay
     )
 
 
@@ -135,7 +156,7 @@ def play_chain(
     """
     play = _Play(attack, defence, attack.strength / defence.strength, rng, params)
     steps: list[Step] = []
-    ball, slot = start.ball, start.slot
+    ball, slot, restart = start.ball, start.slot, start.restart
     if start.won_with is not None:
         bodypart = BodyPart.OTHER if start.won_with in KEEPER_ACTIONS else BodyPart.FOOT
         duration = _between(rng, params.reaction_time)
@@ -151,34 +172,67 @@ def play_chain(
                 Phase.TRANSITION,
             )
         )
+    in_transition = start.won_with is not None
     after_cross = False
 
     while True:
-        phase = _phase(start, steps, params)
-        is_keeper = attack.formation.slots[slot].role is Role.GOALKEEPER
-        if start.kickoff and not steps:
-            back = Point(ball.x - rng.uniform(8, 14), ball.y + rng.uniform(-8, 8))
-            outcome = _pass(slot, ball, back, phase, play)
+        if restart is not None:
+            in_transition = False
+            outcome = _restart(restart, slot, ball, play)
         else:
-            action = _choose_action(ball, is_keeper, after_cross, rng, params)
-            if action is ActionType.SHOT:
-                outcome = _shoot(slot, ball, after_cross, phase, play)
-            elif action is ActionType.CROSS:
-                outcome = _cross(slot, ball, phase, play)
-            elif action is ActionType.DRIBBLE:
-                outcome = _dribble(slot, ball, phase, play)
-            elif is_keeper:
-                target = _kick(ball, params.keeper_pass_length_mean, params.keeper_pass_kappa, play)
-                outcome = _pass(slot, ball, target, phase, play)
-            else:
-                third = zone_of(ball).third
-                length_mean, kappa = params.pass_length_mean.of(third), params.pass_kappa.of(third)
-                outcome = _pass(slot, ball, _kick(ball, length_mean, kappa, play), phase, play)
+            elapsed = sum(step.duration for step in steps)
+            transition = in_transition and elapsed < params.transition_seconds
+            outcome = _open_play(slot, ball, after_cross, play, transition)
         steps.append(outcome.step)
         if outcome.handover is not None:
             return Chain(tuple(steps), outcome.handover)
-        after_cross = outcome.step.action_type is ActionType.CROSS
-        ball, slot = outcome.step.end, outcome.receiver
+        if outcome.corner is not None:
+            ball, slot, restart = outcome.corner.ball, outcome.corner.slot, Restart.CORNER
+            after_cross = False
+        else:
+            ball, slot, restart = outcome.step.end, outcome.receiver, None
+            after_cross = outcome.step.action_type in CROSSES
+
+
+def _open_play(
+    slot: int, ball: Point, after_cross: bool, play: _Play, transition: bool
+) -> _Outcome:
+    rng, params = play.rng, play.params
+    phase = Phase.TRANSITION if transition else Phase.OPEN_PLAY
+    is_keeper = play.attack.formation.slots[slot].role is Role.GOALKEEPER
+    action = _choose_action(ball, is_keeper, after_cross, rng, params)
+    if action is ActionType.SHOT:
+        return _shoot(slot, ball, after_cross, phase, play)
+    if action is ActionType.CROSS:
+        return _cross(slot, ball, phase, play)
+    if action is ActionType.DRIBBLE:
+        return _dribble(slot, ball, phase, play)
+    if is_keeper:
+        target = _kick(ball, params.keeper_pass_length_mean, params.keeper_pass_kappa, play)
+        return _pass(slot, ball, target, phase, play)
+    third = zone_of(ball).third
+    length_mean, kappa = params.pass_length_mean.of(third), params.pass_kappa.of(third)
+    return _pass(slot, ball, _kick(ball, length_mean, kappa, play), phase, play)
+
+
+def _restart(restart: Restart, slot: int, ball: Point, play: _Play) -> _Outcome:
+    rng, params = play.rng, play.params
+    phase = Phase.SET_PIECE
+    if restart is Restart.KICKOFF:
+        back = Point(ball.x - rng.uniform(8, 14), ball.y + rng.uniform(-8, 8))
+        return _pass(slot, ball, back, phase, play)
+    if restart is Restart.THROW_IN:
+        infield = params.throw_in_aim if ball.y < PITCH_WIDTH / 2 else -params.throw_in_aim
+        target = _kick(ball, params.throw_in_length_mean, params.throw_in_kappa, play, infield)
+        return _pass(slot, ball, target, phase, play, ActionType.THROW_IN, BodyPart.OTHER)
+    if restart is Restart.GOAL_KICK:
+        target = _kick(ball, params.keeper_pass_length_mean, params.keeper_pass_kappa, play)
+        return _pass(slot, ball, target, phase, play, ActionType.GOALKICK)
+    if rng.random() < params.corner_short_share:
+        infield = 1.0 if ball.y < PITCH_WIDTH / 2 else -1.0
+        target = Point(ball.x - rng.uniform(4, 15), ball.y + infield * rng.uniform(3, 12))
+        return _pass(slot, ball, target, phase, play, ActionType.CORNER_SHORT)
+    return _cross(slot, ball, phase, play, ActionType.CORNER_CROSSED, params.corner_success)
 
 
 def _choose_action(
@@ -203,7 +257,20 @@ def _choose_action(
     return ActionType.PASS
 
 
-def _pass(slot: int, ball: Point, target: Point, phase: Phase, play: _Play) -> _Outcome:
+def _pass(
+    slot: int,
+    ball: Point,
+    target: Point,
+    phase: Phase,
+    play: _Play,
+    action: ActionType = ActionType.PASS,
+    bodypart: BodyPart = BodyPart.FOOT,
+) -> _Outcome:
+    """Any kind of pass along the ground or in the air to a teammate.
+
+    ``target`` may be off the pitch: a successful pass stops short of the lines, and a failed
+    one may run on out of play.
+    """
     end = clamp_to_pitch(target, EDGE_MARGIN)
     length = distance(ball, end)
     params = play.params
@@ -211,19 +278,26 @@ def _pass(slot: int, ball: Point, target: Point, phase: Phase, play: _Play) -> _
         -max(0.0, length - params.long_pass_from) / params.long_pass_falloff
     )
     if not _succeeds(success, play):
-        return _lose(slot, ActionType.PASS, ball, end, params.pass_speed, phase, play)
+        run_on = _beyond(ball, target, _between(play.rng, params.run_on))
+        if not on_pitch(run_on):
+            return _out_of_play(slot, action, bodypart, ball, run_on, phase, play)
+        return _lose(slot, action, bodypart, ball, end, params.pass_speed, phase, play)
     duration = length / params.pass_speed + _between(play.rng, params.control_time)
     return _Outcome(
-        Step(slot, ActionType.PASS, Result.SUCCESS, BodyPart.FOOT, ball, end, duration, phase),
+        Step(slot, action, Result.SUCCESS, bodypart, ball, end, duration, phase),
         _nearest(play.attack.formation, end, in_possession=True, exclude=slot),
     )
 
 
 def _dribble(slot: int, ball: Point, phase: Phase, play: _Play) -> _Outcome:
     params = play.params
-    end = _kick(ball, params.dribble_length_mean, params.dribble_kappa, play)
+    end = clamp_to_pitch(
+        _kick(ball, params.dribble_length_mean, params.dribble_kappa, play), EDGE_MARGIN
+    )
     if not _succeeds(params.dribble_success, play):
-        return _lose(slot, ActionType.DRIBBLE, ball, end, params.dribble_speed, phase, play)
+        return _lose(
+            slot, ActionType.DRIBBLE, BodyPart.FOOT, ball, end, params.dribble_speed, phase, play
+        )
     duration = distance(ball, end) / params.dribble_speed + _between(play.rng, params.reaction_time)
     return _Outcome(
         Step(slot, ActionType.DRIBBLE, Result.SUCCESS, BodyPart.FOOT, ball, end, duration, phase),
@@ -234,6 +308,7 @@ def _dribble(slot: int, ball: Point, phase: Phase, play: _Play) -> _Outcome:
 def _lose(
     slot: int,
     action: ActionType,
+    bodypart: BodyPart,
     ball: Point,
     end: Point,
     speed: float,
@@ -247,36 +322,83 @@ def _lose(
     winner = _nearest(play.defence.formation, mirror(lost_at), in_possession=False)
     won_with = ActionType.TACKLE if action is ActionType.DRIBBLE else ActionType.INTERCEPTION
     return _Outcome(
-        Step(slot, action, Result.FAIL, BodyPart.FOOT, ball, lost_at, duration, phase),
+        Step(slot, action, Result.FAIL, bodypart, ball, lost_at, duration, phase),
         slot,
-        Start(mirror(lost_at), winner, won_with),
+        handover=Start(mirror(lost_at), winner, won_with),
     )
 
 
-def _cross(slot: int, ball: Point, phase: Phase, play: _Play) -> _Outcome:
+def _out_of_play(
+    slot: int,
+    action: ActionType,
+    bodypart: BodyPart,
+    ball: Point,
+    beyond: Point,
+    phase: Phase,
+    play: _Play,
+) -> _Outcome:
+    """A pass that goes out, and the other team's restart.
+
+    Over the touchline it's their throw-in where it went out; over the goal line being attacked,
+    their goal kick; over the passer's own goal line, their corner.
+    """
+    params = play.params
+    out = where_it_leaves(ball, beyond)
+    if out.x == PITCH_LENGTH:
+        handover = _goal_kick(play.defence, play)
+    elif out.x == 0:
+        handover = _corner(play.defence, mirror(out).y, params.corner_delay)
+    else:
+        throw_in = mirror(out)
+        handover = Start(
+            throw_in,
+            _taker(play.defence.formation, throw_in),
+            restart=Restart.THROW_IN,
+            delay=params.throw_in_delay,
+        )
+    flight = distance(ball, out) / params.pass_speed
+    return _Outcome(
+        Step(slot, action, Result.FAIL, bodypart, ball, out, flight, phase),
+        slot,
+        handover=handover,
+    )
+
+
+def _cross(
+    slot: int,
+    ball: Point,
+    phase: Phase,
+    play: _Play,
+    action: ActionType = ActionType.CROSS,
+    success: float | None = None,
+) -> _Outcome:
+    """A cross into the box, from open play or a corner."""
     rng, params = play.rng, play.params
     end = clamp_to_pitch(Point(rng.uniform(88, 100), rng.normal(PITCH_WIDTH / 2, 6)), EDGE_MARGIN)
     flight = distance(ball, end) / params.pass_speed
-    if _succeeds(params.cross_success, play):
+    if _succeeds(params.cross_success if success is None else success, play):
         duration = flight + _between(rng, params.reaction_time)
         return _Outcome(
-            Step(slot, ActionType.CROSS, Result.SUCCESS, BodyPart.FOOT, ball, end, duration, phase),
+            Step(slot, action, Result.SUCCESS, BodyPart.FOOT, ball, end, duration, phase),
             _nearest(play.attack.formation, end, in_possession=True, exclude=slot),
         )
+    failed = Step(slot, action, Result.FAIL, BodyPart.FOOT, ball, end, flight, phase)
+    if rng.random() < params.cross_out_for_corner:
+        corner = _corner(play.attack, ball.y, params.corner_delay)
+        return _Outcome(_wait(failed, corner.delay), slot, corner=corner)
     if rng.random() < params.keeper_claim_share:
         handover = Start(mirror(end), _keeper(play.defence.formation), ActionType.KEEPER_CLAIM)
     else:
         winner = _nearest(play.defence.formation, mirror(end), in_possession=False)
         handover = Start(mirror(end), winner, ActionType.INTERCEPTION)
-    return _Outcome(
-        Step(slot, ActionType.CROSS, Result.FAIL, BodyPart.FOOT, ball, end, flight, phase),
-        slot,
-        handover,
-    )
+    return _Outcome(failed, slot, handover=handover)
 
 
 def _shoot(slot: int, ball: Point, header: bool, phase: Phase, play: _Play) -> _Outcome:
-    """A shot always ends the possession: a goal, a save, or a miss."""
+    """A shot: a goal, a save, a miss that goes out for a goal kick, or a deflection for a corner.
+
+    Only the corner leaves the ball with the shooting team.
+    """
     rng, params = play.rng, play.params
     bodypart = BodyPart.HEAD if header else BodyPart.FOOT
     logit = (
@@ -285,31 +407,45 @@ def _shoot(slot: int, ball: Point, header: bool, phase: Phase, play: _Play) -> _
         + params.goal_per_metre * distance_to_goal(ball)
     )
     on_target = Point(PITCH_LENGTH, PITCH_WIDTH / 2 + rng.uniform(-1, 1) * (GOAL_WIDTH / 2 - 0.3))
+
+    def shot(result: Result, end: Point) -> Step:
+        return Step(slot, ActionType.SHOT, result, bodypart, ball, end, params.shot_flight, phase)
+
     if _succeeds(1 / (1 + math.exp(-logit)), play):
-        result, end = Result.SUCCESS, on_target
         handover = kickoff(play.defence, delay=params.goal_restart_delay)
-    elif rng.random() < params.save_share:
-        result, end = Result.FAIL, on_target
+        return _Outcome(shot(Result.SUCCESS, on_target), slot, handover=handover)
+    if rng.random() < params.save_share:
         save_at = Point(PITCH_LENGTH - 1, on_target.y)
         handover = Start(mirror(save_at), _keeper(play.defence.formation), ActionType.KEEPER_SAVE)
-    else:
-        wide = rng.choice((-1.0, 1.0)) * rng.uniform(GOAL_WIDTH / 2 + 0.5, 12)
-        result, end = Result.FAIL, Point(PITCH_LENGTH, PITCH_WIDTH / 2 + wide)
-        # Stands in for a goal kick until restarts arrive.
-        across = rng.uniform(-1, 1) * SIX_YARD_HALF_WIDTH
-        goal_kick = Point(SIX_YARD_DEPTH, PITCH_WIDTH / 2 + across)
-        handover = Start(
-            goal_kick, _keeper(play.defence.formation), delay=params.miss_restart_delay
-        )
-    step = Step(slot, ActionType.SHOT, result, bodypart, ball, end, params.shot_flight, phase)
-    return _Outcome(step, slot, handover)
+        return _Outcome(shot(Result.FAIL, on_target), slot, handover=handover)
+    wide = rng.choice((-1.0, 1.0)) * rng.uniform(GOAL_WIDTH / 2 + 0.5, 12)
+    missed = shot(Result.FAIL, Point(PITCH_LENGTH, PITCH_WIDTH / 2 + wide))
+    if rng.random() < params.miss_out_for_corner:
+        corner = _corner(play.attack, missed.end.y, params.corner_delay)
+        return _Outcome(_wait(missed, corner.delay), slot, corner=corner)
+    return _Outcome(missed, slot, handover=_goal_kick(play.defence, play))
 
 
-def _phase(start: Start, steps: list[Step], params: SimParams) -> Phase:
-    if start.won_with is None:
-        return Phase.SET_PIECE if not steps else Phase.OPEN_PLAY
-    elapsed = sum(step.duration for step in steps)
-    return Phase.TRANSITION if elapsed < params.transition_seconds else Phase.OPEN_PLAY
+def _goal_kick(side: Side, play: _Play) -> Start:
+    """A goal kick for ``side``, from a random spot on the front of its six-yard box."""
+    across = play.rng.uniform(-1, 1) * SIX_YARD_HALF_WIDTH
+    return Start(
+        Point(SIX_YARD_DEPTH, PITCH_WIDTH / 2 + across),
+        _keeper(side.formation),
+        restart=Restart.GOAL_KICK,
+        delay=play.params.goal_kick_delay,
+    )
+
+
+def _corner(side: Side, y: float, delay: float) -> Start:
+    """A corner for ``side`` from the flag on the same side of the pitch as ``y``."""
+    flag = Point(PITCH_LENGTH, 0.0 if y < PITCH_WIDTH / 2 else PITCH_WIDTH)
+    return Start(flag, _taker(side.formation, flag), restart=Restart.CORNER, delay=delay)
+
+
+def _wait(step: Step, delay: float) -> Step:
+    """The step, with dead-ball time added before the next action."""
+    return replace(step, duration=step.duration + delay)
 
 
 def _succeeds(probability: float, play: _Play) -> bool:
@@ -318,14 +454,24 @@ def _succeeds(probability: float, play: _Play) -> bool:
     return play.rng.random() < odds / (1 + odds)
 
 
-def _kick(ball: Point, length_mean: float, kappa: float, play: _Play) -> Point:
-    """An end point a random length away, in a direction scattered around straight at goal."""
+def _kick(ball: Point, length_mean: float, kappa: float, play: _Play, aim: float = 0.0) -> Point:
+    """An end point a random length away, scattered around ``aim`` radians from straight at goal.
+
+    The point may be off the pitch.
+    """
     shape = play.params.pass_length_shape
     length = play.rng.gamma(shape, length_mean / shape)
-    angle = play.rng.vonmises(0.0, kappa)
-    return clamp_to_pitch(
-        Point(ball.x + length * math.cos(angle), ball.y + length * math.sin(angle)), EDGE_MARGIN
-    )
+    angle = play.rng.vonmises(aim, kappa)
+    return Point(ball.x + length * math.cos(angle), ball.y + length * math.sin(angle))
+
+
+def _beyond(start: Point, target: Point, extra: float) -> Point:
+    """The point ``extra`` metres further on along the line from ``start`` through ``target``."""
+    length = distance(start, target)
+    if length == 0:
+        return target
+    scale = (length + extra) / length
+    return Point(start.x + scale * (target.x - start.x), start.y + scale * (target.y - start.y))
 
 
 def _between(rng: Generator, bounds: tuple[float, float]) -> float:
@@ -334,6 +480,11 @@ def _between(rng: Generator, bounds: tuple[float, float]) -> float:
 
 def _keeper(formation: Formation) -> int:
     return next(i for i, slot in enumerate(formation.slots) if slot.role is Role.GOALKEEPER)
+
+
+def _taker(formation: Formation, ball: Point) -> int:
+    """The outfield player nearest a restart, in the team's own direction."""
+    return _nearest(formation, ball, in_possession=True, exclude=_keeper(formation))
 
 
 def _nearest(

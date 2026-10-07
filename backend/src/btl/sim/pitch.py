@@ -97,6 +97,33 @@ def in_penalty_area(point: Point) -> bool:
     )
 
 
+def on_pitch(point: Point) -> bool:
+    """Whether a point is on the pitch, lines included."""
+    return 0 <= point.x <= PITCH_LENGTH and 0 <= point.y <= PITCH_WIDTH
+
+
+def where_it_leaves(inside: Point, outside: Point) -> Point:
+    """Where the straight line from a point on the pitch to one off it crosses the lines.
+
+    The point is exactly on the line it crosses, so ``x == PITCH_LENGTH`` means the ball went
+    over the goal line being attacked.
+    """
+    dx, dy = outside.x - inside.x, outside.y - inside.y
+    crossings: list[tuple[float, Point]] = []
+    for line_x, beyond in ((0.0, outside.x < 0), (PITCH_LENGTH, outside.x > PITCH_LENGTH)):
+        if beyond:
+            fraction = (line_x - inside.x) / dx
+            crossings.append((fraction, Point(line_x, inside.y + fraction * dy)))
+    for line_y, beyond in ((0.0, outside.y < 0), (PITCH_WIDTH, outside.y > PITCH_WIDTH)):
+        if beyond:
+            fraction = (line_y - inside.y) / dy
+            crossings.append((fraction, Point(inside.x + fraction * dx, line_y)))
+    if not crossings:
+        raise ValueError(f"{outside} is on the pitch")
+    _, crossing = min(crossings, key=lambda each: each[0])
+    return clamp_to_pitch(crossing)
+
+
 def clamp_to_pitch(point: Point, margin: float = 0.0) -> Point:
     """The nearest point on the pitch, at least ``margin`` metres inside the lines."""
     return Point(

@@ -9,8 +9,8 @@ from btl.league.league import League, generate_league
 from btl.schema.frames import to_spadl_frame
 from btl.schema.match import Match
 from btl.schema.possession import split_possessions
-from btl.schema.vocab import ActionType, Phase
-from btl.sim.chain import CENTRE_SPOT
+from btl.schema.vocab import ActionType, BodyPart, Phase
+from btl.sim.chain import CENTRE_SPOT, SIX_YARD_DEPTH
 from btl.sim.engine import simulate_match
 from btl.sim.params import DEFAULT_PARAMS
 from btl.sim.pitch import PITCH_LENGTH, PITCH_WIDTH
@@ -80,6 +80,26 @@ def test_each_half_starts_with_a_kickoff(seed: int) -> None:
         assert event.action_type is ActionType.PASS
         assert event.phase is Phase.SET_PIECE
         assert (event.start_x, event.start_y) == (CENTRE_SPOT.x, CENTRE_SPOT.y)
+
+
+@pytest.mark.parametrize("seed", SEEDS)
+def test_restarts_are_set_pieces_taken_from_the_right_place(seed: int) -> None:
+    events = match(seed).events
+
+    for kind in (ActionType.THROW_IN, ActionType.GOALKICK):
+        assert any(event.action_type is kind for event in events)
+    for event in events:
+        at_a_flag = event.start_x in (0, PITCH_LENGTH) and event.start_y in (0, PITCH_WIDTH)
+        if event.action_type is ActionType.THROW_IN:
+            assert event.start_y in (0, PITCH_WIDTH)
+            assert event.bodypart is BodyPart.OTHER
+        elif event.action_type is ActionType.GOALKICK:
+            assert event.start_x in (SIX_YARD_DEPTH, PITCH_LENGTH - SIX_YARD_DEPTH)
+        elif event.action_type in (ActionType.CORNER_CROSSED, ActionType.CORNER_SHORT):
+            assert at_a_flag
+        else:
+            continue
+        assert event.phase is Phase.SET_PIECE
 
 
 @pytest.mark.parametrize("seed", SEEDS)

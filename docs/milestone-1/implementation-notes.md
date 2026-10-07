@@ -115,3 +115,28 @@ Sources, and which pools were checked against registry data, are in `docs/name-s
 - Planted moments arrive with T13.
 **Why:** the league is fully determined by its seed, so saving names would only duplicate it. Showing all 2,000+ events at once was unreadable.
 **Affects:** T15. A saved simulated match is about 1.1 MB, mostly `positions.parquet` (about 47,000 rows of 64-bit floats). The plan expects the committed sample match to be about 100 KB, so T15 will need a shorter match, rounded or 32-bit positions, or a larger budget. If the name pools change, old saved matches show new names; the ids and events stay valid.
+
+## T8 — Restarts and calibration (2026-10-07)
+**Plan said:** kickoffs, throw-ins, goal kicks, corners; band tests over 50 seeds (passes 700–1100, completion 70–88%, shots 15–35, mean goals 1.5–4); stop tuning when they pass.
+**We did:**
+- A failed pass carries on past its target by up to 8 m. If that takes it off the pitch, it goes out where it crosses the line: over a touchline it's the other team's throw-in from that spot, over the goal line being attacked their goal kick, over the passer's own goal line their corner. Otherwise an opponent intercepts it, as before.
+- Corners also come from failed crosses (15% are deflected out) and missed shots (10%). The ball stays with the attacking team, so the corner is part of the same possession; there is no defender event for the deflection.
+- Missed shots now lead to a `goalkick`. Throw-ins use body part `other`. Corners are 80% `corner_crossed` (treated like a cross, so a header can follow) and 20% `corner_short`.
+- Each restart costs dead-ball time: throw-in 12 s, goal kick 20 s, corner 25 s (a goal is still 45 s).
+- `Start` now says how a possession begins with either `won_with` or a `restart` kind, never both, replacing the old `kickoff` flag.
+- New `sim/stats.py` counts passes (SPADL `pass` only; crosses and restarts are counted separately), shots, goals and restarts. `tests/sim/test_calibration.py` holds the bands. Each band must hold for the mean over the 50 seeds **and** for at least 90% of single matches, so a good average can't hide wild matches.
+
+Over 50 seeds, after tuning:
+
+| | Before T8 | After | Band |
+|---|---|---|---|
+| Events | ~2,200 | 1,658 (1,526–1,752) | — |
+| Passes | ~1,300 | 961 (851–1,070) | 700–1,100 |
+| Pass completion | 75% | 75% (73–77%) | 70–88% |
+| Shots | 43 | 25.4 (14–33) | 15–35 |
+| Goals | 3.5 | 2.3 (0–6) | mean 1.5–4 |
+| Throw-ins / goal kicks / corners | — | 57 / 24 / 11 | — |
+
+Most of the drop in passes came from dead-ball time alone. Tuning was then just shot frequency (`shot_share_in_box` 0.35 → 0.22, `shot_share_in_range` 0.06 → 0.035) and how often restarts happen.
+**Why:** the bands are the definition of done, so tuning stopped once they passed.
+**Affects:** Two things look unrealistic but aren't covered by a band, so we left them. Throw-ins (~57) and goal kicks (~24) run above real matches (roughly 40 and 17), because wide passes are often aimed off the pitch in the first place. Successful wide passes are clamped 1 m inside the touchline, so a lot of play runs right along it. Both could matter for how snapshots look in T13. A match now takes about 0.11 s (0.03 s without snapshots).

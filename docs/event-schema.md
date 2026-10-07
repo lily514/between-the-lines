@@ -42,7 +42,7 @@ Defined as enums in `btl/schema/vocab.py`. The enum value is the SPADL id, and a
 Kept outside the SPADL frame because the schema is strict:
 
 - `possession_id: int`
-- `phase`: open play, set piece, or transition. In simulated matches, a set piece is the first action after a restart (a kickoff, or the keeper's kick after a missed shot). Transition covers the action that wins the ball in open play and anything that team does in the next 8 seconds. Everything else is open play.
+- `phase`: open play, set piece, or transition. In simulated matches, a set piece is the action that restarts play: a kickoff (SPADL type `pass`), `throw_in`, `goalkick`, `corner_crossed` or `corner_short`. Transition covers the action that wins the ball in open play and anything that team does in the next 8 seconds, unless play stops first. Everything else is open play.
 - `planted_moment_id: int | None`
 
 ## Snapshots

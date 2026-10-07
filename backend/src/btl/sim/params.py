@@ -1,8 +1,8 @@
 """Every tunable number in the simulator, in one place.
 
 Probabilities and lengths that depend on where the ball is are given per third of the pitch,
-from the point of view of the team in possession. These are starting values; T8 calibrates
-them against band tests.
+from the point of view of the team in possession. The values are calibrated so that matches
+fall inside the bands in ``tests/sim/test_calibration.py``; they make no further claim to realism.
 """
 
 from dataclasses import dataclass
@@ -35,9 +35,9 @@ class SimParams:
 
     # Choosing an action. Shots and crosses are considered first; otherwise it's a pass or,
     # with ``dribble_share``, a dribble.
-    shot_share_in_box: float = 0.35
+    shot_share_in_box: float = 0.22
     header_share_after_cross: float = 0.6
-    shot_share_in_range: float = 0.06
+    shot_share_in_range: float = 0.035
     shot_range: float = 30.0
     cross_share_on_wing: float = 0.35
     dribble_share: PerThird = PerThird(0.15, 0.25, 0.3)
@@ -60,6 +60,19 @@ class SimParams:
 
     cross_success: float = 0.3
     keeper_claim_share: float = 0.35
+    # Of the crosses that fail, the share a defender deflects out for a corner.
+    cross_out_for_corner: float = 0.15
+
+    # A failed pass carries on past its target by a random distance in this range. If that takes
+    # it off the pitch, it goes out of play instead of to an opponent.
+    run_on: tuple[float, float] = (0.0, 8.0)
+
+    throw_in_length_mean: float = 12.0
+    # Throw-ins aim this many radians infield of straight up the touchline.
+    throw_in_aim: float = 0.6
+    throw_in_kappa: float = 2.0
+    corner_short_share: float = 0.2
+    corner_success: float = 0.3
 
     # Shots: chance of scoring is a logistic function of the goal's visible angle (radians) and
     # the distance to goal. Of the shots that don't score, ``save_share`` are saved.
@@ -67,6 +80,8 @@ class SimParams:
     goal_per_radian: float = 1.5
     goal_per_metre: float = -0.1
     save_share: float = 0.45
+    # Of the shots that miss, the share deflected out for a corner rather than a goal kick.
+    miss_out_for_corner: float = 0.1
 
     # A team's success odds are multiplied by (its strength / opponent's strength) ** this.
     strength_exponent: float = 0.5
@@ -76,8 +91,11 @@ class SimParams:
     control_time: tuple[float, float] = (0.8, 3.0)
     reaction_time: tuple[float, float] = (0.5, 1.5)
     shot_flight: float = 1.0
+    # Dead-ball time before each kind of restart.
     goal_restart_delay: float = 45.0
-    miss_restart_delay: float = 15.0
+    goal_kick_delay: float = 20.0
+    throw_in_delay: float = 12.0
+    corner_delay: float = 25.0
 
     # Actions this soon after winning the ball in open play count as a transition.
     transition_seconds: float = 8.0

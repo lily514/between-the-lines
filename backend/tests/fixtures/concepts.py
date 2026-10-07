@@ -1,12 +1,22 @@
 """Small hand-built matches for the concept detectors."""
 
+from dataclasses import replace
+
 import numpy as np
 
+from btl.schema.event import Event
 from btl.schema.ids import PlayerId, TeamId
 from btl.schema.match import Match
 from btl.schema.snapshot import PlayerSlot, Positions
 from btl.schema.vocab import ActionType, Result
-from tests.fixtures.matches import AWAY, AWAY_MIDFIELDER, GAME, HOME, HOME_MIDFIELDER, make_event
+from tests.fixtures.matches import (
+    AWAY,
+    AWAY_MIDFIELDER,
+    GAME,
+    HOME,
+    HOME_MIDFIELDER,
+    make_event,
+)
 
 HOME_WINGER = PlayerId(12)
 DEFENDER_IDS = 100
@@ -83,3 +93,48 @@ def one_pass(
 def mirrored(spots: tuple[Spot, ...]) -> tuple[Spot, ...]:
     """The same spots seen from the other end: for building an away team's fixtures."""
     return tuple((105 - x, 68 - y) for x, y in spots)
+
+
+LOST_AT = 23.0
+
+
+def lost_and_won_back(
+    seconds: float,
+    where: Spot,
+    *,
+    team: TeamId = HOME,
+    lost_with: ActionType = ActionType.INTERCEPTION,
+    won_with: ActionType = ActionType.TACKLE,
+) -> Match:
+    """A team loses the ball at ``LOST_AT`` seconds and wins it back ``seconds`` later.
+
+    ``where`` is the spot it wins the ball back, seen as if ``team`` attacks towards x = 105;
+    the match stores it, like everything else, in the team's real direction.
+
+    - 0: ``team`` passes forward.
+    - 1: its pass towards the opponent's box fails.
+    - 2: the opponent wins the ball (``lost_with``).
+    - 3: the opponent passes to ``where``.
+    - 4: ``team`` wins it back there (``won_with``).
+    - 5: ``team`` passes on.
+    """
+    other = AWAY if team == HOME else HOME
+    ours = HOME_MIDFIELDER if team == HOME else AWAY_MIDFIELDER
+    theirs = AWAY_MIDFIELDER if team == HOME else HOME_MIDFIELDER
+    timed = (
+        (20.0, make_event(0, team, ours, (40, 34), (65, 30))),
+        (22.0, make_event(1, team, ours, (65, 30), (80, 40), result=Result.FAIL)),
+        (LOST_AT, make_event(2, other, theirs, (80, 40), (80, 40), lost_with)),
+        (LOST_AT + 0.5, make_event(3, other, theirs, (80, 40), where)),
+        (LOST_AT + seconds, make_event(4, team, ours, where, where, won_with)),
+        (LOST_AT + seconds + 1, make_event(5, team, ours, where, (90, 34))),
+    )
+    events = tuple(replace(event, time_seconds=time) for time, event in timed)
+    if team == AWAY:
+        events = tuple(_mirror_event(event) for event in events)
+    return Match(game_id=GAME, home_team_id=HOME, away_team_id=AWAY, events=events)
+
+
+def _mirror_event(event: Event) -> Event:
+    (start, end) = mirrored(((event.start_x, event.start_y), (event.end_x, event.end_y)))
+    return replace(event, start_x=start[0], start_y=start[1], end_x=end[0], end_y=end[1])

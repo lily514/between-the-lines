@@ -18,6 +18,7 @@ class ConceptId(StrEnum):
 
     SWITCH_OF_PLAY = "switch_of_play"
     LINE_BREAKING_PASS = "line_breaking_pass"
+    COUNTER_PRESS = "counter_press"
 
     @property
     def label(self) -> str:

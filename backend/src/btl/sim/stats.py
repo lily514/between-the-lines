@@ -6,9 +6,12 @@ from dataclasses import dataclass
 
 from btl.schema.match import Match
 from btl.schema.vocab import ActionType, Result
+from btl.sim.pitch import PITCH_WIDTH
 
 SHOTS = frozenset({ActionType.SHOT, ActionType.SHOT_FREEKICK, ActionType.SHOT_PENALTY})
 CORNERS = frozenset({ActionType.CORNER_CROSSED, ActionType.CORNER_SHORT})
+# How close to a touchline an action has to start to count as on it.
+TOUCHLINE_STRIP = 2.0
 
 
 @dataclass(frozen=True, slots=True)
@@ -17,7 +20,8 @@ class MatchStats:
 
     ``passes`` counts only SPADL ``pass`` actions (kickoffs included); crosses, throw-ins, goal
     kicks and corners are counted separately. ``throw_in_lengths`` are in metres, from where
-    each throw was taken to where it ended.
+    each successful throw was taken to the teammate who got it. ``on_touchline`` counts actions
+    that start within ``TOUCHLINE_STRIP`` metres of either touchline, throw-ins included.
     """
 
     passes: int
@@ -28,6 +32,8 @@ class MatchStats:
     goal_kicks: int
     corners: int
     throw_in_lengths: tuple[float, ...]
+    actions: int
+    on_touchline: int
 
     @property
     def pass_completion(self) -> float:
@@ -52,6 +58,11 @@ def match_stats(match: Match) -> MatchStats:
         throw_in_lengths=tuple(
             math.hypot(event.end_x - event.start_x, event.end_y - event.start_y)
             for event in match.events
-            if event.action_type is ActionType.THROW_IN
+            if event.action_type is ActionType.THROW_IN and event.result is Result.SUCCESS
+        ),
+        actions=len(match.events),
+        on_touchline=sum(
+            min(event.start_y, PITCH_WIDTH - event.start_y) <= TOUCHLINE_STRIP
+            for event in match.events
         ),
     )

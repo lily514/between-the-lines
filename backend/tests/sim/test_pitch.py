@@ -15,6 +15,7 @@ from btl.sim.pitch import (
     in_penalty_area,
     mirror,
     on_pitch,
+    reflect_into_pitch,
     where_it_leaves,
     zone_of,
 )
@@ -91,3 +92,23 @@ def test_where_it_leaves_puts_the_ball_exactly_on_the_goal_line() -> None:
 def test_where_it_leaves_needs_a_point_off_the_pitch() -> None:
     with pytest.raises(ValueError, match="on the pitch"):
         where_it_leaves(Point(10, 10), Point(20, 20))
+
+
+@pytest.mark.parametrize(
+    ("point", "reflected"),
+    [
+        (Point(50, -5), Point(50, 5)),
+        (Point(50, 72), Point(50, 64)),
+        (Point(110, 34), Point(100, 34)),
+        (Point(-3, -4), Point(3, 4)),
+        (Point(40, 30), Point(40, 30)),
+    ],
+)
+def test_reflect_into_pitch_mirrors_a_point_back_across_the_line(
+    point: Point, reflected: Point
+) -> None:
+    assert reflect_into_pitch(point) == reflected
+
+
+def test_reflect_into_pitch_keeps_a_margin_from_the_lines() -> None:
+    assert reflect_into_pitch(Point(50, -0.5), margin=1) == Point(50, 1)

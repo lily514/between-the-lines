@@ -17,10 +17,9 @@ from btl.sim.stats import MatchStats, match_stats
 
 SEEDS = range(50)
 SINGLE_MATCH_SHARE = 0.9
-# A long throw is one of 20 m or more. The longest in real matches are in the low 30s of metres;
-# 40 m leaves room for a failed throw that runs on out of play.
+# A long throw is one of 20 m or more. The longest in real matches are in the low 30s of metres.
 LONG_THROW = 20.0
-LONGEST_THROW = 40.0
+LONGEST_THROW = 35.0
 
 
 @cache
@@ -39,12 +38,22 @@ MEASURES: dict[str, Callable[[MatchStats], float]] = {
     "passes": lambda stats: stats.passes,
     "pass completion": lambda stats: stats.pass_completion,
     "shots": lambda stats: stats.shots,
+    "throw-ins": lambda stats: stats.throw_ins,
+    "share of actions on a touchline": lambda stats: stats.on_touchline / stats.actions,
 }
 
 
 @pytest.mark.parametrize(
     ("name", "low", "high"),
-    [("passes", 700, 1100), ("pass completion", 0.70, 0.88), ("shots", 15, 35)],
+    [
+        ("passes", 700, 1100),
+        ("pass completion", 0.70, 0.88),
+        ("shots", 15, 35),
+        # Real matches average about 39.
+        ("throw-ins", 25, 50),
+        # Play spread evenly across the pitch would put about 6% there.
+        ("share of actions on a touchline", 0, 0.10),
+    ],
 )
 def test_matches_fall_in_the_band(name: str, low: float, high: float) -> None:
     values = [MEASURES[name](stats) for stats in all_stats()]

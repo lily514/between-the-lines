@@ -157,3 +157,23 @@ Most of the drop in passes came from dead-ball time alone. Tuning was then just 
 **We did:** added a fifth band, for throw-in length: mean 8–20 m, 2–15% of throws 20 m or more, none over 40 m. Throws are capped at 32 m (`throw_in_longest`); a longer random length is drawn again. `MatchStats` now also records each throw-in's length.
 **Why:** a 25 m throw showed up in a sample match, and the longest throw over 50 seeds was 53 m, close to the world record of about 51–60 m set outside matches. In real matches a "long throw" is 20 m or more, and the longest are in the low 30s of metres; teams take about 4 long throws in about 39 throw-ins per match in the current top-flight season (sources: the league's own article on long throws in 2025/26, and The Analyst on throw-ins). The 40 m limit leaves room for a failed throw that runs on 8 m before going out. Before the cap: mean 10.0 m, 10% long, longest 53.4 m. After: 9.7 m, 9%, 33.5 m.
 **Affects:** every match after its first capped throw changes, because the random draws shift. The other bands still pass with nearly the same numbers (passes 964, completion 76%, shots 26, goals 2.2). The grid in `expected-threat.md` was refitted; it keeps its shape and its 13% peak.
+
+## T8 — Passes no longer hug the touchline (2026-10-07)
+**Plan said:** nothing about this; the T8 note flagged it as left alone.
+**We did:**
+- A pass or dribble aimed off the pitch now has its target reflected back in across the line, like a ball bouncing off a wall, instead of being pinned 1 m inside it. A target 5 m beyond the touchline becomes one 5 m inside it. New helper: `reflect_into_pitch` in `sim/pitch.py`.
+- A failed pass now runs on from that reflected target. So the ball goes out only when a pass misses and carries on over a line, not because it was aimed out. To keep enough throw-ins, the run-on range grew from 0–8 m to 0–20 m.
+- Two new bands: 25–50 throw-ins per match (real matches average about 39), and at most 10% of actions starting within 2 m of a touchline. `MatchStats` gains `actions` and `on_touchline`.
+- The throw-in length band now measures only successful throws, from the thrower to the teammate who got it, and its limit tightens from 40 m to 35 m. With a 20 m run-on, a missed throw could roll out 40 m or more from where it was taken, which says nothing about how far it was thrown.
+
+| Over 50 seeds | Before | After |
+|---|---|---|
+| Actions within 2 m of a touchline | 18% | 6.5% |
+| Throw-ins | 56 | 34 |
+| Goal kicks | 24 | 27.5 |
+| Passes | 964 | 1,010 |
+| Shots | 26 | 28.5 |
+| Goals | 2.2 | 2.2 |
+
+**Why:** about 1 in 6 actions happened right on the touchline (an even spread would give about 6%), because wide passes were pinned to the line and the next pass from there was pinned again. It looked wrong, and it inflated throw-ins. Making the ball go out only when a pass misses is closer to how play really stops. We tried running on from the original off-pitch target instead: that left 52 throw-ins per match. The touchline share has no published figure that we know of; 10% is our own limit, set against the 6% of an even spread.
+**Affects:** every match changes, so seed 7 is now a 0-0 draw. Goal kicks rise to about 27.5, because more missed forward passes run over the goal line; real matches have fewer, but there's no band for them. The threat grid in `expected-threat.md` was refitted: same shape, peak about 12%. T13's snapshots should look more natural on the wings.

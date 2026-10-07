@@ -30,6 +30,7 @@ from btl.sim.pitch import (
     in_penalty_area,
     mirror,
     on_pitch,
+    reflect_into_pitch,
     where_it_leaves,
     zone_of,
 )
@@ -38,7 +39,7 @@ from btl.sim.shape import Formation, team_shape
 CENTRE_SPOT = Point(PITCH_LENGTH / 2, PITCH_WIDTH / 2)
 KEEPER_ACTIONS = frozenset({ActionType.KEEPER_SAVE, ActionType.KEEPER_CLAIM})
 CROSSES = frozenset({ActionType.CROSS, ActionType.CORNER_CROSSED})
-# A successful pass or dribble stops this far inside the lines.
+# Passes and dribbles aimed off the pitch come back in at least this far inside the lines.
 EDGE_MARGIN = 1.0
 SIX_YARD_DEPTH = 5.5
 SIX_YARD_HALF_WIDTH = 9.16
@@ -275,17 +276,17 @@ def _pass(
 ) -> _Outcome:
     """Any kind of pass along the ground or in the air to a teammate.
 
-    ``target`` may be off the pitch: a successful pass stops short of the lines, and a failed
-    one may run on out of play.
+    A ``target`` off the pitch is reflected back in: nobody aims a pass out of play. A failed
+    pass may still run on past its target and go out.
     """
-    end = clamp_to_pitch(target, EDGE_MARGIN)
+    end = reflect_into_pitch(target, EDGE_MARGIN)
     length = distance(ball, end)
     params = play.params
     success = params.pass_success.of(zone_of(end).third) * math.exp(
         -max(0.0, length - params.long_pass_from) / params.long_pass_falloff
     )
     if not _succeeds(success, play):
-        run_on = _beyond(ball, target, _between(play.rng, params.run_on))
+        run_on = _beyond(ball, end, _between(play.rng, params.run_on))
         if not on_pitch(run_on):
             return _out_of_play(slot, action, bodypart, ball, run_on, phase, play)
         return _lose(slot, action, bodypart, ball, end, params.pass_speed, phase, play)
@@ -298,7 +299,7 @@ def _pass(
 
 def _dribble(slot: int, ball: Point, phase: Phase, play: _Play) -> _Outcome:
     params = play.params
-    end = clamp_to_pitch(
+    end = reflect_into_pitch(
         _kick(ball, params.dribble_length_mean, params.dribble_kappa, play), EDGE_MARGIN
     )
     if not _succeeds(params.dribble_success, play):

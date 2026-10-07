@@ -65,7 +65,7 @@ class SimParams:
 
     # A failed pass carries on past its target by a random distance in this range. If that takes
     # it off the pitch, it goes out of play instead of to an opponent.
-    run_on: tuple[float, float] = (0.0, 8.0)
+    run_on: tuple[float, float] = (0.0, 20.0)
 
     throw_in_length_mean: float = 12.0
     # The longest throws in real matches are in the low 30s of metres.

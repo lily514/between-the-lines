@@ -124,6 +124,22 @@ def where_it_leaves(inside: Point, outside: Point) -> Point:
     return clamp_to_pitch(crossing)
 
 
+def reflect_into_pitch(point: Point, margin: float = 0.0) -> Point:
+    """The point mirrored back across any line it lies beyond, at least ``margin`` inside.
+
+    A point 5 m beyond a touchline comes back as a point 5 m inside it.
+    """
+    x = (
+        -point.x
+        if point.x < 0
+        else 2 * PITCH_LENGTH - point.x
+        if point.x > PITCH_LENGTH
+        else point.x
+    )
+    y = -point.y if point.y < 0 else 2 * PITCH_WIDTH - point.y if point.y > PITCH_WIDTH else point.y
+    return clamp_to_pitch(Point(x, y), margin)
+
+
 def clamp_to_pitch(point: Point, margin: float = 0.0) -> Point:
     """The nearest point on the pitch, at least ``margin`` metres inside the lines."""
     return Point(

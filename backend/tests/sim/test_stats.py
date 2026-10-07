@@ -32,3 +32,4 @@ def test_match_stats_counts_passes_shots_and_restarts() -> None:
     assert (stats.shots, stats.goals) == (2, 1)
     assert (stats.throw_ins, stats.goal_kicks, stats.corners) == (1, 0, 1)
     assert stats.throw_in_lengths == (pytest.approx(12.8, abs=0.1),)
+    assert (stats.actions, stats.on_touchline) == (11, 2)

@@ -219,3 +219,16 @@ Most of the drop in passes came from dead-ball time alone. Tuning was then just 
 **Affects:** T11–T14 add a `ConceptId` member and a line in `ALL_DETECTORS` each. T15's `btl inspect` can join tags to events by `action_id`.
 
 **Checked against real data.** On the 40 real matches from the T8 note, our rule finds 19.9 switches per match. StatsBomb's analysts flag 14.7 passes per match as switches, and our rule catches 13.3 of them (90%). StatsBomb doesn't flag the other 6.6, and its exact definition isn't published with the data, so we can't say which side is stricter where. Simulated matches have only about 9 per match, so the simulator plays fewer long cross-field passes than real teams do. There's no band for this yet. The rule also counts passes across a team's own penalty area, which real definitions count too, but which make weak teaching examples. A later task could require the pass to start outside the team's own third.
+
+## T11 — Line-breaking detector (2026-10-07)
+**Plan said:** group the opposition's outfield players into lines by x; a successful pass that starts behind a line of at least 3 players and ends beyond it breaks that line; difficulty from the gap width at the crossing point and the number of lines broken.
+**We did:** as planned, with these choices written into the detector's docstring:
+- A new line starts wherever the next defender (sorted by x) stands more than 5 m further up the pitch. In simulated play, players within a line are under 4 m apart along the pitch and lines are 11–15 m apart, so anything from 4 to 8 m gives the same lines.
+- "Through" means the pass crosses the line *between* two of its players. A pass around the end of a line doesn't count. The gap is the distance between those two players.
+- "Behind" and "beyond" are strict: the pass must start in front of every player in the line and end behind every one.
+- Only SPADL `pass` actions count. Positions come from the snapshot at the start of the pass.
+- Difficulty is 0 for a gap of 20 m or more, rising to 1 at 6 m or less, judged at the narrowest gap. Each extra line broken adds 0.2, up to 1. The evidence holds the lines broken and the narrowest gap.
+**Why:** the plan's rule left these open, and the planted moments in T13 need a difficulty that rises reliably as the gap narrows.
+**Affects:** T13's template must make each difficulty level's gap narrower than the last; a decoy option alone doesn't change the detected difficulty.
+
+**How often it fires.** In simulated play there are about 205 per match, 29% of completed passes. Most break one line through a gap of about 8–13 m, and 1 in 6 breaks two. FIFA's match data counts line breaks through, around *and over* a line, and the best team at one recent tournament made 59 *midfield* line breaks per 90 minutes. So our count is the right order of magnitude but probably high. The simulator's lines are perfectly flat and evenly spaced, so short passes of 9–13 m between two level midfielders count. That's correct by the definition but makes weaker teaching examples. StatsBomb's free data includes player positions ("360" freeze frames) only for other competitions, such as the 2022 men's World Cup, so the count isn't checked against real matches yet.

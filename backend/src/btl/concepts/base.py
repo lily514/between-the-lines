@@ -17,6 +17,7 @@ class ConceptId(StrEnum):
     """The football concepts the detectors know. Each has exactly one detector."""
 
     SWITCH_OF_PLAY = "switch_of_play"
+    LINE_BREAKING_PASS = "line_breaking_pass"
 
     @property
     def label(self) -> str:

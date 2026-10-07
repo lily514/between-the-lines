@@ -86,3 +86,16 @@ Sources, and which pools were checked against registry data, are in `docs/name-s
 **Sources and estimates:** the season's counts for the largest groups come from Transfermarkt figures reported in the press (France 40 of about 390 players, Netherlands 36, Brazil 31, Spain 21, Germany 15, Argentina and Portugal 14 each, Belgium 12; 65 nationalities). Smaller nations aren't in that list, so their sizes are estimated from the league's own all-time count of players by nation, scaled to this season. No current count of English players was available; the British share is the remainder, consistent with squad rules that cap non-homegrown players at 17 of 25. Italian, Greek, Turkish, and East Asian players (a few percent together) have no style of their own.
 **Why:** Lily asked for squads that sound like a real league's, not mostly English.
 **Affects:** nothing; `pick_style` is tested to produce these proportions.
+
+## T6 — Simulator core (2026-10-07)
+**Plan said:** `simulate_match(home, away, seed)`; the actor is a player whose formation role fits the zone; open play only.
+**We did:**
+- The signature also takes keyword-only `game_id` (defaults to the seed), `home_formation` and `away_formation` (default 4-4-2), `with_snapshots`, and `params`.
+- New module `sim/lineup.py` picks each club's starting eleven: the first squad members of each role.
+- The actor is the player whose spot in the team's shape, without jitter, is nearest the ball. A pass goes to the teammate nearest where it lands; a dribble keeps the same player. Choosing players never uses the shape model's random stream, so turning snapshots off leaves the events unchanged (tested).
+- A possession that starts by winning the ball opens with the winning action (interception, tackle, keeper save or claim), so the engine's `possession_id` and `schema/possession.py` agree by construction. The possession test confirms this on every event.
+- Snapshots are taken at the start of each action. For the action that wins the ball, the shape is still the other team's attacking shape.
+- With no restarts yet: a kickoff is a set-piece pass backwards from the centre spot (start of each half, and after a goal). After a missed shot, the keeper takes a set-piece pass from the six-yard box (T8 turns it into a goal kick). Passes and dribbles end at least 1 m inside the lines, so the ball never goes out.
+- Dribbles can fail (the opponent's tackle wins the ball); there are no separate take-ons.
+**Why:** the simplest model that meets the T6 invariants. The rule for choosing actors also means passes in natural play end where a teammate stands, which the line-breaking detector (T11) needs.
+**Affects:** T8. Before any calibration, a match takes about 0.14 s (0.03 s without snapshots) and has about 2,200 events, 1,300 passes (75% completed), 43 shots, and 3.5 goals. Passes and shots are above T8's bands. Strength now moves each success's *odds* by (strength ratio) ** 0.5. The first draft used ** 2, which compounds over a possession: the stronger side took up to 9 in 10 of the shots. T8 should keep this in mind. `sim/stats.py` (summary stats for band tests) is left to T8, where those tests live.

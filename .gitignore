@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# Generated match data and models (regenerable from seeds)
+backend/data/
+backend/runs/
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/

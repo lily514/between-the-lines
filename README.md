@@ -15,3 +15,14 @@ Built for the "Inside the Game" hackathon.
 | 1. Data engine | Event schema, match simulator, Expected Threat valuation, concept detectors, CLI | In progress |
 
 Work in progress lives on milestone branches and is merged to `main` when each milestone is complete.
+
+## Quickstart
+
+Requires [uv](https://docs.astral.sh/uv/). Full steps are in [docs/setup.md](docs/setup.md).
+
+```sh
+cd backend
+uv python install 3.11
+uv sync
+uv run btl --help
+```

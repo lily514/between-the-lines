@@ -99,3 +99,19 @@ Sources, and which pools were checked against registry data, are in `docs/name-s
 - Dribbles can fail (the opponent's tackle wins the ball); there are no separate take-ons.
 **Why:** the simplest model that meets the T6 invariants. The rule for choosing actors also means passes in natural play end where a teammate stands, which the line-breaking detector (T11) needs.
 **Affects:** T8. Before any calibration, a match takes about 0.14 s (0.03 s without snapshots) and has about 2,200 events, 1,300 passes (75% completed), 43 shots, and 3.5 goals. Passes and shots are above T8's bands. Strength now moves each success's *odds* by (strength ratio) ** 0.5. The first draft used ** 2, which compounds over a possession: the stronger side took up to 9 in 10 of the shots. T8 should keep this in mind. `sim/stats.py` (summary stats for band tests) is left to T8, where those tests live.
+
+## T7 — CLI and saved matches (2026-10-07)
+**Plan said:** all file reading and writing lives in `btl/io.py`, with parquet for tables; CLAUDE.md allowed pandas only in `schema/frames.py`, `value/`, and `cli/`.
+**We did:** added `io.py` to CLAUDE.md's list of pandas edge modules, so it may also start with `# pyright: basic`. Added `pyarrow` as a dependency; pandas needs it for parquet.
+**Why:** the plan and the rule conflicted. Writing parquet means calling pandas, and pandas' parquet functions fail strict pyright. Moving the reads and writes into `frames.py` would have broken the other rule, that I/O happens only in `io.py` and `cli/`.
+**Affects:** nothing.
+
+## T7 — Saved match details (2026-10-07)
+**Plan said:** `meta.json` holds the seed, clubs, schema version, and planted moments; `btl simulate --seed 7 --out runs/`.
+**We did:**
+- `meta.json` holds the schema version, game and team ids, the match seed, the league seed, and both formations. Club and player names aren't saved. `btl events` regenerates the league from its seed to name them.
+- Without `--home` and `--away` (club short names), `btl simulate` takes the clubs from the league's season fixtures, using the seed to choose. `--out` defaults to `data/matches`.
+- `btl events` shows 50 events by default; `--start` and `--count` choose others.
+- Planted moments arrive with T13.
+**Why:** the league is fully determined by its seed, so saving names would only duplicate it. Showing all 2,000+ events at once was unreadable.
+**Affects:** T15. A saved simulated match is about 1.1 MB, mostly `positions.parquet` (about 47,000 rows of 64-bit floats). The plan expects the committed sample match to be about 100 KB, so T15 will need a shorter match, rounded or 32-bit positions, or a larger budget. If the name pools change, old saved matches show new names; the ids and events stay valid.

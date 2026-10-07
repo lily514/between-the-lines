@@ -8,6 +8,7 @@ requires-python = ">=3.11,<3.12"
 dependencies = [
     "numpy>=1.26.4",
     "pandas>=2.3.3",
+    "pyarrow>=25.0.1",
     "socceraction==1.5.3",
     "typer>=0.12",
 ]

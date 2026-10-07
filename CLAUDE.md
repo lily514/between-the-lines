@@ -50,8 +50,8 @@ One concept per module. Subpackages: schema, league, sim, value, concepts, cli.
   stream spawned from the match seed via `SeedSequence.spawn`, so one part never shifts another.
 - Units: metres and seconds. Pitch is 105 × 68 (SPADL). Coordinate convention is documented in
   `btl/schema/__init__.py`; do not invent another one. Direction flipping happens only in `frames.py`.
-- pandas only in `schema/frames.py`, `value/`, and `cli/`. Everything else uses typed dataclasses.
-  socceraction has no type hints, so only those edge modules may start with `# pyright: basic`; nowhere else.
+- pandas only in `schema/frames.py`, `io.py` (parquet files), `value/`, and `cli/`. Everything else uses typed dataclasses.
+  pandas and socceraction are only partly typed, so only those edge modules may start with `# pyright: basic`; nowhere else.
 - Pure functions where possible; I/O only in `btl/io.py` and `btl/cli/`.
 
 ## Naming

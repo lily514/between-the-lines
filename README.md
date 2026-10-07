@@ -26,3 +26,10 @@ uv python install 3.11
 uv sync
 uv run btl --help
 ```
+
+Simulate a match and look at its events:
+
+```sh
+uv run btl simulate --seed 7
+uv run btl events data/matches/match-0007
+```

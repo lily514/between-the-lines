@@ -6,6 +6,7 @@ from hypothesis import strategies as st
 from btl.schema.vocab import ActionType, BodyPart, Phase, Result
 from btl.sim.chain import (
     CENTRE_SPOT,
+    KEEPER_PICK_UP_DEPTH,
     SIX_YARD_DEPTH,
     Chain,
     Restart,
@@ -15,7 +16,7 @@ from btl.sim.chain import (
     kickoff,
     play_chain,
 )
-from btl.sim.params import DEFAULT_PARAMS, SimParams
+from btl.sim.params import DEFAULT_PARAMS, PerThird, SimParams
 from btl.sim.pitch import PITCH_LENGTH, PITCH_WIDTH, Point, mirror, on_pitch
 from btl.sim.shape import FOUR_FOUR_TWO, FOUR_THREE_THREE
 
@@ -195,3 +196,26 @@ def test_a_saved_shot_hands_the_ball_to_the_keeper_in_front_of_their_goal() -> N
     assert result.next_start.won_with is ActionType.KEEPER_SAVE
     assert result.next_start.slot == 0
     assert result.next_start.ball.x < 5
+
+
+def test_a_pass_running_through_in_front_of_goal_is_picked_up_by_the_keeper() -> None:
+    overhit_at_goal = SimParams(
+        shot_share_in_box=0.0,
+        shot_share_in_range=0.0,
+        dribble_share=PerThird(0.0, 0.0, 0.0),
+        pass_kappa=PerThird(500.0, 500.0, 500.0),
+        pass_length_mean=PerThird(8.0, 8.0, 8.0),
+        pass_success=PerThird(0.0, 0.0, 0.0),
+        run_on=(30.0, 30.0),
+        keeper_pick_up_share=1.0,
+    )
+    start = Start(Point(80, 34), slot=STRIKER, won_with=ActionType.TACKLE)
+
+    result = chain(start, params=overhit_at_goal)
+
+    last = result.steps[-1]
+    assert last.action_type is ActionType.PASS
+    assert last.result is Result.FAIL
+    assert last.end.x == PITCH_LENGTH - KEEPER_PICK_UP_DEPTH
+    assert result.next_start.won_with is ActionType.KEEPER_PICK_UP
+    assert result.next_start.slot == 0  # the keeper

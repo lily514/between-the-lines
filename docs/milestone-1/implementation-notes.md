@@ -177,3 +177,30 @@ Most of the drop in passes came from dead-ball time alone. Tuning was then just 
 
 **Why:** about 1 in 6 actions happened right on the touchline (an even spread would give about 6%), because wide passes were pinned to the line and the next pass from there was pinned again. It looked wrong, and it inflated throw-ins. Making the ball go out only when a pass misses is closer to how play really stops. We tried running on from the original off-pitch target instead: that left 52 throw-ins per match. The touchline share has no published figure that we know of; 10% is our own limit, set against the 6% of an even spread.
 **Affects:** every match changes, so seed 7 is now a 0-0 draw. Goal kicks rise to about 27.5, because more missed forward passes run over the goal line; real matches have fewer, but there's no band for them. The threat grid in `expected-threat.md` was refitted: same shape, peak about 12%. T13's snapshots should look more natural on the wings.
+
+## T8 — Bands checked against real match data (2026-10-07)
+**Plan said:** band tests with ranges for passes, completion, shots and goals; no source for the ranges.
+**We did:** counted the same measures in real event data and set or corrected the bands against it.
+- **Source:** StatsBomb's free open data (github.com/statsbomb/open-data), which holds every match of the 2015/16 season of the real top-flight English league. We took 40 matches at random and counted with a throwaway script. Neither the data nor the script is in the repo. "Passes" there means open-play passes and kickoffs, matching `MatchStats`. "On a touchline" means a pass, carry or shot starting within 2 m of one.
+- **Goal kicks:** half the simulator's 27.5 per match came from passes overhit over the goal line. Now, when a failed pass would run over the goal line in front of goal (the width of the penalty area), the keeper picks it up 2 m before the line 90% of the time (`keeper_pick_up_share`, SPADL `keeper_pick_up`). The extra open play pushed passes up, so the time to control a pass grew from 0.8–3.0 s to 1.2–3.8 s. New band: 10–25 goal kicks per match.
+- **Throw-in length: the earlier band was wrong.** The figures it used ("about 4 long throws a match, the longest in the low 30s of metres") count only throws of 20 m or more *into the box*; we had read them as covering all throws. In the real data, 24% of successful throws go 20 m or more, and 1 in 100 goes 39 m or more. The mean throw before misses and the cap is now 18 m (was 12 m), and the cap is 40 m (was 32 m). The band is now: mean 10–20 m, 15–35% of throws 20 m or more, none over 45 m.
+- **Throw-in count:** the band widens to 25–55 to cover both the real 48 here and the about 39 reported for recent seasons.
+- The band test's comments now give the real figure next to each band.
+
+| Per match | Real (40 matches) | Before | After | Band |
+|---|---|---|---|---|
+| Goal kicks | 16.8 (9–27) | 27.5 | 17.5 | 10–25 |
+| Throw-ins | 47.8 (26–70) | 34 | 35 | 25–55 |
+| Corners | 10.0 | 10.5 | 9.5 | — |
+| Passes | 717 (553–944) | 1,010 | 959 | 700–1,100 |
+| Pass completion | 79% | 75% | 75% | 70–88% |
+| Shots | 25.2 | 28.5 | 24.8 | 15–35 |
+| Goals | 2.7 | 2.2 | 2.1 | mean 1.5–4 |
+| Actions within 2 m of a touchline | 6.0% (3.6–8.7%) | 6.5% | 6.4% | at most 10% |
+| Successful throw-ins: mean / 20 m or more / longest | 15.6 m / 24% / 51 m | 11.2 m / 10% / 32 m | 14.3 m / 23% / 40 m | see above |
+
+**Why:** Lily asked for goal kicks to be checked against real matches, and checking the rest at the same time showed the throw-in band was based on a misread figure.
+**Affects:**
+- **Era caveats.** The data is ten years old. Counts of restarts depend on the ball going out, so they should still hold, but how they are taken has changed. In 2015/16 most goal kicks were long (median 61 m); since a 2019 law change most are played short. Teams also pass more now, so 717 passes is likely low for today's game.
+- **Left as is:** the simulator's goal kicks stay long (mean 35 m), and its throw-ins stay below the real 48. Both are in band.
+- **Every match changes again.** The grid in `expected-threat.md` was refitted: same shape, peak about 12%.

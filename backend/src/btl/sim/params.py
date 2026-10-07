@@ -66,10 +66,13 @@ class SimParams:
     # A failed pass carries on past its target by a random distance in this range. If that takes
     # it off the pitch, it goes out of play instead of to an opponent.
     run_on: tuple[float, float] = (0.0, 20.0)
+    # Of the failed passes running over the goal line in front of goal, the share the keeper
+    # picks up before they go out for a goal kick.
+    keeper_pick_up_share: float = 0.9
 
-    throw_in_length_mean: float = 12.0
-    # The longest throws in real matches are in the low 30s of metres.
-    throw_in_longest: float = 32.0
+    throw_in_length_mean: float = 18.0
+    # About 1 in 100 throws in real matches goes 39 m or more.
+    throw_in_longest: float = 40.0
     # Throw-ins aim this many radians infield of straight up the touchline.
     throw_in_aim: float = 0.6
     throw_in_kappa: float = 2.0
@@ -90,7 +93,7 @@ class SimParams:
 
     pass_speed: float = 15.0
     dribble_speed: float = 5.0
-    control_time: tuple[float, float] = (0.8, 3.0)
+    control_time: tuple[float, float] = (1.2, 3.8)
     reaction_time: tuple[float, float] = (0.5, 1.5)
     shot_flight: float = 1.0
     # Dead-ball time before each kind of restart.

@@ -37,11 +37,15 @@ from btl.sim.pitch import (
 from btl.sim.shape import Formation, team_shape
 
 CENTRE_SPOT = Point(PITCH_LENGTH / 2, PITCH_WIDTH / 2)
-KEEPER_ACTIONS = frozenset({ActionType.KEEPER_SAVE, ActionType.KEEPER_CLAIM})
+KEEPER_ACTIONS = frozenset(
+    {ActionType.KEEPER_SAVE, ActionType.KEEPER_CLAIM, ActionType.KEEPER_PICK_UP}
+)
 CROSSES = frozenset({ActionType.CROSS, ActionType.CORNER_CROSSED})
 # Passes and dribbles aimed off the pitch come back in at least this far inside the lines.
 EDGE_MARGIN = 1.0
 SIX_YARD_DEPTH = 5.5
+# How far in front of the goal line a keeper picks up a ball running through.
+KEEPER_PICK_UP_DEPTH = 2.0
 SIX_YARD_HALF_WIDTH = 9.16
 
 
@@ -345,13 +349,30 @@ def _out_of_play(
     phase: Phase,
     play: _Play,
 ) -> _Outcome:
-    """A pass that goes out, and the other team's restart.
+    """A pass heading out of play, and how the other team gets the ball.
 
-    Over the touchline it's their throw-in where it went out; over the goal line being attacked,
-    their goal kick; over the passer's own goal line, their corner.
+    Over the touchline it's their throw-in where it went out; over the passer's own goal line,
+    their corner. Over the goal line being attacked it's their goal kick, unless it's running
+    through in front of goal, where their keeper often picks it up just before the line.
     """
     params = play.params
     out = where_it_leaves(ball, beyond)
+    in_front_of_goal = in_penalty_area(Point(PITCH_LENGTH, out.y))
+    if (
+        out.x == PITCH_LENGTH
+        and in_front_of_goal
+        and play.rng.random() < params.keeper_pick_up_share
+    ):
+        picked_up = Point(PITCH_LENGTH - KEEPER_PICK_UP_DEPTH, out.y)
+        flight = distance(ball, picked_up) / params.pass_speed
+        handover = Start(
+            mirror(picked_up), _keeper(play.defence.formation), ActionType.KEEPER_PICK_UP
+        )
+        return _Outcome(
+            Step(slot, action, Result.FAIL, bodypart, ball, picked_up, flight, phase),
+            slot,
+            handover=handover,
+        )
     if out.x == PITCH_LENGTH:
         handover = _goal_kick(play.defence, play)
     elif out.x == 0:

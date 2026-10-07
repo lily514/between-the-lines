@@ -23,23 +23,23 @@ Every action is first turned so that its team attacks left to right (towards x =
 
 ## Our grid
 
-`btl fit-xt` simulates 200 matches (by default) and fits the grid on all their actions, about 351,000. The matches use the season's fixtures in order, with match seeds drawn from `--seed`, so the same command always gives the same grid. It takes about 10 seconds, mostly simulating.
+`btl fit-xt` simulates 200 matches (by default) and fits the grid on all their actions, about 331,000. The matches use the season's fixtures in order, with match seeds drawn from `--seed`, so the same command always gives the same grid. It takes about 10 seconds, mostly simulating.
 
 Values in percent, attacking left to right, rows from the top touchline (y = 68) down:
 
 ```
- 0.2  0.2  0.2  0.2  0.3  0.3  0.3  0.4  0.5  0.6  0.7  1.1  1.2  1.0  1.2  1.0
- 0.2  0.2  0.2  0.2  0.3  0.3  0.3  0.4  0.5  0.6  0.8  1.0  1.2  1.3  1.2  1.4
- 0.2  0.2  0.2  0.2  0.3  0.3  0.3  0.4  0.5  0.6  0.8  1.0  1.2  1.3  1.8  1.7
- 0.2  0.2  0.2  0.2  0.3  0.3  0.3  0.4  0.5  0.6  0.8  1.0  1.3  1.8  2.4  2.4
- 0.2  0.2  0.2  0.2  0.3  0.3  0.4  0.4  0.5  0.7  0.8  1.0  1.6  2.4  3.1  4.2
- 0.2  0.2  0.2  0.2  0.3  0.3  0.4  0.4  0.5  0.7  0.9  1.2  1.7  2.9  6.1 10.7
- 0.2  0.2  0.2  0.2  0.3  0.3  0.4  0.4  0.6  0.7  0.9  1.2  2.0  3.2  7.2 12.2
- 0.2  0.2  0.2  0.2  0.3  0.3  0.4  0.5  0.6  0.7  0.9  1.1  1.6  2.7  4.3  4.3
- 0.2  0.2  0.2  0.2  0.3  0.3  0.4  0.4  0.6  0.7  0.8  1.0  1.3  2.0  2.3  3.6
- 0.2  0.2  0.2  0.2  0.3  0.3  0.4  0.4  0.6  0.7  0.8  1.1  1.3  1.5  1.6  1.9
- 0.2  0.2  0.2  0.2  0.3  0.3  0.4  0.4  0.5  0.6  0.8  1.1  1.3  1.3  1.4  1.5
- 0.2  0.2  0.2  0.2  0.3  0.3  0.4  0.4  0.5  0.7  0.8  1.0  1.2  1.3  1.3  1.3
+ 0.2  0.2  0.2  0.2  0.3  0.3  0.4  0.4  0.5  0.6  0.9  1.1  1.3  1.2  1.4  1.3
+ 0.2  0.2  0.2  0.2  0.3  0.3  0.3  0.4  0.5  0.6  0.8  1.1  1.1  1.3  1.2  1.3
+ 0.2  0.2  0.2  0.2  0.3  0.3  0.4  0.4  0.5  0.7  0.8  1.0  1.2  1.3  1.7  1.5
+ 0.2  0.2  0.2  0.2  0.3  0.3  0.4  0.4  0.5  0.7  0.8  1.0  1.3  1.7  2.2  2.8
+ 0.2  0.2  0.2  0.2  0.3  0.3  0.4  0.5  0.6  0.7  0.9  1.1  1.6  2.5  3.7  4.6
+ 0.2  0.2  0.2  0.2  0.3  0.3  0.4  0.5  0.5  0.7  0.9  1.3  2.0  3.1  6.9 11.7
+ 0.2  0.2  0.2  0.2  0.3  0.3  0.4  0.5  0.6  0.7  1.0  1.2  1.8  3.2  6.9 12.1
+ 0.2  0.2  0.2  0.3  0.3  0.3  0.4  0.5  0.5  0.7  0.9  1.1  1.7  2.5  4.1  3.8
+ 0.2  0.2  0.2  0.3  0.3  0.3  0.4  0.5  0.6  0.7  0.9  1.0  1.6  2.0  2.6  2.9
+ 0.2  0.2  0.2  0.2  0.3  0.3  0.4  0.5  0.6  0.7  0.8  1.1  1.2  1.6  1.8  2.0
+ 0.2  0.2  0.2  0.3  0.3  0.3  0.4  0.5  0.5  0.7  0.9  1.1  1.3  1.4  1.5  1.7
+ 0.2  0.2  0.2  0.2  0.3  0.3  0.4  0.4  0.5  0.7  0.9  1.1  1.1  1.4  1.6  1.5
 ```
 
 The shape is what published grids from real matches look like: almost flat and near zero in a team's own half, rising through midfield, and peaking in the cells right in front of goal (about 12%). That's a sanity check on the simulator as much as on the fit.

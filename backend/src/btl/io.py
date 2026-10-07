@@ -5,7 +5,7 @@
 A match gets one directory, with parquet tables and a JSON summary:
 
     match-0007/
-    ├── meta.json          # schema version, ids, and how the match was made
+    ├── meta.json          # schema version, ids, how the match was made, planted moments
     ├── events.parquet     # one row per event: SPADL columns, then our extension columns
     └── positions.parquet  # one row per player per event; absent if the match has no positions
 
@@ -30,12 +30,14 @@ from btl.schema.frames import (
     to_snapshot_frame,
     to_spadl_frame,
 )
-from btl.schema.ids import GameId, TeamId
+from btl.schema.ids import ActionId, GameId, TeamId
 from btl.schema.match import Match
+from btl.schema.moment import PlantedMoment
+from btl.schema.vocab import ConceptId
 from btl.value.xt import FitInfo, ThreatModel
 
 # Bump whenever the saved layout or columns change, so old files fail loudly.
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 META_FILE = "meta.json"
 EVENTS_FILE = "events.parquet"
 POSITIONS_FILE = "positions.parquet"
@@ -81,6 +83,7 @@ def save_match(match: Match, info: MatchInfo, parent: Path) -> Path:
         "home_team_id": match.home_team_id,
         "away_team_id": match.away_team_id,
         **asdict(info),
+        "planted": [asdict(moment) for moment in match.planted],
     }
     (directory / META_FILE).write_text(json.dumps(meta, indent=2) + "\n")
     return directory
@@ -115,6 +118,15 @@ def load_match(directory: Path) -> tuple[Match, MatchInfo]:
         away_team_id=TeamId(meta["away_team_id"]),
         events=events,
         positions=positions,
+        planted=tuple(
+            PlantedMoment(
+                concept=ConceptId(moment["concept"]),
+                difficulty=moment["difficulty"],
+                pause_action_id=ActionId(moment["pause_action_id"]),
+                answer_action_id=ActionId(moment["answer_action_id"]),
+            )
+            for moment in meta["planted"]
+        ),
     )
     info = MatchInfo(
         seed=meta["seed"],

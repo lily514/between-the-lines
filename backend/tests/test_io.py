@@ -15,7 +15,9 @@ from btl.io import (
     save_threat_model,
 )
 from btl.league.league import generate_league
-from btl.schema.ids import GameId
+from btl.schema.ids import ActionId, GameId
+from btl.schema.moment import PlantedMoment
+from btl.schema.vocab import ConceptId
 from btl.sim.engine import simulate_match
 from btl.value.xt import FitInfo, ThreatModel
 from tests.fixtures.matches import six_event_match
@@ -39,6 +41,13 @@ def test_a_saved_match_loads_back_unchanged(tmp_path: Path) -> None:
 def test_a_simulated_match_loads_back_unchanged(tmp_path: Path) -> None:
     home, away = generate_league(np.random.default_rng(0)).clubs[:2]
     match = simulate_match(home, away, 7)
+
+    assert load_match(save_match(match, INFO, tmp_path)) == (match, INFO)
+
+
+def test_planted_moments_load_back_unchanged(tmp_path: Path) -> None:
+    moment = PlantedMoment(ConceptId.LINE_BREAKING_PASS, 2, ActionId(4), ActionId(5))
+    match = replace(six_event_match(), planted=(moment,))
 
     assert load_match(save_match(match, INFO, tmp_path)) == (match, INFO)
 

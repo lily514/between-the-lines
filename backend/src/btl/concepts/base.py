@@ -2,7 +2,6 @@
 
 from collections.abc import Mapping
 from dataclasses import dataclass
-from enum import StrEnum
 from typing import Protocol
 
 from btl.schema.event import Event
@@ -11,19 +10,7 @@ from btl.schema.ids import ActionId, GameId
 from btl.schema.match import Match
 from btl.schema.possession import Possession, split_possessions
 from btl.schema.snapshot import Snapshot
-
-
-class ConceptId(StrEnum):
-    """The football concepts the detectors know. Each has exactly one detector."""
-
-    SWITCH_OF_PLAY = "switch_of_play"
-    LINE_BREAKING_PASS = "line_breaking_pass"
-    COUNTER_PRESS = "counter_press"
-
-    @property
-    def label(self) -> str:
-        """The concept's name for display, e.g. "switch of play"."""
-        return self.value.replace("_", " ")
+from btl.schema.vocab import ConceptId
 
 
 @dataclass(frozen=True, slots=True)

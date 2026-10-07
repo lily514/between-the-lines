@@ -4,7 +4,9 @@ import numpy as np
 import pytest
 
 from btl.schema.ids import ActionId, TeamId
+from btl.schema.moment import PlantedMoment
 from btl.schema.snapshot import Positions
+from btl.schema.vocab import ConceptId
 from tests.fixtures.matches import (
     AWAY_KEEPER,
     AWAY_MIDFIELDER,
@@ -28,6 +30,16 @@ def test_events_must_be_by_one_of_the_two_teams() -> None:
 
     with pytest.raises(ValueError, match="team 99"):
         replace(match, events=(stranger, *match.events[1:]))
+
+
+@pytest.mark.parametrize(("pause", "answer"), [(4, 6), (5, 4)])
+def test_a_planted_moment_must_pause_before_its_answer_within_the_match(
+    pause: int, answer: int
+) -> None:
+    moment = PlantedMoment(ConceptId.LINE_BREAKING_PASS, 1, ActionId(pause), ActionId(answer))
+
+    with pytest.raises(ValueError, match="planted moment"):
+        replace(six_event_match(), planted=(moment,))
 
 
 def test_positions_must_cover_every_action() -> None:

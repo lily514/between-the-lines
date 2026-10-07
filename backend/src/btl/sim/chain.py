@@ -8,6 +8,7 @@ in that team's own direction, so the engine can hand straight over.
 """
 
 import math
+from collections.abc import Sequence
 from dataclasses import dataclass, replace
 from enum import Enum
 
@@ -161,32 +162,70 @@ def play_chain(
     """
     play = _Play(attack, defence, attack.strength / defence.strength, rng, params)
     steps: list[Step] = []
-    ball, slot, restart = start.ball, start.slot, start.restart
     if start.won_with is not None:
         bodypart = BodyPart.OTHER if start.won_with in KEEPER_ACTIONS else BodyPart.FOOT
         duration = _between(rng, params.reaction_time)
         steps.append(
             Step(
-                slot,
+                start.slot,
                 start.won_with,
                 Result.SUCCESS,
                 bodypart,
-                ball,
-                ball,
+                start.ball,
+                start.ball,
                 duration,
                 Phase.TRANSITION,
             )
         )
-    in_transition = start.won_with is not None
-    after_cross = False
+    won_the_ball = start.won_with is not None
+    return _play_from(steps, start.ball, start.slot, start.restart, won_the_ball, play)
 
+
+def play_on(
+    attack: Side,
+    defence: Side,
+    opening: Sequence[Step],
+    ball: Point,
+    slot: int,
+    in_transition: bool,
+    rng: Generator,
+    params: SimParams,
+) -> Chain:
+    """Carry on a possession whose first actions were written elsewhere.
+
+    Args:
+        attack: The team in possession.
+        defence: The other team.
+        opening: The possession's actions so far.
+        ball: Where the ball is now.
+        slot: Who has it now.
+        in_transition: Whether the possession began by winning the ball in open play.
+        rng: The engine's random stream.
+        params: The simulator's knobs.
+
+    Returns:
+        The whole possession, ``opening`` first, and how the other team's possession starts.
+    """
+    play = _Play(attack, defence, attack.strength / defence.strength, rng, params)
+    return _play_from(list(opening), ball, slot, None, in_transition, play)
+
+
+def _play_from(
+    steps: list[Step],
+    ball: Point,
+    slot: int,
+    restart: Restart | None,
+    in_transition: bool,
+    play: _Play,
+) -> Chain:
+    after_cross = False
     while True:
         if restart is not None:
             in_transition = False
             outcome = _restart(restart, slot, ball, play)
         else:
             elapsed = sum(step.duration for step in steps)
-            transition = in_transition and elapsed < params.transition_seconds
+            transition = in_transition and elapsed < play.params.transition_seconds
             outcome = _open_play(slot, ball, after_cross, play, transition)
         steps.append(outcome.step)
         if outcome.handover is not None:

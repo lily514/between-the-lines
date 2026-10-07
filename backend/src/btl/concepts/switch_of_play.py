@@ -2,9 +2,9 @@
 
 from dataclasses import dataclass, field
 
-from btl.concepts.base import ConceptId, ConceptTag, MatchContext
+from btl.concepts.base import ConceptTag, MatchContext
 from btl.schema import PITCH_WIDTH
-from btl.schema.vocab import ActionType, Result
+from btl.schema.vocab import ActionType, ConceptId, Result
 
 MIN_ACROSS = 30.0
 FLANK_WIDTH = PITCH_WIDTH / 3

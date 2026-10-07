@@ -2,7 +2,8 @@
 
 The engine owns the clock and the event numbering, converts each chain's coordinates into the
 stored direction (the home team attacks towards x = 105), and, unless asked not to, records
-where all 22 players stood at the start of every event.
+where all 22 players stood at the start of every event. A `Director` may write the opening of
+any possession, such as a planted teachable moment.
 """
 
 import numpy as np
@@ -13,11 +14,13 @@ from btl.league.league import Club, Role
 from btl.schema.event import Event
 from btl.schema.ids import ActionId, GameId
 from btl.schema.match import Match
+from btl.schema.moment import PlantedMoment
 from btl.schema.snapshot import PlayerSlot, Positions
-from btl.sim.chain import Side, Step, kickoff, play_chain
+from btl.sim.chain import Side, Step, kickoff, play_chain, play_on
 from btl.sim.lineup import Lineup, pick_lineup
 from btl.sim.params import DEFAULT_PARAMS, SimParams
 from btl.sim.pitch import Point, mirror
+from btl.sim.script import Director, Shape
 from btl.sim.shape import FOUR_FOUR_TWO, Formation, place_teams
 
 HOME, AWAY = 0, 1
@@ -33,6 +36,7 @@ def simulate_match(
     away_formation: Formation = FOUR_FOUR_TWO,
     with_snapshots: bool = True,
     params: SimParams = DEFAULT_PARAMS,
+    director: Director | None = None,
 ) -> Match:
     """Simulate a match of open play between two clubs.
 
@@ -49,16 +53,19 @@ def simulate_match(
         with_snapshots: Record player positions. Turning this off makes batch runs faster
             and doesn't change the events.
         params: The simulator's knobs.
+        director: Writes the opening of chosen possessions. Play before its first script is
+            the same as without it.
 
     Returns:
-        The match, with positions for all 22 players at every event if requested.
+        The match, with positions for all 22 players at every event if requested, and the
+        moments the director planted.
     """
     if home.team_id == away.team_id:
         raise ValueError(f"{home.name} can't play itself")
-    # Child streams depend only on their index, so spawning more later (e.g. for planting)
-    # leaves these two unchanged.
-    engine_seed, shape_seed = np.random.SeedSequence(seed).spawn(2)
+    # Child streams depend only on their index, so adding one leaves the others unchanged.
+    engine_seed, shape_seed, director_seed = np.random.SeedSequence(seed).spawn(3)
     engine_rng = np.random.default_rng(engine_seed)
+    director_rng = np.random.default_rng(director_seed)
     shape_rng = np.random.default_rng(shape_seed) if with_snapshots else None
     lineups = (pick_lineup(home, home_formation), pick_lineup(away, away_formation))
     sides = tuple(Side(lineup.formation, lineup.club.strength) for lineup in lineups)
@@ -66,6 +73,7 @@ def simulate_match(
 
     events: list[Event] = []
     snapshots: list[NDArray[np.float64]] = []
+    planted: list[PlantedMoment] = []
     possession_id = 0
     for period_id, team in ((1, HOME), (2, AWAY)):
         start, clock = kickoff(sides[team]), 0.0
@@ -73,7 +81,40 @@ def simulate_match(
             clock += start.delay
             if clock >= params.period_seconds:
                 break
-            chain = play_chain(sides[team], sides[1 - team], start, engine_rng, params)
+            attack, defence = sides[team], sides[1 - team]
+            script = (
+                None
+                if director is None
+                else director.script(
+                    len(planted), period_id, clock, attack, defence, start, director_rng
+                )
+            )
+            shapes: dict[int, Shape] = {}
+            moment_id: int | None = None
+            scripted = 0
+            if script is None:
+                chain = play_chain(attack, defence, start, engine_rng, params)
+            else:
+                won_the_ball = start.won_with is not None
+                chain = play_on(
+                    attack,
+                    defence,
+                    script.steps,
+                    script.ball,
+                    script.slot,
+                    won_the_ball,
+                    engine_rng,
+                    params,
+                )
+                shapes, moment_id, scripted = dict(script.shapes), len(planted), len(script.steps)
+                planted.append(
+                    PlantedMoment(
+                        script.concept,
+                        script.difficulty,
+                        ActionId(len(events) + script.pause),
+                        ActionId(len(events) + script.answer),
+                    )
+                )
             for index, step in enumerate(chain.steps):
                 if clock >= params.period_seconds:
                     break
@@ -87,9 +128,12 @@ def simulate_match(
                         team,
                         step,
                         possession_id,
+                        moment_id if index < scripted else None,
                     )
                 )
-                if shape_rng is not None:
+                if shape_rng is not None and index in shapes:
+                    snapshots.append(_stored_positions(sides, team, *shapes[index]))
+                elif shape_rng is not None:
                     # Positions are at the start of the action. When it wins the ball, the
                     # other team still has it at that moment.
                     holder = 1 - team if index == 0 and start.won_with is not None else team
@@ -112,6 +156,7 @@ def simulate_match(
         away_team_id=away.team_id,
         events=tuple(events),
         positions=positions,
+        planted=tuple(planted),
     )
 
 
@@ -129,6 +174,7 @@ def _event(
     team: int,
     step: Step,
     possession_id: int,
+    planted_moment_id: int | None,
 ) -> Event:
     start, end = _stored(step.start, team), _stored(step.end, team)
     return Event(
@@ -147,6 +193,7 @@ def _event(
         bodypart=step.bodypart,
         possession_id=possession_id,
         phase=step.phase,
+        planted_moment_id=planted_moment_id,
     )
 
 
@@ -156,6 +203,16 @@ def _snapshot(
     """All 22 stored positions, home slots first, with the actor exactly on the ball."""
     ball = step.start if holder == team else mirror(step.start)
     on_ball, off_ball = place_teams(sides[holder].formation, sides[1 - holder].formation, ball, rng)
+    xy = _stored_positions(sides, holder, on_ball, off_ball)
+    actor = _stored(step.start, team)
+    xy[team * len(sides[HOME].formation.slots) + step.slot] = (actor.x, actor.y)
+    return xy
+
+
+def _stored_positions(
+    sides: tuple[Side, ...], holder: int, on_ball: tuple[Point, ...], off_ball: tuple[Point, ...]
+) -> NDArray[np.float64]:
+    """Both teams' positions, given in ``holder``'s direction, as stored rows: home slots first."""
     per_team = {holder: on_ball, 1 - holder: off_ball}
     xy = np.empty((sum(len(side.formation.slots) for side in sides), 2))
     row = 0
@@ -164,6 +221,4 @@ def _snapshot(
             stored = _stored(point, holder)
             xy[row] = (stored.x, stored.y)
             row += 1
-    actor = _stored(step.start, team)
-    xy[team * len(sides[HOME].formation.slots) + step.slot] = (actor.x, actor.y)
     return xy

@@ -4,10 +4,10 @@ import math
 from dataclasses import dataclass, field
 from itertools import pairwise
 
-from btl.concepts.base import ConceptId, ConceptTag, MatchContext
+from btl.concepts.base import ConceptTag, MatchContext
 from btl.schema.event import Event
 from btl.schema.snapshot import PlayerPosition, Snapshot
-from btl.schema.vocab import ActionType, Result
+from btl.schema.vocab import ActionType, ConceptId, Result
 
 LINE_SPLIT = 5.0
 MIN_LINE_PLAYERS = 3

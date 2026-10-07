@@ -43,7 +43,7 @@ Kept outside the SPADL frame because the schema is strict:
 
 - `possession_id: int`
 - `phase`: open play, set piece, or transition. In simulated matches, a set piece is the action that restarts play: a kickoff (SPADL type `pass`), `throw_in`, `goalkick`, `corner_crossed` or `corner_short`. Transition covers the action that wins the ball in open play and anything that team does in the next 8 seconds, unless play stops first. Everything else is open play.
-- `planted_moment_id: int | None`
+- `planted_moment_id: int | None`: which planted moment the action was written for, if any (an index into the match's planted moments).
 
 ## Snapshots
 
@@ -59,6 +59,19 @@ SPADL has no possession column, so `btl/schema/possession.py` derives possession
 - A possession is an unbroken spell on the ball by one team.
 - A new possession starts at the start of each period, and whenever the other team makes an action that **wins the ball**.
 - These actions by the other team do *not* win the ball, so they stay inside the current possession: fouls, and failed defensive actions (tackle, interception, clearance, and the goalkeeper actions).
+
+## Planted moments
+
+A match can be simulated to hold teachable moments on purpose (`btl/plant/`). Each one is recorded on the match as a `PlantedMoment` (`btl/schema/moment.py`) and saved in `meta.json`:
+
+| Field | Meaning |
+|---|---|
+| `concept` | Which idea it shows (`ConceptId`) |
+| `difficulty` | The level asked for, from 1 (easiest) to 3 |
+| `pause_action_id` | Play pauses once this action ends |
+| `answer_action_id` | The action the question is about; its snapshot is the picture the learner sees |
+
+Moments happen easiest first. The events written for a moment carry its index in `planted_moment_id`. The detectors never read either: they must find planted moments from their football rules alone.
 
 ## Concept tags
 

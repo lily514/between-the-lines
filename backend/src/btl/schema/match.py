@@ -1,4 +1,4 @@
-"""A whole match: its events and, optionally, where the players stood."""
+"""A whole match: its events, optionally where the players stood, and any planted moments."""
 
 from dataclasses import dataclass
 
@@ -6,6 +6,7 @@ import numpy as np
 
 from btl.schema.event import Event
 from btl.schema.ids import ActionId, GameId, TeamId
+from btl.schema.moment import PlantedMoment
 from btl.schema.snapshot import PlayerPosition, Positions, Snapshot
 
 
@@ -18,9 +19,10 @@ class Match:
     away_team_id: TeamId
     events: tuple[Event, ...]
     positions: Positions | None = None
+    planted: tuple[PlantedMoment, ...] = ()
 
     def __post_init__(self) -> None:
-        """Check that events are numbered in order and belong to this match."""
+        """Check that events are numbered in order, and that everything belongs to this match."""
         for index, event in enumerate(self.events):
             if event.action_id != index:
                 raise ValueError(f"event {index} has action_id {event.action_id}")
@@ -33,6 +35,12 @@ class Match:
                 f"positions cover {self.positions.n_actions} actions, "
                 f"but the match has {len(self.events)}"
             )
+        for moment in self.planted:
+            if not moment.pause_action_id < moment.answer_action_id < len(self.events):
+                raise ValueError(
+                    f"planted moment pauses at {moment.pause_action_id} and is answered at "
+                    f"{moment.answer_action_id}, but the match has {len(self.events)} events"
+                )
 
     def snapshot(self, action_id: ActionId) -> Snapshot | None:
         """The known player positions at the start of an action, or None if there are none."""

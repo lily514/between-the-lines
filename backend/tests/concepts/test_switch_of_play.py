@@ -3,12 +3,12 @@ from functools import cache
 import numpy as np
 import pytest
 
-from btl.concepts.base import ConceptId, match_context
+from btl.concepts.base import match_context
 from btl.concepts.switch_of_play import FLANK_WIDTH, SwitchOfPlay
 from btl.league.league import generate_league
 from btl.schema import PITCH_WIDTH
 from btl.schema.match import Match
-from btl.schema.vocab import ActionType, Result
+from btl.schema.vocab import ActionType, ConceptId, Result
 from btl.sim.engine import simulate_match
 from tests.fixtures.concepts import switches_match
 

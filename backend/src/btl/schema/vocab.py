@@ -2,7 +2,7 @@
 
 Values are the SPADL ids, so ``ActionType.PASS == 0`` matches socceraction's ``type_id``.
 socceraction keeps these as plain lists in ``socceraction.spadl.config``; a test checks that
-the enums stay in step with them. ``Phase`` is our own addition.
+the enums stay in step with them. ``Phase`` and ``ConceptId`` are our own additions.
 """
 
 from enum import IntEnum, StrEnum
@@ -80,3 +80,16 @@ class Phase(StrEnum):
     OPEN_PLAY = "open_play"
     SET_PIECE = "set_piece"
     TRANSITION = "transition"
+
+
+class ConceptId(StrEnum):
+    """The football concepts the detectors know. Each has exactly one detector."""
+
+    SWITCH_OF_PLAY = "switch_of_play"
+    LINE_BREAKING_PASS = "line_breaking_pass"
+    COUNTER_PRESS = "counter_press"
+
+    @property
+    def label(self) -> str:
+        """The concept's name for display, e.g. "switch of play"."""
+        return self.value.replace("_", " ")

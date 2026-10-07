@@ -8,12 +8,22 @@ import numpy as np
 import typer
 from rich.console import Console
 
-from btl.cli.render import events_table, scoreline, tags_table, threat_grid
-from btl.concepts.base import ConceptId, match_context
+from btl.cli.render import (
+    events_table,
+    match_clock,
+    pitch_picture,
+    scoreline,
+    tags_table,
+    threat_grid,
+)
+from btl.concepts.base import match_context
 from btl.concepts.registry import detect_all
 from btl.io import MatchInfo, load_match, load_threat_model, save_match, save_threat_model
 from btl.league.league import Club, League, generate_league, season_fixtures
+from btl.plant.planter import simulate_with_moments
+from btl.plant.spec import parse_plant
 from btl.schema.match import Match
+from btl.schema.vocab import ConceptId
 from btl.sim.engine import simulate_match
 from btl.sim.shape import FOUR_FOUR_TWO
 from btl.value.xt import fit_on_simulated_matches, rate_match
@@ -58,10 +68,18 @@ def simulate(
     league_seed: Annotated[int, typer.Option(help="Which fictional league to use.")] = 0,
     home: Annotated[str | None, typer.Option(help="Home club's short name, e.g. KEN.")] = None,
     away: Annotated[str | None, typer.Option(help="Away club's short name.")] = None,
+    plant: Annotated[
+        list[str] | None,
+        typer.Option(
+            help="Teachable moments to plant, as concept:levels, e.g. line_breaking_pass:1,2,3."
+            " Repeat for more concepts."
+        ),
+    ] = None,
 ) -> None:
     """Simulate a match and save it.
 
     Without --home and --away, the clubs come from the league's season fixtures, picked by seed.
+    Planted moments happen easiest first.
     """
     league = _league(league_seed)
     if (home is None) != (away is None):
@@ -75,7 +93,14 @@ def simulate(
     if home_club == away_club:
         raise typer.BadParameter(f"{home_club.name} can't play itself")
 
-    match = simulate_match(home_club, away_club, seed)
+    if plant:
+        try:
+            request = parse_plant(plant)
+            match = simulate_with_moments(home_club, away_club, seed, request)
+        except ValueError as error:
+            raise typer.BadParameter(str(error), param_hint="--plant") from None
+    else:
+        match = simulate_match(home_club, away_club, seed)
     info = MatchInfo(
         seed=seed,
         league_seed=league_seed,
@@ -85,6 +110,10 @@ def simulate(
     directory = save_match(match, info, out)
     console.print(scoreline(match, league))
     console.print(f"{len(match.events):,} events · seed {seed} · saved to {directory}")
+    if match.planted:
+        console.print(
+            f"{len(match.planted)} planted moments; `btl moments {directory}` shows them."
+        )
 
 
 @app.command()
@@ -134,6 +163,43 @@ def tags(
     counts = Counter(tag.concept for tag in found)
     summary = ", ".join(f"{count} {concept.label}" for concept, count in sorted(counts.items()))
     console.print(f"{len(found)} tags" + (f": {summary}" if summary else ""))
+
+
+@app.command()
+def moments(
+    match_dir: Annotated[Path, typer.Argument(help="A folder saved by `btl simulate --plant`.")],
+) -> None:
+    """Show a saved match's planted moments: the play leading up to each, and the pitch at it."""
+    match, info = _load(match_dir)
+    league = _league(info.league_seed)
+    console.print(scoreline(match, league))
+    if not match.planted:
+        console.print("No planted moments. Plant some with `btl simulate --plant`.")
+        return
+    ctx = match_context(match)
+    found = {(tag.concept, tag.action_id): tag for tag in detect_all(ctx)}
+    for number, moment in enumerate(match.planted, start=1):
+        answer = match.events[moment.answer_action_id]
+        first = next(
+            event.action_id for event in match.events if event.planted_moment_id == number - 1
+        )
+        console.rule(
+            f"Moment {number} · {moment.concept.label} · level {moment.difficulty}"
+            f" · {match_clock(answer)}"
+        )
+        console.print(events_table(match, league, first, moment.answer_action_id - first + 1))
+        console.print(
+            f"Play pauses after #{moment.pause_action_id}. The question is about"
+            f" #{moment.answer_action_id}, shown attacking left to right:"
+        )
+        console.print(pitch_picture(ctx.match, moment.answer_action_id))
+        tag = found.get((moment.concept, moment.answer_action_id))
+        console.print(
+            "Not found by the detector."
+            if tag is None
+            else f"Detector: {tag.concept.label}, difficulty {tag.difficulty}"
+            + "".join(f" · {name} {value:g}" for name, value in tag.evidence.items())
+        )
 
 
 @app.command("fit-xt")

@@ -1,9 +1,10 @@
 from collections import Counter
 from dataclasses import dataclass, field
 
-from btl.concepts.base import ConceptId, ConceptTag, MatchContext, match_context
+from btl.concepts.base import ConceptTag, MatchContext, match_context
 from btl.concepts.registry import ALL_DETECTORS, detect_all
 from btl.schema.ids import ActionId
+from btl.schema.vocab import ConceptId
 from tests.fixtures.concepts import switches_match
 from tests.fixtures.matches import six_event_match
 

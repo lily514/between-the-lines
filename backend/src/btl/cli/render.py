@@ -1,4 +1,4 @@
-"""How the CLI shows things: a match's scoreline, events and concept tags, and the threat grid."""
+"""How the CLI shows things: the scoreline, events, concept tags, threat grid, and the pitch."""
 
 from collections.abc import Sequence
 
@@ -7,8 +7,9 @@ from rich.text import Text
 
 from btl.concepts.base import ConceptTag
 from btl.league.league import League
+from btl.schema import PITCH_LENGTH, PITCH_WIDTH
 from btl.schema.event import Event
-from btl.schema.ids import TeamId
+from btl.schema.ids import ActionId, TeamId
 from btl.schema.match import Match
 from btl.schema.vocab import ActionType, Result
 from btl.value.xt import ThreatModel
@@ -151,3 +152,67 @@ def tags_table(match: Match, league: League, tags: Sequence[ConceptTag]) -> Tabl
             " · ".join(f"{name} {value:g}" for name, value in tag.evidence.items()),
         )
     return table
+
+
+PITCH_COLUMNS = 53
+PITCH_ROWS = 17
+PITCH_STYLE = "green"
+PASS_STYLE = "yellow"
+# By (on the ball's team, goalkeeper).
+PLAYER_MARKS = {(True, False): "o", (True, True): "G", (False, False): "x", (False, True): "K"}
+PITCH_LEGEND = (
+    "@ on the ball · o teammates · G their keeper · x opponents · K opponents' keeper"
+    " · * pass target"
+)
+
+
+def pitch_picture(match: Match, action_id: ActionId) -> Text:
+    """The pitch at the start of an action, as text, with the actor's team attacking left to right.
+
+    ``match`` must already be in that direction (see `btl.schema.frames.to_left_to_right`). The
+    actor is ``@`` and the action's path a dotted line to ``*``. The actor's teammates are ``o``
+    and opponents ``x``; the keepers are ``G`` and ``K``. Each team has its usual colour, and a
+    legend under the pitch explains the marks.
+
+    Raises:
+        ValueError: If the action has no snapshot.
+    """
+    snapshot = match.snapshot(action_id)
+    if snapshot is None:
+        raise ValueError(f"no player positions for action {action_id}")
+    event = match.events[action_id]
+    cells = [[(" ", "")] * PITCH_COLUMNS for _ in range(PITCH_ROWS)]
+
+    def put(x: float, y: float, mark: str, style: str) -> None:
+        column = min(int(x / PITCH_LENGTH * PITCH_COLUMNS), PITCH_COLUMNS - 1)
+        row = min(int((PITCH_WIDTH - y) / PITCH_WIDTH * PITCH_ROWS), PITCH_ROWS - 1)
+        cells[row][column] = (mark, style)
+
+    for row in cells:
+        row[PITCH_COLUMNS // 2] = (":", PITCH_STYLE)
+    for step in range(1, PITCH_COLUMNS):
+        along = step / PITCH_COLUMNS
+        put(
+            event.start_x + along * (event.end_x - event.start_x),
+            event.start_y + along * (event.end_y - event.start_y),
+            "·",
+            PASS_STYLE,
+        )
+    for player in snapshot.positions:
+        style = HOME_STYLE if player.team_id == match.home_team_id else AWAY_STYLE
+        mark = PLAYER_MARKS[player.team_id == event.team_id, player.is_goalkeeper]
+        put(player.x, player.y, mark, style)
+    put(event.end_x, event.end_y, "*", f"bold {PASS_STYLE}")
+    actor_style = HOME_STYLE if event.team_id == match.home_team_id else AWAY_STYLE
+    put(event.start_x, event.start_y, "@", f"bold {actor_style}")
+
+    edge = "+" + "-" * PITCH_COLUMNS + "+"
+    picture = Text(edge + "\n", style=PITCH_STYLE)
+    for row in cells:
+        picture.append("|", style=PITCH_STYLE)
+        for mark, style in row:
+            picture.append(mark, style=style)
+        picture.append("|\n", style=PITCH_STYLE)
+    picture.append(edge + "\n", style=PITCH_STYLE)
+    picture.append(PITCH_LEGEND, style="dim")
+    return picture

@@ -4,12 +4,12 @@ from functools import cache
 import numpy as np
 import pytest
 
-from btl.concepts.base import ConceptId, ConceptTag, match_context
+from btl.concepts.base import ConceptTag, match_context
 from btl.concepts.counter_press import HALFWAY, CounterPress
 from btl.league.league import generate_league
 from btl.schema.ids import ActionId
 from btl.schema.match import Match
-from btl.schema.vocab import ActionType, Result
+from btl.schema.vocab import ActionType, ConceptId, Result
 from btl.sim.engine import simulate_match
 from tests.fixtures.concepts import lost_and_won_back
 from tests.fixtures.matches import AWAY, HOME

@@ -4,6 +4,7 @@ import numpy as np
 from typer.testing import CliRunner
 
 from btl.cli.app import app
+from btl.cli.render import PITCH_LEGEND
 from btl.io import load_match, load_threat_model
 from btl.league.league import generate_league
 
@@ -128,3 +129,44 @@ def test_tags_can_show_one_concept_and_rejects_unknown_ones(tmp_path: Path) -> N
 
     assert one.exit_code == 0, one.output
     assert unknown.exit_code == 2
+
+
+def test_simulate_plants_moments_that_moments_shows(tmp_path: Path) -> None:
+    simulated = runner.invoke(
+        app,
+        ["simulate", "--seed", "7", "--out", str(tmp_path), "--plant", "line_breaking_pass:1,2,3"],
+        env=WIDE,
+    )
+
+    assert simulated.exit_code == 0, simulated.output
+    assert "3 planted moments" in simulated.output
+    match, _ = load_match(tmp_path / "match-0007")
+    assert [moment.difficulty for moment in match.planted] == [1, 2, 3]
+
+    shown = runner.invoke(app, ["moments", str(tmp_path / "match-0007")], env=WIDE)
+
+    assert shown.exit_code == 0, shown.output
+    for level in (1, 2, 3):
+        assert f"Moment {level} · line breaking pass · level {level}" in shown.output
+    assert shown.output.count("Detector: line breaking pass") == 3
+    assert shown.output.count(PITCH_LEGEND) == 3
+
+
+def test_simulate_explains_a_moment_it_cannot_plant(tmp_path: Path) -> None:
+    result = runner.invoke(
+        app,
+        ["simulate", "--seed", "7", "--out", str(tmp_path), "--plant", "counter_press:1"],
+        env=WIDE,
+    )
+
+    assert result.exit_code == 2
+    assert "can't be planted yet" in result.output
+
+
+def test_moments_says_when_a_match_has_none(tmp_path: Path) -> None:
+    runner.invoke(app, ["simulate", "--seed", "7", "--out", str(tmp_path)], env=WIDE)
+
+    shown = runner.invoke(app, ["moments", str(tmp_path / "match-0007")], env=WIDE)
+
+    assert shown.exit_code == 0, shown.output
+    assert "No planted moments" in shown.output

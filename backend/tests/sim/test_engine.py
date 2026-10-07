@@ -5,7 +5,10 @@ from itertools import pairwise
 import numpy as np
 import pytest
 
+import btl.sim
 from btl.league.league import League, generate_league
+from btl.plant.planter import simulate_with_moments
+from btl.plant.spec import parse_plant
 from btl.schema.frames import to_spadl_frame
 from btl.schema.match import Match
 from btl.schema.possession import split_possessions
@@ -15,8 +18,12 @@ from btl.sim.engine import simulate_match
 from btl.sim.params import DEFAULT_PARAMS
 from btl.sim.pitch import PITCH_LENGTH, PITCH_WIDTH
 from btl.sim.shape import FOUR_THREE_THREE
+from tests.fixtures.imports import imports_by_module
 
 SEEDS = range(5)
+# These seeds' matches also hold three planted line-breaking passes, so the invariants are
+# checked with planting too.
+PLANTED_SEEDS = (100, 101)
 
 
 @cache
@@ -27,6 +34,9 @@ def league() -> League:
 @cache
 def match(seed: int) -> Match:
     home, away = league().clubs[:2]
+    if seed in PLANTED_SEEDS:
+        request = parse_plant(["line_breaking_pass:1,2,3"])
+        return simulate_with_moments(home, away, seed, request, away_formation=FOUR_THREE_THREE)
     return simulate_match(home, away, seed, away_formation=FOUR_THREE_THREE)
 
 
@@ -58,7 +68,7 @@ def test_a_club_cannot_play_itself() -> None:
         simulate_match(club, club, 0)
 
 
-@pytest.mark.parametrize("seed", SEEDS)
+@pytest.mark.parametrize("seed", [*SEEDS, *PLANTED_SEEDS])
 def test_time_runs_forwards_within_each_half(seed: int) -> None:
     events = match(seed).events
 
@@ -70,7 +80,7 @@ def test_time_runs_forwards_within_each_half(seed: int) -> None:
     assert all(0 <= event.time_seconds < DEFAULT_PARAMS.period_seconds for event in events)
 
 
-@pytest.mark.parametrize("seed", SEEDS)
+@pytest.mark.parametrize("seed", [*SEEDS, *PLANTED_SEEDS])
 def test_each_half_starts_with_a_kickoff(seed: int) -> None:
     played = match(seed)
     firsts = [next(e for e in played.events if e.period_id == period) for period in (1, 2)]
@@ -82,7 +92,7 @@ def test_each_half_starts_with_a_kickoff(seed: int) -> None:
         assert (event.start_x, event.start_y) == (CENTRE_SPOT.x, CENTRE_SPOT.y)
 
 
-@pytest.mark.parametrize("seed", SEEDS)
+@pytest.mark.parametrize("seed", [*SEEDS, *PLANTED_SEEDS])
 def test_restarts_are_set_pieces_taken_from_the_right_place(seed: int) -> None:
     events = match(seed).events
 
@@ -102,7 +112,7 @@ def test_restarts_are_set_pieces_taken_from_the_right_place(seed: int) -> None:
         assert event.phase is Phase.SET_PIECE
 
 
-@pytest.mark.parametrize("seed", SEEDS)
+@pytest.mark.parametrize("seed", [*SEEDS, *PLANTED_SEEDS])
 def test_everything_happens_on_the_pitch(seed: int) -> None:
     played = match(seed)
     assert played.positions is not None
@@ -115,7 +125,7 @@ def test_everything_happens_on_the_pitch(seed: int) -> None:
     assert ((xy[..., 1] >= 0) & (xy[..., 1] <= PITCH_WIDTH)).all()
 
 
-@pytest.mark.parametrize("seed", SEEDS)
+@pytest.mark.parametrize("seed", [*SEEDS, *PLANTED_SEEDS])
 def test_possession_changes_hands_every_time_it_changes(seed: int) -> None:
     events = match(seed).events
 
@@ -129,7 +139,7 @@ def test_possession_changes_hands_every_time_it_changes(seed: int) -> None:
             assert before.team_id != after.team_id
 
 
-@pytest.mark.parametrize("seed", SEEDS)
+@pytest.mark.parametrize("seed", [*SEEDS, *PLANTED_SEEDS])
 def test_derived_possessions_match_the_engines_own(seed: int) -> None:
     events = match(seed).events
 
@@ -141,18 +151,19 @@ def test_derived_possessions_match_the_engines_own(seed: int) -> None:
     assert derived == [(ids[0], ids[-1]) for ids in engine.values()]
 
 
-@pytest.mark.parametrize("seed", SEEDS)
+@pytest.mark.parametrize("seed", [*SEEDS, *PLANTED_SEEDS])
 def test_the_events_are_valid_spadl(seed: int) -> None:
     frame = to_spadl_frame(match(seed))
 
     assert len(frame) == len(match(seed).events)
 
 
-@pytest.mark.parametrize("seed", SEEDS)
+@pytest.mark.parametrize("seed", [*SEEDS, *PLANTED_SEEDS])
 def test_every_snapshot_has_two_full_teams_and_the_actor_on_the_ball(seed: int) -> None:
     played = match(seed)
 
-    for event in played.events[::50]:
+    answers = [played.events[moment.answer_action_id] for moment in played.planted]
+    for event in (*played.events[::50], *answers):
         snapshot = played.snapshot(event.action_id)
         assert snapshot is not None
         for team_id in (played.home_team_id, played.away_team_id):
@@ -170,3 +181,9 @@ def test_a_match_takes_well_under_a_second() -> None:
     simulate_match(home, away, 0)
 
     assert time.perf_counter() - started < 1.0
+
+
+def test_the_simulator_never_imports_planting() -> None:
+    # Planting drives the simulator through `btl.sim.script.Director`, never the other way.
+    for module, imported in imports_by_module(btl.sim).items():
+        assert not [name for name in imported if name.startswith("btl.plant")], module

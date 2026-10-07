@@ -1,23 +1,28 @@
 from functools import cache
 
 import numpy as np
+import pytest
 from rich.console import Console
 
 from btl.cli.render import (
+    PITCH_LEGEND,
     events_table,
     goals,
     match_clock,
+    pitch_picture,
     scoreline,
     tags_table,
     threat_grid,
     threat_text,
 )
-from btl.concepts.base import ConceptId, ConceptTag
+from btl.concepts.base import ConceptTag
 from btl.league.league import League, generate_league
+from btl.schema.ids import ActionId
 from btl.schema.match import Match
-from btl.schema.vocab import ActionType, Result
+from btl.schema.vocab import ActionType, ConceptId, Result
 from btl.sim.engine import simulate_match
 from btl.value.xt import FitInfo, ThreatModel
+from tests.fixtures.concepts import BACK_LINE, MIDFIELD_LINE, one_pass
 from tests.fixtures.matches import (
     AWAY,
     AWAY_MIDFIELDER,
@@ -140,3 +145,25 @@ def test_the_tags_table_shows_each_tag_with_its_action_and_evidence() -> None:
     assert "across (m) 41.2" in text
     assert "0.25" in text
     assert match_clock(event) in text
+
+
+def test_the_pitch_shows_the_players_and_the_pass_attacking_left_to_right() -> None:
+    match = one_pass((40, 34), (60, 34), MIDFIELD_LINE + BACK_LINE)
+
+    lines = text_of(pitch_picture(match, ActionId(0))).splitlines()
+
+    assert len(lines) == 20
+    assert lines[0] == lines[-2] == "+" + "-" * 53 + "+"
+    assert lines[-1] == PITCH_LEGEND
+    drawn = "".join(lines[:-1])
+    assert [drawn.count(mark) for mark in "@*xKoG"] == [1, 1, 8, 1, 0, 0]
+    on_the_ball = lines[9]
+    assert on_the_ball.index("@") < on_the_ball.index("·") < on_the_ball.index("*")
+    assert on_the_ball.endswith("K|")
+
+
+def test_the_pitch_needs_a_snapshot() -> None:
+    match = one_pass((40, 34), (60, 34), (), with_snapshot=False)
+
+    with pytest.raises(ValueError, match="no player positions"):
+        pitch_picture(match, ActionId(0))

@@ -204,3 +204,18 @@ Most of the drop in passes came from dead-ball time alone. Tuning was then just 
 - **Era caveats.** The data is ten years old. Counts of restarts depend on the ball going out, so they should still hold, but how they are taken has changed. In 2015/16 most goal kicks were long (median 61 m); since a 2019 law change most are played short. Teams also pass more now, so 717 passes is likely low for today's game.
 - **Left as is:** the simulator's goal kicks stay long (mean 35 m), and its throw-ins stay below the real 48. Both are in band.
 - **Every match changes again.** The grid in `expected-threat.md` was refitted: same shape, peak about 12%.
+
+## T10 — Detector framework and switch of play (2026-10-07)
+**Plan said:** `MatchContext` bundles the SPADL frame (with names), snapshots, possessions, and xT; `ConceptId` covers the four concepts; detectors return a `list`; `concepts/` depends only on `schema/` and `value/`.
+**We did:**
+- `MatchContext` holds a typed `Match` seen left to right, not a DataFrame. CLAUDE.md keeps pandas out of everything but `frames.py`, `io.py`, `value/` and `cli/`, and detectors read better as loops over `Event`s. The context's snapshots come from the same flipped match, so an action and its snapshot are always flipped together.
+- New `to_left_to_right(match)` in `frames.py`, the one place that flips coordinates. The frame functions' `left_to_right=True` now use it instead of socceraction's `play_left_to_right`, and a test checks that the two give the same frame.
+- The pitch's length and width moved to `btl/schema/__init__.py` (re-exported by `sim/pitch.py`), so detectors can use them without importing the simulator.
+- `ConceptId` has only `SWITCH_OF_PLAY` for now; each later detector task adds its own member. Otherwise the test that every concept has a detector would fail until T14.
+- `detect` returns a tuple, matching the rest of the code. A test parses every module in `concepts/` and fails if one imports `sim`, `plant`, `league`, `cli` or `io`.
+- Switch of play, as written in the detector's docstring: a successful pass or cross at least 30 m across, ending in the outer third of the pitch's width on the other side of the centre line from where it started. No difficulty is given. The evidence is the distance across.
+- `btl tags <match>` lists tags, optionally just one concept (`--concept switch_of_play`).
+**Why:** the CLAUDE.md rule on pandas, and keeping detectors free of the simulator.
+**Affects:** T11–T14 add a `ConceptId` member and a line in `ALL_DETECTORS` each. T15's `btl inspect` can join tags to events by `action_id`.
+
+**Checked against real data.** On the 40 real matches from the T8 note, our rule finds 19.9 switches per match. StatsBomb's analysts flag 14.7 passes per match as switches, and our rule catches 13.3 of them (90%). StatsBomb doesn't flag the other 6.6, and its exact definition isn't published with the data, so we can't say which side is stricter where. Simulated matches have only about 9 per match, so the simulator plays fewer long cross-field passes than real teams do. There's no band for this yet. The rule also counts passes across a team's own penalty area, which real definitions count too, but which make weak teaching examples. A later task could require the pass to start outside the team's own third.

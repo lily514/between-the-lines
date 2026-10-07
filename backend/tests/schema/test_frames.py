@@ -3,9 +3,11 @@
 from dataclasses import replace
 
 import numpy as np
+import pandas as pd
 from hypothesis import given, settings
 from hypothesis import strategies as st
-from socceraction.spadl import SPADLSchema
+from pandera.typing import DataFrame
+from socceraction.spadl import SPADLSchema, play_left_to_right
 
 from btl.schema.event import Event
 from btl.schema.frames import (
@@ -13,6 +15,7 @@ from btl.schema.frames import (
     events_from_frames,
     positions_from_snapshot_frame,
     to_extension_frame,
+    to_left_to_right,
     to_snapshot_frame,
     to_spadl_frame,
 )
@@ -150,3 +153,29 @@ def test_flipping_twice_gives_back_the_stored_coordinates() -> None:
     np.testing.assert_allclose(
         105 - once.loc[away, "start_x"], to_spadl_frame(match).loc[away, "start_x"]
     )
+
+
+def test_our_left_to_right_flip_agrees_with_socceractions() -> None:
+    match = six_event_match()
+
+    ours = to_spadl_frame(to_left_to_right(match))
+    theirs = play_left_to_right(DataFrame[SPADLSchema](to_spadl_frame(match)), home_team_id=HOME)
+
+    pd.testing.assert_frame_equal(ours, pd.DataFrame(theirs))
+
+
+def test_the_left_to_right_view_flips_snapshots_with_their_actions() -> None:
+    match = six_event_match()
+
+    flipped = to_left_to_right(match)
+
+    away_action = match.events[3]
+    assert away_action.team_id == AWAY
+    assert flipped.events[3].start_x == 105 - away_action.start_x
+    before, after = match.snapshot(away_action.action_id), flipped.snapshot(away_action.action_id)
+    assert before is not None and after is not None
+    assert [(p.x, p.y) for p in after.positions] == [
+        (105 - p.x, 68 - p.y) for p in before.positions
+    ]
+    assert flipped.events[0] == match.events[0]
+    assert flipped.snapshot(match.events[0].action_id) == match.snapshot(match.events[0].action_id)

@@ -8,16 +8,18 @@ Three frames describe a match:
 - the extension frame: our fields SPADL has no columns for, keyed by ``(game_id, action_id)``;
 - the snapshot frame: one row per known player position per action.
 
-This is the only module that flips coordinates. With ``left_to_right=True``, every action
-and its snapshot are mirrored as if the acting team attacks towards x = 105.
+This is the only module that flips coordinates. `to_left_to_right` mirrors every away-team
+action and its snapshot as if the acting team attacks towards x = 105; the frame functions'
+``left_to_right=True`` option uses it.
 """
+
+from dataclasses import replace
 
 import numpy as np
 import pandas as pd
-from pandera.typing import DataFrame
-from socceraction.spadl import SPADLSchema, play_left_to_right
-from socceraction.spadl import config as spadl_config
+from socceraction.spadl import SPADLSchema
 
+from btl.schema import PITCH_LENGTH, PITCH_WIDTH
 from btl.schema.event import Event
 from btl.schema.ids import ActionId, GameId, PlayerId, TeamId
 from btl.schema.match import Match
@@ -53,6 +55,36 @@ SNAPSHOT_COLUMNS = (
 )
 
 
+def to_left_to_right(match: Match) -> Match:
+    """The match as if every action's team attacks towards x = 105.
+
+    Away-team actions, and the snapshots taken at them, are mirrored: ``x → 105 - x`` and
+    ``y → 68 - y``, as socceraction's ``play_left_to_right`` does. Home actions are unchanged.
+    The result is a view for analysis; never save it as a match.
+    """
+    away = [event.team_id != match.home_team_id for event in match.events]
+    events = tuple(
+        replace(
+            event,
+            start_x=PITCH_LENGTH - event.start_x,
+            start_y=PITCH_WIDTH - event.start_y,
+            end_x=PITCH_LENGTH - event.end_x,
+            end_y=PITCH_WIDTH - event.end_y,
+        )
+        if is_away
+        else event
+        for event, is_away in zip(match.events, away, strict=True)
+    )
+    positions = match.positions
+    if positions is not None and any(away):
+        xy = positions.xy.copy()
+        flip = np.array(away)
+        xy[flip, :, 0] = PITCH_LENGTH - xy[flip, :, 0]
+        xy[flip, :, 1] = PITCH_WIDTH - xy[flip, :, 1]
+        positions = Positions(slots=positions.slots, xy=xy)
+    return replace(match, events=events, positions=positions)
+
+
 def to_spadl_frame(match: Match, *, left_to_right: bool = False) -> pd.DataFrame:
     """The match's events as a validated SPADL frame.
 
@@ -63,6 +95,8 @@ def to_spadl_frame(match: Match, *, left_to_right: bool = False) -> pd.DataFrame
     Returns:
         A frame with exactly the SPADL columns, one row per event.
     """
+    if left_to_right:
+        match = to_left_to_right(match)
     frame = pd.DataFrame(
         {
             "game_id": [event.game_id for event in match.events],
@@ -83,8 +117,6 @@ def to_spadl_frame(match: Match, *, left_to_right: bool = False) -> pd.DataFrame
     ).astype(
         {"time_seconds": float, "start_x": float, "start_y": float, "end_x": float, "end_y": float}
     )
-    if left_to_right:
-        frame = play_left_to_right(DataFrame[SPADLSchema](frame), match.home_team_id)
     return pd.DataFrame(SPADLSchema.validate(frame))
 
 
@@ -114,16 +146,14 @@ def to_snapshot_frame(match: Match, *, left_to_right: bool = False) -> pd.DataFr
         A frame with the snapshot columns. Unknown positions are left out, so a match without
         positions gives an empty frame.
     """
+    if left_to_right:
+        match = to_left_to_right(match)
     positions = match.positions
     if positions is None or not match.events:
         return pd.DataFrame(columns=pd.Index(SNAPSHOT_COLUMNS))
 
     n_actions, n_slots, _ = positions.xy.shape
-    xy = positions.xy.copy()
-    if left_to_right:
-        away = np.array([event.team_id != match.home_team_id for event in match.events])
-        xy[away, :, 0] = spadl_config.field_length - xy[away, :, 0]
-        xy[away, :, 1] = spadl_config.field_width - xy[away, :, 1]
+    xy = positions.xy
 
     actors = np.array([event.player_id for event in match.events])
     slot_players = np.array([slot.player_id for slot in positions.slots])

@@ -11,3 +11,6 @@ Coordinate convention (the only one used in this package):
   the concept detectors, gets a normalised copy from ``frames.py``. No other module flips
   coordinates.
 """
+
+PITCH_LENGTH = 105.0
+PITCH_WIDTH = 68.0

@@ -3,7 +3,16 @@ from functools import cache
 import numpy as np
 from rich.console import Console
 
-from btl.cli.render import events_table, goals, match_clock, scoreline, threat_grid, threat_text
+from btl.cli.render import (
+    events_table,
+    goals,
+    match_clock,
+    scoreline,
+    tags_table,
+    threat_grid,
+    threat_text,
+)
+from btl.concepts.base import ConceptId, ConceptTag
 from btl.league.league import League, generate_league
 from btl.schema.match import Match
 from btl.schema.vocab import ActionType, Result
@@ -111,3 +120,23 @@ def test_the_threat_grid_shows_every_cell_in_percent() -> None:
     assert len(lines) == 12
     assert lines[0].split() == [f"{column / 10:.1f}" for column in range(16)]
     assert all(len(line) <= 80 for line in lines)
+
+
+def test_the_tags_table_shows_each_tag_with_its_action_and_evidence() -> None:
+    match = simulated()
+    event = match.events[5]
+    tag = ConceptTag(
+        ConceptId.SWITCH_OF_PLAY,
+        match.game_id,
+        event.action_id,
+        (event.action_id, event.action_id),
+        0.25,
+        {"across (m)": 41.2},
+    )
+
+    text = text_of(tags_table(match, league(), [tag]))
+
+    assert "switch of play" in text
+    assert "across (m) 41.2" in text
+    assert "0.25" in text
+    assert match_clock(event) in text

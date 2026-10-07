@@ -1,10 +1,11 @@
-"""How the CLI shows things: a match's scoreline and events, and the threat grid."""
+"""How the CLI shows things: a match's scoreline, events and concept tags, and the threat grid."""
 
 from collections.abc import Sequence
 
 from rich.table import Table
 from rich.text import Text
 
+from btl.concepts.base import ConceptTag
 from btl.league.league import League
 from btl.schema.event import Event
 from btl.schema.ids import TeamId
@@ -116,4 +117,37 @@ def threat_grid(model: ThreatModel) -> Table:
                 Text(f"{value * 100:.1f}", style=f"black on rgb(255,{255 - heat},{255 - heat})")
             )
         table.add_row(*cells)
+    return table
+
+
+def tags_table(match: Match, league: League, tags: Sequence[ConceptTag]) -> Table:
+    """A table of concept tags, one row per tag, showing its key action.
+
+    Coordinates are in the stored direction, as in `events_table`.
+    """
+    table = Table(header_style="bold")
+    table.add_column("#", justify="right")
+    table.add_column("time", justify="right")
+    table.add_column("team")
+    table.add_column("player")
+    table.add_column("concept")
+    table.add_column("action")
+    table.add_column("from → to")
+    table.add_column("difficulty", justify="right")
+    table.add_column("evidence")
+    for tag in tags:
+        event = match.events[tag.action_id]
+        player = league.player(event.player_id)
+        style = HOME_STYLE if event.team_id == match.home_team_id else AWAY_STYLE
+        table.add_row(
+            str(tag.action_id),
+            match_clock(event),
+            Text(league.club(event.team_id).name, style=style),
+            f"#{player.shirt_number} {player.full_name}",
+            tag.concept.label,
+            event.action_type.spadl_name,
+            f"({event.start_x:.0f},{event.start_y:.0f}) → ({event.end_x:.0f},{event.end_y:.0f})",
+            "" if tag.difficulty is None else f"{tag.difficulty:.2f}",
+            " · ".join(f"{name} {value:g}" for name, value in tag.evidence.items()),
+        )
     return table

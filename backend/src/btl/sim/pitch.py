@@ -7,8 +7,8 @@ import math
 from dataclasses import dataclass
 from enum import Enum
 
-PITCH_LENGTH = 105.0
-PITCH_WIDTH = 68.0
+from btl.schema import PITCH_LENGTH, PITCH_WIDTH
+
 GOAL_WIDTH = 7.32
 PENALTY_AREA_DEPTH = 16.5
 PENALTY_AREA_WIDTH = 40.32

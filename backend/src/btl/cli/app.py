@@ -1,5 +1,6 @@
 """The `btl` command and its subcommands."""
 
+from collections import Counter
 from pathlib import Path
 from typing import Annotated
 
@@ -7,9 +8,12 @@ import numpy as np
 import typer
 from rich.console import Console
 
-from btl.cli.render import events_table, scoreline, threat_grid
+from btl.cli.render import events_table, scoreline, tags_table, threat_grid
+from btl.concepts.base import ConceptId, match_context
+from btl.concepts.registry import detect_all
 from btl.io import MatchInfo, load_match, load_threat_model, save_match, save_threat_model
 from btl.league.league import Club, League, generate_league, season_fixtures
+from btl.schema.match import Match
 from btl.sim.engine import simulate_match
 from btl.sim.shape import FOUR_FOUR_TWO
 from btl.value.xt import fit_on_simulated_matches, rate_match
@@ -30,6 +34,13 @@ def main() -> None:
 
 def _league(league_seed: int) -> League:
     return generate_league(np.random.default_rng(league_seed))
+
+
+def _load(match_dir: Path) -> tuple[Match, MatchInfo]:
+    try:
+        return load_match(match_dir)
+    except FileNotFoundError:
+        raise typer.BadParameter(f"no saved match in {match_dir}") from None
 
 
 def _club(league: League, short_name: str) -> Club:
@@ -86,10 +97,7 @@ def events(
     ] = DEFAULT_MODEL,
 ) -> None:
     """Show a saved match's events as a table, with threat values once a model is fitted."""
-    try:
-        match, info = load_match(match_dir)
-    except FileNotFoundError:
-        raise typer.BadParameter(f"no saved match in {match_dir}") from None
+    match, info = _load(match_dir)
     league = _league(info.league_seed)
     total = len(match.events)
     shown = min(count, max(total - start, 0))
@@ -105,6 +113,27 @@ def events(
     )
     if threat is None:
         console.print(f"No threat model at {model}; run `btl fit-xt` to add a threat column.")
+
+
+@app.command()
+def tags(
+    match_dir: Annotated[Path, typer.Argument(help="A folder saved by `btl simulate`.")],
+    concept: Annotated[
+        ConceptId | None, typer.Option(help="Show only this concept.", case_sensitive=False)
+    ] = None,
+) -> None:
+    """List the football concepts the detectors find in a saved match."""
+    match, info = _load(match_dir)
+    league = _league(info.league_seed)
+    found = detect_all(match_context(match))
+    if concept is not None:
+        found = tuple(tag for tag in found if tag.concept is concept)
+
+    console.print(scoreline(match, league))
+    console.print(tags_table(match, league, found))
+    counts = Counter(tag.concept for tag in found)
+    summary = ", ".join(f"{count} {concept.label}" for concept, count in sorted(counts.items()))
+    console.print(f"{len(found)} tags" + (f": {summary}" if summary else ""))
 
 
 @app.command("fit-xt")

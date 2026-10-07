@@ -107,3 +107,24 @@ def test_events_without_a_model_says_how_to_get_threat_values(tmp_path: Path) ->
 
     assert shown.exit_code == 0, shown.output
     assert "run `btl fit-xt`" in shown.output
+
+
+def test_tags_lists_the_concepts_found_in_a_saved_match(tmp_path: Path) -> None:
+    runner.invoke(app, ["simulate", "--seed", "7", "--out", str(tmp_path)], env=WIDE)
+
+    shown = runner.invoke(app, ["tags", str(tmp_path / "match-0007")], env=WIDE)
+
+    assert shown.exit_code == 0, shown.output
+    assert "switch of play" in shown.output
+    assert "tags: " in shown.output
+
+
+def test_tags_can_show_one_concept_and_rejects_unknown_ones(tmp_path: Path) -> None:
+    runner.invoke(app, ["simulate", "--seed", "7", "--out", str(tmp_path)], env=WIDE)
+    match_dir = str(tmp_path / "match-0007")
+
+    one = runner.invoke(app, ["tags", match_dir, "--concept", "switch_of_play"], env=WIDE)
+    unknown = runner.invoke(app, ["tags", match_dir, "--concept", "nutmeg"], env=WIDE)
+
+    assert one.exit_code == 0, one.output
+    assert unknown.exit_code == 2

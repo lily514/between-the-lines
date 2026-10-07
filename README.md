@@ -39,3 +39,9 @@ Learn the Expected Threat grid once (about 10 seconds), and `btl events` adds a 
 ```sh
 uv run btl fit-xt
 ```
+
+List the football concepts the detectors find in a match, such as switches of play:
+
+```sh
+uv run btl tags data/matches/match-0007
+```

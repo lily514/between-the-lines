@@ -60,6 +60,20 @@ SPADL has no possession column, so `btl/schema/possession.py` derives possession
 - A new possession starts at the start of each period, and whenever the other team makes an action that **wins the ball**.
 - These actions by the other team do *not* win the ball, so they stay inside the current possession: fouls, and failed defensive actions (tackle, interception, clearance, and the goalkeeper actions).
 
+## Concept tags
+
+Concept detectors (`btl/concepts/`) label events with football ideas. Their output is a separate list of tags, never extra SPADL columns:
+
+| Field | Meaning |
+|---|---|
+| `concept` | Which idea, e.g. `switch_of_play` (`ConceptId`) |
+| `game_id`, `action_id` | The match, and the key action |
+| `span` | The first and last action involved |
+| `difficulty` | 0 (easy to spot) to 1, when the detector defines it |
+| `evidence` | The measurements behind the tag, e.g. `{"across (m)": 41.2}` |
+
+Detectors see every action, and its snapshot, as if its team attacks left to right (`to_left_to_right` in `frames.py`). They take possessions from `split_possessions`, never from `possession_id`. Each concept's definition is written in its detector's docstring.
+
 ## Expected Threat notes
 
 - `ExpectedThreat.fit` uses actions exactly as given, so they must be normalised left → right first.

@@ -223,7 +223,14 @@ def _restart(restart: Restart, slot: int, ball: Point, play: _Play) -> _Outcome:
         return _pass(slot, ball, back, phase, play)
     if restart is Restart.THROW_IN:
         infield = params.throw_in_aim if ball.y < PITCH_WIDTH / 2 else -params.throw_in_aim
-        target = _kick(ball, params.throw_in_length_mean, params.throw_in_kappa, play, infield)
+        target = _kick(
+            ball,
+            params.throw_in_length_mean,
+            params.throw_in_kappa,
+            play,
+            infield,
+            params.throw_in_longest,
+        )
         return _pass(slot, ball, target, phase, play, ActionType.THROW_IN, BodyPart.OTHER)
     if restart is Restart.GOAL_KICK:
         target = _kick(ball, params.keeper_pass_length_mean, params.keeper_pass_kappa, play)
@@ -454,13 +461,22 @@ def _succeeds(probability: float, play: _Play) -> bool:
     return play.rng.random() < odds / (1 + odds)
 
 
-def _kick(ball: Point, length_mean: float, kappa: float, play: _Play, aim: float = 0.0) -> Point:
+def _kick(
+    ball: Point,
+    length_mean: float,
+    kappa: float,
+    play: _Play,
+    aim: float = 0.0,
+    longest: float = math.inf,
+) -> Point:
     """An end point a random length away, scattered around ``aim`` radians from straight at goal.
 
-    The point may be off the pitch.
+    Lengths over ``longest`` are drawn again. The point may be off the pitch.
     """
     shape = play.params.pass_length_shape
     length = play.rng.gamma(shape, length_mean / shape)
+    while length > longest:
+        length = play.rng.gamma(shape, length_mean / shape)
     angle = play.rng.vonmises(aim, kappa)
     return Point(ball.x + length * math.cos(angle), ball.y + length * math.sin(angle))
 

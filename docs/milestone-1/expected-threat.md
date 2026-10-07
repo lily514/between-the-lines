@@ -28,21 +28,21 @@ Every action is first turned so that its team attacks left to right (towards x =
 Values in percent, attacking left to right, rows from the top touchline (y = 68) down:
 
 ```
- 0.2  0.2  0.2  0.2  0.3  0.3  0.4  0.4  0.5  0.6  0.8  1.1  1.3  1.2  1.2  1.2
- 0.2  0.2  0.2  0.2  0.3  0.3  0.4  0.4  0.5  0.6  0.9  1.2  1.2  1.4  1.4  1.5
- 0.2  0.2  0.2  0.2  0.3  0.3  0.4  0.5  0.5  0.6  0.8  1.1  1.2  1.9  1.8  1.4
- 0.2  0.2  0.2  0.2  0.3  0.3  0.4  0.4  0.6  0.7  0.8  1.1  1.5  2.0  3.0  2.2
- 0.2  0.2  0.2  0.2  0.3  0.3  0.4  0.4  0.5  0.7  1.0  1.1  1.7  2.3  4.0  4.3
- 0.2  0.2  0.2  0.2  0.3  0.3  0.4  0.5  0.5  0.8  0.9  1.2  2.0  3.7  7.0 13.2
- 0.2  0.2  0.2  0.2  0.3  0.3  0.4  0.5  0.6  0.7  1.0  1.2  2.0  3.7  7.2 11.4
- 0.2  0.2  0.2  0.2  0.3  0.3  0.4  0.5  0.6  0.7  0.9  1.1  1.6  2.3  5.1  3.9
- 0.2  0.2  0.2  0.2  0.3  0.3  0.4  0.4  0.5  0.7  0.8  1.0  1.4  1.7  2.2  2.6
- 0.2  0.2  0.2  0.2  0.3  0.3  0.4  0.4  0.5  0.6  0.8  1.0  1.2  1.5  2.2  2.0
- 0.2  0.2  0.2  0.2  0.3  0.3  0.4  0.4  0.5  0.6  0.8  1.1  1.3  1.4  1.6  1.4
- 0.2  0.2  0.2  0.2  0.3  0.3  0.4  0.4  0.5  0.6  0.8  1.1  1.2  1.1  1.4  1.3
+ 0.2  0.2  0.2  0.3  0.3  0.3  0.4  0.5  0.5  0.6  0.8  1.1  1.3  1.3  1.2  1.3
+ 0.2  0.2  0.2  0.3  0.3  0.3  0.4  0.4  0.6  0.6  0.9  1.3  1.3  1.5  1.4  1.3
+ 0.2  0.2  0.2  0.2  0.3  0.3  0.4  0.5  0.6  0.7  0.9  1.1  1.2  2.0  1.9  1.7
+ 0.2  0.2  0.2  0.2  0.3  0.3  0.4  0.5  0.6  0.8  0.9  1.1  1.5  2.2  2.7  3.1
+ 0.2  0.2  0.2  0.2  0.3  0.3  0.4  0.5  0.6  0.8  1.0  1.2  1.8  2.4  4.1  5.2
+ 0.2  0.2  0.2  0.2  0.3  0.3  0.4  0.5  0.5  0.8  1.0  1.3  2.2  3.8  7.2 13.0
+ 0.2  0.2  0.2  0.2  0.3  0.3  0.4  0.5  0.6  0.8  1.0  1.3  2.2  3.9  7.5 13.0
+ 0.2  0.2  0.2  0.3  0.3  0.3  0.4  0.5  0.6  0.7  1.0  1.2  1.8  2.4  5.6  4.5
+ 0.2  0.2  0.2  0.2  0.3  0.3  0.4  0.5  0.6  0.7  0.9  1.1  1.5  1.9  2.5  3.7
+ 0.2  0.2  0.2  0.3  0.3  0.3  0.4  0.5  0.6  0.7  0.9  1.1  1.4  1.6  2.1  2.7
+ 0.2  0.2  0.2  0.3  0.3  0.3  0.4  0.5  0.5  0.7  0.9  1.2  1.3  1.4  1.8  1.5
+ 0.2  0.2  0.2  0.3  0.3  0.3  0.4  0.4  0.5  0.7  0.8  1.1  1.2  1.3  1.5  1.4
 ```
 
-The shape is what published grids from real matches look like: almost flat and near zero in a team's own half, rising through midfield, and peaking in the cells right in front of goal (about 13%: 13.2 and 11.4). That's a sanity check on the simulator as much as on the fit.
+The shape is what published grids from real matches look like: almost flat and near zero in a team's own half, rising through midfield, and peaking in the cells right in front of goal (about 13%). That's a sanity check on the simulator as much as on the fit.
 
 The model is saved as JSON at `backend/data/models/expected-threat.json` (gitignored). The file holds the grid and what it was fitted on: number of matches, seed, league seed, and number of actions. socceraction's own `save_model` writes only the bare grid, so the file format is ours (see `btl/io.py`). It is not committed, because it would quietly go stale whenever the simulator changes.
 

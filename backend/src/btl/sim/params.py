@@ -68,6 +68,8 @@ class SimParams:
     run_on: tuple[float, float] = (0.0, 8.0)
 
     throw_in_length_mean: float = 12.0
+    # The longest throws in real matches are in the low 30s of metres.
+    throw_in_longest: float = 32.0
     # Throw-ins aim this many radians infield of straight up the touchline.
     throw_in_aim: float = 0.6
     throw_in_kappa: float = 2.0

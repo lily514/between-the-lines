@@ -151,3 +151,9 @@ Most of the drop in passes came from dead-ball time alone. Tuning was then just 
 - The fast tests fit on 20 matches (about 2 s). The 200-match fit runs only with `pytest -m slow`, as CLAUDE.md planned.
 **Why:** the extra options keep tests and experiments away from the real model file. The rest is the simplest way to meet the plan.
 **Affects:** T10's `MatchContext` can take threat values from `rate_match`. The CLI test that runs `btl events` now passes `--model`, so it never reads a model from the real `data/` folder.
+
+## T8 — Throw-in length band (2026-10-07)
+**Plan said:** T8's bands cover passes, completion, shots, and goals.
+**We did:** added a fifth band, for throw-in length: mean 8–20 m, 2–15% of throws 20 m or more, none over 40 m. Throws are capped at 32 m (`throw_in_longest`); a longer random length is drawn again. `MatchStats` now also records each throw-in's length.
+**Why:** a 25 m throw showed up in a sample match, and the longest throw over 50 seeds was 53 m, close to the world record of about 51–60 m set outside matches. In real matches a "long throw" is 20 m or more, and the longest are in the low 30s of metres; teams take about 4 long throws in about 39 throw-ins per match in the current top-flight season (sources: the league's own article on long throws in 2025/26, and The Analyst on throw-ins). The 40 m limit leaves room for a failed throw that runs on 8 m before going out. Before the cap: mean 10.0 m, 10% long, longest 53.4 m. After: 9.7 m, 9%, 33.5 m.
+**Affects:** every match after its first capped throw changes, because the random draws shift. The other bands still pass with nearly the same numbers (passes 964, completion 76%, shots 26, goals 2.2). The grid in `expected-threat.md` was refitted; it keeps its shape and its 13% peak.

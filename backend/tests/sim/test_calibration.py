@@ -17,6 +17,10 @@ from btl.sim.stats import MatchStats, match_stats
 
 SEEDS = range(50)
 SINGLE_MATCH_SHARE = 0.9
+# A long throw is one of 20 m or more. The longest in real matches are in the low 30s of metres;
+# 40 m leaves room for a failed throw that runs on out of play.
+LONG_THROW = 20.0
+LONGEST_THROW = 40.0
 
 
 @cache
@@ -59,3 +63,11 @@ def test_every_kind_of_restart_happens() -> None:
 
     assert all(each.throw_ins > 0 and each.goal_kicks > 0 for each in stats)
     assert sum(each.corners for each in stats) > 0
+
+
+def test_throw_ins_are_mostly_short_with_a_few_long_ones() -> None:
+    lengths = [length for stats in all_stats() for length in stats.throw_in_lengths]
+
+    assert 8 <= mean(lengths) <= 20
+    assert 0.02 <= sum(length >= LONG_THROW for length in lengths) / len(lengths) <= 0.15
+    assert max(lengths) <= LONGEST_THROW

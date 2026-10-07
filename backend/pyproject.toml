@@ -6,6 +6,7 @@ authors = [{ name = "Lily Carlson" }]
 license = "MIT"
 requires-python = ">=3.11,<3.12"
 dependencies = [
+    "socceraction==1.5.3",
     "typer>=0.12",
 ]
 
@@ -40,6 +41,8 @@ convention = "google"
 include = ["src", "tests"]
 pythonVersion = "3.11"
 typeCheckingMode = "strict"
+# socceraction has inline type hints but no py.typed marker; pyright still reads its source.
+reportMissingTypeStubs = false
 venvPath = "."
 venv = ".venv"
 
@@ -47,6 +50,9 @@ venv = ".venv"
 testpaths = ["tests"]
 addopts = ["--strict-markers", "-m", "not slow"]
 markers = ["slow: long-running tests such as the batch Expected Threat fit"]
+filterwarnings = ["error"]
 
 [tool.uv]
 python-preference = "only-managed"
+# socceraction 1.5.3 caps pandera at 0.17, which imports `multimethod.overload` (deprecated in 1.11, removed in 2.0).
+constraint-dependencies = ["multimethod<1.11"]

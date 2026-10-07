@@ -33,3 +33,9 @@ Simulate a match and look at its events:
 uv run btl simulate --seed 7
 uv run btl events data/matches/match-0007
 ```
+
+Learn the Expected Threat grid once (about 10 seconds), and `btl events` adds a threat column:
+
+```sh
+uv run btl fit-xt
+```

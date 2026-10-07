@@ -4,7 +4,7 @@ import numpy as np
 from typer.testing import CliRunner
 
 from btl.cli.app import app
-from btl.io import load_match
+from btl.io import load_match, load_threat_model
 from btl.league.league import generate_league
 
 runner = CliRunner()
@@ -26,7 +26,11 @@ def test_simulate_saves_a_match_that_events_can_show(tmp_path: Path) -> None:
     match, info = load_match(tmp_path / "match-0007")
     assert info.seed == 7
 
-    shown = runner.invoke(app, ["events", str(tmp_path / "match-0007"), "--count", "3"], env=WIDE)
+    shown = runner.invoke(
+        app,
+        ["events", str(tmp_path / "match-0007"), "--count", "3", "--model", str(tmp_path / "none")],
+        env=WIDE,
+    )
 
     assert shown.exit_code == 0, shown.output
     assert f"Events 0 to 2 of {len(match.events):,}" in shown.output
@@ -72,3 +76,34 @@ def test_events_explains_a_folder_with_no_match(tmp_path: Path) -> None:
 
     assert result.exit_code == 2
     assert "no saved match" in result.output
+
+
+def test_fit_xt_saves_a_model_that_events_uses_for_a_threat_column(tmp_path: Path) -> None:
+    model = tmp_path / "expected-threat.json"
+    runner.invoke(app, ["simulate", "--seed", "7", "--out", str(tmp_path)], env=WIDE)
+
+    fitted = runner.invoke(
+        app, ["fit-xt", "--matches", "3", "--seed", "1", "--out", str(model)], env=WIDE
+    )
+
+    assert fitted.exit_code == 0, fitted.output
+    assert "Fitted on 3 matches" in fitted.output
+    assert load_threat_model(model).fitted_on.seed == 1
+    shown = runner.invoke(
+        app, ["events", str(tmp_path / "match-0007"), "--model", str(model)], env=WIDE
+    )
+    assert shown.exit_code == 0, shown.output
+    assert "threat" in shown.output
+
+
+def test_events_without_a_model_says_how_to_get_threat_values(tmp_path: Path) -> None:
+    runner.invoke(app, ["simulate", "--seed", "7", "--out", str(tmp_path)], env=WIDE)
+
+    shown = runner.invoke(
+        app,
+        ["events", str(tmp_path / "match-0007"), "--model", str(tmp_path / "missing.json")],
+        env=WIDE,
+    )
+
+    assert shown.exit_code == 0, shown.output
+    assert "run `btl fit-xt`" in shown.output

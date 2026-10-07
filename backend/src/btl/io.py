@@ -1,16 +1,18 @@
 # pyright: basic
 # pandas is only partially typed; see CLAUDE.md on edge modules.
-"""Saving and loading matches: one directory per match, with parquet tables and a JSON summary.
+"""Saving and loading matches and Expected Threat models.
 
-A saved match looks like this:
+A match gets one directory, with parquet tables and a JSON summary:
 
     match-0007/
     ├── meta.json          # schema version, ids, and how the match was made
     ├── events.parquet     # one row per event: SPADL columns, then our extension columns
     └── positions.parquet  # one row per player per event; absent if the match has no positions
 
+A threat model is one JSON file: the grid, plus the matches and seeds it was fitted on.
+
 The files are a convenience. Any simulated match can be regenerated from the seeds in
-``meta.json``.
+``meta.json``, and any model refitted from the seeds in its file.
 """
 
 import json
@@ -30,12 +32,15 @@ from btl.schema.frames import (
 )
 from btl.schema.ids import GameId, TeamId
 from btl.schema.match import Match
+from btl.value.xt import FitInfo, ThreatModel
 
 # Bump whenever the saved layout or columns change, so old files fail loudly.
 SCHEMA_VERSION = 1
 META_FILE = "meta.json"
 EVENTS_FILE = "events.parquet"
 POSITIONS_FILE = "positions.parquet"
+# Bump whenever the threat model file's layout changes.
+THREAT_MODEL_VERSION = 1
 
 
 @dataclass(frozen=True, slots=True)
@@ -118,3 +123,34 @@ def load_match(directory: Path) -> tuple[Match, MatchInfo]:
         away_formation=meta["away_formation"],
     )
     return match, info
+
+
+def save_threat_model(model: ThreatModel, path: Path) -> None:
+    """Save a threat model as JSON, creating its folder if needed.
+
+    The same model always gives the same bytes.
+    """
+    path.parent.mkdir(parents=True, exist_ok=True)
+    content = {
+        "format_version": THREAT_MODEL_VERSION,
+        "fitted_on": asdict(model.fitted_on),
+        "grid": [list(row) for row in model.grid],
+    }
+    path.write_text(json.dumps(content, indent=2) + "\n")
+
+
+def load_threat_model(path: Path) -> ThreatModel:
+    """Load a threat model saved by `save_threat_model`.
+
+    Raises:
+        FileNotFoundError: If there is no file at ``path``.
+        ValueError: If the model was saved in a different format version.
+    """
+    content = json.loads(path.read_text())
+    if content["format_version"] != THREAT_MODEL_VERSION:
+        raise ValueError(
+            f"{path} was saved in format version {content['format_version']}, "
+            f"but this version of btl reads version {THREAT_MODEL_VERSION}"
+        )
+    grid = tuple(tuple(float(value) for value in row) for row in content["grid"])
+    return ThreatModel(grid, FitInfo(**content["fitted_on"]))

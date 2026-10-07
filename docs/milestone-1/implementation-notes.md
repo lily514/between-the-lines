@@ -140,3 +140,14 @@ Over 50 seeds, after tuning:
 Most of the drop in passes came from dead-ball time alone. Tuning was then just shot frequency (`shot_share_in_box` 0.35 → 0.22, `shot_share_in_range` 0.06 → 0.035) and how often restarts happen.
 **Why:** the bands are the definition of done, so tuning stopped once they passed.
 **Affects:** Two things look unrealistic but aren't covered by a band, so we left them. Throw-ins (~57) and goal kicks (~24) run above real matches (roughly 40 and 17), because wide passes are often aimed off the pitch in the first place. Successful wide passes are clamped 1 m inside the touchline, so a lot of play runs right along it. Both could matter for how snapshots look in T13. A match now takes about 0.11 s (0.03 s without snapshots).
+
+## T9 — Expected Threat (2026-10-07)
+**Plan said:** `btl fit-xt --matches 200 --seed 0` saves the model deterministically, along with how it was fitted (matches, seed, simulator version); `btl events` shows an xT column.
+**We did:**
+- `btl fit-xt` also takes `--league-seed` and `--out` (default `data/models/expected-threat.json`). `--seed` draws one seed per match; the matches follow the season's fixtures in order. It prints the grid as a heat map, which makes it the first thing worth showing about threat.
+- The model file holds the grid, the number of matches and actions, the seed, and the league seed, plus a format version so old files fail loudly. There's no simulator version to record, because the project has none. A refit is the way to pick up simulator changes.
+- `btl events` adds a `threat` column when a model exists at `--model` (by default the same path). Otherwise it leaves the column out and says to run `btl fit-xt`.
+- `ExpectedThreat.fit` prints its iteration count to stdout, so `fit_grid` swallows it to keep the CLI's output clean.
+- The fast tests fit on 20 matches (about 2 s). The 200-match fit runs only with `pytest -m slow`, as CLAUDE.md planned.
+**Why:** the extra options keep tests and experiments away from the real model file. The rest is the simplest way to meet the plan.
+**Affects:** T10's `MatchContext` can take threat values from `rate_match`. The CLI test that runs `btl events` now passes `--model`, so it never reads a model from the real `data/` folder.

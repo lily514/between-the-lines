@@ -3,11 +3,12 @@ from functools import cache
 import numpy as np
 from rich.console import Console
 
-from btl.cli.render import events_table, goals, match_clock, scoreline
+from btl.cli.render import events_table, goals, match_clock, scoreline, threat_grid, threat_text
 from btl.league.league import League, generate_league
 from btl.schema.match import Match
 from btl.schema.vocab import ActionType, Result
 from btl.sim.engine import simulate_match
+from btl.value.xt import FitInfo, ThreatModel
 from tests.fixtures.matches import (
     AWAY,
     AWAY_MIDFIELDER,
@@ -78,3 +79,35 @@ def test_the_events_table_shows_the_requested_slice_with_names() -> None:
     assert first_row.split()[1] == "100"
     assert f"#{player.shirt_number} {player.full_name}" in first_row
     assert league().club(event.team_id).name in first_row
+
+
+def test_threat_shows_its_sign_and_hides_rounding_noise() -> None:
+    assert threat_text(0.0123).plain == "+0.012"
+    assert threat_text(-0.004).plain == "-0.004"
+    assert threat_text(-0.0001).plain == "0.000"
+    assert threat_text(None).plain == ""
+
+
+def test_the_events_table_has_a_threat_column_only_when_given_values() -> None:
+    match = simulated()
+    threat = [0.0123 if event.action_id == 1 else None for event in match.events]
+
+    without = text_of(events_table(match, league(), 0, 3))
+    with_threat = text_of(events_table(match, league(), 0, 3, threat))
+
+    assert "threat" not in without
+    assert "threat" in with_threat
+    assert "+0.012" in with_threat
+
+
+def test_the_threat_grid_shows_every_cell_in_percent() -> None:
+    model = ThreatModel(
+        grid=tuple(tuple(0.001 * column for column in range(16)) for _ in range(12)),
+        fitted_on=FitInfo(matches=1, seed=0, league_seed=0, actions=1),
+    )
+
+    lines = text_of(threat_grid(model)).splitlines()
+
+    assert len(lines) == 12
+    assert lines[0].split() == [f"{column / 10:.1f}" for column in range(16)]
+    assert all(len(line) <= 80 for line in lines)

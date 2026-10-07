@@ -7,11 +7,12 @@ import numpy as np
 import typer
 from rich.console import Console
 
-from btl.cli.render import events_table, scoreline
-from btl.io import MatchInfo, load_match, save_match
+from btl.cli.render import events_table, scoreline, threat_grid
+from btl.io import MatchInfo, load_match, load_threat_model, save_match, save_threat_model
 from btl.league.league import Club, League, generate_league, season_fixtures
 from btl.sim.engine import simulate_match
 from btl.sim.shape import FOUR_FOUR_TWO
+from btl.value.xt import fit_on_simulated_matches, rate_match
 
 app = typer.Typer(
     name="btl",
@@ -19,6 +20,7 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 console = Console()
+DEFAULT_MODEL = Path("data/models/expected-threat.json")
 
 
 @app.callback()
@@ -79,8 +81,11 @@ def events(
     match_dir: Annotated[Path, typer.Argument(help="A folder saved by `btl simulate`.")],
     start: Annotated[int, typer.Option(help="First event to show.", min=0)] = 0,
     count: Annotated[int, typer.Option(help="How many events to show.", min=1)] = 50,
+    model: Annotated[
+        Path, typer.Option(help="Expected Threat model from `btl fit-xt`, for the threat column.")
+    ] = DEFAULT_MODEL,
 ) -> None:
-    """Show a saved match's events as a table."""
+    """Show a saved match's events as a table, with threat values once a model is fitted."""
     try:
         match, info = load_match(match_dir)
     except FileNotFoundError:
@@ -89,10 +94,33 @@ def events(
     total = len(match.events)
     shown = min(count, max(total - start, 0))
 
+    threat = rate_match(load_threat_model(model), match) if model.exists() else None
+
     console.print(scoreline(match, league))
-    console.print(events_table(match, league, start, count))
+    console.print(events_table(match, league, start, count, threat))
     console.print(
         f"Events {start} to {start + shown - 1} of {total:,}. Use --start and --count for others."
         if shown
         else f"No events from {start}; the match has {total:,}."
+    )
+    if threat is None:
+        console.print(f"No threat model at {model}; run `btl fit-xt` to add a threat column.")
+
+
+@app.command("fit-xt")
+def fit_xt(
+    matches: Annotated[int, typer.Option(help="How many matches to simulate.", min=1)] = 200,
+    seed: Annotated[int, typer.Option(help="The same seed always gives the same model.")] = 0,
+    league_seed: Annotated[int, typer.Option(help="Which fictional league to use.")] = 0,
+    out: Annotated[Path, typer.Option(help="File to save the model in.")] = DEFAULT_MODEL,
+) -> None:
+    """Simulate matches and learn the Expected Threat grid from them."""
+    with console.status(f"Simulating {matches:,} matches and fitting the grid…"):
+        fitted = fit_on_simulated_matches(_league(league_seed), league_seed, matches, seed)
+    save_threat_model(fitted, out)
+    console.print("Chance of scoring soon from each cell (%), attacking left to right:")
+    console.print(threat_grid(fitted))
+    console.print(
+        f"Fitted on {matches:,} matches ({fitted.fitted_on.actions:,} actions) · seed {seed}"
+        f" · saved to {out}"
     )

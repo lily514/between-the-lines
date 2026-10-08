@@ -99,3 +99,31 @@ The three levels never swapped order within a match. The middle 80% of each leve
 **Affects:**
 - **Live level-1 questions about line-breaks will be rare,** because natural gaps are seldom wider than 14 m. Level-1 questions are identify questions, so they can come from the planted level-1 moment instead, as a deferred review. T9's selector must allow for that.
 - **The band test takes about 8 s,** because line-breaks need full snapshots.
+
+## T7 — Questions and options (2026-10-08)
+**Plan said:** forms by level and delivery; counter-presses never predicted; wrong options get closer as the level rises. At level 3 the alternatives are "the free teammate and the best forward pass that breaks no line". The options invariant holds over 40 seeds. T6 moved the "consistent set of options" check here.
+**We did:**
+- **Wording is left to the Tutor.** A question records *what* it asks (`Asks`: where to pass, lines broken, gap width, what they did, seconds to win back), its three options and the picture to show. Pass options are labelled `Pass to {target}`, and the evidence pack fills in the name.
+- **Predict alternatives are chosen from fair passes:** passes to teammates that break fewer lines and add no more threat than the real one.
+  - **Level 2:** the most backward and the most sideways of them.
+  - **Level 3:** the two that add the most threat, the closest in value.
+
+  The plan's "free teammate" is dropped: it could add more threat than the right answer and contradict the feedback. If fewer than two fair passes exist, the moment can't be asked as predict.
+- **Identify questions get harder through finer detail:**
+
+  | Level | Line-breaking pass | Counter-press |
+  |---|---|---|
+  | 1 | How many lines? (none, one, two) | What did they do? (won it back, dropped back, fouled) |
+  | 2 | Gap width: under 8 m, 8–14 m, 14 m or more | Seconds to win back: under 2, 2–3.5, 3.5 or more |
+  | 3 | Gap width in 3 m ranges around the real one | Seconds in 1-second ranges |
+
+  The true narrow range sits first, second or third at random. Ranges use the detector's own rounded figures, so the shown number and its range always agree.
+- **Options are shuffled with a sort key drawn per option.** numpy's `permutation` isn't fully typed in this version, so strict pyright rejects it.
+- **`active_concepts(concept_map)`:** the map's concepts whose detector has questions here.
+- **Test helpers move to `tests/fixtures/learning.py`,** so each test run simulates the 40-seed matches once and shares them.
+
+**Measured over 40 seeds:** every one of 5,067 line-break candidates, natural and planted, had a fair predict question at both levels 2 and 3, and the invariant held in all of them. In practice no candidate is dropped. Level-3 alternatives are on average closer in threat to the answer than level-2 ones (tested).
+**Why:** the plan's level-3 rule could break its own invariant, and the plan left the identify forms open.
+**Affects:**
+- **T8** turns option facts into displayed `Fact`s and fills `{target}` with the player's name and shirt number.
+- **T10's templates** word each `Asks` kind.

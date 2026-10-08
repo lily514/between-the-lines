@@ -1,44 +1,21 @@
 import ast
 import inspect
 from dataclasses import replace
-from functools import cache
 
 import numpy as np
 import pytest
 
 from btl.concepts.base import match_context
 from btl.concepts.phase import PhaseOfPlay, phase_timeline
-from btl.league.league import generate_league
 from btl.learn import candidates as candidates_module
-from btl.learn.candidates import MATCH_DESIGN, Candidate, find_candidates
-from btl.learn.concept_map import ConceptKey, load_concept_map
-from btl.plant.planter import simulate_with_moments
-from btl.schema.match import Match
+from btl.learn.candidates import Candidate, find_candidates
+from btl.learn.concept_map import load_concept_map
 from btl.schema.vocab import ConceptId
-from btl.value.xt import ThreatModel, fit_on_simulated_matches, rate_match
 from tests.fixtures.concepts import BACK_LINE, MIDFIELD_LINE, Spot, one_pass
+from tests.fixtures.learning import ACTIVE, COUNTER_PRESS, LINE_BREAKING, candidates_in, designed
 
-LINE_BREAKING = ConceptKey("line_breaking_pass")
-COUNTER_PRESS = ConceptKey("counter_press")
-ACTIVE = (LINE_BREAKING, COUNTER_PRESS)
 # The selector's difficulty band for each question level.
 BANDS = {1: (0.0, 0.4), 2: (0.3, 0.7), 3: (0.6, 1.0)}
-
-
-@cache
-def threat_model() -> ThreatModel:
-    return fit_on_simulated_matches(generate_league(np.random.default_rng(0)), 0, 20, seed=0)
-
-
-@cache
-def designed(seed: int) -> Match:
-    home, away = generate_league(np.random.default_rng(0)).clubs[:2]
-    return simulate_with_moments(home, away, seed, MATCH_DESIGN)
-
-
-def candidates_in(match: Match, active: tuple[ConceptKey, ...] = ACTIVE) -> tuple[Candidate, ...]:
-    ctx = match_context(match, rate_match(threat_model(), match))
-    return find_candidates(ctx, phase_timeline(match), load_concept_map(), active)
 
 
 def one_pass_candidates(start: Spot, end: Spot, threat: float) -> tuple[Candidate, ...]:

@@ -6,6 +6,7 @@ from itertools import pairwise
 
 from btl.concepts.base import ConceptTag, MatchContext
 from btl.schema.event import Event
+from btl.schema.ids import TeamId
 from btl.schema.snapshot import PlayerPosition, Snapshot
 from btl.schema.vocab import ActionType, ConceptId, Result
 
@@ -70,21 +71,42 @@ class LineBreakingPass:
             snapshot = ctx.snapshot(event.action_id)
             if snapshot is None:
                 continue
-            gaps = [
-                gap
-                for line in self._lines(snapshot, event)
-                if (gap := _gap_crossed(line, event)) is not None
-            ]
+            gaps = self.lines_broken(
+                snapshot, event.team_id, (event.start_x, event.start_y), (event.end_x, event.end_y)
+            )
             if gaps:
                 tags.append(self._tag(event, gaps))
         return tuple(tags)
 
-    def _lines(self, snapshot: Snapshot, event: Event) -> list[_Line]:
+    def lines_broken(
+        self,
+        snapshot: Snapshot,
+        team_id: TeamId,
+        start: tuple[float, float],
+        end: tuple[float, float],
+    ) -> tuple[float, ...]:
+        """The lines a pass from ``start`` to ``end`` would break, by this detector's rule.
+
+        The pass need not have happened, so answer options can be measured the same way as the
+        pass that was played. Coordinates are in the direction of ``team_id``, the passing team,
+        as in `btl.concepts.base.MatchContext`.
+
+        Returns:
+            The width of the gap the pass goes through in each line it breaks, nearest line
+            first. Empty if it breaks none.
+        """
+        return tuple(
+            gap
+            for line in self._lines(snapshot, team_id)
+            if (gap := _gap_crossed(line, start, end)) is not None
+        )
+
+    def _lines(self, snapshot: Snapshot, team_id: TeamId) -> list[_Line]:
         defenders = sorted(
             (
                 player
                 for player in snapshot.positions
-                if player.team_id != event.team_id and not player.is_goalkeeper
+                if player.team_id != team_id and not player.is_goalkeeper
             ),
             key=lambda player: player.x,
         )
@@ -100,7 +122,7 @@ class LineBreakingPass:
             if len(group) >= self.min_line_players
         ]
 
-    def _tag(self, event: Event, gaps: list[float]) -> ConceptTag:
+    def _tag(self, event: Event, gaps: tuple[float, ...]) -> ConceptTag:
         narrowest = min(gaps)
         openness = (narrowest - self.narrow_gap) / (self.wide_gap - self.narrow_gap)
         difficulty = 1 - min(max(openness, 0.0), 1.0)
@@ -115,13 +137,14 @@ class LineBreakingPass:
         )
 
 
-def _gap_crossed(line: _Line, event: Event) -> float | None:
+def _gap_crossed(line: _Line, start: tuple[float, float], end: tuple[float, float]) -> float | None:
     """The width of the gap the pass goes through, or None if it doesn't go through the line."""
-    if not (event.start_x < line.front and event.end_x > line.back):
+    (start_x, start_y), (end_x, end_y) = start, end
+    if not (start_x < line.front and end_x > line.back):
         return None
     line_x = (line.front + line.back) / 2
-    along = (line_x - event.start_x) / (event.end_x - event.start_x)
-    crossing_y = event.start_y + along * (event.end_y - event.start_y)
+    along = (line_x - start_x) / (end_x - start_x)
+    crossing_y = start_y + along * (end_y - start_y)
     for left, right in pairwise(line.players):
         if left.y <= crossing_y <= right.y:
             return math.hypot(right.x - left.x, right.y - left.y)

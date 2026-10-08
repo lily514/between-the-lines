@@ -167,3 +167,29 @@ The three levels never swapped order within a match. The middle 80% of each leve
 - **More questions than the original "two to four" per match.** The amended plan's caps allow 4 in play plus 2 at each break, up to 8, and the median is 7. Lowering `BREAK_CAP` or `IN_PLAY_CAP` changes that in one place.
 - **Live questions are rare** (5–9%), as T5 and T6 predicted. Two-thirds of play is transition, and natural settled line-breaks seldom fit level 1.
 - **T12** uses `run_match` with the real question flow as `ask`.
+
+## T10 — Grader, Tutor protocol, slots and templates (2026-10-08)
+**Plan said:** `ChoiceGrader`; a `Tutor` protocol; fact slots; a `TemplateTutor` whose wording differs by level, whose deferred questions open with phase context, and whose every slot fills; an import rule for `tutor/`.
+**We did:** as planned, with these choices:
+- **Slot syntax** (`tutor/slots.py`):
+  - `{team}` is a pack fact;
+  - `{B.threat_added}` is an option's fact, and `{B.label}` its label;
+  - `{answer}` and `{chosen}`, with their facts (`{answer.lines_broken}`), are the right option and the viewer's pick, after answering;
+  - `{occurred_at}`, `{delivered_at}` and `{restart}` come from the timing.
+
+  Question wording is filled from the question view alone, so wording that cites an outcome fails with a `SlotError` instead of giving the answer away.
+- **The verdict belongs to the grade,** not the Tutor: `Grade.verdict` is "Spot on." or "Not quite.". A Tutor's text can't contradict the grade, because it never says whether the viewer was right.
+- **`Answer` is a tagged type** (`ChoiceAnswer`, kind "choice"), so free text can join it later. The knowledge model only sees `Grade.correct`.
+- **Feedback:**
+  - the concept map's explanation at the viewer's level (level 1 beginner, 2 intermediate, 3 analyst);
+  - then a sentence confirming or comparing: for a pass, the right pass's lines broken and threat added against the pick's;
+  - after a wrong answer, one of the map's misconceptions, chosen from the pack id so it never changes for the same question.
+
+  The takeaway is the concept's objective from the map.
+- **A pass option now carries its receiver's name as a neutral fact (`target`),** so feedback can say "the pass to #9 Niels Meiner". The option's label already showed the name, so nothing new is revealed early.
+- **The import rule** is tested by parsing every module in `tutor/`: no imports from `sim`, `value`, `concepts` or `plant`.
+
+**Why:** the plan left the slot syntax and the feedback's structure open.
+**Affects:**
+- **2b's Verifier** checks a model's slots with the same `question_values` and `feedback_values`, and falls back to these templates.
+- **Map text read in a sentence.** Some of the map's wording reads a little stiffly once filled, for example "this one broke one". Rewording the map would fix that.

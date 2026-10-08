@@ -316,9 +316,10 @@ def _counter_press_outcome(question: Question, ctx: MatchContext) -> dict[str, F
 
 def _pack_option(option: Option, names: _Names) -> PackOption:
     label = option.label
+    neutral: dict[str, Fact] = {}
     if option.target is not None:
         label = label.replace("{target}", names.player(option.target))
-    neutral: dict[str, Fact] = {}
+        neutral["target"] = _text(names.player(option.target))
     outcome: dict[str, Fact] = {}
     for name, value in option.facts.items():
         if name == "distance_m":

@@ -153,7 +153,7 @@ def test_pass_options_are_named_and_only_measured_after_answering() -> None:
     pack = pack_for(first_line_break(), 2, Delivery.LIVE)
 
     assert all(re.fullmatch(r"Pass to #\d+ \S.*", o.label) for o in pack.options)
-    assert all(set(o.neutral) == {"distance_m", "direction"} for o in pack.options)
+    assert all(set(o.neutral) == {"target", "distance_m", "direction"} for o in pack.options)
     (right,) = [o for o in pack.options if o.correct]
     assert right.key == pack.correct_key
     assert right.outcome["lines_broken"].value == pack.outcome["lines_broken"].value

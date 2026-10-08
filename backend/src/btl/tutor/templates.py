@@ -1,0 +1,100 @@
+"""The templated Tutor: plain, safe wording written in code.
+
+It is the Tutor for Milestone 2a, and later the fallback whenever a model's wording fails a
+check. Every number reaches the viewer through a slot, so its text can always be verified.
+
+Questions are worded by what they ask. A question asked after the play opens by saying when it
+happened. Feedback uses the concept map's explanation at the viewer's level (beginner,
+intermediate or analyst), compares the right option with the viewer's pick, and offers a common
+misconception when the answer was wrong.
+"""
+
+from collections.abc import Mapping
+from dataclasses import dataclass, field
+
+from btl.learn.evidence import EvidencePack, QuestionView, Timing
+from btl.learn.grader import Grade
+from btl.learn.questions import Asks
+from btl.tutor.base import TutorFeedback, TutorQuestion
+
+SOURCE = "template"
+# What each question asks, in words. Every slot here is in the question view.
+ASKING: Mapping[Asks, str] = {
+    Asks.WHERE_TO_PASS: "{player} has the ball for {team}. Where should the pass go?",
+    Asks.LINES_BROKEN: "{player} has just played the ball forward for {team}. "
+    "How many of {opponent}'s lines did that pass go through?",
+    Asks.GAP_WIDTH: "{player}'s pass went through a gap in {opponent}'s line. "
+    "How wide was the gap?",
+    Asks.WHAT_THEY_DID: "{team} lost the ball to {opponent}. What did they do next?",
+    Asks.SECONDS_TO_REGAIN: "{team} lost the ball to {opponent} and won it back. "
+    "How long did that take?",
+}
+# How a question asked after the play opens, by where play is when it is asked.
+LOOKING_BACK: Mapping[str, str] = {
+    "dead ball": "Play has stopped for a {restart}. Back at {occurred_at}: ",
+    "half-time": "Half-time. Back at {occurred_at}: ",
+    "full time": "Full time. Back at {occurred_at}: ",
+}
+LEVEL_NAMES = {1: "beginner", 2: "intermediate", 3: "analyst"}
+# After a wrong pick in a predict question: why the right pass was better, measured.
+COMPARE_PASSES = (
+    "The pass to {answer.target} went through the gap: it went through {answer.lines_broken} "
+    "of the defending team's lines and changed the chance of scoring soon by "
+    "{answer.threat_added}, against {chosen.threat_added} for the pass to {chosen.target}."
+)
+CONFIRM_PASS = (
+    "The pass to {answer.target} went through {answer.lines_broken} of the defending team's "
+    "lines and changed the chance of scoring soon by {answer.threat_added}."
+)
+CORRECT_CHOICE = "The answer was {answer}."
+
+
+@dataclass(frozen=True, slots=True)
+class TemplateTutor:
+    """A `btl.tutor.base.Tutor` whose wording is fixed templates with fact slots."""
+
+    source: str = field(default=SOURCE, init=False)
+
+    def question(self, view: QuestionView) -> TutorQuestion:
+        """The question for what it asks, opening with when it happened if asked later."""
+        return TutorQuestion(_looking_back(view.timing) + ASKING[view.asks])
+
+    def feedback(self, pack: EvidencePack, grade: Grade) -> TutorFeedback:
+        """The concept's explanation at the viewer's level, the comparison, and a misconception.
+
+        The verdict ("Spot on." or "Not quite.") comes from the grade, not from here.
+        """
+        sentences = [_explanation(pack)]
+        is_pass = pack.asks is Asks.WHERE_TO_PASS
+        if grade.correct:
+            sentences.append(CONFIRM_PASS if is_pass else CORRECT_CHOICE)
+        else:
+            sentences.append(COMPARE_PASSES if is_pass else CORRECT_CHOICE)
+            sentences.append(f"A common mix-up: “{_misconception(pack)}”")
+        return TutorFeedback(
+            explanation=" ".join(sentences),
+            takeaway=pack.concept.objective,
+            source=self.source,
+        )
+
+
+def _looking_back(timing: Timing) -> str:
+    if timing.delivery == "live":
+        return ""
+    opening = LOOKING_BACK[timing.delivered_phase]
+    return opening if "{restart}" not in opening or timing.restart else "Play has stopped. "
+
+
+def _explanation(pack: EvidencePack) -> str:
+    texts = {
+        "beginner": pack.concept.beginner,
+        "intermediate": pack.concept.intermediate,
+        "analyst": pack.concept.analyst,
+    }
+    return texts[LEVEL_NAMES[pack.level]]
+
+
+def _misconception(pack: EvidencePack) -> str:
+    """One of the concept's misconceptions, the same one every time for the same pack."""
+    misconceptions = pack.concept.misconceptions
+    return misconceptions[int(pack.pack_id, 16) % len(misconceptions)]

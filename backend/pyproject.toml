@@ -9,6 +9,7 @@ dependencies = [
     "numpy>=1.26.4",
     "pandas>=2.3.3",
     "pyarrow>=25.0.1",
+    "pyyaml>=6.0.3",
     "socceraction==1.5.3",
     "typer>=0.12",
 ]
@@ -22,6 +23,7 @@ dev = [
     "pyright>=1.1.400",
     "pytest>=8",
     "ruff>=0.6",
+    "types-pyyaml>=6.0.12.20260906",
 ]
 
 [build-system]

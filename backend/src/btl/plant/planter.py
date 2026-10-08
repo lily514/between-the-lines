@@ -64,7 +64,8 @@ class Planter:
         moments = self.request.in_match_order
         if planted >= len(moments) or (period_id, clock) < self.targets[planted]:
             return None
-        if clock > self.params.period_seconds - QUIET_END:
+        # A moment that missed its own half is still due in the next one, but not at its start.
+        if not QUIET_START <= clock <= self.params.period_seconds - QUIET_END:
             return None
         moment = moments[planted]
         template = TEMPLATES[moment.concept]

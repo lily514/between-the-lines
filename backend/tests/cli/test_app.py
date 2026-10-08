@@ -1,12 +1,16 @@
 from pathlib import Path
 
 import numpy as np
+import pytest
 from typer.testing import CliRunner
 
 from btl.cli.app import app
 from btl.cli.render import PITCH_LEGEND, REPLAY_LEGEND
 from btl.io import load_match, load_threat_model
 from btl.league.league import generate_league
+from btl.plant import templates
+from btl.schema.vocab import ConceptId
+from btl.sim.chain import Start
 
 runner = CliRunner()
 WIDE = {"COLUMNS": "200"}
@@ -171,6 +175,26 @@ def test_simulate_explains_a_moment_it_cannot_plant(tmp_path: Path) -> None:
 
     assert result.exit_code == 2
     assert "can't be planted yet" in result.output
+
+
+class NeverFits(templates.LineBreakingTemplate):
+    def fits(self, start: Start) -> bool:
+        return False
+
+
+def test_simulate_explains_when_moments_did_not_fit_in_the_match(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setitem(templates.TEMPLATES, ConceptId.LINE_BREAKING_PASS, NeverFits())
+
+    result = runner.invoke(
+        app,
+        ["simulate", "--seed", "7", "--out", str(tmp_path), "--plant", "line_breaking_pass:1"],
+        env=WIDE,
+    )
+
+    assert result.exit_code == 2
+    assert "only 0 of 1 moments could be planted" in result.output
 
 
 def test_moments_says_when_a_match_has_none(tmp_path: Path) -> None:

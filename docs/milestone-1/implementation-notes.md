@@ -319,3 +319,6 @@ Most of the drop in passes came from dead-ball time alone. Tuning was then just 
 - `pitch_picture`'s drawing moved into a small shared `_Pitch` grid, and its output is unchanged.
 **Why:** it gives the pause-and-predict loop a feel in the terminal before the UI exists. The jitter in the shape model (1.5 m) needed no smoothing: spread over the median 2.6 s between actions, it reads as drift, not flicker.
 **Affects:** the UI milestone can reuse `lead_up_frames` and `answer_frames`. Players jump a few metres into a planted moment's scripted positions (up to about 15 m in the sample); smoothing that is left for the UI.
+
+## Code review fixes (2026-10-08)
+**Plan said:** each half's first and last 5 minutes hold no moment (T13).   **We did:** the planter only enforced the last 5 minutes. A moment that missed its target in the first half could be planted seconds into the second. It now waits until 5 minutes in. The engine now raises `RuntimeError` if a period ends before a planted moment's answer, instead of leaving the moment's ids pointing at the next period's events. `btl simulate --plant` reports moments that didn't fit as a `--plant` error instead of a traceback.   **Why:** found in a review of the whole milestone.   **Affects:** nothing; the sample matches and every seeded test are unchanged.

@@ -12,11 +12,12 @@ from btl.plant.spec import parse_plant
 from btl.schema.frames import to_spadl_frame
 from btl.schema.match import Match
 from btl.schema.possession import split_possessions
-from btl.schema.vocab import ActionType, BodyPart, Phase
-from btl.sim.chain import CENTRE_SPOT, SIX_YARD_DEPTH
+from btl.schema.vocab import ActionType, BodyPart, ConceptId, Phase, Result
+from btl.sim.chain import CENTRE_SPOT, SIX_YARD_DEPTH, Side, Start, Step
 from btl.sim.engine import simulate_match
 from btl.sim.params import DEFAULT_PARAMS
-from btl.sim.pitch import PITCH_LENGTH, PITCH_WIDTH
+from btl.sim.pitch import PITCH_LENGTH, PITCH_WIDTH, Point
+from btl.sim.script import Script
 from btl.sim.shape import FOUR_THREE_THREE
 from tests.fixtures.imports import imports_by_module
 
@@ -187,3 +188,47 @@ def test_the_simulator_never_imports_planting() -> None:
     # Planting drives the simulator through `btl.sim.script.Director`, never the other way.
     for module, imported in imports_by_module(btl.sim).items():
         assert not [name for name in imported if name.startswith("btl.plant")], module
+
+
+class CutOffByTheWhistle:
+    """Writes the first possession as passes so slow the period ends before the answer."""
+
+    def script(
+        self,
+        planted: int,
+        period_id: int,
+        clock: float,
+        attack: Side,
+        defence: Side,
+        start: Start,
+        rng: np.random.Generator,
+    ) -> Script | None:
+        if planted:
+            return None
+        ball = Point(50, 34)
+        slow_pass = Step(
+            0,
+            ActionType.PASS,
+            Result.SUCCESS,
+            BodyPart.FOOT,
+            ball,
+            ball,
+            DEFAULT_PARAMS.period_seconds,
+            Phase.OPEN_PLAY,
+        )
+        return Script(
+            steps=(slow_pass,) * 3,
+            then=Start(ball, 0, ActionType.INTERCEPTION),
+            shapes={},
+            concept=ConceptId.LINE_BREAKING_PASS,
+            difficulty=1,
+            pause=1,
+            answer=2,
+        )
+
+
+def test_a_moment_cut_off_by_the_whistle_is_an_error() -> None:
+    home, away = league().clubs[:2]
+
+    with pytest.raises(RuntimeError, match="period 1 ended"):
+        simulate_match(home, away, 0, with_snapshots=False, director=CutOffByTheWhistle())

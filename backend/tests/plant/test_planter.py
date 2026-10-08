@@ -11,10 +11,12 @@ from btl.plant import templates
 from btl.plant.planter import QUIET_END, QUIET_START, Planter, simulate_with_moments
 from btl.plant.spec import MomentSpec, PlantRequest, parse_plant
 from btl.schema.match import Match
-from btl.schema.vocab import ConceptId
-from btl.sim.chain import Start
+from btl.schema.vocab import ActionType, ConceptId
+from btl.sim.chain import Side, Start
 from btl.sim.engine import simulate_match
 from btl.sim.params import DEFAULT_PARAMS
+from btl.sim.pitch import Point
+from btl.sim.script import Script
 from btl.sim.shape import FOUR_FOUR_TWO, FOUR_THREE_THREE
 
 ONE_TWO_THREE = parse_plant(["line_breaking_pass:1,2,3"])
@@ -109,6 +111,20 @@ def test_targets_are_spread_over_both_halves_away_from_the_whistles() -> None:
     assert [period for period, _ in targets] == [1, 1, 2, 2]
     last_allowed = DEFAULT_PARAMS.period_seconds - QUIET_END
     assert all(QUIET_START <= at <= last_allowed for _, at in targets)
+
+
+@pytest.mark.parametrize("clock", [0.0, QUIET_START - 1, DEFAULT_PARAMS.period_seconds - 1])
+def test_a_late_moment_waits_out_the_next_halfs_quiet_minutes(clock: float) -> None:
+    planter = Planter(parse_plant(["line_breaking_pass:1,2"]))
+    attack, defence = Side(FOUR_FOUR_TWO, 1.0), Side(FOUR_FOUR_TWO, 1.0)
+    won = Start(Point(40, 20), 6, ActionType.INTERCEPTION)
+
+    def script_at(at: float) -> Script | None:
+        return planter.script(0, 2, at, attack, defence, won, np.random.default_rng(0))
+
+    assert planter.targets[0][0] == 1
+    assert script_at(clock) is None
+    assert script_at(QUIET_START) is not None
 
 
 def test_a_concept_without_a_template_cannot_be_planted() -> None:

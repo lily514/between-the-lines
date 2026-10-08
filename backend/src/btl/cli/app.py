@@ -145,7 +145,7 @@ def simulate(
         try:
             request = parse_plant(plant)
             match = simulate_with_moments(home_club, away_club, seed, request)
-        except ValueError as error:
+        except (ValueError, RuntimeError) as error:
             raise typer.BadParameter(str(error), param_hint="--plant") from None
     else:
         match = simulate_match(home_club, away_club, seed)

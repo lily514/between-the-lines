@@ -59,6 +59,9 @@ def simulate_match(
     Returns:
         The match, with positions for all 22 players at every event if requested, and the
         moments the director planted.
+
+    Raises:
+        RuntimeError: If a period ends before a planted moment's answer.
     """
     if home.team_id == away.team_id:
         raise ValueError(f"{home.name} can't play itself")
@@ -145,6 +148,8 @@ def simulate_match(
                 clock += step.duration
             possession_id += 1
             team, start = 1 - team, chain.next_start
+        if planted and planted[-1].answer_action_id >= len(events):
+            raise RuntimeError(f"period {period_id} ended before its last planted moment's answer")
 
     positions = None
     if shape_rng is not None:

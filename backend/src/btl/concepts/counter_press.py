@@ -36,17 +36,16 @@ class CounterPress:
 
     def detect(self, ctx: MatchContext) -> tuple[ConceptTag, ...]:
         """Every counter-press in the match, in event order."""
-        events = {event.action_id: event for event in ctx.events}
         tags: list[ConceptTag] = []
         for before, lost, regained in zip(
             ctx.possessions, ctx.possessions[1:], ctx.possessions[2:], strict=False
         ):
             if not (before.period_id == lost.period_id == regained.period_id):
                 continue
-            last_touch = events[before.last]
-            loss, regain = events[lost.first], events[regained.first]
+            last_touch = ctx.events[before.last]
+            loss, regain = ctx.events[lost.first], ctx.events[regained.first]
             lost_it = changes_hands_in_open_play(last_touch, loss)
-            if not (lost_it and changes_hands_in_open_play(events[lost.last], regain)):
+            if not (lost_it and changes_hands_in_open_play(ctx.events[lost.last], regain)):
                 continue
             seconds = regain.time_seconds - loss.time_seconds
             if seconds <= self.max_seconds and regain.start_x > HALFWAY:

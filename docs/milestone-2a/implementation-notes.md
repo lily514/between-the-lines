@@ -54,3 +54,26 @@ The three levels never swapped order within a match. The middle 80% of each leve
 **Affects:**
 - **Natural counter-presses are mostly hard** (median difficulty 0.73), so beginners will mostly be asked about the planted level-1 ones. That's fine; it's what they're for.
 - **`btl moments` now prints a difficulty for counter-presses**, and its test was updated.
+
+## T5 — Phase timeline (2026-10-08)
+**Plan said:** `phase_timeline(match)` splits the match into settled, transition, dead-ball and break segments, from events only. Dead-ball windows run from the stoppage to the restart, and those of 15 s or more fall in a stated band. Planted line-breaks and counter-presses are transitions. It broadly agrees with the simulator's own `phase` field.
+**We did:** as planned, with these choices:
+- **Names.** The phases are `PhaseOfPlay`, because the schema already has a `Phase` vocabulary: the simulator's per-event label. It keeps the plan's constants: 4 passes, 12 s, and a 15 s minimum window.
+- **What counts.** A transition counts completed passes and crosses. A possession that starts with a restart, or with the kickoff after a goal, is settled.
+- **Where segments start and end.** Each action's stretch of play runs to the next action. When play stops after an action, the dead ball starts at that action's time, which includes the ball's flight out of play, and runs to the restart. Breaks are zero-length segments after each period's last action.
+- **Two views of the result.** The timeline also gives each action's own phase (`phase_of`), which is what the selector needs to place a candidate.
+
+**Measured over 40 seeds** (all moments planted, snapshots off):
+
+| | Result |
+|---|---|
+| Dead-ball windows of 15 s or more, per match | 25–48, median 35 |
+| Simulator transition actions that are also transitions here | 100% (the simulator's rule is narrower: 8 s, with no pass count) |
+| Planted moments classified as transitions | 240 of 240 |
+| Line-breaks found in settled play, per match (median, before T6's quality filter) | 82 |
+| Share of all actions in a transition | 63% |
+
+**Why:** the plan left these details open.
+**Affects:**
+- **Most moments will be deferred.** 63% of actions are transitions, because simulated possessions usually start with an interception and end before 4 passes or 12 s. That's high, but no real figure has been checked against it yet: StatsBomb's open data could. Most live questions will be line-break predict questions from the settled third of play, and most others will wait for a stoppage.
+- **T9's selector** reads `phase_of` and the dead-ball and break segments that are long enough to ask in.

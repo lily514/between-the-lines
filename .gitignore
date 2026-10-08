@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# Private, never committed: real names used only to check generated names
+backend/private/
+
+# Generated match data and models (regenerable from seeds)
+backend/data/
+backend/runs/
+
+# OS / editor
+.DS_Store
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/

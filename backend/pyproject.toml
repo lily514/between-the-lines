@@ -1,0 +1,62 @@
+[project]
+name = "btl"
+version = "0.1.0"
+description = "Between the Lines: an adaptive football-learning tool built on synthetic match data."
+authors = [{ name = "Lily Carlson" }]
+license = "MIT"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    "numpy>=1.26.4",
+    "pandas>=2.3.3",
+    "pyarrow>=25.0.1",
+    "socceraction==1.5.3",
+    "typer>=0.12",
+]
+
+[project.scripts]
+btl = "btl.cli.app:app"
+
+[dependency-groups]
+dev = [
+    "hypothesis>=6.168.5",
+    "pyright>=1.1.400",
+    "pytest>=8",
+    "ruff>=0.6",
+]
+
+[build-system]
+requires = ["uv_build>=0.12.23,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "RUF", "N", "D"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["D"]
+
+[tool.pyright]
+include = ["src", "tests"]
+pythonVersion = "3.11"
+typeCheckingMode = "strict"
+# socceraction has inline type hints but no py.typed marker; pyright still reads its source.
+reportMissingTypeStubs = false
+venvPath = "."
+venv = ".venv"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = ["--strict-markers", "-m", "not slow"]
+markers = ["slow: long-running tests such as the batch Expected Threat fit"]
+filterwarnings = ["error"]
+
+[tool.uv]
+python-preference = "only-managed"
+# socceraction 1.5.3 caps pandera at 0.17, which imports `multimethod.overload` (deprecated in 1.11, removed in 2.0).
+constraint-dependencies = ["multimethod<1.11"]

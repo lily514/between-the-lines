@@ -1,0 +1,24 @@
+{
+    // The project lives in backend/; point VS Code at its uv-managed environment.
+    "python.defaultInterpreterPath": "${workspaceFolder}/backend/.venv/bin/python",
+    "python.analysis.extraPaths": ["backend"],
+    // Pylance only reads pyright settings from the workspace root, so mirror backend/pyproject.toml.
+    "python.analysis.typeCheckingMode": "strict",
+    "python.analysis.diagnosticSeverityOverrides": {
+        "reportMissingTypeStubs": "none"
+    },
+    // ruff is this project's linter and formatter; the others don't read its settings.
+    "flake8.enabled": false,
+    "pylint.enabled": false,
+    "[python]": {
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.organizeImports.ruff": "explicit"
+        },
+        "editor.rulers": [100]
+    },
+    "python.testing.pytestEnabled": true,
+    "python.testing.cwd": "${workspaceFolder}/backend",
+    "python.testing.pytestArgs": ["tests"]
+}

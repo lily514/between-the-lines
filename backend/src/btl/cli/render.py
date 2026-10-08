@@ -16,11 +16,11 @@ from btl.schema.event import Event
 from btl.schema.ids import ActionId, TeamId
 from btl.schema.match import Match
 from btl.schema.possession import split_possessions
+from btl.schema.scoreboard import clock, goals, match_clock
 from btl.schema.snapshot import PlayerPosition
 from btl.schema.vocab import ActionType, ConceptId, Result
 from btl.value.xt import ThreatModel
 
-PERIOD_MINUTES = 45
 SHOTS = frozenset({ActionType.SHOT, ActionType.SHOT_FREEKICK, ActionType.SHOT_PENALTY})
 HOME_STYLE = "cyan"
 AWAY_STYLE = "magenta"
@@ -32,28 +32,6 @@ def counted(count: int, noun: str, plural: str | None = None) -> str:
     ``plural`` is for nouns that don't just add an "s".
     """
     return f"{count:,} {noun if count == 1 else plural or noun + 's'}"
-
-
-def match_clock(event: Event) -> str:
-    """Time on the match clock, e.g. ``68:12`` for 23 min 12 s into the second half."""
-    return _clock(event.period_id, event.time_seconds)
-
-
-def _clock(period_id: int, time_seconds: float) -> str:
-    seconds = int(time_seconds) + (period_id - 1) * PERIOD_MINUTES * 60
-    return f"{seconds // 60:02d}:{seconds % 60:02d}"
-
-
-def goals(match: Match) -> dict[TeamId, int]:
-    """Goals per team, counting own goals for the other team."""
-    home, away = match.home_team_id, match.away_team_id
-    scored = {home: 0, away: 0}
-    for event in match.events:
-        if event.action_type in SHOTS and event.result is Result.SUCCESS:
-            scored[event.team_id] += 1
-        elif event.result is Result.OWNGOAL:
-            scored[away if event.team_id == home else home] += 1
-    return scored
 
 
 def scoreline(match: Match, league: League) -> Text:
@@ -363,8 +341,8 @@ def replay_picture(
     if show_target:
         pitch.put(*end, "*", f"bold {PASS_STYLE}")
     pitch.put(*frame.ball, "@", f"bold {_team_style(match, event.team_id)}")
-    clock = Text(_clock(event.period_id, frame.time_seconds) + "\n", style="bold")
-    return Text.assemble(clock, pitch.text(REPLAY_LEGEND))
+    time = Text(clock(event.period_id, frame.time_seconds) + "\n", style="bold")
+    return Text.assemble(time, pitch.text(REPLAY_LEGEND))
 
 
 def _team_style(match: Match, team_id: TeamId) -> str:

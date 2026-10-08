@@ -127,3 +127,21 @@ The three levels never swapped order within a match. The middle 80% of each leve
 **Affects:**
 - **T8** turns option facts into displayed `Fact`s and fills `{target}` with the player's name and shirt number.
 - **T10's templates** word each `Asks` kind.
+
+## T8 — Evidence pack (2026-10-08)
+**Plan said:** `EvidencePack` with `Fact`s (value plus number-only display) and a deterministic `pack_id`; phase, occurred-at, delivered-at and delivery fields; each question form hides exactly its own answer facts; `question_view()` and `feedback_view()`. T2 moved the "every active concept's evidence fields are produced" test here.
+**We did:**
+- **Context and outcome facts.** Facts are split in two. Context facts are known before answering: the clubs, the score, the clock, and the passer for a line-breaking pass. Outcome facts are everything measured about the play. The question view leaves out **every** outcome fact in every form, not just the one being asked, plus the right answer and the correct flags. That's simpler than a per-form list and can't leak by omission. The feedback view is the whole pack, so there is no `feedback_view()`.
+- **Who won the ball back is an outcome fact.** For a counter-press, naming the player who won it back hints at the answer to "what did they do?", so it isn't in the context.
+- **How numbers are shown:**
+  - Counts as words ("one", "two"), so the map's text reads naturally ("with two players close to the ball").
+  - Metres and seconds to one decimal, as the detectors round them, dropping a trailing ".0". So the number shown after answering always falls in the identify range marked right (tested).
+  - Threat to two significant figures ("0.29%", "+0.11%"). In midfield, threat values are around 0.3%, so whole percentages showed "0%" both before and after a pass, and different options looked identical.
+- **The pack carries the concept's text from the map:** name, objective, the three explanations and the misconceptions. The Tutor needs nothing but the pack and the viewer's level.
+- **The picture** holds every player as shirt number, side, position and role, plus the ball, all with the team on the ball attacking left to right. An identify question also gets the play's path.
+- **`pressers`** counts the pressing team's outfield players within 10 m of the ball when it is won back, including the one who wins it. **`receiver_zone`** is the pitch third where the pass ends.
+- **When a question is asked** arrives as a small `Delivered` record (delivery, time, phase, restart), which T9's selector fills in.
+- **`match_clock` and `goals` moved** from `cli/render.py` to a new `schema/scoreboard.py`, so `learn/` doesn't import the CLI. `goals` can now count only the goals before an action. The CLI's output is unchanged.
+
+**Why:** hiding every outcome fact is the safer reading of "never reveals the answer before the viewer commits". The display rules came from looking at real packs.
+**Affects:** T10's templates fill slots from `Fact.display`. 2b's Verifier checks the Tutor's slots against the same facts.

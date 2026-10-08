@@ -3,11 +3,17 @@
 from collections.abc import Sequence
 
 from btl.concepts.base import ConceptTag, Detector, MatchContext
+from btl.concepts.counter_attack import CounterAttack
 from btl.concepts.counter_press import CounterPress
 from btl.concepts.line_breaking import LineBreakingPass
 from btl.concepts.switch_of_play import SwitchOfPlay
 
-ALL_DETECTORS: tuple[Detector, ...] = (SwitchOfPlay(), LineBreakingPass(), CounterPress())
+ALL_DETECTORS: tuple[Detector, ...] = (
+    SwitchOfPlay(),
+    LineBreakingPass(),
+    CounterPress(),
+    CounterAttack(),
+)
 
 
 def detect_all(

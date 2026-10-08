@@ -19,18 +19,27 @@ Shape = tuple[tuple[Point, ...], tuple[Point, ...]]
 
 
 @dataclass(frozen=True, slots=True)
+class PlayOn:
+    """Play carries on with ``slot`` on the ball at ``ball``."""
+
+    ball: Point
+    slot: int
+
+
+@dataclass(frozen=True, slots=True)
 class Script:
     """The opening of a possession, written instead of simulated, and the moment it holds.
 
-    Everything is in the attacking team's direction. Play carries on from ``ball`` with
-    ``slot`` on it. ``shapes`` replaces the shape model's positions for some steps, by index:
-    the attacking team's, then the defending team's, each in formation slot order. ``pause``
-    and ``answer`` are indexes into ``steps``.
+    Everything is in the attacking team's direction. After ``steps``, ``then`` says either how
+    play carries on in this possession, or how the other team's possession starts, which ends
+    this one. ``shapes`` replaces the shape model's positions for some steps, by index: the
+    attacking team's, then the defending team's, each in formation slot order. ``pause`` and
+    ``answer`` count actions from the first step; the answer may come after the script, in a
+    later possession.
     """
 
     steps: tuple[Step, ...]
-    ball: Point
-    slot: int
+    then: PlayOn | Start
     shapes: Mapping[int, Shape]
     concept: ConceptId
     difficulty: int

@@ -68,10 +68,10 @@ A match can be simulated to hold teachable moments on purpose (`btl/plant/`). Ea
 |---|---|
 | `concept` | Which idea it shows (`ConceptId`) |
 | `difficulty` | The level asked for, from 1 (easiest) to 3 |
-| `pause_action_id` | Play pauses once this action ends |
-| `answer_action_id` | The action the question is about; its snapshot is the picture the learner sees |
+| `pause_action_id` | Play pauses once this action ends; the snapshot of the next action is the picture the learner sees |
+| `answer_action_id` | The action the question is about: the next action, or one a little later |
 
-Moments happen easiest first. The events written for a moment carry its index in `planted_moment_id`. The detectors never read either: they must find planted moments from their football rules alone.
+Moments happen easiest first. The events from a moment's first written action to its answer carry its index in `planted_moment_id`. The detectors never read either: they must find planted moments from their football rules alone.
 
 ## Concept tags
 

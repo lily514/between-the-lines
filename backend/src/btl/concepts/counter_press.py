@@ -4,27 +4,11 @@ from dataclasses import dataclass, field
 
 from btl.concepts.base import ConceptTag, MatchContext
 from btl.schema import PITCH_LENGTH
-from btl.schema.event import Event
-from btl.schema.vocab import ActionType, ConceptId, Result
+from btl.schema.possession import changes_hands_in_open_play
+from btl.schema.vocab import ConceptId
 
 MAX_SECONDS = 5.0
 HALFWAY = PITCH_LENGTH / 2
-
-# Set pieces restart play after the ball has been dead. Winning or losing the ball through one
-# isn't a turnover in open play, so it can't start or finish a counter-press.
-RESTARTS = frozenset(
-    {
-        ActionType.THROW_IN,
-        ActionType.FREEKICK_CROSSED,
-        ActionType.FREEKICK_SHORT,
-        ActionType.CORNER_CROSSED,
-        ActionType.CORNER_SHORT,
-        ActionType.SHOT_PENALTY,
-        ActionType.SHOT_FREEKICK,
-        ActionType.GOALKICK,
-    }
-)
-SHOTS = frozenset({ActionType.SHOT, ActionType.SHOT_PENALTY, ActionType.SHOT_FREEKICK})
 
 
 @dataclass(frozen=True, slots=True)
@@ -61,7 +45,8 @@ class CounterPress:
                 continue
             last_touch = events[before.last]
             loss, regain = events[lost.first], events[regained.first]
-            if not (_turnover(last_touch, loss) and _turnover(events[lost.last], regain)):
+            lost_it = changes_hands_in_open_play(last_touch, loss)
+            if not (lost_it and changes_hands_in_open_play(events[lost.last], regain)):
                 continue
             seconds = regain.time_seconds - loss.time_seconds
             if seconds <= self.max_seconds and regain.start_x > HALFWAY:
@@ -79,11 +64,3 @@ class CounterPress:
                     )
                 )
         return tuple(tags)
-
-
-def _turnover(last_touch: Event, first_touch: Event) -> bool:
-    """Whether the ball changed hands in open play between these two actions."""
-    scored = last_touch.result is Result.OWNGOAL or (
-        last_touch.action_type in SHOTS and last_touch.result is Result.SUCCESS
-    )
-    return not scored and first_touch.action_type not in RESTARTS

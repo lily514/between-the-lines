@@ -1,5 +1,5 @@
 from btl.schema.ids import ActionId, TeamId
-from btl.schema.possession import Possession, split_possessions
+from btl.schema.possession import Possession, changes_hands_in_open_play, split_possessions
 from btl.schema.vocab import ActionType, Result
 from tests.fixtures.matches import (
     AWAY,
@@ -51,3 +51,24 @@ def test_new_period_starts_a_new_possession_for_the_same_team() -> None:
 
 def test_no_events_means_no_possessions() -> None:
     assert split_possessions(()) == ()
+
+
+def test_the_ball_changes_hands_in_open_play_when_won_from_the_other_team() -> None:
+    lost = make_event(0, HOME, HOME_MIDFIELDER, (60, 30), (70, 30), result=Result.FAIL)
+    won = make_event(1, AWAY, AWAY_MIDFIELDER, (70, 30), (70, 30), ActionType.INTERCEPTION)
+
+    assert changes_hands_in_open_play(lost, won)
+
+
+def test_a_set_piece_does_not_win_the_ball_in_open_play() -> None:
+    out = make_event(0, HOME, HOME_MIDFIELDER, (60, 30), (70, 0), result=Result.FAIL)
+    throw = make_event(1, AWAY, AWAY_MIDFIELDER, (70, 0), (65, 10), ActionType.THROW_IN)
+
+    assert not changes_hands_in_open_play(out, throw)
+
+
+def test_the_kickoff_after_a_goal_does_not_win_the_ball_in_open_play() -> None:
+    goal = make_event(0, HOME, HOME_MIDFIELDER, (95, 34), (105, 34), ActionType.SHOT)
+    kickoff = make_event(1, AWAY, AWAY_MIDFIELDER, (52.5, 34), (60, 30))
+
+    assert not changes_hands_in_open_play(goal, kickoff)

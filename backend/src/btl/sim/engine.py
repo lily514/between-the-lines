@@ -16,11 +16,11 @@ from btl.schema.ids import ActionId, GameId
 from btl.schema.match import Match
 from btl.schema.moment import PlantedMoment
 from btl.schema.snapshot import PlayerSlot, Positions
-from btl.sim.chain import Side, Step, kickoff, play_chain, play_on
+from btl.sim.chain import Chain, Side, Step, kickoff, play_chain, play_on
 from btl.sim.lineup import Lineup, pick_lineup
 from btl.sim.params import DEFAULT_PARAMS, SimParams
 from btl.sim.pitch import Point, mirror
-from btl.sim.script import Director, Shape
+from btl.sim.script import Director, PlayOn, Shape
 from btl.sim.shape import FOUR_FOUR_TWO, Formation, place_teams
 
 HOME, AWAY = 0, 1
@@ -74,6 +74,8 @@ def simulate_match(
     events: list[Event] = []
     snapshots: list[NDArray[np.float64]] = []
     planted: list[PlantedMoment] = []
+    # The moment being written, and the first and last action ids to mark with it.
+    marking: tuple[int, int, int] | None = None
     possession_id = 0
     for period_id, team in ((1, HOME), (2, AWAY)):
         start, clock = kickoff(sides[team]), 0.0
@@ -90,23 +92,25 @@ def simulate_match(
                 )
             )
             shapes: dict[int, Shape] = {}
-            moment_id: int | None = None
-            scripted = 0
             if script is None:
                 chain = play_chain(attack, defence, start, engine_rng, params)
             else:
-                won_the_ball = start.won_with is not None
-                chain = play_on(
-                    attack,
-                    defence,
-                    script.steps,
-                    script.ball,
-                    script.slot,
-                    won_the_ball,
-                    engine_rng,
-                    params,
-                )
-                shapes, moment_id, scripted = dict(script.shapes), len(planted), len(script.steps)
+                if isinstance(script.then, PlayOn):
+                    won_the_ball = start.won_with is not None
+                    chain = play_on(
+                        attack,
+                        defence,
+                        script.steps,
+                        script.then.ball,
+                        script.then.slot,
+                        won_the_ball,
+                        engine_rng,
+                        params,
+                    )
+                else:
+                    chain = Chain(script.steps, script.then)
+                shapes = dict(script.shapes)
+                marking = (len(planted), len(events), len(events) + script.answer)
                 planted.append(
                     PlantedMoment(
                         script.concept,
@@ -128,7 +132,7 @@ def simulate_match(
                         team,
                         step,
                         possession_id,
-                        moment_id if index < scripted else None,
+                        _moment_of(len(events), marking),
                     )
                 )
                 if shape_rng is not None and index in shapes:
@@ -158,6 +162,14 @@ def simulate_match(
         positions=positions,
         planted=tuple(planted),
     )
+
+
+def _moment_of(action_id: int, marking: tuple[int, int, int] | None) -> int | None:
+    """The planted moment an action belongs to: from its script's first step to its answer."""
+    if marking is None:
+        return None
+    moment_id, first, last = marking
+    return moment_id if first <= action_id <= last else None
 
 
 def _stored(point: Point, team: int) -> Point:

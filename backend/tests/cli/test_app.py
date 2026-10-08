@@ -155,7 +155,7 @@ def test_simulate_plants_moments_that_moments_shows(tmp_path: Path) -> None:
 def test_simulate_explains_a_moment_it_cannot_plant(tmp_path: Path) -> None:
     result = runner.invoke(
         app,
-        ["simulate", "--seed", "7", "--out", str(tmp_path), "--plant", "counter_press:1"],
+        ["simulate", "--seed", "7", "--out", str(tmp_path), "--plant", "switch_of_play:1"],
         env=WIDE,
     )
 
@@ -170,3 +170,20 @@ def test_moments_says_when_a_match_has_none(tmp_path: Path) -> None:
 
     assert shown.exit_code == 0, shown.output
     assert "No planted moments" in shown.output
+
+
+def test_moments_shows_a_counter_press_from_just_after_the_ball_is_lost(tmp_path: Path) -> None:
+    runner.invoke(
+        app,
+        ["simulate", "--seed", "7", "--out", str(tmp_path), "--plant", "counter_press:2"],
+        env=WIDE,
+    )
+
+    shown = runner.invoke(app, ["moments", str(tmp_path / "match-0007")], env=WIDE)
+
+    assert shown.exit_code == 0, shown.output
+    match, _ = load_match(tmp_path / "match-0007")
+    (moment,) = match.planted
+    assert f"the pitch at #{moment.pause_action_id + 1}" in shown.output
+    assert "Detector: counter press · seconds to win back" in shown.output
+    assert "None" not in shown.output

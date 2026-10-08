@@ -11,8 +11,9 @@ class PlantedMoment:
     """A teachable moment written into a match on purpose: the key to a future question.
 
     Play pauses once ``pause_action_id`` ends, and the learner sees the snapshot at the start
-    of ``answer_action_id``, the action the question is about. ``difficulty`` is the level
-    that was asked for, from 1 (easiest) up.
+    of the next action. ``answer_action_id`` is the action the question is about: that next
+    action itself, or one a little later. ``difficulty`` is the level that was asked for, from
+    1 (easiest) up.
     """
 
     concept: ConceptId

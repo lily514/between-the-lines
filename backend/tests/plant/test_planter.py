@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 
 from btl.concepts.base import match_context
+from btl.concepts.counter_press import CounterPress
 from btl.concepts.line_breaking import LineBreakingPass
 from btl.league.league import Club, generate_league
 from btl.plant import templates
@@ -62,6 +63,21 @@ def test_moments_happen_in_order_and_hold_their_own_events(seed: int) -> None:
         assert match.events[moment.answer_action_id].team_id == match.events[marked[0]].team_id
 
 
+@pytest.mark.parametrize("seed", SEEDS)
+def test_every_planted_counter_press_is_found_by_the_detector(seed: int) -> None:
+    request = parse_plant(["counter_press:1,2,3", "line_breaking_pass:2"])
+    match = simulate_with_moments(*clubs(), seed, request, with_snapshots=False)
+    found = {tag.action_id for tag in CounterPress().detect(match_context(match))}
+
+    presses = [m for m in match.planted if m.concept is ConceptId.COUNTER_PRESS]
+
+    assert [moment.difficulty for moment in presses] == [1, 2, 3]
+    assert all(moment.answer_action_id in found for moment in presses)
+    for number, moment in enumerate(match.planted):
+        marked = [e.action_id for e in match.events if e.planted_moment_id == number]
+        assert marked[-1] == moment.answer_action_id
+
+
 def test_play_before_the_first_moment_is_the_unplanted_match() -> None:
     match = planted(0)
     plain = simulate_match(*clubs(), 0)
@@ -97,7 +113,7 @@ def test_targets_are_spread_over_both_halves_away_from_the_whistles() -> None:
 
 def test_a_concept_without_a_template_cannot_be_planted() -> None:
     with pytest.raises(ValueError, match="can't be planted yet"):
-        Planter(PlantRequest((MomentSpec(ConceptId.COUNTER_PRESS, 1),)))
+        Planter(PlantRequest((MomentSpec(ConceptId.SWITCH_OF_PLAY, 1),)))
 
 
 class NeverFits(templates.LineBreakingTemplate):

@@ -21,8 +21,8 @@ from btl.sim.shape import FOUR_THREE_THREE
 from tests.fixtures.imports import imports_by_module
 
 SEEDS = range(5)
-# These seeds' matches also hold three planted line-breaking passes, so the invariants are
-# checked with planting too.
+# These seeds' matches also hold planted line-breaking passes and counter-presses, so the
+# invariants are checked with planting too.
 PLANTED_SEEDS = (100, 101)
 
 
@@ -35,7 +35,7 @@ def league() -> League:
 def match(seed: int) -> Match:
     home, away = league().clubs[:2]
     if seed in PLANTED_SEEDS:
-        request = parse_plant(["line_breaking_pass:1,2,3"])
+        request = parse_plant(["line_breaking_pass:1,2,3", "counter_press:1,2,3"])
         return simulate_with_moments(home, away, seed, request, away_formation=FOUR_THREE_THREE)
     return simulate_match(home, away, seed, away_formation=FOUR_THREE_THREE)
 

@@ -138,3 +138,38 @@ def lost_and_won_back(
 def _mirror_event(event: Event) -> Event:
     (start, end) = mirrored(((event.start_x, event.start_y), (event.end_x, event.end_y)))
     return replace(event, start_x=start[0], start_y=start[1], end_x=end[0], end_y=end[1])
+
+
+WON_AT = 30.0
+
+
+def won_and_carried(
+    seconds: float,
+    where: Spot,
+    *,
+    team: TeamId = HOME,
+    won_with: ActionType = ActionType.INTERCEPTION,
+) -> Match:
+    """A team wins the ball at ``where`` at ``WON_AT`` seconds and is in the box ``seconds`` later.
+
+    ``where`` is seen as if ``team`` attacks towards x = 105, like the other spots; the match
+    stores everything in the team's real direction.
+
+    - 0: the opponent passes towards ``where``, and it's cut out.
+    - 1: ``team`` wins the ball there (``won_with``).
+    - 2: ``team`` passes forward, to the edge of the box.
+    - 3: ``team`` shoots from inside the box.
+    """
+    other = AWAY if team == HOME else HOME
+    ours = HOME_MIDFIELDER if team == HOME else AWAY_MIDFIELDER
+    theirs = AWAY_MIDFIELDER if team == HOME else HOME_MIDFIELDER
+    timed = (
+        (WON_AT - 2, make_event(0, other, theirs, (70, 30), where, result=Result.FAIL)),
+        (WON_AT, make_event(1, team, ours, where, where, won_with)),
+        (WON_AT + 1, make_event(2, team, ours, where, (92, 40))),
+        (WON_AT + seconds, make_event(3, team, ours, (92, 40), (105, 34), ActionType.SHOT)),
+    )
+    events = tuple(replace(event, time_seconds=time) for time, event in timed)
+    if team == AWAY:
+        events = tuple(_mirror_event(event) for event in events)
+    return Match(game_id=GAME, home_team_id=HOME, away_team_id=AWAY, events=events)

@@ -5,12 +5,12 @@ import numpy as np
 import pytest
 
 from btl.league.league import Role
-from btl.plant.templates import GAP_WIDTHS, LineBreakingTemplate
-from btl.schema.vocab import ActionType
+from btl.plant.templates import GAP_WIDTHS, CounterPressTemplate, LineBreakingTemplate
+from btl.schema.vocab import ActionType, Result
 from btl.sim.chain import Restart, Side, Start
 from btl.sim.params import DEFAULT_PARAMS
-from btl.sim.pitch import Point, distance
-from btl.sim.script import Script
+from btl.sim.pitch import PITCH_LENGTH, Point, distance, mirror
+from btl.sim.script import PlayOn, Script
 from btl.sim.shape import FOUR_FOUR_TWO, FOUR_THREE_THREE
 
 ATTACK = Side(FOUR_FOUR_TWO, 1.0)
@@ -60,7 +60,7 @@ def test_the_ball_is_won_laid_off_then_passed_forward() -> None:
     assert lay_off.start == won.end and answer.start == lay_off.end
     assert (script.pause, script.answer) == (1, 2)
     assert answer.end.x > answer.start.x
-    assert script.ball == answer.end
+    assert isinstance(script.then, PlayOn) and script.then.ball == answer.end
 
 
 @pytest.mark.parametrize("difficulty", [1, 2, 3])
@@ -96,7 +96,8 @@ def test_the_passer_and_receiver_stand_where_the_ball_is() -> None:
     answer = script.steps[script.answer]
 
     assert attackers[answer.slot] == answer.start
-    assert attackers[script.slot] == answer.end
+    assert isinstance(script.then, PlayOn)
+    assert attackers[script.then.slot] == answer.end
 
 
 @pytest.mark.parametrize(("difficulty", "decoy"), [(1, False), (2, False), (3, True)])
@@ -117,3 +118,48 @@ def test_only_the_hardest_level_has_a_free_teammate_to_the_side(
 
 def test_the_same_random_stream_writes_the_same_moment() -> None:
     assert write(3, seed=5) == write(3, seed=5)
+
+
+WON_DEEP = Start(Point(25, 30), 2, ActionType.TACKLE)
+
+
+def write_press(difficulty: int, seed: int = 0) -> Script:
+    return CounterPressTemplate().write(
+        ATTACK, DEFENCE, WON_DEEP, difficulty, np.random.default_rng(seed), DEFAULT_PARAMS
+    )
+
+
+@pytest.mark.parametrize(
+    ("start", "fits"),
+    [
+        (WON_DEEP, True),
+        (Start(Point(50, 30), 6, ActionType.INTERCEPTION), False),
+        (Start(Point(25, 0), 2, restart=Restart.THROW_IN), False),
+    ],
+)
+def test_a_counter_press_needs_the_opponent_to_win_the_ball_in_its_own_half(
+    start: Start, fits: bool
+) -> None:
+    assert CounterPressTemplate().fits(start) is fits
+
+
+@pytest.mark.parametrize(("difficulty", "passes"), [(1, 0), (2, 1), (3, 2)])
+def test_the_opponent_keeps_the_ball_longer_at_harder_levels(difficulty: int, passes: int) -> None:
+    won, *completed, cut_out = write_press(difficulty).steps
+
+    assert won.action_type is ActionType.TACKLE
+    assert len(completed) == passes
+    assert all(step.result is Result.SUCCESS for step in completed)
+    assert cut_out.result is Result.FAIL
+
+
+@pytest.mark.parametrize("seed", range(20))
+def test_the_ball_is_won_back_quickly_in_the_opponents_half(seed: int) -> None:
+    script = write_press(3, seed)
+
+    assert isinstance(script.then, Start)
+    assert script.then.won_with is ActionType.INTERCEPTION
+    assert script.then.ball == mirror(script.steps[-1].end)
+    assert script.then.ball.x > PITCH_LENGTH / 2
+    assert sum(step.duration for step in script.steps) < 5
+    assert (script.pause, script.answer) == (0, len(script.steps))

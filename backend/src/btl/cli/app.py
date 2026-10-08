@@ -22,6 +22,7 @@ from btl.io import MatchInfo, load_match, load_threat_model, save_match, save_th
 from btl.league.league import Club, League, generate_league, season_fixtures
 from btl.plant.planter import simulate_with_moments
 from btl.plant.spec import parse_plant
+from btl.schema.ids import ActionId
 from btl.schema.match import Match
 from btl.schema.vocab import ConceptId
 from btl.sim.engine import simulate_match
@@ -188,18 +189,19 @@ def moments(
             f" · {match_clock(answer)}"
         )
         console.print(events_table(match, league, first, moment.answer_action_id - first + 1))
+        paused_at = ActionId(moment.pause_action_id + 1)
         console.print(
-            f"Play pauses after #{moment.pause_action_id}. The question is about"
-            f" #{moment.answer_action_id}, shown attacking left to right:"
+            f"Play pauses after #{moment.pause_action_id}; the pitch at #{paused_at},"
+            f" attacking left to right. The answer is #{moment.answer_action_id}."
         )
-        console.print(pitch_picture(ctx.match, moment.answer_action_id))
+        console.print(pitch_picture(ctx.match, paused_at))
         tag = found.get((moment.concept, moment.answer_action_id))
-        console.print(
-            "Not found by the detector."
-            if tag is None
-            else f"Detector: {tag.concept.label}, difficulty {tag.difficulty}"
-            + "".join(f" · {name} {value:g}" for name, value in tag.evidence.items())
-        )
+        if tag is None:
+            console.print("Not found by the detector.")
+            continue
+        details = [f"difficulty {tag.difficulty}"] if tag.difficulty is not None else []
+        details += [f"{name} {value:g}" for name, value in tag.evidence.items()]
+        console.print(f"Detector: {tag.concept.label} · " + " · ".join(details))
 
 
 @app.command("fit-xt")

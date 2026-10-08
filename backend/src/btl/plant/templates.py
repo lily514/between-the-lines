@@ -4,6 +4,7 @@ A template never looks at the detectors. It builds its moment from the same foot
 so the test that planted moments are detected checks both sides independently.
 """
 
+import math
 from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Protocol
@@ -14,9 +15,9 @@ from btl.league.league import Role
 from btl.schema.vocab import ActionType, BodyPart, ConceptId, Phase, Result
 from btl.sim.chain import Side, Start, Step
 from btl.sim.params import SimParams
-from btl.sim.pitch import PITCH_WIDTH, Point, clamp_to_pitch, distance
-from btl.sim.script import Script
-from btl.sim.shape import Formation, place_teams
+from btl.sim.pitch import PITCH_WIDTH, Point, clamp_to_pitch, distance, mirror
+from btl.sim.script import PlayOn, Script
+from btl.sim.shape import Formation, place_teams, team_shape
 
 # Where the ball must be won for a line-breaking moment to follow, in the winner's direction:
 # deep enough that the opponent's midfield line is still in front of it.
@@ -40,6 +41,19 @@ DECOY_FROM_LEVEL = 3
 DECOY_SIDEWAYS = 12.0
 JITTER = 0.5
 _MARGIN = 0.5
+
+# Where the opponent wins the ball for a counter-press to follow, in the opponent's direction:
+# in its own half, so the ball is won back in the pressing team's attacking half. The opponent
+# never takes it past ``PRESS_LAST_X``.
+PRESS_ZONE = (15.0, 40.0)
+PRESS_LAST_X = 44.0
+# Under pressure the opponent plays short and quick. With these ranges even level 3 is won
+# back within 4.7 s of the opponent winning the ball.
+QUICK_TOUCH = (0.3, 0.7)
+ESCAPE_PASS = (5.0, 10.0)
+ESCAPE_ANGLE = 0.6 * math.pi
+CUT_OUT_ALONG = (0.4, 0.8)
+PASSES_BEFORE_LOSING: Mapping[int, int] = {1: 0, 2: 1, 3: 2}
 
 
 class Template(Protocol):
@@ -133,13 +147,12 @@ class LineBreakingTemplate:
                 rng.uniform(*params.reaction_time),
                 Phase.TRANSITION,
             ),
-            _pass(start.slot, won_at, playmaker_at, rng, params),
-            _pass(playmaker, playmaker_at, receiver_at, rng, params),
+            _pass(start.slot, won_at, playmaker_at, params.control_time, rng, params),
+            _pass(playmaker, playmaker_at, receiver_at, params.control_time, rng, params),
         )
         return Script(
             steps=steps,
-            ball=receiver_at,
-            slot=receiver,
+            then=PlayOn(receiver_at, receiver),
             shapes={2: (attackers, defenders)},
             concept=ConceptId.LINE_BREAKING_PASS,
             difficulty=difficulty,
@@ -148,7 +161,89 @@ class LineBreakingTemplate:
         )
 
 
-TEMPLATES: Mapping[ConceptId, Template] = {ConceptId.LINE_BREAKING_PASS: LineBreakingTemplate()}
+@dataclass(frozen=True, slots=True)
+class CounterPressTemplate:
+    """The opponent wins the ball in its own half and loses it straight back.
+
+    The moment is about the team that lost the ball. Play pauses just after it loses it: what
+    should it do now? Its players are still close to the ball, so it hunts the ball and cuts
+    out the opponent's pass in the opponent's half, a few seconds later. The harder the level,
+    the longer the opponent keeps the ball first, so the press is harder to recognise: at
+    level 1 its first pass is cut out, at level 2 its second, and at level 3 its third.
+
+    In `Script` terms the attacking team is the opponent, which has the ball during the script.
+    The script ends by handing the ball back, so the answer is the first action of the pressing
+    team's next possession.
+    """
+
+    def fits(self, start: Start) -> bool:
+        """Whether the opponent won the ball in open play, in its own half."""
+        return start.won_with in WINNING_ACTIONS and PRESS_ZONE[0] <= start.ball.x <= PRESS_ZONE[1]
+
+    def write(
+        self,
+        attack: Side,
+        defence: Side,
+        start: Start,
+        difficulty: int,
+        rng: Generator,
+        params: SimParams,
+    ) -> Script:
+        """Win, a few quick passes, then the pass the pressing team cuts out."""
+        if start.won_with is None:
+            raise ValueError("a counter-press moment starts with the opponent winning the ball")
+        outfield = {Role.DEFENDER, Role.MIDFIELDER, Role.FORWARD}
+        ball, slot = start.ball, start.slot
+        steps = [
+            Step(
+                slot,
+                start.won_with,
+                Result.SUCCESS,
+                BodyPart.FOOT,
+                ball,
+                ball,
+                rng.uniform(*QUICK_TOUCH),
+                Phase.TRANSITION,
+            )
+        ]
+        for _ in range(PASSES_BEFORE_LOSING[difficulty]):
+            target = _escape(ball, rng)
+            shape = team_shape(attack.formation, target, in_possession=True)
+            receiver = _nearest(attack.formation, shape, target, outfield, {slot})
+            steps.append(_pass(slot, ball, target, QUICK_TOUCH, rng, params))
+            ball, slot = target, receiver
+        target = _escape(ball, rng)
+        along = rng.uniform(*CUT_OUT_ALONG)
+        cut_out = Point(ball.x + along * (target.x - ball.x), ball.y + along * (target.y - ball.y))
+        steps.append(_pass(slot, ball, cut_out, QUICK_TOUCH, rng, params, Result.FAIL))
+        won_back_at = mirror(cut_out)
+        shape = team_shape(defence.formation, won_back_at, in_possession=False)
+        presser = _nearest(defence.formation, shape, won_back_at, outfield, set())
+        return Script(
+            steps=tuple(steps),
+            then=Start(won_back_at, presser, ActionType.INTERCEPTION),
+            shapes={},
+            concept=ConceptId.COUNTER_PRESS,
+            difficulty=difficulty,
+            pause=0,
+            answer=len(steps),
+        )
+
+
+TEMPLATES: Mapping[ConceptId, Template] = {
+    ConceptId.LINE_BREAKING_PASS: LineBreakingTemplate(),
+    ConceptId.COUNTER_PRESS: CounterPressTemplate(),
+}
+
+
+def _escape(ball: Point, rng: Generator) -> Point:
+    """Where a short pass under pressure goes: anywhere but back towards goal, in its own half."""
+    length = rng.uniform(*ESCAPE_PASS)
+    angle = rng.uniform(-ESCAPE_ANGLE, ESCAPE_ANGLE)
+    return Point(
+        _clamp(ball.x + length * math.cos(angle), _MARGIN, PRESS_LAST_X),
+        _clamp(ball.y + length * math.sin(angle), _MARGIN, PITCH_WIDTH - _MARGIN),
+    )
 
 
 def _lay_off_target(won_at: Point, rng: Generator) -> Point:
@@ -201,10 +296,19 @@ def _open_gap(
     return placed, {midfielders[left], midfielders[left + 1]}
 
 
-def _pass(slot: int, start: Point, end: Point, rng: Generator, params: SimParams) -> Step:
-    duration = distance(start, end) / params.pass_speed + rng.uniform(*params.control_time)
+def _pass(
+    slot: int,
+    start: Point,
+    end: Point,
+    touch: tuple[float, float],
+    rng: Generator,
+    params: SimParams,
+    result: Result = Result.SUCCESS,
+) -> Step:
+    """A pass, lasting its flight plus a random ``touch`` time until the next action."""
+    duration = distance(start, end) / params.pass_speed + rng.uniform(*touch)
     return Step(
-        slot, ActionType.PASS, Result.SUCCESS, BodyPart.FOOT, start, end, duration, Phase.TRANSITION
+        slot, ActionType.PASS, result, BodyPart.FOOT, start, end, duration, Phase.TRANSITION
     )
 
 

@@ -24,6 +24,21 @@ DEFENSIVE_ACTIONS = frozenset(
         ActionType.KEEPER_PICK_UP,
     }
 )
+# Set pieces restart play after the ball has been dead, so a possession that starts with one
+# didn't win the ball in open play.
+RESTARTS = frozenset(
+    {
+        ActionType.THROW_IN,
+        ActionType.FREEKICK_CROSSED,
+        ActionType.FREEKICK_SHORT,
+        ActionType.CORNER_CROSSED,
+        ActionType.CORNER_SHORT,
+        ActionType.SHOT_PENALTY,
+        ActionType.SHOT_FREEKICK,
+        ActionType.GOALKICK,
+    }
+)
+SHOTS = frozenset({ActionType.SHOT, ActionType.SHOT_PENALTY, ActionType.SHOT_FREEKICK})
 
 
 @dataclass(frozen=True, slots=True)
@@ -70,3 +85,19 @@ def split_possessions(events: Sequence[Event]) -> tuple[Possession, ...]:
     if current is not None:
         possessions.append(current)
     return tuple(possessions)
+
+
+def changes_hands_in_open_play(last_touch: Event, first_touch: Event) -> bool:
+    """Whether the ball changed hands in open play between two possessions.
+
+    It didn't if the new possession starts with a set piece, or if the old one ended with a
+    goal: the kickoff after a goal is a plain SPADL pass, so the goal is what gives it away.
+
+    Args:
+        last_touch: The last action of one possession.
+        first_touch: The first action of the next.
+    """
+    scored = last_touch.result is Result.OWNGOAL or (
+        last_touch.action_type in SHOTS and last_touch.result is Result.SUCCESS
+    )
+    return not scored and first_touch.action_type not in RESTARTS

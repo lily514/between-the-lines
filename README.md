@@ -46,9 +46,9 @@ List the football concepts the detectors find in a match, such as switches of pl
 uv run btl tags data/matches/match-0007
 ```
 
-Plant three line-breaking passes, easiest first, and see each one on an ASCII pitch:
+Plant teachable moments, easiest first, and see each one on an ASCII pitch. Here: three line-breaking passes and one counter-press:
 
 ```sh
-uv run btl simulate --seed 7 --plant line_breaking_pass:1,2,3
+uv run btl simulate --seed 7 --plant line_breaking_pass:1,2,3 --plant counter_press:1
 uv run btl moments data/matches/match-0007
 ```

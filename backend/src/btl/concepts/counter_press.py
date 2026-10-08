@@ -8,6 +8,8 @@ from btl.schema.possession import changes_hands_in_open_play
 from btl.schema.vocab import ConceptId
 
 MAX_SECONDS = 5.0
+QUICK_REGAIN = 1.0
+SLOW_REGAIN = 4.0
 HALFWAY = PITCH_LENGTH / 2
 
 
@@ -26,11 +28,18 @@ class CounterPress:
     and in the opponent's half. Possessions come from `btl.schema.possession`, and the times are
     those of the actions that win the ball each way.
 
-    No difficulty is given. The tag's key action is the one that wins the ball back, and its span
-    runs from the team's last action before it lost the ball.
+    Difficulty is how hard the press is to recognise. Won back within ``quick_regain`` seconds,
+    the ball has barely left and the press is unmistakable: difficulty 0. The longer the
+    opponent keeps it, stringing passes together, the more the regain looks like ordinary
+    defending, rising to 1 at ``slow_regain`` seconds or more.
+
+    The tag's key action is the one that wins the ball back, and its span runs from the team's
+    last action before it lost the ball.
     """
 
     max_seconds: float = MAX_SECONDS
+    quick_regain: float = QUICK_REGAIN
+    slow_regain: float = SLOW_REGAIN
     concept: ConceptId = field(default=ConceptId.COUNTER_PRESS, init=False)
     needs_snapshots: bool = field(default=False, init=False)
 
@@ -55,7 +64,7 @@ class CounterPress:
                         game_id=regain.game_id,
                         action_id=regain.action_id,
                         span=(last_touch.action_id, regain.action_id),
-                        difficulty=None,
+                        difficulty=self._difficulty(seconds),
                         evidence={
                             "seconds to win back": round(seconds, 1),
                             "metres from goal": round(PITCH_LENGTH - regain.start_x, 1),
@@ -63,3 +72,7 @@ class CounterPress:
                     )
                 )
         return tuple(tags)
+
+    def _difficulty(self, seconds: float) -> float:
+        held = (seconds - self.quick_regain) / (self.slow_regain - self.quick_regain)
+        return round(min(max(held, 0.0), 1.0), 2)

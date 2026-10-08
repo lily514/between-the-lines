@@ -35,3 +35,22 @@ Where implementation diverged from [plan.md](plan.md), or something surprising w
 **Affects:**
 - **`switch_of_play` has a detector but no concept in the map,** so its tags count towards nothing. That's harmless in 2a; a later milestone can add a concept for it.
 - **T8** adds the evidence-fields test.
+
+## T4 — Counter-press difficulty (2026-10-08)
+**Plan said:** the detector gives a difficulty from 0 to 1 from the seconds taken to win the ball back, with named thresholds; planted levels are detected in difficulty order over 40 seeds.
+**We did:** as planned. Difficulty rises in a straight line from 0 at `QUICK_REGAIN` = 1 s to 1 at `SLOW_REGAIN` = 4 s, rounded to two places. The thresholds were chosen from measurements over 40 seeds:
+
+| Seconds to win back | Lowest | 10th percentile | Median | 90th percentile | Highest | Difficulty, 10th–90th percentile |
+|---|---|---|---|---|---|---|
+| Planted level 1 | 0.9 | 1.1 | 1.3 | 1.5 | 1.8 | 0.03–0.17 |
+| Planted level 2 | 1.6 | 2.0 | 2.3 | 2.6 | 2.8 | 0.33–0.53 |
+| Planted level 3 | 2.5 | 2.8 | 3.2 | 3.5 | 3.9 | 0.60–0.84 |
+| Natural (27.5 per match) | — | 2.2 | 3.2 | 4.5 | — | 0.40–1.00 |
+
+The three levels never swapped order within a match. The middle 80% of each level lands inside the selector's band for that level (0–0.4, 0.3–0.7, 0.6–1).
+
+**Why:** within about a second the ball has barely left, so the press is unmistakable. By four seconds the opponent has strung passes together, and the regain looks like ordinary defending.
+
+**Affects:**
+- **Natural counter-presses are mostly hard** (median difficulty 0.73), so beginners will mostly be asked about the planted level-1 ones. That's fine; it's what they're for.
+- **`btl moments` now prints a difficulty for counter-presses**, and its test was updated.

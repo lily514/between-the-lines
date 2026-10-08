@@ -80,6 +80,20 @@ def test_every_planted_counter_press_is_found_by_the_detector(seed: int) -> None
         assert marked[-1] == moment.answer_action_id
 
 
+@pytest.mark.parametrize("seed", range(40))
+def test_planted_counter_presses_are_detected_in_order_of_difficulty(seed: int) -> None:
+    request = parse_plant(["counter_press:1,2,3"])
+    match = simulate_with_moments(*clubs(), seed, request, with_snapshots=False)
+    found = {tag.action_id: tag for tag in CounterPress().detect(match_context(match))}
+
+    detected = [found[moment.answer_action_id].difficulty for moment in match.planted]
+    scores = [d for d in detected if d is not None]
+
+    assert [moment.difficulty for moment in match.planted] == [1, 2, 3]
+    assert len(scores) == 3
+    assert scores == sorted(scores) and len(set(scores)) == 3
+
+
 def test_play_before_the_first_moment_is_the_unplanted_match() -> None:
     match = planted(0)
     plain = simulate_match(*clubs(), 0)

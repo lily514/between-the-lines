@@ -193,3 +193,13 @@ The three levels never swapped order within a match. The middle 80% of each leve
 **Affects:**
 - **2b's Verifier** checks a model's slots with the same `question_values` and `feedback_values`, and falls back to these templates.
 - **Map text read in a sentence.** Some of the map's wording reads a little stiffly once filled, for example "this one broke one". Rewording the map would fix that.
+
+## T11 — Learner store (2026-10-08)
+**Plan said:** a `LearnerStore` protocol with memory and JSON-file implementations; one contract suite run on both (create, get, put, a stale etag refused).
+**We did:** as planned, plus:
+- **The saved document is shaped like a Cosmos DB item:** `id` and `viewer_id` (the future partition key), `version`, `seed`, `match_number`, and every attempt inside. `to_document` and `from_document` live in `store/base.py`, so Milestone 3's Cosmos store reuses them. A record from another version is refused, like old match files.
+- **Viewer ids are kept plain** (lower-case letters, digits, `-` and `_`, up to 64 characters), because they become file names and document ids. That also stops a viewer id like `../escape` from writing outside the folder.
+- **Etags.** The JSON store's etag is a hash of the file. The memory store's counts writes. Files are written to a temporary name and then moved into place, so a crash never leaves half a file.
+
+**Why:** the plan left these details open.
+**Affects:** T12 keeps learners in `data/learners/` (already gitignored under `backend/data/`). Milestone 3 adds a Cosmos DB store to the contract suite's `STORES`.

@@ -13,6 +13,7 @@ from btl.io import (
     load_threat_model,
     save_match,
     save_threat_model,
+    saved_match_directories,
 )
 from btl.league.league import generate_league
 from btl.schema.ids import ActionId, GameId
@@ -120,3 +121,14 @@ def test_a_threat_model_in_another_format_version_is_refused(tmp_path: Path) -> 
 
     with pytest.raises(ValueError, match="format version 0"):
         load_threat_model(path)
+
+
+def test_saved_match_directories_lists_only_folders_holding_a_match(tmp_path: Path) -> None:
+    (tmp_path / "notes").mkdir()
+    match = six_event_match()
+    for game in (GameId(12), GameId(3)):
+        events = tuple(replace(event, game_id=game) for event in match.events)
+        save_match(replace(match, game_id=game, events=events), INFO, tmp_path)
+
+    assert saved_match_directories(tmp_path) == [tmp_path / "match-0003", tmp_path / "match-0012"]
+    assert saved_match_directories(tmp_path / "missing") == []

@@ -2,6 +2,25 @@
 
 Where implementation diverged from [plan.md](plan.md), or something surprising was learned. One note per occurrence, added in the same commit as the change.
 
+## Summary (2026-10-07)
+
+Milestone 1 is done: every task from T1 to T15 is in, including the cuttable ones (the counter-press detector and template, and the counter-attack detector).
+
+**Biggest changes from the plan**
+- **Detectors read typed events, not a DataFrame.** `MatchContext` holds a `Match` seen left to right, so pandas stays in the edge modules (T10).
+- **Names.** Clubs are named after real towns with no professional club, players have real first names and invented surnames, and no real names are in the repo, not even as a list of names to avoid. A private, gitignored list checks them locally (T4).
+- **Planting.** The engine asks an optional director for each possession's opening and never imports `plant/`. Scripts can hand the ball to the other team, which a counter-press needs. The learner's picture is the snapshot just after play pauses (T13, T14).
+- **Bands checked against real matches.** Counting the same measures in 40 real matches from StatsBomb's open data corrected the throw-in band and added goal-kick, throw-in and touchline bands (T8).
+- **The sample match is about 800 KB**, not 100 KB, because it keeps every player's position at every event (T15).
+
+**Cut:** the `ordering` option for planted moments (always easiest first), a simulator version in the threat model file (there is none to record), and the animated ASCII replay stretch goal.
+
+**Carries over**
+- Where the simulator differs from real matches, with no band yet: about 9 switches of play per match against about 20 real, 0.9 counter-attacks against 3, probably too many line breaks (about 205), long goal kicks, and slightly fewer throw-ins.
+- Only the line-breaking detector gives a difficulty. The counter-press rule would need a fix for loose balls before running on real data (T12).
+- The sample match must be regenerated whenever the simulator changes; the README gives the command.
+- The animated replay (play the seconds before a moment, then freeze on the picture) suits the UI milestone, and its frame builder could feed the web pitch.
+
 ## T1 — Project skeleton (2026-10-07)
 **Plan said:** pin Python with `uv python pin 3.11` so the project doesn't depend on pyenv.
 **We did:** also set `python-preference = "only-managed"` under `[tool.uv]` in `pyproject.toml`.
@@ -273,3 +292,17 @@ Most of the drop in passes came from dead-ball time alone. Tuning was then just 
 **How often it fires.** Simulated matches have about 0.9 counter-attacks each (0–3 over 30 seeds). On the 40 real matches from the T8 note, converted to SPADL with socceraction, the same rule finds about 3.0 per match (0–7). StatsBomb's analysts mark about 3.9 possessions per match as coming from a counter, though not all of those reach the box. So the simulator plays fewer fast breaks than real teams. There's no band for this yet. The median time to the box is about 10 s in both.
 **Why:** the plan left the counter-press template's levels and the details of both rules open, and a counter-press spans three possessions, which the T13 script couldn't express.
 **Affects:** T15's sample match can plant both concepts.
+
+## T15 — Milestone 1 wrap-up (2026-10-07)
+**Plan said:** `btl inspect <match>` combines events, xT and tags; a README walkthrough; `backend/examples/sample-match/`, about 100 KB, regenerated and committed; setup.md audited from a clean checkout.
+**We did:**
+- **`btl inspect`** shows each team's goals, shots, passes and completion, possessions, threat added (with a model) and tags per concept, then the events table with a threat column and a concepts column. The concepts column names every tag whose key action is that event, and marks planted ones. `--concept` shows only events with that concept; `--start` and `--count` work as in `btl events`. `events_table` now takes the events to show rather than a start and a count, so `inspect` can pass a filtered list.
+- **The sample match is `backend/examples/match-0007`**, not `sample-match`, so that one `btl simulate ... --out examples` command regenerates it in place. It is seed 7 with three line-breaking and three counter-press moments, all six found by their detectors. A test loads it and checks that.
+- **It is about 800 KB** (positions 710 KB, events 100 KB). Storing positions to the nearest 10 cm as 32-bit floats would have brought it to about 160 KB, but Lily chose to commit it exact: rounding every save would let a reloaded match differ slightly from the simulated one, and a detector could disagree on a borderline case.
+- **setup.md audit.** A fresh clone, with its own virtual environment, passed every step: tests (with the two real-name tests skipped, as documented), ruff, pyright and `btl --help`. No step was missing. Python 3.11 was already installed by uv on this machine, so `uv python install 3.11` itself was not tested from scratch.
+- The README now has a walkthrough built on the sample match, and the status table marks the milestone done.
+- **`btl matches [folder]`**, not in the plan, lists the saved matches in a folder (by default `data/matches`): clubs, score, seed, number of events and planted moments. Saves from an older schema version are listed underneath with a note to simulate them again, instead of stopping the command. Lily asked for it.
+- `btl --help` ends with four example commands, and the commands that read a match show it as `MATCH`, with example folders and a pointer to `btl matches`. Lily hadn't seen from the help that `inspect` needs a match's folder.
+- Count messages now use the singular for one ("1 planted moment"), and concept counts are shown as tallies ("switch of play 12"), because concept names don't pluralise by adding an "s".
+**Why:** a regeneration command that needs no renaming, and exact positions over a smaller file.
+**Affects:** each regeneration adds about 800 KB to the repo's history, so it's worth doing only at milestone ends or when the README's output goes wrong.

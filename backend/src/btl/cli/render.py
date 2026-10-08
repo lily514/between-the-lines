@@ -1,23 +1,35 @@
-"""How the CLI shows things: the scoreline, events, concept tags, threat grid, and the pitch."""
+"""How the CLI shows things: matches, scorelines, summaries, events, tags, threat, the pitch."""
 
+from collections import Counter
 from collections.abc import Sequence
+from pathlib import Path
 
 from rich.table import Table
 from rich.text import Text
 
 from btl.concepts.base import ConceptTag
+from btl.io import MatchInfo
 from btl.league.league import League
 from btl.schema import PITCH_LENGTH, PITCH_WIDTH
 from btl.schema.event import Event
 from btl.schema.ids import ActionId, TeamId
 from btl.schema.match import Match
-from btl.schema.vocab import ActionType, Result
+from btl.schema.possession import split_possessions
+from btl.schema.vocab import ActionType, ConceptId, Result
 from btl.value.xt import ThreatModel
 
 PERIOD_MINUTES = 45
 SHOTS = frozenset({ActionType.SHOT, ActionType.SHOT_FREEKICK, ActionType.SHOT_PENALTY})
 HOME_STYLE = "cyan"
 AWAY_STYLE = "magenta"
+
+
+def counted(count: int, noun: str, plural: str | None = None) -> str:
+    """A count with its noun, plural unless the count is one, e.g. "1 tag" or "1,203 tags".
+
+    ``plural`` is for nouns that don't just add an "s".
+    """
+    return f"{count:,} {noun if count == 1 else plural or noun + 's'}"
 
 
 def match_clock(event: Event) -> str:
@@ -48,17 +60,44 @@ def scoreline(match: Match, league: League) -> Text:
     )
 
 
+def matches_table(saved: Sequence[tuple[Path, Match, MatchInfo, League]]) -> Table:
+    """One row per saved match: its folder's name, clubs and score, seed, and what it holds."""
+    table = Table(header_style="bold")
+    table.add_column("match")
+    table.add_column("home", justify="right")
+    table.add_column("score", justify="center")
+    table.add_column("away")
+    table.add_column("seed", justify="right")
+    table.add_column("events", justify="right")
+    table.add_column("planted moments")
+    for directory, match, info, league in saved:
+        score = goals(match)
+        planted = Counter(moment.concept for moment in match.planted)
+        table.add_row(
+            directory.name,
+            Text(league.club(match.home_team_id).name, style=HOME_STYLE),
+            f"{score[match.home_team_id]}-{score[match.away_team_id]}",
+            Text(league.club(match.away_team_id).name, style=AWAY_STYLE),
+            str(info.seed),
+            f"{len(match.events):,}",
+            ", ".join(f"{concept.label} {count}" for concept, count in planted.items()),
+        )
+    return table
+
+
 def events_table(
     match: Match,
     league: League,
-    start: int,
-    count: int,
+    events: Sequence[Event],
     threat: Sequence[float | None] | None = None,
+    tags: Sequence[ConceptTag] | None = None,
 ) -> Table:
-    """A table of ``count`` events from action id ``start``.
+    """A table of some of a match's events.
 
     Coordinates are in metres, in the stored direction: the home team attacks towards x = 105.
-    With ``threat`` (one value per event), a column shows how much threat each event added.
+    With ``threat`` (one value per event in the match), a column shows how much threat each event
+    added. With ``tags``, a column names the concepts whose key action each event is, marking
+    those planted as teachable moments.
     """
     table = Table(header_style="bold")
     table.add_column("#", justify="right")
@@ -71,7 +110,10 @@ def events_table(
     if threat is not None:
         table.add_column("threat", justify="right")
     table.add_column("phase")
-    for event in match.events[start : start + count]:
+    concepts = _concepts_by_action(match, tags or ())
+    if tags is not None:
+        table.add_column("concepts")
+    for event in events:
         club = league.club(event.team_id)
         player = league.player(event.player_id)
         style = HOME_STYLE if event.team_id == match.home_team_id else AWAY_STYLE
@@ -86,7 +128,68 @@ def events_table(
             f"({event.start_x:.0f},{event.start_y:.0f}) → ({event.end_x:.0f},{event.end_y:.0f})",
             *([] if threat is None else [threat_text(threat[event.action_id])]),
             event.phase.value.replace("_", " "),
+            *([] if tags is None else [", ".join(concepts.get(event.action_id, ()))]),
         )
+    return table
+
+
+def _concepts_by_action(match: Match, tags: Sequence[ConceptTag]) -> dict[ActionId, list[str]]:
+    planted = {(moment.concept, moment.answer_action_id) for moment in match.planted}
+    concepts: dict[ActionId, list[str]] = {}
+    for tag in tags:
+        label = tag.concept.label
+        if (tag.concept, tag.action_id) in planted:
+            label += " (planted)"
+        concepts.setdefault(tag.action_id, []).append(label)
+    return concepts
+
+
+def summary_table(
+    match: Match,
+    league: League,
+    tags: Sequence[ConceptTag],
+    threat: Sequence[float | None] | None = None,
+) -> Table:
+    """Each team's main numbers side by side: goals, shots, passes, possessions, and concepts.
+
+    With ``threat`` (one value per event), a row adds up the threat each team's actions added.
+    """
+    teams = (match.home_team_id, match.away_team_id)
+    table = Table(header_style="bold")
+    table.add_column("")
+    for team, style in zip(teams, (HOME_STYLE, AWAY_STYLE), strict=True):
+        table.add_column(Text(league.club(team).name, style=style), justify="right")
+
+    score = goals(match)
+    shots = Counter(event.team_id for event in match.events if event.action_type in SHOTS)
+    passes = Counter(
+        event.team_id for event in match.events if event.action_type is ActionType.PASS
+    )
+    completed = Counter(
+        event.team_id
+        for event in match.events
+        if event.action_type is ActionType.PASS and event.result is Result.SUCCESS
+    )
+    possessions = Counter(possession.team_id for possession in split_possessions(match.events))
+    table.add_row("goals", *(str(score[team]) for team in teams))
+    table.add_row("shots", *(str(shots[team]) for team in teams))
+    table.add_row(
+        "passes (completed)",
+        *(
+            f"{passes[team]} ({completed[team] / passes[team]:.0%})" if passes[team] else "0"
+            for team in teams
+        ),
+    )
+    table.add_row("possessions", *(str(possessions[team]) for team in teams))
+    if threat is not None:
+        added = dict.fromkeys(teams, 0.0)
+        for event, value in zip(match.events, threat, strict=True):
+            if value is not None:
+                added[event.team_id] += value
+        table.add_row("threat added", *(f"{added[team]:+.2f}" for team in teams))
+    found = Counter((tag.concept, match.events[tag.action_id].team_id) for tag in tags)
+    for concept in ConceptId:
+        table.add_row(concept.label, *(str(found[concept, team]) for team in teams))
     return table
 
 

@@ -9,16 +9,26 @@ import typer
 from rich.console import Console
 
 from btl.cli.render import (
+    counted,
     events_table,
     match_clock,
+    matches_table,
     pitch_picture,
     scoreline,
+    summary_table,
     tags_table,
     threat_grid,
 )
 from btl.concepts.base import match_context
 from btl.concepts.registry import detect_all
-from btl.io import MatchInfo, load_match, load_threat_model, save_match, save_threat_model
+from btl.io import (
+    MatchInfo,
+    load_match,
+    load_threat_model,
+    save_match,
+    save_threat_model,
+    saved_match_directories,
+)
 from btl.league.league import Club, League, generate_league, season_fixtures
 from btl.plant.planter import simulate_with_moments
 from btl.plant.spec import parse_plant
@@ -29,13 +39,40 @@ from btl.sim.engine import simulate_match
 from btl.sim.shape import FOUR_FOUR_TWO
 from btl.value.xt import fit_on_simulated_matches, rate_match
 
+EXAMPLES = (
+    ("btl simulate --seed 7 --plant counter_press:1", "saves data/matches/match-0007"),
+    ("btl matches", "lists the saved matches"),
+    ("btl inspect data/matches/match-0007", "events, tags, moments too"),
+    ("btl moments examples/match-0007", "the sample match in the repo"),
+)
+
+
+def _examples_help() -> str:
+    # Rich joins single line breaks, so each example is its own paragraph.
+    width = max(len(command) for command, _ in EXAMPLES)
+    lines = [f"{command.ljust(width)}   [dim]{note}[/dim]" for command, note in EXAMPLES]
+    return "\n\n".join(["[bold]Examples[/bold]", *lines])
+
+
 app = typer.Typer(
     name="btl",
     help="Generate synthetic football matches and inspect their events, values, and concept tags.",
+    epilog=_examples_help(),
+    rich_markup_mode="rich",
     no_args_is_help=True,
 )
 console = Console()
 DEFAULT_MODEL = Path("data/models/expected-threat.json")
+DEFAULT_MATCHES = Path("data/matches")
+MatchDir = Annotated[
+    Path,
+    typer.Argument(
+        metavar="MATCH",
+        help="A saved match's folder, e.g. examples/match-0007 or data/matches/match-0007."
+        " `btl matches` lists the saved ones.",
+        show_default=False,
+    ),
+]
 
 
 @app.callback()
@@ -65,7 +102,7 @@ def _club(league: League, short_name: str) -> Club:
 @app.command()
 def simulate(
     seed: Annotated[int, typer.Option(help="The same seed always gives the same match.")],
-    out: Annotated[Path, typer.Option(help="Folder to save the match in.")] = Path("data/matches"),
+    out: Annotated[Path, typer.Option(help="Folder to save the match in.")] = DEFAULT_MATCHES,
     league_seed: Annotated[int, typer.Option(help="Which fictional league to use.")] = 0,
     home: Annotated[str | None, typer.Option(help="Home club's short name, e.g. KEN.")] = None,
     away: Annotated[str | None, typer.Option(help="Away club's short name.")] = None,
@@ -110,16 +147,43 @@ def simulate(
     )
     directory = save_match(match, info, out)
     console.print(scoreline(match, league))
-    console.print(f"{len(match.events):,} events · seed {seed} · saved to {directory}")
+    console.print(f"{counted(len(match.events), 'event')} · seed {seed} · saved to {directory}")
     if match.planted:
         console.print(
-            f"{len(match.planted)} planted moments; `btl moments {directory}` shows them."
+            f"{counted(len(match.planted), 'planted moment')};"
+            f" `btl moments {directory}` shows them."
         )
+
+
+@app.command("matches")
+def list_matches(
+    folder: Annotated[
+        Path, typer.Argument(help="Folder to look in, as given to `btl simulate --out`.")
+    ] = DEFAULT_MATCHES,
+) -> None:
+    """List the matches saved in a folder."""
+    saved: list[tuple[Path, Match, MatchInfo, League]] = []
+    unreadable: list[str] = []
+    for directory in saved_match_directories(folder):
+        try:
+            match, info = load_match(directory)
+        except ValueError as error:
+            unreadable.append(str(error))
+            continue
+        saved.append((directory, match, info, _league(info.league_seed)))
+    if not saved and not unreadable:
+        console.print(f"No saved matches in {folder}. Make one with `btl simulate`.")
+        return
+    if saved:
+        console.print(matches_table(saved))
+    console.print(f"{counted(len(saved), 'match', 'matches')} in {folder}")
+    for problem in unreadable:
+        console.print(f"{problem}; simulate it again to update it.", style="yellow")
 
 
 @app.command()
 def events(
-    match_dir: Annotated[Path, typer.Argument(help="A folder saved by `btl simulate`.")],
+    match_dir: MatchDir,
     start: Annotated[int, typer.Option(help="First event to show.", min=0)] = 0,
     count: Annotated[int, typer.Option(help="How many events to show.", min=1)] = 50,
     model: Annotated[
@@ -135,7 +199,7 @@ def events(
     threat = rate_match(load_threat_model(model), match) if model.exists() else None
 
     console.print(scoreline(match, league))
-    console.print(events_table(match, league, start, count, threat))
+    console.print(events_table(match, league, match.events[start : start + count], threat))
     console.print(
         f"Events {start} to {start + shown - 1} of {total:,}. Use --start and --count for others."
         if shown
@@ -147,7 +211,7 @@ def events(
 
 @app.command()
 def tags(
-    match_dir: Annotated[Path, typer.Argument(help="A folder saved by `btl simulate`.")],
+    match_dir: MatchDir,
     concept: Annotated[
         ConceptId | None, typer.Option(help="Show only this concept.", case_sensitive=False)
     ] = None,
@@ -162,13 +226,58 @@ def tags(
     console.print(scoreline(match, league))
     console.print(tags_table(match, league, found))
     counts = Counter(tag.concept for tag in found)
-    summary = ", ".join(f"{count} {concept.label}" for concept, count in sorted(counts.items()))
-    console.print(f"{len(found)} tags" + (f": {summary}" if summary else ""))
+    summary = ", ".join(f"{concept.label} {count}" for concept, count in sorted(counts.items()))
+    console.print(counted(len(found), "tag") + (f": {summary}" if summary else ""))
+
+
+@app.command()
+def inspect(
+    match_dir: MatchDir,
+    start: Annotated[int, typer.Option(help="First event to show.", min=0)] = 0,
+    count: Annotated[int, typer.Option(help="How many events to show.", min=1)] = 50,
+    concept: Annotated[
+        ConceptId | None,
+        typer.Option(help="Show only events where this concept happens.", case_sensitive=False),
+    ] = None,
+    model: Annotated[
+        Path, typer.Option(help="Expected Threat model from `btl fit-xt`, for the threat column.")
+    ] = DEFAULT_MODEL,
+) -> None:
+    """Show a saved match's summary, then its events with their threat and concepts."""
+    match, info = _load(match_dir)
+    league = _league(info.league_seed)
+    threat = rate_match(load_threat_model(model), match) if model.exists() else None
+    found = detect_all(match_context(match, threat))
+
+    console.print(scoreline(match, league))
+    console.print(summary_table(match, league, found, threat))
+    if match.planted:
+        console.print(f"{counted(len(match.planted), 'planted moment')}; `btl moments` shows them.")
+
+    if concept is None:
+        shown = match.events[start : start + count]
+    else:
+        tagged = sorted({tag.action_id for tag in found if tag.concept is concept})
+        shown = [match.events[action] for action in tagged if action >= start][:count]
+    console.print(events_table(match, league, shown, threat, found))
+    if not shown:
+        console.print(f"No events to show from #{start}.")
+    elif concept is None:
+        console.print(
+            f"Events {start} to {shown[-1].action_id} of {len(match.events):,}."
+            " Use --start and --count for others, or --concept to pick out one concept."
+        )
+    else:
+        console.print(
+            f"{counted(len(shown), f'{concept.label} event')} from #{start}. Use --count for more."
+        )
+    if threat is None:
+        console.print(f"No threat model at {model}; run `btl fit-xt` to add a threat column.")
 
 
 @app.command()
 def moments(
-    match_dir: Annotated[Path, typer.Argument(help="A folder saved by `btl simulate --plant`.")],
+    match_dir: MatchDir,
 ) -> None:
     """Show a saved match's planted moments: the play leading up to each, and the pitch at it."""
     match, info = _load(match_dir)
@@ -188,7 +297,8 @@ def moments(
             f"Moment {number} · {moment.concept.label} · level {moment.difficulty}"
             f" · {match_clock(answer)}"
         )
-        console.print(events_table(match, league, first, moment.answer_action_id - first + 1))
+        lead_up = match.events[first : moment.answer_action_id + 1]
+        console.print(events_table(match, league, lead_up))
         paused_at = ActionId(moment.pause_action_id + 1)
         console.print(
             f"Play pauses after #{moment.pause_action_id}; the pitch at #{paused_at},"

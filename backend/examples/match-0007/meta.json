@@ -1,0 +1,48 @@
+{
+  "schema_version": 2,
+  "game_id": 7,
+  "home_team_id": 7,
+  "away_team_id": 2,
+  "seed": 7,
+  "league_seed": 0,
+  "home_formation": "4-4-2",
+  "away_formation": "4-4-2",
+  "planted": [
+    {
+      "concept": "line_breaking_pass",
+      "difficulty": 1,
+      "pause_action_id": 202,
+      "answer_action_id": 203
+    },
+    {
+      "concept": "counter_press",
+      "difficulty": 1,
+      "pause_action_id": 396,
+      "answer_action_id": 398
+    },
+    {
+      "concept": "line_breaking_pass",
+      "difficulty": 2,
+      "pause_action_id": 570,
+      "answer_action_id": 571
+    },
+    {
+      "concept": "counter_press",
+      "difficulty": 2,
+      "pause_action_id": 952,
+      "answer_action_id": 955
+    },
+    {
+      "concept": "line_breaking_pass",
+      "difficulty": 3,
+      "pause_action_id": 1151,
+      "answer_action_id": 1152
+    },
+    {
+      "concept": "counter_press",
+      "difficulty": 3,
+      "pause_action_id": 1375,
+      "answer_action_id": 1379
+    }
+  ]
+}

@@ -6,11 +6,13 @@ from rich.console import Console
 
 from btl.cli.render import (
     PITCH_LEGEND,
+    counted,
     events_table,
     goals,
     match_clock,
     pitch_picture,
     scoreline,
+    summary_table,
     tags_table,
     threat_grid,
     threat_text,
@@ -19,6 +21,7 @@ from btl.concepts.base import ConceptTag
 from btl.league.league import League, generate_league
 from btl.schema.ids import ActionId
 from btl.schema.match import Match
+from btl.schema.moment import PlantedMoment
 from btl.schema.vocab import ActionType, ConceptId, Result
 from btl.sim.engine import simulate_match
 from btl.value.xt import FitInfo, ThreatModel
@@ -48,6 +51,14 @@ def text_of(renderable: object) -> str:
     console = Console(width=200, record=True)
     console.print(renderable)
     return console.export_text()
+
+
+def test_counts_are_plural_unless_there_is_exactly_one() -> None:
+    assert counted(1, "tag") == "1 tag"
+    assert counted(0, "tag") == "0 tags"
+    assert counted(1_203, "tag") == "1,203 tags"
+    assert counted(2, "match", "matches") == "2 matches"
+    assert counted(1, "match", "matches") == "1 match"
 
 
 def test_the_clock_carries_on_from_45_minutes_in_the_second_half() -> None:
@@ -86,7 +97,7 @@ def test_the_events_table_shows_the_requested_slice_with_names() -> None:
     event = match.events[100]
     player = league().player(event.player_id)
 
-    table = events_table(match, league(), start=100, count=5)
+    table = events_table(match, league(), match.events[100:105])
 
     assert table.row_count == 5
     first_row = text_of(table).splitlines()[3]
@@ -106,12 +117,63 @@ def test_the_events_table_has_a_threat_column_only_when_given_values() -> None:
     match = simulated()
     threat = [0.0123 if event.action_id == 1 else None for event in match.events]
 
-    without = text_of(events_table(match, league(), 0, 3))
-    with_threat = text_of(events_table(match, league(), 0, 3, threat))
+    without = text_of(events_table(match, league(), match.events[:3]))
+    with_threat = text_of(events_table(match, league(), match.events[:3], threat))
 
     assert "threat" not in without
     assert "threat" in with_threat
     assert "+0.012" in with_threat
+
+
+def tag_at(match: Match, concept: ConceptId, action_id: int) -> ConceptTag:
+    action = ActionId(action_id)
+    return ConceptTag(concept, match.game_id, action, (action, action), None, {})
+
+
+def test_the_events_table_names_the_concepts_at_each_event_and_marks_planted_ones() -> None:
+    events = tuple(make_event(i, HOME, HOME_MIDFIELDER, (50, 34), (60, 34)) for i in range(3))
+    moment = PlantedMoment(ConceptId.LINE_BREAKING_PASS, 1, ActionId(1), ActionId(2))
+    match = Match(GAME, HOME, AWAY, events, planted=(moment,))
+    tags = [
+        tag_at(match, ConceptId.SWITCH_OF_PLAY, 1),
+        tag_at(match, ConceptId.SWITCH_OF_PLAY, 2),
+        tag_at(match, ConceptId.LINE_BREAKING_PASS, 2),
+    ]
+
+    rows = text_of(events_table(match, league(), match.events, tags=tags)).splitlines()[3:6]
+
+    assert rows[0].split("│")[-2].strip() == ""
+    assert "switch of play" in rows[1]
+    assert "switch of play, line breaking pass (planted)" in rows[2]
+
+
+def test_the_summary_counts_each_teams_goals_passes_threat_and_concepts() -> None:
+    events = (
+        make_event(0, HOME, HOME_MIDFIELDER, (50, 34), (60, 34)),
+        make_event(1, HOME, HOME_MIDFIELDER, (60, 34), (70, 34), result=Result.FAIL),
+        make_event(2, AWAY, AWAY_MIDFIELDER, (35, 34), (45, 34)),
+        make_event(3, AWAY, AWAY_MIDFIELDER, (90, 34), (105, 34), ActionType.SHOT),
+    )
+    match = Match(GAME, HOME, AWAY, events)
+    tags = [tag_at(match, ConceptId.COUNTER_PRESS, 2)]
+
+    text = text_of(summary_table(match, league(), tags, [0.01, -0.02, 0.03, None]))
+
+    rows = {line.split("│")[1].strip(): line.split("│")[2:4] for line in text.splitlines()[3:-1]}
+    cells = {name: [cell.strip() for cell in values] for name, values in rows.items()}
+    assert cells["goals"] == ["0", "1"]
+    assert cells["shots"] == ["0", "1"]
+    assert cells["passes (completed)"] == ["2 (50%)", "1 (100%)"]
+    assert cells["possessions"] == ["1", "1"]
+    assert cells["threat added"] == ["-0.01", "+0.03"]
+    assert cells["counter press"] == ["0", "1"]
+    assert cells["switch of play"] == ["0", "0"]
+
+
+def test_the_summary_leaves_out_threat_without_a_model() -> None:
+    match = simulated()
+
+    assert "threat added" not in text_of(summary_table(match, league(), []))
 
 
 def test_the_threat_grid_shows_every_cell_in_percent() -> None:

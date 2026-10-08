@@ -17,6 +17,16 @@ def test_help_describes_the_tool() -> None:
 
     assert result.exit_code == 0
     assert "synthetic football matches" in result.output
+    assert "btl inspect data/matches/match-0007" in result.output
+
+
+def test_commands_that_read_a_match_explain_its_folder() -> None:
+    for command in ("events", "tags", "inspect", "moments"):
+        result = runner.invoke(app, [command, "--help"], env=WIDE)
+
+        assert result.exit_code == 0, result.output
+        assert f"btl {command} [OPTIONS] MATCH" in result.output.replace("{", "").replace("}", "")
+        assert "`btl matches` lists the saved ones" in result.output
 
 
 def test_simulate_saves_a_match_that_events_can_show(tmp_path: Path) -> None:
@@ -139,7 +149,7 @@ def test_simulate_plants_moments_that_moments_shows(tmp_path: Path) -> None:
     )
 
     assert simulated.exit_code == 0, simulated.output
-    assert "3 planted moments" in simulated.output
+    assert "3 planted moments;" in simulated.output
     match, _ = load_match(tmp_path / "match-0007")
     assert [moment.difficulty for moment in match.planted] == [1, 2, 3]
 
@@ -187,3 +197,97 @@ def test_moments_shows_a_counter_press_from_just_after_the_ball_is_lost(tmp_path
     assert f"the pitch at #{moment.pause_action_id + 1}" in shown.output
     assert "Detector: counter press · seconds to win back" in shown.output
     assert "None" not in shown.output
+
+
+def test_inspect_shows_the_summary_and_events_with_threat_and_concepts(tmp_path: Path) -> None:
+    model = tmp_path / "expected-threat.json"
+    runner.invoke(
+        app,
+        ["simulate", "--seed", "7", "--out", str(tmp_path), "--plant", "line_breaking_pass:1"],
+        env=WIDE,
+    )
+    runner.invoke(app, ["fit-xt", "--matches", "3", "--out", str(model)], env=WIDE)
+    match, _ = load_match(tmp_path / "match-0007")
+    (moment,) = match.planted
+
+    shown = runner.invoke(
+        app,
+        [
+            "inspect",
+            str(tmp_path / "match-0007"),
+            "--start",
+            str(moment.answer_action_id),
+            "--count",
+            "1",
+            "--model",
+            str(model),
+        ],
+        env=WIDE,
+    )
+
+    assert shown.exit_code == 0, shown.output
+    assert "threat added" in shown.output
+    assert "1 planted moment;" in shown.output
+    assert "line breaking pass (planted)" in shown.output
+    assert f"Events {moment.answer_action_id} to {moment.answer_action_id} of" in shown.output
+
+
+def test_inspect_can_show_only_events_with_one_concept(tmp_path: Path) -> None:
+    runner.invoke(app, ["simulate", "--seed", "7", "--out", str(tmp_path)], env=WIDE)
+
+    shown = runner.invoke(
+        app,
+        [
+            "inspect",
+            str(tmp_path / "match-0007"),
+            "--concept",
+            "switch_of_play",
+            "--model",
+            str(tmp_path / "missing.json"),
+        ],
+        env=WIDE,
+    )
+
+    assert shown.exit_code == 0, shown.output
+    lines = shown.output.splitlines()
+    event_rows = [line for line in lines if line.startswith("│") and "→" in line]
+    assert event_rows
+    assert all("switch of play" in line for line in event_rows)
+    assert "run `btl fit-xt`" in shown.output
+
+
+def test_matches_lists_each_saved_match_with_its_planted_moments(tmp_path: Path) -> None:
+    runner.invoke(app, ["simulate", "--seed", "7", "--out", str(tmp_path)], env=WIDE)
+    runner.invoke(
+        app,
+        ["simulate", "--seed", "8", "--out", str(tmp_path), "--plant", "counter_press:1,2"],
+        env=WIDE,
+    )
+
+    shown = runner.invoke(app, ["matches", str(tmp_path)], env=WIDE)
+
+    assert shown.exit_code == 0, shown.output
+    rows = [line for line in shown.output.splitlines() if "match-000" in line]
+    assert len(rows) == 2
+    assert "match-0007" in rows[0]
+    assert "counter press 2" in rows[1]
+    assert f"2 matches in {tmp_path}" in shown.output
+
+
+def test_matches_says_when_a_folder_has_none(tmp_path: Path) -> None:
+    shown = runner.invoke(app, ["matches", str(tmp_path)], env=WIDE)
+
+    assert shown.exit_code == 0, shown.output
+    assert "No saved matches" in shown.output
+
+
+def test_matches_points_out_saves_from_an_older_schema(tmp_path: Path) -> None:
+    runner.invoke(app, ["simulate", "--seed", "7", "--out", str(tmp_path)], env=WIDE)
+    meta = tmp_path / "match-0007" / "meta.json"
+    meta.write_text(meta.read_text().replace('"schema_version": 2', '"schema_version": 1'))
+
+    shown = runner.invoke(app, ["matches", str(tmp_path)], env=WIDE)
+
+    assert shown.exit_code == 0, shown.output
+    assert f"0 matches in {tmp_path}" in shown.output
+    assert "simulate it again" in shown.output

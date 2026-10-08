@@ -89,6 +89,16 @@ def save_match(match: Match, info: MatchInfo, parent: Path) -> Path:
     return directory
 
 
+def saved_match_directories(parent: Path) -> list[Path]:
+    """The directories directly under ``parent`` that hold a saved match, sorted by name.
+
+    A missing ``parent`` has none.
+    """
+    if not parent.is_dir():
+        return []
+    return sorted(path.parent for path in parent.glob(f"*/{META_FILE}"))
+
+
 def load_match(directory: Path) -> tuple[Match, MatchInfo]:
     """Load a match saved by `save_match`.
 

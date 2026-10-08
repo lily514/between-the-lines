@@ -6,11 +6,13 @@ from rich.console import Console
 
 from btl.cli.render import (
     PITCH_LEGEND,
+    REPLAY_LEGEND,
     counted,
     events_table,
     goals,
     match_clock,
     pitch_picture,
+    replay_picture,
     scoreline,
     summary_table,
     tags_table,
@@ -19,6 +21,7 @@ from btl.cli.render import (
 )
 from btl.concepts.base import ConceptTag
 from btl.league.league import League, generate_league
+from btl.replay import frame_at, lead_up_frames
 from btl.schema.ids import ActionId
 from btl.schema.match import Match
 from btl.schema.moment import PlantedMoment
@@ -33,7 +36,10 @@ from tests.fixtures.matches import (
     HOME,
     HOME_MIDFIELDER,
     make_event,
+    six_event_match,
 )
+
+PLANTED_PASS = PlantedMoment(ConceptId.LINE_BREAKING_PASS, 1, ActionId(1), ActionId(2))
 
 
 @cache
@@ -229,3 +235,56 @@ def test_the_pitch_needs_a_snapshot() -> None:
 
     with pytest.raises(ValueError, match="no player positions"):
         pitch_picture(match, ActionId(0))
+
+
+def drawn_at(lines: list[str], x: float, y: float) -> str:
+    """The character drawn for a point on the pitch, given a replay picture's lines."""
+    column = min(int(x / 105 * 53), 52)
+    row = min(int((68 - y) / 68 * 17), 16)
+    return lines[2 + row][1 + column]
+
+
+def test_a_replay_frame_trails_the_ball_from_where_the_action_started() -> None:
+    match = six_event_match()  # pass #0 from (40, 34) to (60, 30), with a 3 s flight
+    one_second_in = lead_up_frames(match, PLANTED_PASS, seconds=8, fps=1)[1]
+
+    lines = text_of(replay_picture(match, one_second_in, HOME)).splitlines()
+
+    assert lines[0] == "00:01"
+    assert lines[-1] == REPLAY_LEGEND
+    assert drawn_at(lines, *one_second_in.ball) == "@"
+    assert drawn_at(lines, 44, 33.2) == "·"
+    assert drawn_at(lines, 56, 31) == " "
+    assert "*" not in "".join(lines[:-1])
+
+
+def test_the_question_frame_gives_no_path_away() -> None:
+    match = six_event_match()
+
+    lines = text_of(replay_picture(match, frame_at(match, ActionId(2)), HOME)).splitlines()
+
+    drawn = "".join(lines[1:-1])
+    assert "·" not in drawn
+    assert "*" not in drawn
+    assert drawn_at(lines, 70, 30) == "@"
+
+
+def test_a_replay_frame_can_show_the_whole_path_to_its_target() -> None:
+    match = six_event_match()
+
+    picture = replay_picture(match, frame_at(match, ActionId(0)), HOME, show_target=True)
+
+    lines = text_of(picture).splitlines()
+    assert drawn_at(lines, 60, 30) == "*"
+    assert drawn_at(lines, 50, 32) == "·"
+    assert drawn_at(lines, 40, 34) == "@"
+
+
+def test_replay_marks_stay_with_the_watching_team_when_the_ball_changes_hands() -> None:
+    match = six_event_match()
+    away_on_the_ball = frame_at(match, ActionId(3))
+
+    drawn = "".join(text_of(replay_picture(match, away_on_the_ball, HOME)).splitlines()[1:-1])
+
+    assert "G" in drawn
+    assert "K" in drawn

@@ -4,7 +4,7 @@ import numpy as np
 from typer.testing import CliRunner
 
 from btl.cli.app import app
-from btl.cli.render import PITCH_LEGEND
+from btl.cli.render import PITCH_LEGEND, REPLAY_LEGEND
 from btl.io import load_match, load_threat_model
 from btl.league.league import generate_league
 
@@ -21,7 +21,7 @@ def test_help_describes_the_tool() -> None:
 
 
 def test_commands_that_read_a_match_explain_its_folder() -> None:
-    for command in ("events", "tags", "inspect", "moments"):
+    for command in ("events", "tags", "inspect", "moments", "replay"):
         result = runner.invoke(app, [command, "--help"], env=WIDE)
 
         assert result.exit_code == 0, result.output
@@ -291,3 +291,34 @@ def test_matches_points_out_saves_from_an_older_schema(tmp_path: Path) -> None:
     assert shown.exit_code == 0, shown.output
     assert f"0 matches in {tmp_path}" in shown.output
     assert "simulate it again" in shown.output
+
+
+def test_replay_shows_the_pause_and_asks_what_happens_next(tmp_path: Path) -> None:
+    runner.invoke(
+        app,
+        ["simulate", "--seed", "7", "--out", str(tmp_path), "--plant", "line_breaking_pass:1"],
+        env=WIDE,
+    )
+    match, _ = load_match(tmp_path / "match-0007")
+    (moment,) = match.planted
+
+    shown = runner.invoke(app, ["replay", str(tmp_path / "match-0007"), "--moment", "1"], env=WIDE)
+
+    assert shown.exit_code == 0, shown.output
+    assert "Moment 1 · line breaking pass · level 1" in shown.output
+    assert shown.output.count(REPLAY_LEGEND) == 1
+    assert f"Play pauses after #{moment.pause_action_id}. What happens next?" in shown.output
+    assert "Press Enter" not in shown.output
+
+
+def test_replay_rejects_a_moment_the_match_does_not_have(tmp_path: Path) -> None:
+    runner.invoke(
+        app,
+        ["simulate", "--seed", "7", "--out", str(tmp_path), "--plant", "counter_press:1"],
+        env=WIDE,
+    )
+
+    shown = runner.invoke(app, ["replay", str(tmp_path / "match-0007"), "--moment", "2"], env=WIDE)
+
+    assert shown.exit_code == 2
+    assert "the match has 1 planted moment" in shown.output

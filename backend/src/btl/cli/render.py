@@ -1,4 +1,4 @@
-"""How the CLI shows things: matches, scorelines, summaries, events, tags, threat, the pitch."""
+"""How the CLI shows things: matches, summaries, events, tags, threat, the pitch, replays."""
 
 from collections import Counter
 from collections.abc import Sequence
@@ -10,11 +10,13 @@ from rich.text import Text
 from btl.concepts.base import ConceptTag
 from btl.io import MatchInfo
 from btl.league.league import League
+from btl.replay import ReplayFrame
 from btl.schema import PITCH_LENGTH, PITCH_WIDTH
 from btl.schema.event import Event
 from btl.schema.ids import ActionId, TeamId
 from btl.schema.match import Match
 from btl.schema.possession import split_possessions
+from btl.schema.snapshot import PlayerPosition
 from btl.schema.vocab import ActionType, ConceptId, Result
 from btl.value.xt import ThreatModel
 
@@ -34,7 +36,11 @@ def counted(count: int, noun: str, plural: str | None = None) -> str:
 
 def match_clock(event: Event) -> str:
     """Time on the match clock, e.g. ``68:12`` for 23 min 12 s into the second half."""
-    seconds = int(event.time_seconds) + (event.period_id - 1) * PERIOD_MINUTES * 60
+    return _clock(event.period_id, event.time_seconds)
+
+
+def _clock(period_id: int, time_seconds: float) -> str:
+    seconds = int(time_seconds) + (period_id - 1) * PERIOD_MINUTES * 60
     return f"{seconds // 60:02d}:{seconds % 60:02d}"
 
 
@@ -267,6 +273,52 @@ PITCH_LEGEND = (
     "@ on the ball · o teammates · G their keeper · x opponents · K opponents' keeper"
     " · * pass target"
 )
+REPLAY_LEGEND = (
+    "@ ball · o attackers · G their keeper · x defenders · K their keeper · * where the ball went"
+)
+
+
+class _Pitch:
+    """A grid of marks, one character for each 2 m by 4 m of pitch, with the halfway line."""
+
+    def __init__(self) -> None:
+        self.cells = [[(" ", "")] * PITCH_COLUMNS for _ in range(PITCH_ROWS)]
+        for row in self.cells:
+            row[PITCH_COLUMNS // 2] = (":", PITCH_STYLE)
+
+    def put(self, x: float, y: float, mark: str, style: str) -> None:
+        column = min(int(x / PITCH_LENGTH * PITCH_COLUMNS), PITCH_COLUMNS - 1)
+        row = min(int((PITCH_WIDTH - y) / PITCH_WIDTH * PITCH_ROWS), PITCH_ROWS - 1)
+        self.cells[row][column] = (mark, style)
+
+    def dot_path(self, start: tuple[float, float], end: tuple[float, float]) -> None:
+        (start_x, start_y), (end_x, end_y) = start, end
+        for step in range(1, PITCH_COLUMNS):
+            along = step / PITCH_COLUMNS
+            self.put(
+                start_x + along * (end_x - start_x),
+                start_y + along * (end_y - start_y),
+                "·",
+                PASS_STYLE,
+            )
+
+    def put_players(self, players: Sequence[PlayerPosition], team_id: TeamId, home: TeamId) -> None:
+        for player in players:
+            style = HOME_STYLE if player.team_id == home else AWAY_STYLE
+            mark = PLAYER_MARKS[player.team_id == team_id, player.is_goalkeeper]
+            self.put(player.x, player.y, mark, style)
+
+    def text(self, legend: str) -> Text:
+        edge = "+" + "-" * PITCH_COLUMNS + "+"
+        picture = Text(edge + "\n", style=PITCH_STYLE)
+        for row in self.cells:
+            picture.append("|", style=PITCH_STYLE)
+            for mark, style in row:
+                picture.append(mark, style=style)
+            picture.append("|\n", style=PITCH_STYLE)
+        picture.append(edge + "\n", style=PITCH_STYLE)
+        picture.append(legend, style="dim")
+        return picture
 
 
 def pitch_picture(match: Match, action_id: ActionId) -> Text:
@@ -284,38 +336,36 @@ def pitch_picture(match: Match, action_id: ActionId) -> Text:
     if snapshot is None:
         raise ValueError(f"no player positions for action {action_id}")
     event = match.events[action_id]
-    cells = [[(" ", "")] * PITCH_COLUMNS for _ in range(PITCH_ROWS)]
+    start, end = (event.start_x, event.start_y), (event.end_x, event.end_y)
+    pitch = _Pitch()
+    pitch.dot_path(start, end)
+    pitch.put_players(snapshot.positions, event.team_id, match.home_team_id)
+    pitch.put(*end, "*", f"bold {PASS_STYLE}")
+    pitch.put(*start, "@", f"bold {_team_style(match, event.team_id)}")
+    return pitch.text(PITCH_LEGEND)
 
-    def put(x: float, y: float, mark: str, style: str) -> None:
-        column = min(int(x / PITCH_LENGTH * PITCH_COLUMNS), PITCH_COLUMNS - 1)
-        row = min(int((PITCH_WIDTH - y) / PITCH_WIDTH * PITCH_ROWS), PITCH_ROWS - 1)
-        cells[row][column] = (mark, style)
 
-    for row in cells:
-        row[PITCH_COLUMNS // 2] = (":", PITCH_STYLE)
-    for step in range(1, PITCH_COLUMNS):
-        along = step / PITCH_COLUMNS
-        put(
-            event.start_x + along * (event.end_x - event.start_x),
-            event.start_y + along * (event.end_y - event.start_y),
-            "·",
-            PASS_STYLE,
-        )
-    for player in snapshot.positions:
-        style = HOME_STYLE if player.team_id == match.home_team_id else AWAY_STYLE
-        mark = PLAYER_MARKS[player.team_id == event.team_id, player.is_goalkeeper]
-        put(player.x, player.y, mark, style)
-    put(event.end_x, event.end_y, "*", f"bold {PASS_STYLE}")
-    actor_style = HOME_STYLE if event.team_id == match.home_team_id else AWAY_STYLE
-    put(event.start_x, event.start_y, "@", f"bold {actor_style}")
+def replay_picture(
+    match: Match, frame: ReplayFrame, team_id: TeamId, *, show_target: bool = False
+) -> Text:
+    """One frame of a replay as text, with the clock above the pitch.
 
-    edge = "+" + "-" * PITCH_COLUMNS + "+"
-    picture = Text(edge + "\n", style=PITCH_STYLE)
-    for row in cells:
-        picture.append("|", style=PITCH_STYLE)
-        for mark, style in row:
-            picture.append(mark, style=style)
-        picture.append("|\n", style=PITCH_STYLE)
-    picture.append(edge + "\n", style=PITCH_STYLE)
-    picture.append(PITCH_LEGEND, style="dim")
-    return picture
+    ``match`` must be seen from ``team_id``'s side (see `btl.schema.frames.seen_by`), and its
+    players are ``o`` and ``G`` throughout, the other team's ``x`` and ``K``. The ball is ``@``,
+    in the colour of the team whose action is under way, trailing a dotted path from where the
+    action started. With ``show_target``, the action's whole path is drawn, ending in ``*``.
+    """
+    event = match.events[frame.action_id]
+    start, end = (event.start_x, event.start_y), (event.end_x, event.end_y)
+    pitch = _Pitch()
+    pitch.dot_path(start, end if show_target else frame.ball)
+    pitch.put_players(frame.players, team_id, match.home_team_id)
+    if show_target:
+        pitch.put(*end, "*", f"bold {PASS_STYLE}")
+    pitch.put(*frame.ball, "@", f"bold {_team_style(match, event.team_id)}")
+    clock = Text(_clock(event.period_id, frame.time_seconds) + "\n", style="bold")
+    return Text.assemble(clock, pitch.text(REPLAY_LEGEND))
+
+
+def _team_style(match: Match, team_id: TeamId) -> str:
+    return HOME_STYLE if team_id == match.home_team_id else AWAY_STYLE

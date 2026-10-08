@@ -1,12 +1,16 @@
 """The `btl` command and its subcommands."""
 
+import time
 from collections import Counter
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Annotated
 
 import numpy as np
 import typer
 from rich.console import Console
+from rich.live import Live
+from rich.text import Text
 
 from btl.cli.render import (
     counted,
@@ -14,12 +18,13 @@ from btl.cli.render import (
     match_clock,
     matches_table,
     pitch_picture,
+    replay_picture,
     scoreline,
     summary_table,
     tags_table,
     threat_grid,
 )
-from btl.concepts.base import match_context
+from btl.concepts.base import ConceptTag, match_context
 from btl.concepts.registry import detect_all
 from btl.io import (
     MatchInfo,
@@ -32,8 +37,12 @@ from btl.io import (
 from btl.league.league import Club, League, generate_league, season_fixtures
 from btl.plant.planter import simulate_with_moments
 from btl.plant.spec import parse_plant
+from btl.replay import DEFAULT_FPS, answer_frames, frame_at, lead_up_frames, question_action
+from btl.schema.event import Event
+from btl.schema.frames import seen_by
 from btl.schema.ids import ActionId
 from btl.schema.match import Match
+from btl.schema.moment import PlantedMoment
 from btl.schema.vocab import ConceptId
 from btl.sim.engine import simulate_match
 from btl.sim.shape import FOUR_FOUR_TWO
@@ -44,6 +53,7 @@ EXAMPLES = (
     ("btl matches", "lists the saved matches"),
     ("btl inspect data/matches/match-0007", "events, tags, moments too"),
     ("btl moments examples/match-0007", "the sample match in the repo"),
+    ("btl replay examples/match-0007 --moment 3", "watch a moment play out"),
 )
 
 
@@ -293,10 +303,7 @@ def moments(
         first = next(
             event.action_id for event in match.events if event.planted_moment_id == number - 1
         )
-        console.rule(
-            f"Moment {number} · {moment.concept.label} · level {moment.difficulty}"
-            f" · {match_clock(answer)}"
-        )
+        _moment_rule(number, moment, answer)
         lead_up = match.events[first : moment.answer_action_id + 1]
         console.print(events_table(match, league, lead_up))
         paused_at = ActionId(moment.pause_action_id + 1)
@@ -305,13 +312,87 @@ def moments(
             f" attacking left to right. The answer is #{moment.answer_action_id}."
         )
         console.print(pitch_picture(ctx.match, paused_at))
-        tag = found.get((moment.concept, moment.answer_action_id))
-        if tag is None:
-            console.print("Not found by the detector.")
-            continue
-        details = [f"difficulty {tag.difficulty}"] if tag.difficulty is not None else []
-        details += [f"{name} {value:g}" for name, value in tag.evidence.items()]
-        console.print(f"Detector: {tag.concept.label} · " + " · ".join(details))
+        console.print(_detector_line(found.get((moment.concept, moment.answer_action_id))))
+
+
+def _moment_rule(number: int, moment: PlantedMoment, answer: Event) -> None:
+    console.rule(
+        f"Moment {number} · {moment.concept.label} · level {moment.difficulty}"
+        f" · {match_clock(answer)}"
+    )
+
+
+def _detector_line(tag: ConceptTag | None) -> str:
+    if tag is None:
+        return "Not found by the detector."
+    details = [f"difficulty {tag.difficulty}"] if tag.difficulty is not None else []
+    details += [f"{name} {value:g}" for name, value in tag.evidence.items()]
+    return f"Detector: {tag.concept.label} · " + " · ".join(details)
+
+
+@app.command()
+def replay(
+    match_dir: MatchDir,
+    moment: Annotated[
+        int, typer.Option(help="Which planted moment, numbered as in `btl moments`.", min=1)
+    ],
+    seconds: Annotated[
+        float, typer.Option(help="How many seconds of play to show before it.", min=1)
+    ] = 15.0,
+    speed: Annotated[float, typer.Option(help="2 plays twice as fast.", min=0.1)] = 1.0,
+    reveal: Annotated[
+        bool, typer.Option(help="After the pause, wait for Enter and play the answer.")
+    ] = True,
+) -> None:
+    """Play the seconds before a planted moment on the pitch, pause on it, then show the answer.
+
+    The team on the ball at the pause attacks left to right throughout. When the output isn't a
+    terminal, it shows only the picture at the pause.
+    """
+    match, info = _load(match_dir)
+    league = _league(info.league_seed)
+    if moment > len(match.planted):
+        raise typer.BadParameter(
+            f"the match has {counted(len(match.planted), 'planted moment')}",
+            param_hint="--moment",
+        )
+    if match.positions is None:
+        raise typer.BadParameter("the match has no player positions to replay")
+    planted = match.planted[moment - 1]
+    question = question_action(planted)
+    team = match.events[question].team_id
+    seen = seen_by(match, team)
+    animate = console.is_terminal
+
+    console.print(scoreline(match, league))
+    _moment_rule(moment, planted, match.events[planted.answer_action_id])
+    lead_up = lead_up_frames(seen, planted, seconds=seconds)
+    pictures = [replay_picture(seen, frame, team) for frame in lead_up]
+    if animate:
+        _play(pictures, speed)
+    else:
+        console.print(pictures[-1])
+    console.print(f"Play pauses after #{planted.pause_action_id}. What happens next?")
+    if not (reveal and animate):
+        return
+
+    console.input("Press Enter to see.")
+    answer = planted.answer_action_id
+    pictures = [replay_picture(seen, frame, team) for frame in answer_frames(seen, planted)]
+    pictures.append(replay_picture(seen, frame_at(seen, answer), team, show_target=True))
+    _play(pictures, speed)
+    console.print(f"The answer is #{answer}:")
+    console.print(events_table(match, league, match.events[question : answer + 1]))
+    found = {(tag.concept, tag.action_id): tag for tag in detect_all(match_context(match))}
+    console.print(_detector_line(found.get((planted.concept, answer))))
+
+
+def _play(pictures: Sequence[Text], speed: float) -> None:
+    with Live(console=console, auto_refresh=False) as live:
+        for index, picture in enumerate(pictures):
+            live.update(picture, refresh=True)
+            if index < len(pictures) - 1:
+                time.sleep(1 / (DEFAULT_FPS * speed))
 
 
 @app.command("fit-xt")

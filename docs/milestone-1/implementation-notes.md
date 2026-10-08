@@ -13,13 +13,15 @@ Milestone 1 is done: every task from T1 to T15 is in, including the cuttable one
 - **Bands checked against real matches.** Counting the same measures in 40 real matches from StatsBomb's open data corrected the throw-in band and added goal-kick, throw-in and touchline bands (T8).
 - **The sample match is about 800 KB**, not 100 KB, because it keeps every player's position at every event (T15).
 
-**Cut:** the `ordering` option for planted moments (always easiest first), a simulator version in the threat model file (there is none to record), and the animated ASCII replay stretch goal.
+**Cut:** the `ordering` option for planted moments (always easiest first), and a simulator version in the threat model file (there is none to record).
+
+**Added beyond the plan:** `btl matches`, and `btl replay`, an animated replay of each planted moment (T15's stretch goal).
 
 **Carries over**
 - Where the simulator differs from real matches, with no band yet: about 9 switches of play per match against about 20 real, 0.9 counter-attacks against 3, probably too many line breaks (about 205), long goal kicks, and slightly fewer throw-ins.
 - Only the line-breaking detector gives a difficulty. The counter-press rule would need a fix for loose balls before running on real data (T12).
 - The sample match must be regenerated whenever the simulator changes; the README gives the command.
-- The animated replay (play the seconds before a moment, then freeze on the picture) suits the UI milestone, and its frame builder could feed the web pitch.
+- The replay's frame builder (`btl/replay.py`) is pure and could feed the web pitch. On the ASCII pitch, motion is steppy (one character is 2 m by 4 m), and players jump a few metres into a planted moment's scripted positions.
 
 ## T1 — Project skeleton (2026-10-07)
 **Plan said:** pin Python with `uv python pin 3.11` so the project doesn't depend on pyenv.
@@ -306,3 +308,14 @@ Most of the drop in passes came from dead-ball time alone. Tuning was then just 
 - Count messages now use the singular for one ("1 planted moment"), and concept counts are shown as tallies ("switch of play 12"), because concept names don't pluralise by adding an "s".
 **Why:** a regeneration command that needs no renaming, and exact positions over a smaller file.
 **Affects:** each regeneration adds about 800 KB to the repo's history, so it's worth doing only at milestone ends or when the README's output goes wrong.
+
+## T15 stretch — Animated replay (2026-10-07)
+**Plan said:** nothing; the T15 wrap-up listed the replay as a stretch goal, if time allowed.
+**We did:**
+- **`btl replay MATCH --moment N`** plays the 15 s before a planted moment (`--seconds` changes it) on the same ASCII pitch as `btl moments`, at 10 frames a second (`--speed` scales it). It pauses on the question picture and asks "What happens next?". After Enter, it plays the answer, holds a still of the answer with its full path and `*` target, and lists the events and what the detector found. `--no-reveal` stops at the question. When the output isn't a terminal (piped, or in tests), it prints only the question picture and never waits for input.
+- **One direction for the whole clip.** Detectors see each action from its own team's side, so the pitch would turn round at every turnover. New `seen_by(match, team)` in `frames.py` mirrors the whole match once for one team, the team on the ball at the question. Its players are `o` and `G` throughout, so the paused frame is exactly `btl moments`' picture for the same moment (tested on all six sample moments).
+- **Frames** (`btl/replay.py`, pure, no pandas). Between two actions, players move in a straight line from one snapshot to the next, and the ball flies from the action's start to its end in at most 3 s, then waits there. Without the cap, the ball would crawl through the 12–45 s of dead-ball time before a restart. Players with unknown positions are left out.
+- **Pass paths.** The ball trails a dotted path from where the action under way started. The question frame shows no path, since the ball is still at its start. The final still shows the answer's whole path.
+- `pitch_picture`'s drawing moved into a small shared `_Pitch` grid, and its output is unchanged.
+**Why:** it gives the pause-and-predict loop a feel in the terminal before the UI exists. The jitter in the shape model (1.5 m) needed no smoothing: spread over the median 2.6 s between actions, it reads as drift, not flicker.
+**Affects:** the UI milestone can reuse `lead_up_frames` and `answer_frames`. Players jump a few metres into a planted moment's scripted positions (up to about 15 m in the sample); smoothing that is left for the UI.

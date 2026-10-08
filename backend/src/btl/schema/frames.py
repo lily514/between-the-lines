@@ -10,7 +10,7 @@ Three frames describe a match:
 
 This is the only module that flips coordinates. `to_left_to_right` mirrors every away-team
 action and its snapshot as if the acting team attacks towards x = 105; the frame functions'
-``left_to_right=True`` option uses it.
+``left_to_right=True`` option uses it. `seen_by` mirrors the whole match for one team.
 """
 
 from dataclasses import replace
@@ -62,7 +62,19 @@ def to_left_to_right(match: Match) -> Match:
     ``y → 68 - y``, as socceraction's ``play_left_to_right`` does. Home actions are unchanged.
     The result is a view for analysis; never save it as a match.
     """
-    away = [event.team_id != match.home_team_id for event in match.events]
+    return _mirrored(match, [event.team_id != match.home_team_id for event in match.events])
+
+
+def seen_by(match: Match, team_id: TeamId) -> Match:
+    """The whole match as if ``team_id`` attacks towards x = 105, both teams mirrored together.
+
+    Unlike `to_left_to_right`, the pitch doesn't turn round when the ball changes hands, so
+    this suits watching play unfold. The result is a view; never save it as a match.
+    """
+    return _mirrored(match, [team_id != match.home_team_id] * len(match.events))
+
+
+def _mirrored(match: Match, flip: list[bool]) -> Match:
     events = tuple(
         replace(
             event,
@@ -71,16 +83,16 @@ def to_left_to_right(match: Match) -> Match:
             end_x=PITCH_LENGTH - event.end_x,
             end_y=PITCH_WIDTH - event.end_y,
         )
-        if is_away
+        if flipped
         else event
-        for event, is_away in zip(match.events, away, strict=True)
+        for event, flipped in zip(match.events, flip, strict=True)
     )
     positions = match.positions
-    if positions is not None and any(away):
+    if positions is not None and any(flip):
         xy = positions.xy.copy()
-        flip = np.array(away)
-        xy[flip, :, 0] = PITCH_LENGTH - xy[flip, :, 0]
-        xy[flip, :, 1] = PITCH_WIDTH - xy[flip, :, 1]
+        rows = np.array(flip)
+        xy[rows, :, 0] = PITCH_LENGTH - xy[rows, :, 0]
+        xy[rows, :, 1] = PITCH_WIDTH - xy[rows, :, 1]
         positions = Positions(slots=positions.slots, xy=xy)
     return replace(match, events=events, positions=positions)
 

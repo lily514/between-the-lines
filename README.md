@@ -64,21 +64,27 @@ Play pauses after #570; the pitch at #571, attacking left to right. The answer i
 Detector: line breaking pass · difficulty 0.57 · lines broken 1 · gap (m) 12
 ```
 
-**2. The whole match.** `btl inspect` gives each team's numbers, then the events with the football concepts the detectors found at each one. `--concept` picks out one concept, and `--start` and `--count` move through the match.
+**2. Watch one play out.** `btl replay` animates the 15 seconds before a moment on the same pitch, with the ball's path trailing behind it, and pauses where the learner would be asked. Press Enter to see the answer play out, ending on its full path. `--speed 2` plays twice as fast.
+
+```sh
+uv run btl replay examples/match-0007 --moment 3
+```
+
+**3. The whole match.** `btl inspect` gives each team's numbers, then the events with the football concepts the detectors found at each one. `--concept` picks out one concept, and `--start` and `--count` move through the match.
 
 ```sh
 uv run btl inspect examples/match-0007
 uv run btl inspect examples/match-0007 --concept counter_press
 ```
 
-**3. How dangerous each action was.** Expected Threat rates every pitch zone by how likely a team with the ball there is to score soon. It is learned from simulated matches, once, in about 10 seconds. After that, `inspect` and `events` show how much threat each action added. [docs/milestone-1/expected-threat.md](docs/milestone-1/expected-threat.md) explains the model.
+**4. How dangerous each action was.** Expected Threat rates every pitch zone by how likely a team with the ball there is to score soon. It is learned from simulated matches, once, in about 10 seconds. After that, `inspect` and `events` show how much threat each action added. [docs/milestone-1/expected-threat.md](docs/milestone-1/expected-threat.md) explains the model.
 
 ```sh
 uv run btl fit-xt
 uv run btl inspect examples/match-0007 --start 560 --count 15
 ```
 
-**4. Your own matches.** The same seed always gives the same match. `--plant` asks for teachable moments by concept and level, and they happen easiest first. Matches are saved under `data/matches/`, which git ignores, and `btl matches` lists them.
+**5. Your own matches.** The same seed always gives the same match. `--plant` asks for teachable moments by concept and level, and they happen easiest first. Matches are saved under `data/matches/`, which git ignores, and `btl matches` lists them.
 
 ```sh
 uv run btl simulate --seed 42 --plant line_breaking_pass:1,2,3 --plant counter_press:2

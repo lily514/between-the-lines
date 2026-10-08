@@ -14,6 +14,7 @@ from btl.schema.frames import (
     SPADL_COLUMNS,
     events_from_frames,
     positions_from_snapshot_frame,
+    seen_by,
     to_extension_frame,
     to_left_to_right,
     to_snapshot_frame,
@@ -179,3 +180,23 @@ def test_the_left_to_right_view_flips_snapshots_with_their_actions() -> None:
     ]
     assert flipped.events[0] == match.events[0]
     assert flipped.snapshot(match.events[0].action_id) == match.snapshot(match.events[0].action_id)
+
+
+def test_seen_by_the_home_team_is_the_stored_match() -> None:
+    match = six_event_match()
+
+    assert seen_by(match, HOME) == match
+
+
+def test_seen_by_the_away_team_mirrors_every_event_and_position_once() -> None:
+    match = six_event_match()
+
+    mirrored = seen_by(match, AWAY)
+
+    for stored, seen in zip(match.events, mirrored.events, strict=True):
+        assert (seen.start_x, seen.start_y) == (105 - stored.start_x, 68 - stored.start_y)
+        assert (seen.end_x, seen.end_y) == (105 - stored.end_x, 68 - stored.end_y)
+    assert match.positions is not None and mirrored.positions is not None
+    np.testing.assert_array_equal(mirrored.positions.xy[..., 0], 105 - match.positions.xy[..., 0])
+    np.testing.assert_array_equal(mirrored.positions.xy[..., 1], 68 - match.positions.xy[..., 1])
+    assert seen_by(mirrored, AWAY) == match

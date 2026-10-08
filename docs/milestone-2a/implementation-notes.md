@@ -227,3 +227,30 @@ The three levels never swapped order within a match. The middle 80% of each leve
 **Affects:**
 - **2b** replaces `TemplateTutor` in `Course` with the Foundry Tutor behind the Verifier.
 - **2c** writes a web `Viewer` that draws `pack.picture` and `target_at` instead of the ASCII pitch.
+
+## Phases of play checked against real matches (2026-10-08)
+**Plan said:** nothing. T5 left the 63% transition share unchecked against real data and suggested StatsBomb's open data.
+**We did:** ran the same `phase_timeline` on 40 real matches and 40 simulated ones.
+- **Real:** 40 matches from StatsBomb's open data for the 2015/16 season of the real top-flight English league, sampled as in Milestone 1's T8 note and converted to SPADL with socceraction's StatsBomb converter.
+- **Simulated:** 40 seeds of plain play, following the season's fixtures.
+- Neither the data nor the throwaway script is in the repo.
+
+| Per match | Real | Simulated |
+|---|---|---|
+| Share of actions in a transition | 47% (36–62%) | 63% (60–67%) |
+| Open-play turnovers | 252 | 277 |
+| Transitions that end in a dead ball | 48% | 25% |
+| Dead balls | 103 | 64 |
+| Dead balls of 15 s or more | 70 | 38 |
+| Free kicks: count, median time to restart, share of 15 s or more | 26, 28 s, 77% | none |
+| Throw-ins | 45, 14 s, 44% | 34, 14 s, 24% |
+| Goal kicks | 17, 29 s, 94% | 18, 21 s, 100% |
+| Corners | 11, 26 s, 96% | 10, 27 s, 100% |
+| Kickoffs after a goal | 2.2, 58 s | 2.2, 46 s |
+
+**Why:** to check T5's surprising 63%, and how many places to ask the gate really has.
+**Affects:**
+- **The simulator overstates transition, and understates stoppages by about half.** Turnovers are similar. The difference is that real transitions are often ended by a foul or the ball going out, and the simulator has no fouls at all. Free kicks are the largest single missing source of stoppages (26 per match), and real throw-ins and goal kicks take longer to restart.
+- **The design still holds:** nearly half of real play is transition, so mostly-deferred questions are a feature of football, not a quirk of the simulator. On real matches the gate would have about twice as many places to ask, so the caps would fill sooner and more questions would be asked live.
+- **Next: fouls and free kicks in the simulator** (Lily's choice).
+- **Caveats:** the data is ten years old, from before the 2019 law change after which goal kicks are mostly played short. "Time to restart" is measured from the action that stopped play, so it includes the ball's flight out.

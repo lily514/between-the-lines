@@ -77,3 +77,25 @@ The three levels never swapped order within a match. The middle 80% of each leve
 **Affects:**
 - **Most moments will be deferred.** 63% of actions are transitions, because simulated possessions usually start with an interception and end before 4 passes or 12 s. That's high, but no real figure has been checked against it yet: StatsBomb's open data could. Most live questions will be line-break predict questions from the settled third of play, and most others will wait for a stoppage.
 - **T9's selector** reads `phase_of` and the dead-ball and break segments that are long enough to ask in.
+
+## T6 — Candidates (2026-10-08)
+**Plan said:** a natural line break must go forward at least 15 m, add threat, and allow a consistent set of options. Every planted moment must pass. Natural settled line-break candidates per match, per difficulty band, land in a stated band.
+**We did:**
+- **The forward threshold is 12 m (`MIN_FORWARD`), not 15 m.** The planted line-breaking pass goes exactly 14 m forward (7 m to the line, 7 m beyond), so at 15 m none of them passed. At 12 m every planted moment passes, with a 2 m margin, and the weakest natural ones are still dropped.
+- **The third condition, a consistent set of options, moves to T7,** where options are built. A candidate whose options can't satisfy the invariant will be dropped there.
+- **Counter-presses have no extra quality rule;** the detector is already strict.
+- **The candidate finder never reads planting records,** checked two ways: a test parses the module and finds no `.planted`, and another shows the candidates are identical when a match's planting records are removed.
+
+**Measured over 40 seeds** (12 m, threat added > 0, settled play, planted moments excluded), out of about 208 line-breaks detected per match:
+
+| Difficulty band | Per match: lowest | Median |
+|---|---|---|
+| All | 36 | 50 |
+| Level 1 (0–0.4) | 0 | 1 |
+| Level 2 (0.3–0.7) | 14 | 22 |
+| Level 3 (0.6–1) | 25 | 37 |
+
+**Why:** the plan's 15 m would have rejected every planted moment, which the plan also required to pass.
+**Affects:**
+- **Live level-1 questions about line-breaks will be rare,** because natural gaps are seldom wider than 14 m. Level-1 questions are identify questions, so they can come from the planted level-1 moment instead, as a deferred review. T9's selector must allow for that.
+- **The band test takes about 8 s,** because line-breaks need full snapshots.

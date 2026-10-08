@@ -145,3 +145,25 @@ The three levels never swapped order within a match. The middle 80% of each leve
 
 **Why:** hiding every outcome fact is the safer reading of "never reveals the answer before the viewer commits". The display rules came from looking at real packs.
 **Affects:** T10's templates fill slots from `Fact.display`. 2b's Verifier checks the Tutor's slots against the same facts.
+
+## T9 — Live selector, gate and queue (2026-10-08)
+**Plan said:** a live selector over the frontier, difficulty bands, 8-minute spacing, at most 4 in-play questions and 2 at each break. Moments in transitions are queued and asked at the next dead ball of 15 s or more, or at a break, re-levelled at delivery, and dropped once mastered. The breaks guarantee a minimum of 2 questions. Occasional level-3 review once everything is mastered. Plus the learner's record.
+**We did:** as planned, with these choices:
+- **`run_match` walks the match** in the order a viewer meets things: candidate moments, then the dead balls long enough to ask in, then the breaks. It hands each question to an `ask` callback, and reads mastery through another callback at every decision, so an answer changes the very next decision. With the same answers it makes the same decisions, which is what lets T12 resume a session.
+- **Queue limits.** At most 2 moments wait at once, never two of the same concept, so a stoppage asks about recent play rather than a backlog. A question that can't be built doesn't count.
+- **Review is "occasional"** in a measurable way: with every active concept mastered, review questions are level 3 and at most 1 while the match is on (`REVIEW_CAP`). The breaks can still add theirs.
+- **Restart names** for the "Dead ball (goal kick)" opening come from the restart's action type.
+- **`LearnerState`** holds the viewer id, the session seed, the match being watched and every `Attempt`. Mastery isn't stored; `model_state()` replays the answers. **The cached model state the plan mentioned is left out:** replaying a session's dozen or so answers takes microseconds.
+
+**Measured over 40 seeds,** with a viewer whose mastery rises 0.15 per answer, and one whose mastery never moves:
+
+| Viewer | Questions per match (lowest, median, highest) | Live | Dead ball | Half-time | Full time |
+|---|---|---|---|---|---|
+| Always improving | 5, 7, 8 | 9% | 50% | 16% | 26% |
+| Never improving | 3, 6, 7 | 5% | 63% | 9% | 23% |
+
+**Why:** the plan left these details open.
+**Affects:**
+- **More questions than the original "two to four" per match.** The amended plan's caps allow 4 in play plus 2 at each break, up to 8, and the median is 7. Lowering `BREAK_CAP` or `IN_PLAY_CAP` changes that in one place.
+- **Live questions are rare** (5–9%), as T5 and T6 predicted. Two-thirds of play is transition, and natural settled line-breaks seldom fit level 1.
+- **T12** uses `run_match` with the real question flow as `ask`.

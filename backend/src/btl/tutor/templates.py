@@ -22,9 +22,8 @@ SOURCE = "template"
 ASKING: Mapping[Asks, str] = {
     Asks.WHERE_TO_PASS: "{player} has the ball for {team}. Where should the pass go?",
     Asks.LINES_BROKEN: "{player} has just played the ball forward for {team}. "
-    "How many of {opponent}'s lines did that pass go through?",
-    Asks.GAP_WIDTH: "{player}'s pass went through a gap in {opponent}'s line. "
-    "How wide was the gap?",
+    "How many defensive lines did that pass go through?",
+    Asks.GAP_WIDTH: "{player}'s pass went through a gap in a defensive line. How wide was the gap?",
     Asks.WHAT_THEY_DID: "{team} lost the ball to {opponent}. What did they do next?",
     Asks.SECONDS_TO_REGAIN: "{team} lost the ball to {opponent} and won it back. "
     "How long did that take?",

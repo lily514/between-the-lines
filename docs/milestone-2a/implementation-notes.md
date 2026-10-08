@@ -203,3 +203,27 @@ The three levels never swapped order within a match. The middle 80% of each leve
 
 **Why:** the plan left these details open.
 **Affects:** T12 keeps learners in `data/learners/` (already gitignored under `backend/data/`). Milestone 3 adds a Cosmos DB store to the contract suite's `STORES`.
+
+## T12 — Session and terminal (2026-10-08)
+**Plan said:** `btl learn --viewer NAME` plays the next match (pitch and text, an A/B/C prompt, feedback, the update sentence, progress bars) and resumes across runs; the terminal shows why it's asking now. End to end, the scripted demo viewer watches three matches: nothing is asked in a transition, mastery ends higher for both concepts, and levels rise within and across matches. The threat model is fitted on first use if missing.
+**We did:** as planned, with these choices:
+- **`learn/session.py` holds the loop.**
+  - `Course` is what every viewer shares: the concept map, the BKT model, the league, the threat model and the Tutor.
+  - `watch_match` plays one match. For each prompt from the selector, it builds the question and the pack, has the Tutor word it, asks the viewer, grades the answer, saves the record, and tells the viewer the verdict, explanation, takeaway, update sentence and bars.
+  - The viewer is anything with `begin`, `ask`, `tell` and `end`: the terminal now, and the web page in 2c.
+- **One match per `btl learn` run.** Each viewer's three matches come from a seed, by default derived from their name. `--reset` starts again.
+- **Stopping and carrying on.** Answers are saved one by one. On the next run the match is simulated again, and the answers already given are fed back in order instead of being asked. The selector reads mastery as it stood at each point, so it arrives at exactly the next unasked question. A test stops a match after two answers and checks the finished record equals an uninterrupted one.
+- **The pitch picture** (`cli/render.py`) gained `show_path` and `marks`:
+  - A predict question hides the pass's path, because showing it would give away the answer.
+  - It marks each option's receiver with its letter, since an ASCII pitch can't show shirt numbers.
+  - An identify question shows the path.
+- **A pass option is marked where its receiver stands,** the right one included (this changes T7). Previously the right option sat where the pass was received, off any `o`, which an attentive viewer could spot. Its facts are still measured along the real pass. Packs now carry each option's position (`target_at`) for the pictures, here and in 2c.
+- **The question line says why it's asking now:** "Dead ball (goal kick), 14:30 · about play at 11:33", or "30:25 · live, in settled play".
+- **Wording tweaks** from watching the demo: "How many defensive lines did that pass go through?", which avoids "Ripon Wardens's", and no automatic number highlighting on learning screens.
+- **`btl demo-viewer`** runs the scripted viewer through three matches in memory and prints every question, pick, feedback and bar. It answers one question in three correctly in match 1, one in two in match 2, and all in match 3.
+
+**Measured with the default 200-match threat model, seed 7:** 19 questions over three matches, one of them live (a level-2 predict question in match 3). Both concepts go from 15% to 97%. Three matches take under 2 s.
+**Why:** the plan left these details open; the pitch changes came from seeing the demo.
+**Affects:**
+- **2b** replaces `TemplateTutor` in `Course` with the Foundry Tutor behind the Verifier.
+- **2c** writes a web `Viewer` that draws `pack.picture` and `target_at` instead of the ASCII pitch.

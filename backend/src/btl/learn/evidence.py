@@ -51,6 +51,7 @@ class PackOption:
     """An answer option as shown: its label with names filled in, and its facts.
 
     ``neutral`` facts may be shown before the viewer answers; ``outcome`` facts only after.
+    ``target_at`` is where a pass option's receiver stands, as in the picture.
     """
 
     key: str
@@ -58,6 +59,7 @@ class PackOption:
     correct: bool
     neutral: Mapping[str, Fact]
     outcome: Mapping[str, Fact]
+    target_at: tuple[float, float] | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -126,11 +128,12 @@ class EvidencePack:
 
 @dataclass(frozen=True, slots=True)
 class ViewOption:
-    """An option as a question shows it: its key, its label and its neutral facts."""
+    """An option as a question shows it: its key, its label, its neutral facts and its place."""
 
     key: str
     label: str
     neutral: Mapping[str, Fact]
+    target_at: tuple[float, float] | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -241,7 +244,7 @@ def question_view(pack: EvidencePack) -> QuestionView:
         level=pack.level,
         timing=pack.timing,
         context=pack.context,
-        options=tuple(ViewOption(o.key, o.label, o.neutral) for o in pack.options),
+        options=tuple(ViewOption(o.key, o.label, o.neutral, o.target_at) for o in pack.options),
         picture=pack.picture,
     )
 
@@ -332,7 +335,8 @@ def _pack_option(option: Option, names: _Names) -> PackOption:
             outcome[name] = _metres(float(value))
         elif name == "threat_added":
             outcome[name] = _percent_points(float(value))
-    return PackOption(option.key, label, option.correct, neutral, outcome)
+    target_at = None if option.end is None else (round(option.end[0], 1), round(option.end[1], 1))
+    return PackOption(option.key, label, option.correct, neutral, outcome, target_at)
 
 
 def _picture(question: Question, ctx: MatchContext, league: League) -> Picture:

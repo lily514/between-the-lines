@@ -73,8 +73,8 @@ class Option:
 
     ``label`` is written by code. A pass option's label holds a ``{target}`` slot for the
     receiver's name, which the evidence pack fills in. ``facts`` are measured, never written:
-    for a pass, what it would break and add if it were played. ``end`` is where a pass would go,
-    seen with the passing team attacking left to right.
+    for a pass, what it would break and add if it were played. ``end`` is where a pass option's
+    receiver stands, seen with the passing team attacking left to right.
     """
 
     key: str
@@ -207,7 +207,8 @@ def _where_to_pass(
         sideways = min(rest, key=lambda pf: abs(pf[0].x - event.start_x))
         chosen = [backward, sideways]
     options: list[_Unkeyed] = [
-        ("Pass to {target}", True, receiver.player_id, answer_end, answer),
+        # Marked where the receiver stands, like the others, so its place gives nothing away.
+        ("Pass to {target}", True, receiver.player_id, (receiver.x, receiver.y), answer),
         *(_pass_option(p, f) for p, f in chosen),
     ]
     return Asks.WHERE_TO_PASS, options

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
-import { answer, ApiError, getStatus, nextStep, startViewer, type Question } from './api/client.ts'
+import { answer, ApiError, getStatus, nextStep, startViewer, type Question } from '../api/client.ts'
 import './App.css'
 import {
 	forgetViewer,
@@ -12,12 +12,12 @@ import {
 	rememberViewer,
 	type Retry
 } from './App.support.ts'
-import ErrorPanel from './components/ErrorPanel.tsx'
-import Feedback from './components/Feedback.tsx'
-import FullTime from './components/FullTime.tsx'
-import MatchStep from './components/MatchStep.tsx'
-import QuestionSheet from './components/QuestionSheet.tsx'
-import Welcome from './components/Welcome.tsx'
+import ErrorPanel from './Shared/ErrorPanel.tsx'
+import Feedback from './Feedback/index.tsx'
+import FullTime from './FullTime/index.tsx'
+import MatchStep from './MatchStep/index.tsx'
+import QuestionSheet from './QuestionSheet/index.tsx'
+import Welcome from './Welcome/index.tsx'
 
 const messageOf = (error: unknown) =>
 	error instanceof Error ? error.message : 'The server could not be reached. Check it is running, then try again.'

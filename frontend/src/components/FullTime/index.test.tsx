@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { fullTime, lastFullTime } from '../test-fixtures/summaries.ts'
-import FullTime from './FullTime.tsx'
+import { fullTime, lastFullTime } from '../../test-fixtures/summaries.ts'
+import FullTime from './index.tsx'
 
 test('full time shows the score, the questions asked and each concept from kick-off to now', () => {
 	render(<FullTime summary={fullTime} onNext={vi.fn()} />)

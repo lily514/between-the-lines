@@ -7,9 +7,9 @@ import {
 	identifyQuestion,
 	predictFeedback,
 	predictQuestion
-} from '../test-fixtures/index.ts'
-import Feedback from './Feedback.tsx'
-import { humanise, pickedLine, statTiles } from './Feedback.support.ts'
+} from '../../test-fixtures/index.ts'
+import Feedback from './index.tsx'
+import { humanise, pickedLine, statTiles } from './index.support.ts'
 
 test('a right answer shows a filled check and the word, and no mix-up', () => {
 	render(<Feedback feedback={identifyFeedback} question={identifyQuestion} onContinue={vi.fn()} />)

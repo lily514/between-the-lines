@@ -1,6 +1,6 @@
 import { useId } from 'react'
-import type { Picture } from '../api/client.ts'
-import './Pitch.css'
+import type { Picture } from '../../../api/client.ts'
+import './index.css'
 import {
 	FULL_VIEW,
 	MARKINGS,
@@ -17,7 +17,7 @@ import {
 	viewBoxText,
 	type PitchOption,
 	type Point
-} from './Pitch.support.ts'
+} from './index.support.ts'
 
 export interface PitchProps {
 	picture: Picture

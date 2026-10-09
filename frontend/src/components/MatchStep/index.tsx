@@ -1,8 +1,8 @@
 import { useEffect, useId, useRef } from 'react'
-import type { Question } from '../api/client.ts'
-import './MatchStep.css'
-import { movedOn, stepHeading, whyNow } from './MatchStep.support.ts'
-import PhasePill from './PhasePill.tsx'
+import type { Question } from '../../api/client.ts'
+import './index.css'
+import { movedOn, stepHeading, whyNow } from './index.support.ts'
+import PhasePill from '../Shared/PhasePill.tsx'
 
 export interface MatchStepProps {
 	home: string

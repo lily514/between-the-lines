@@ -1,5 +1,5 @@
 import type { Ref } from 'react'
-import type { TileState } from './AnswerGroup.support.ts'
+import type { TileState } from './index.support.ts'
 import './AnswerTile.css'
 
 export interface AnswerTileProps {

@@ -1,20 +1,12 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
-import type { Question } from '../api/client.ts'
-import AnswerGroup from './AnswerGroup.tsx'
+import type { Question } from '../../api/client.ts'
+import AnswerGroup from '../Shared/AnswerGroup/index.tsx'
 import LockIn from './LockIn.tsx'
-import PhasePill from './PhasePill.tsx'
-import Pitch from './Pitch.tsx'
-import './QuestionSheet.css'
-import {
-	clockLine,
-	earlierAt,
-	isLive,
-	keyedOption,
-	pitchLabel,
-	pitchOptions,
-	shownPath,
-	sheetPill
-} from './QuestionSheet.support.ts'
+import PhasePill from '../Shared/PhasePill.tsx'
+import Pitch from '../Shared/Pitch/index.tsx'
+import { pitchOptions } from '../Shared/Pitch/index.support.ts'
+import './index.css'
+import { clockLine, earlierAt, isLive, keyedOption, pitchLabel, shownPath, sheetPill } from './index.support.ts'
 
 export interface QuestionSheetProps {
 	question: Question

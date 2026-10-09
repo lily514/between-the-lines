@@ -1,4 +1,4 @@
-import type { Marker, Picture } from '../api/client.ts'
+import type { Marker, Picture, Question } from '../../../api/client.ts'
 
 /** A point in metres. */
 export type Point = readonly [number, number]
@@ -184,3 +184,7 @@ export const describePitch = (label: string, picture: Picture, options: readonly
 }
 
 const round = (value: number) => Math.round(value * 100) / 100
+
+/** Where each option's pass would go, for the pitch. Options that aren't passes have no target. */
+export const pitchOptions = (question: Question): PitchOption[] =>
+	question.options.flatMap(o => (o.target_at === null ? [] : [{ key: o.key, at: o.target_at }]))

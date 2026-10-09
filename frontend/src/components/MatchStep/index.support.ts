@@ -1,4 +1,4 @@
-import type { Question } from '../api/client.ts'
+import type { Question } from '../../api/client.ts'
 
 type Delivered = Question['delivered']
 type Occurred = Question['occurred']

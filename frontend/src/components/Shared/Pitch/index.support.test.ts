@@ -1,5 +1,9 @@
-import type { Question } from '../api/client.ts'
-import { counterQuestion as counter, predictFeedback, predictQuestion as predict } from '../test-fixtures/index.ts'
+import type { Question } from '../../../api/client.ts'
+import {
+	counterQuestion as counter,
+	predictFeedback,
+	predictQuestion as predict
+} from '../../../test-fixtures/index.ts'
 import {
 	FULL_VIEW,
 	PITCH_LENGTH,
@@ -15,7 +19,7 @@ import {
 	toScreen,
 	type PitchOption,
 	type Point
-} from './Pitch.support.ts'
+} from './index.support.ts'
 
 const optionsOf = (question: Question): PitchOption[] =>
 	question.options.flatMap(o => (o.target_at === null ? [] : [{ key: o.key, at: o.target_at }]))

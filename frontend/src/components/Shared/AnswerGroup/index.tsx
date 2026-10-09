@@ -1,6 +1,6 @@
 import { useRef, type KeyboardEvent } from 'react'
-import './AnswerGroup.css'
-import { layoutFor, stepFrom, tileState, type Choice, type Outcome } from './AnswerGroup.support.ts'
+import './index.css'
+import { layoutFor, stepFrom, tileState, type Choice, type Outcome } from './index.support.ts'
 import AnswerTile from './AnswerTile.tsx'
 
 export interface AnswerGroupProps {

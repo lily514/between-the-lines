@@ -1,4 +1,4 @@
-import type { Feedback } from '../api/client.ts'
+import type { Feedback } from '../../api/client.ts'
 
 /** How each measured fact is labelled on its tile, in the order the tiles appear. The value is always the pack's own
  * display text; only the label and unit are written here. */

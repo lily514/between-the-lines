@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { identifyQuestion, predictQuestion } from '../test-fixtures/index.ts'
-import MatchStep from './MatchStep.tsx'
-import { movedOn, stepHeading, whyNow } from './MatchStep.support.ts'
+import { identifyQuestion, predictQuestion } from '../../test-fixtures/index.ts'
+import MatchStep from './index.tsx'
+import { movedOn, stepHeading, whyNow } from './index.support.ts'
 
 const stepTo = (question: typeof identifyQuestion, from: string | null = null, onArrive = vi.fn()) =>
 	render(

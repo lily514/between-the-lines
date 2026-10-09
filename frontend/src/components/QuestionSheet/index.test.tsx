@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { counterQuestion, identifyQuestion, predictQuestion } from '../test-fixtures/index.ts'
-import QuestionSheet from './QuestionSheet.tsx'
+import { counterQuestion, identifyQuestion, predictQuestion } from '../../test-fixtures/index.ts'
+import QuestionSheet from './index.tsx'
 
 const lockInButton = () => screen.getByRole('button', { name: /lock in/i })
 

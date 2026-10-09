@@ -215,3 +215,27 @@ Where implementation diverged from [plan.md](plan.md), or something surprising w
 
 **Why:** a number the viewer can't read sends them to the wrong player.
 **Affects:** the handoff puts the ball about 1.5 m from the carrier; it is now about 3 m. Pack ids change, because the score's text changed.
+
+## Components grouped in folders (2026-10-09)
+**Plan said:** one component per `.tsx` file, with helpers in a `.support.ts` beside it. The plan didn't say how to lay out the folder.
+**We did:** grouped `src/components/` the way `../Web/orbit-web` does (Lily's choice):
+
+```
+src/components/
+├── App.tsx (+ App.support.ts, App.css, tests)
+├── Welcome/         index.tsx, index.css, index.test.tsx
+├── MatchStep/       index.tsx, index.support.ts, index.css, index.test.tsx
+├── QuestionSheet/   index.* plus LockIn
+├── Feedback/        index.* plus VerdictMark, StatTile
+├── FullTime/        index.*
+└── Shared/          Pitch/ (index.*), AnswerGroup/ (index.* plus AnswerTile), PhasePill, ProgressBar, ErrorPanel
+```
+
+- A folder's main component is `index.tsx`, as in orbit-web.
+- A piece goes in `Shared/` when more than one screen uses it: the pitch, the answer tiles, the phase pill and the progress bar. `ErrorPanel` is there too, because it's app-wide.
+- `App.tsx` moved from `src/` into `components/`, as in orbit-web.
+- `pitchOptions` moved from the question sheet's support file to the pitch's, because the feedback screen uses it too and one screen shouldn't import from another.
+- Nothing else changed; the moves were made with `git mv`, so history follows the files.
+
+**Why:** easier to find things as the page grows, in a layout Lily already knows.
+**Affects:** CLAUDE.md's "Frontend style" describes the layout. Paths named in earlier notes (for example `components/Pitch.tsx`) are now inside these folders.

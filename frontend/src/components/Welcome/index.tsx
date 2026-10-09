@@ -1,8 +1,8 @@
 import { useEffect, useId, useRef, useState, type RefObject, type SyntheticEvent } from 'react'
-import type { Status } from '../api/client.ts'
-import ProgressBar from './ProgressBar.tsx'
-import { percent } from './ProgressBar.support.ts'
-import './Welcome.css'
+import type { Status } from '../../api/client.ts'
+import ProgressBar from '../Shared/ProgressBar.tsx'
+import { percent } from '../Shared/ProgressBar.support.ts'
+import './index.css'
 
 export interface WelcomeProps {
 	/** The viewer's record once found, or null while they type their name. */

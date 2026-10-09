@@ -1,6 +1,10 @@
 import { render, screen } from '@testing-library/react'
-import { identifyQuestion as identify, predictFeedback, predictQuestion as predict } from '../test-fixtures/index.ts'
-import Pitch from './Pitch.tsx'
+import {
+	identifyQuestion as identify,
+	predictFeedback,
+	predictQuestion as predict
+} from '../../../test-fixtures/index.ts'
+import Pitch from './index.tsx'
 
 const options = predict.options.flatMap(o => (o.target_at === null ? [] : [{ key: o.key, at: o.target_at }]))
 

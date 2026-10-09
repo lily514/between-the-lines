@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { finishedStatus, startStatus } from '../test-fixtures/summaries.ts'
-import Welcome from './Welcome.tsx'
+import { finishedStatus, startStatus } from '../../test-fixtures/summaries.ts'
+import Welcome from './index.tsx'
 
 const handlers = () => ({ onStart: vi.fn(), onWatch: vi.fn(), onChangeName: vi.fn() })
 

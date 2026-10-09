@@ -1,9 +1,9 @@
 import { useEffect, useId, useRef } from 'react'
-import type { FullTime as FullTimeData } from '../api/client.ts'
-import './FullTime.css'
-import PhasePill from './PhasePill.tsx'
-import ProgressBar from './ProgressBar.tsx'
-import { percent } from './ProgressBar.support.ts'
+import type { FullTime as FullTimeData } from '../../api/client.ts'
+import './index.css'
+import PhasePill from '../Shared/PhasePill.tsx'
+import ProgressBar from '../Shared/ProgressBar.tsx'
+import { percent } from '../Shared/ProgressBar.support.ts'
 
 export interface FullTimeProps {
 	summary: FullTimeData

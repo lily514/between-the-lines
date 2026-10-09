@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
-import AnswerGroup from './AnswerGroup.tsx'
-import type { Outcome } from './AnswerGroup.support.ts'
+import AnswerGroup from './index.tsx'
+import type { Outcome } from './index.support.ts'
 
 const choices = [
 	{ key: 'A', label: 'None' },

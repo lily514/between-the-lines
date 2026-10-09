@@ -1,4 +1,4 @@
-import type { Feedback, FullTime, NextStep, Question, Status } from './api/client.ts'
+import type { Feedback, FullTime, NextStep, Question, Status } from '../api/client.ts'
 
 /** A point in a match: where the last question left the viewer, so the next step can say how far play moved on. */
 export interface Moment {

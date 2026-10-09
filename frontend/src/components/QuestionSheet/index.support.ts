@@ -1,5 +1,4 @@
-import type { Question } from '../api/client.ts'
-import type { PitchOption } from './Pitch.support.ts'
+import type { Question } from '../../api/client.ts'
 
 export const isLive = (question: Question) => question.delivered.delivery === 'live'
 
@@ -19,10 +18,6 @@ export const clockLine = (question: Question): string => {
 /** When a review question's play happened, unless the worded question already says so ("Back at 05:12: …"). */
 export const earlierAt = (question: Question): string | undefined =>
 	isLive(question) || question.text.includes(question.occurred.clock) ? undefined : question.occurred.clock
-
-/** Where each option's pass would go, for the pitch. Options that aren't passes have no target. */
-export const pitchOptions = (question: Question): PitchOption[] =>
-	question.options.flatMap(o => (o.target_at === null ? [] : [{ key: o.key, at: o.target_at }]))
 
 /** A predict question never shows the play's path, since the path is the answer. */
 export const shownPath = (question: Question) => (question.form === 'predict' ? [] : question.picture.path)

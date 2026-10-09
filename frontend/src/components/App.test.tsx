@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from './App.tsx'
-import { identifyFeedback, identifyQuestion } from './test-fixtures/index.ts'
-import { fullTime, startStatus } from './test-fixtures/summaries.ts'
+import { identifyFeedback, identifyQuestion } from '../test-fixtures/index.ts'
+import { fullTime, startStatus } from '../test-fixtures/summaries.ts'
 
 const reply = (status: number, body: unknown) =>
 	new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })

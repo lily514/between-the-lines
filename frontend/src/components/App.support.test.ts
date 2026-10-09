@@ -1,5 +1,5 @@
-import { identifyFeedback, identifyQuestion, predictQuestion } from './test-fixtures/index.ts'
-import { fullTime, startStatus } from './test-fixtures/summaries.ts'
+import { identifyFeedback, identifyQuestion, predictQuestion } from '../test-fixtures/index.ts'
+import { fullTime, startStatus } from '../test-fixtures/summaries.ts'
 import { initialState, matchHeader, momentOf, reducer, type AppState } from './App.support.ts'
 
 const fresh = initialState(null)

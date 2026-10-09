@@ -1,0 +1,50 @@
+/* The verdict's mark (Components: verdict mark). Right is filled, wrong is dashed, a mix-up is a warning sign. */
+
+.verdict-mark {
+	flex: none;
+	width: 36px;
+	height: 36px;
+}
+
+.verdict-mark--mix-up {
+	width: 24px;
+	height: 24px;
+}
+
+.verdict-mark__glyph {
+	fill: none;
+	stroke-width: 3;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+
+.verdict-mark__disc {
+	fill: var(--know);
+}
+
+.verdict-mark--correct .verdict-mark__glyph {
+	stroke: var(--on-know);
+}
+
+.verdict-mark__ring {
+	fill: none;
+	stroke: var(--incorrect);
+	stroke-width: 2;
+	stroke-dasharray: 4 3;
+}
+
+.verdict-mark--incorrect .verdict-mark__glyph {
+	stroke: var(--incorrect);
+	stroke-width: 2.5;
+}
+
+.verdict-mark__triangle {
+	fill: none;
+	stroke: var(--note);
+	stroke-width: 2.5;
+	stroke-linejoin: round;
+}
+
+.verdict-mark--mix-up .verdict-mark__glyph {
+	stroke: var(--note);
+}

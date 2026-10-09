@@ -19,12 +19,14 @@ class TutorFeedback:
     """The feedback's wording after the code-written verdict, with ``{slots}`` for facts.
 
     ``source`` says who wrote it, for logs and the screen: "template" here, a model's name in
-    Milestone 2b.
+    Milestone 2b. ``misconception`` is a common mix-up, offered after a wrong answer; it is kept
+    apart from the explanation so a page can set it aside.
     """
 
     explanation: str
     takeaway: str
     source: str
+    misconception: str | None = None
 
 
 class Tutor(Protocol):

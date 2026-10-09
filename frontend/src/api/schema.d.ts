@@ -195,6 +195,8 @@ export interface components {
             match_number: number;
             /** Match Seed */
             match_seed: number;
+            /** Misconception */
+            misconception: string | null;
             /** Options */
             options: components["schemas"]["FeedbackOption"][];
             /** Outcome */

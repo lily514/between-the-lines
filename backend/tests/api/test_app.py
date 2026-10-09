@@ -117,6 +117,20 @@ def test_the_feedback_shows_the_answer_the_evidence_and_how_mastery_moved() -> N
     assert feedback["match_seed"] == SEED * 1000 + 1
 
 
+def test_a_wrong_answer_brings_a_common_mix_up_apart_from_the_explanation() -> None:
+    api = client(MemoryLearnerStore())
+    started(api)
+    told: list[dict[str, Any]] = []
+    while not any(not f["correct"] for f in told):
+        step = next_step(api)
+        if step["kind"] == "question":
+            told.append(answer(api, step["pack_id"], step["options"][0]["key"]).json())
+
+    for feedback in told:
+        assert (feedback["misconception"] is None) is feedback["correct"]
+        assert "mix-up" not in feedback["explanation"]
+
+
 def test_an_answer_to_another_question_is_refused_and_changes_nothing() -> None:
     store = MemoryLearnerStore()
     api = client(store)

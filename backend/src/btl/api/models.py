@@ -154,6 +154,7 @@ class FeedbackOut(BaseModel):
     verdict: str
     explanation: str
     takeaway: str
+    misconception: str | None
     source: str
     update: str
     concept_name: str

@@ -64,6 +64,7 @@ class Told:
     source: str
     update: str
     mastery: dict[str, float]
+    misconception: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -296,6 +297,9 @@ def watch_match(
                 source=feedback.source,
                 update=model.explain(update),
                 mastery=bars(),
+                misconception=None
+                if feedback.misconception is None
+                else fill(feedback.misconception, values),
             )
         )
         return True

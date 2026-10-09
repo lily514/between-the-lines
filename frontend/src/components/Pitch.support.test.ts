@@ -66,7 +66,12 @@ test('a short moment still gets a view of at least fifty metres', () => {
 })
 
 test('a play from one end to the other shows both goal lines', () => {
-	const view = cropTo(momentPoints(counter.picture, [], counter.picture.path))
+	const endToEnd: Point[] = [
+		[8, 30],
+		[60, 40],
+		[100, 34]
+	]
+	const view = cropTo(momentPoints(counter.picture, [], endToEnd))
 	expect(view.y).toBeLessThanOrEqual(0)
 	expect(view.y + view.height).toBeGreaterThanOrEqual(PITCH_LENGTH - 15)
 })

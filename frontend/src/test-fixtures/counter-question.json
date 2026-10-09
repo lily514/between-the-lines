@@ -1,6 +1,6 @@
 {
 	"kind": "question",
-	"pack_id": "902285bed659bf0d",
+	"pack_id": "afe7e9cc1e8c8c5d",
 	"match_number": 1,
 	"home": "Ripon Wardens",
 	"away": "Ludlow Ferrymen",
@@ -252,8 +252,8 @@
 		"ball": [92.2, 34.5],
 		"path": [
 			[105.0, 0.0],
-			[14.7, 38.5],
-			[14.7, 38.5],
+			[90.3, 29.5],
+			[90.3, 29.5],
 			[92.2, 34.5],
 			[92.2, 34.5]
 		]

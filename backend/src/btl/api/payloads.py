@@ -81,6 +81,7 @@ def feedback_payload(
         verdict=told.verdict,
         explanation=told.explanation,
         takeaway=told.takeaway,
+        misconception=told.misconception,
         source=told.source,
         update=told.update,
         concept_name=pack.concept.name,

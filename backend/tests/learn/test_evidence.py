@@ -19,6 +19,7 @@ from btl.learn.evidence import (
 )
 from btl.learn.knowledge import Delivery
 from btl.learn.questions import Asks, Form, active_concepts, build_question
+from btl.schema.frames import seen_by
 from btl.schema.vocab import ConceptId
 from tests.fixtures.learning import designed_with_candidates, threat_model
 
@@ -181,6 +182,29 @@ def test_every_pack_holds_the_real_path_to_reveal_after_answering() -> None:
 
     assert len(predict.reveal_path) >= 2
     assert predict.reveal_path == identify.reveal_path == identify.picture.path
+
+
+@pytest.mark.parametrize("seed", range(3))
+def test_a_path_that_changes_hands_stays_in_the_pictures_direction(seed: int) -> None:
+    match, _, candidates = designed_with_candidates(seed)
+    presses = [c for c in candidates if c.tag.concept is ConceptId.COUNTER_PRESS][:5]
+    assert presses
+
+    for candidate in presses:
+        pack = pack_for(candidate, 1, Delivery.DEFERRED, seed)
+        team = match.events[pack.picture.action_id].team_id
+        seen = seen_by(match, team).events
+        first, last = candidate.tag.span
+        expected = (
+            *(
+                (round(seen[a].start_x, 1), round(seen[a].start_y, 1))
+                for a in range(first, last + 1)
+            ),
+            (round(seen[last].end_x, 1), round(seen[last].end_y, 1)),
+        )
+
+        assert {match.events[a].team_id for a in range(first, last + 1)} != {team}
+        assert pack.reveal_path == pack.picture.path == expected
 
 
 def test_each_player_says_whether_they_play_for_the_home_club() -> None:

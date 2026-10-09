@@ -26,7 +26,7 @@ from btl.league.league import League
 from btl.learn.concept_map import ConceptKey, ConceptMap
 from btl.learn.knowledge import Delivery
 from btl.learn.questions import Asks, Form, Option, Question
-from btl.schema import PITCH_LENGTH
+from btl.schema import PITCH_LENGTH, PITCH_WIDTH
 from btl.schema.ids import ActionId, PlayerId, TeamId
 from btl.schema.scoreboard import clock, goals
 from btl.schema.vocab import ConceptId
@@ -376,11 +376,23 @@ def _picture(question: Question, ctx: MatchContext, league: League) -> Picture:
 
 
 def _play_path(question: Question, ctx: MatchContext) -> tuple[tuple[float, float], ...]:
+    """The play's path in the picture's direction: its team attacking towards x = 105.
+
+    The context gives each action in its own team's direction, so a play that changes hands
+    (a counter-press) has the other team's actions turned round to match.
+    """
     first, last = question.candidate.tag.span
+    team = ctx.events[question.picture].team_id
     played = [ctx.events[a] for a in range(first, last + 1)]
+
+    def point(x: float, y: float, team_id: TeamId) -> tuple[float, float]:
+        if team_id != team:
+            x, y = PITCH_LENGTH - x, PITCH_WIDTH - y
+        return (round(x, 1), round(y, 1))
+
     return (
-        *((round(e.start_x, 1), round(e.start_y, 1)) for e in played),
-        (round(played[-1].end_x, 1), round(played[-1].end_y, 1)),
+        *(point(e.start_x, e.start_y, e.team_id) for e in played),
+        point(played[-1].end_x, played[-1].end_y, played[-1].team_id),
     )
 
 

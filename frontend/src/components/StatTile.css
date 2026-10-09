@@ -1,0 +1,26 @@
+/* A stat tile (S4): a label over a value from the evidence pack, in the data font. */
+
+.stat-tile {
+	min-width: 0;
+	padding: 10px var(--s-3);
+	border-radius: var(--r-tile);
+	background: var(--surface);
+}
+
+.stat-tile__label {
+	font-size: var(--fs-caption);
+	color: var(--text-muted);
+}
+
+.stat-tile__value {
+	margin: 2px 0 0;
+	font-family: var(--font-data);
+	font-size: var(--fs-data-l);
+	font-weight: 500;
+	overflow-wrap: anywhere;
+}
+
+.stat-tile__unit {
+	font-size: var(--fs-label);
+	color: var(--text-muted);
+}

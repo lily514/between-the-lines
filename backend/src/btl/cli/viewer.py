@@ -78,7 +78,10 @@ def show_question(console: Console, asked: Asked) -> None:
 def show_feedback(console: Console, told: Told) -> None:
     """The verdict, the explanation and takeaway, the update sentence, and the bars."""
     style = "bold green" if told.grade.correct else "bold yellow"
-    console.print(Text.assemble((told.verdict, style), " ", told.explanation), highlight=False)
+    explanation = told.explanation
+    if told.misconception is not None:
+        explanation += f" A common mix-up: “{told.misconception}”"
+    console.print(Text.assemble((told.verdict, style), " ", explanation), highlight=False)
     console.print(Text(f"Takeaway: {told.takeaway}", style="italic"))
     console.print(Text(told.update, style="dim"))
     console.print(progress_bars(told.mastery))

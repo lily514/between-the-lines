@@ -1,11 +1,12 @@
 {
-	"pack_id": "902285bed659bf0d",
+	"pack_id": "afe7e9cc1e8c8c5d",
 	"correct": false,
 	"chosen": "A",
 	"correct_key": "C",
 	"verdict": "Good instinct, not this one.",
-	"explanation": "After losing the ball, Ripon Wardens hunted it straight back instead of retreating. Winning it back quickly catches the opponent before they can spread out. The answer was Hunted the ball straight back and won it. A common mix-up: “A team that loses the ball should always drop back first.”",
+	"explanation": "After losing the ball, Ripon Wardens hunted it straight back instead of retreating. Winning it back quickly catches the opponent before they can spread out. The answer was Hunted the ball straight back and won it.",
 	"takeaway": "Recognize a counter-press: winning the ball straight back after losing it, before the opponent can organize.",
+	"misconception": "A team that loses the ball should always drop back first.",
 	"source": "template",
 	"update": "Not this time, which on its own lowers our estimate for counter-pressing. But you've just seen the explanation, and that teaches it 15% of the time, so we're now 17% sure you understand it, up from 15%.",
 	"concept_name": "Counter-pressing",
@@ -269,16 +270,16 @@
 		"ball": [92.2, 34.5],
 		"path": [
 			[105.0, 0.0],
-			[14.7, 38.5],
-			[14.7, 38.5],
+			[90.3, 29.5],
+			[90.3, 29.5],
 			[92.2, 34.5],
 			[92.2, 34.5]
 		]
 	},
 	"reveal_path": [
 		[105.0, 0.0],
-		[14.7, 38.5],
-		[14.7, 38.5],
+		[90.3, 29.5],
+		[90.3, 29.5],
 		[92.2, 34.5],
 		[92.2, 34.5]
 	],

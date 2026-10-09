@@ -242,6 +242,17 @@
             "title": "Match Seed",
             "type": "integer"
           },
+          "misconception": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Misconception"
+          },
           "options": {
             "items": {
               "$ref": "#/components/schemas/FeedbackOption"
@@ -308,6 +319,7 @@
           "verdict",
           "explanation",
           "takeaway",
+          "misconception",
           "source",
           "update",
           "concept_name",

@@ -70,11 +70,11 @@ class TemplateTutor:
             sentences.append(CONFIRM_PASS if is_pass else CORRECT_CHOICE)
         else:
             sentences.append(COMPARE_PASSES if is_pass else CORRECT_CHOICE)
-            sentences.append(f"A common mix-up: “{_misconception(pack)}”")
         return TutorFeedback(
             explanation=" ".join(sentences),
             takeaway=pack.concept.objective,
             source=self.source,
+            misconception=None if grade.correct else _misconception(pack),
         )
 
 

@@ -2,7 +2,8 @@
 
 ## Git workflow
 - GitHub remote, no PRs. One branch per milestone, named after the milestone (M1 "The Data Engine": `feature/data-engine`;
-  M2a "The loop in the terminal": `feature/learning-loop`).
+  M2a "The loop in the terminal": `feature/learning-loop`; M2c "The web page": `feature/web-page`).
+  2c is built before 2b, because Azure isn't set up yet.
 - Each plan task is one commit on the milestone branch, made after Lily reviews the diff.
 - When a milestone is done, merge it into main with `git merge --no-ff`, so each milestone shows up as one merge in the graph.
 - Claude commits locally only; Lily pushes when ready. CI runs on every push, to any branch.
@@ -11,6 +12,7 @@
 Adaptive football-learning tool on synthetic match data. Milestone 1 built the data engine; Milestone 2
 is split into 2a (the learning engine, played in the terminal), 2b (the Foundry Tutor and Verifier) and
 2c (the web page).
+Milestone 2c puts the learning loop in a browser: a React page over a small FastAPI layer.
 
 ## Learning design rules
 - The match never depends on the viewer. Adaptation lives in which moments we ask about, when, and
@@ -24,6 +26,9 @@ is split into 2a (the learning engine, played in the terminal), 2b (the Foundry 
 - Every number shown to the viewer comes from the evidence pack, through a fact slot such as
   `{B.threat_added}`. `tutor/` never imports sim, value, concepts or plant.
 - `learn/` takes time as a parameter and never reads the clock.
+- The browser computes no football and invents no numbers: everything it shows comes from the API.
+  Question payloads are built from the question view only, so the right answer never leaves the
+  server before the viewer answers.
 
 ## Hard rules
 - All data synthetic: fictional league/clubs/players only. No real league, club, or player names or marks.
@@ -50,12 +55,19 @@ is split into 2a (the learning engine, played in the terminal), 2b (the Foundry 
 - Lint/format: `uv run ruff check --fix && uv run ruff format`
 - Types: `uv run pyright`
 - CLI: `uv run btl --help` · learning loop: `uv run btl learn --viewer NAME`, `uv run btl demo-viewer`
+- Web page: `uv run btl serve` (serves the API and the built page)
+
+## Commands (run from frontend/)
+- Install: `npm ci` (Node 24, see `.nvmrc`)
+- Dev server: `npm run dev` (proxies `/api` to `btl serve`)
+- Test, lint, build: `npm test` · `npm run lint` · `npm run build`
+- API types: `npm run api-types` (regenerate after any change to the API)
 
 ## Layout
 Monorepo layout: Python lives in `backend/` (src layout: `backend/src/btl/`, tests in
-`backend/tests/` mirroring package paths). `frontend/` arrives in a later milestone.
+`backend/tests/` mirroring package paths). `frontend/` holds the web page (Vite + React + TS).
 One concept per module. Subpackages: schema, league, sim, plant, value, concepts, learn, tutor, store,
-cli, plus `replay.py`.
+cli, api, plus `replay.py`. `api` holds the HTTP routes the page calls; the page itself is `frontend/`.
 
 ## Python style
 - ruff format (line length 100); ruff rules: E, F, I, B, UP, SIM, RUF, N, D (Google convention).
@@ -70,7 +82,7 @@ cli, plus `replay.py`.
   `btl/schema/__init__.py`; do not invent another one. Direction flipping happens only in `frames.py`.
 - pandas only in `schema/frames.py`, `io.py` (parquet files), `value/`, and `cli/`. Everything else uses typed dataclasses.
   pandas and socceraction are only partly typed, so only those edge modules may start with `# pyright: basic`; nowhere else.
-- Pure functions where possible; I/O only in `btl/io.py`, `btl/store/` and `btl/cli/`.
+- Pure functions where possible; I/O only in `btl/io.py`, `btl/store/`, `btl/cli/` and `btl/api/`.
 
 ## Naming
 - Modules/functions: snake_case; functions are verbs (`simulate_match`), data types are nouns (`Snapshot`).
@@ -95,3 +107,9 @@ cli, plus `replay.py`.
 - Short imperative subject line, no prefixes: `Add possession-chain simulator`, `Plant line-breaking moments`.
 - Add a body only when the *why* isn't obvious from the diff.
 - One plan task = one commit, tests included.
+
+## Frontend style
+- Follows the workspace CLAUDE.md (tabs, no semicolons, single quotes, one component per `.tsx`,
+  helpers in `.support.ts`).
+- Component CSS uses the tokens in `src/styles/tokens.css` only, never a hex value.
+- Design reference: `docs/milestone-2c/design/`. It guides the look; the repo decides behaviour and data.

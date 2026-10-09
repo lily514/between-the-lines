@@ -115,3 +115,27 @@ Where implementation diverged from [plan.md](plan.md), or something surprising w
 - **T6:** the reveal passes `reveal_path`, `reveal` and `crop="moment"`.
 - **T5–T7** can use the fixtures in `src/test-fixtures/index.ts`.
 - **Not drawn yet:** the handoff's defensive lines and their numbered badges on the reveal. The pack doesn't carry line positions, and the plan doesn't ask for them.
+
+## T5 — Question sheet (2026-10-08)
+**Plan said:** a `QuestionSheet` for predict (S2) and review (S3) questions, built from the question payload, with `AnswerGroup`/`AnswerTile` as a radio group, `LockIn` disabled until a pick, and a `PhasePill`. Keys 1/2/3 pick and Enter locks in, only while the sheet is open. Focus goes to the question heading. The sheet slides in over 240 ms, or crossfades with reduced motion.
+**We did:** as planned, with these choices:
+- **Components and props:**
+  - `QuestionSheet({question, onLockIn, busy?})` holds the pick itself. The page gives it `key={question.pack_id}`, so a new question starts with no pick.
+  - `AnswerGroup({label, choices, selected, onSelect, disabled?, outcome?})`. `outcome` (`{correct, chosen}`) turns the tiles into the reveal's states for T6: the answer gets ✓ and "Answer", a wrong pick gets ✕, "Your pick" and a dashed border, and the others are muted. The pick can't change after that.
+  - `AnswerTile` draws one option; `LockIn({selected, busy?, onLockIn})`; `PhasePill({phase, detail?})`.
+- **Two layouts for the tiles,** chosen in `AnswerGroup.support.ts`. When every label is 18 characters or less ("One", "Under 8 m"), three 112 px tiles sit side by side, as in the mockups. Otherwise each option gets a full-width row, with its letter on the left. Labels such as "Pass to #14 Niels Rosinga" and "Hunted the ball straight back and won it" don't fit a third of a 390 px phone. Every option keeps its letter, so the tiles match the letters on the pitch and keys 1/2/3.
+- **No separate "Earlier, at…" line when the question already gives the time.** The template Tutor's review questions open with "Play has stopped for a free kick. Back at 05:12: …", so the line would repeat it. The line appears only when the wording leaves the time out, which 2b's model might do.
+- **The score shows only for live questions.** A review question's score is from when the play happened, and may be out of date by the stoppage, so its bar shows just the clock. The hyphen in the score becomes an en dash, as in the mockups.
+- **Left out on purpose:**
+  - "Save for the break", the close button and the "If play restarts first…" line. The selector doesn't re-queue a question, so they would promise something that doesn't happen (the plan leaves "Save for the break" out).
+  - The review screen's Replay button, which needs playback.
+- **Lock in stays focusable when it can't be used:** it has `aria-disabled` rather than `disabled`, and says "Pick an answer to lock in". While the answer is sent it says "Locking in…".
+- **Keys:** the arrow keys, Home and End move through the options and pick, with one tab stop for the group, as native radios do. 1/2/3 and Enter are handled on the sheet's own element, never on `window`. Enter with no pick does nothing.
+- **Focus** lands on the question heading (`tabIndex=-1`) without a focus ring, because the heading isn't a control.
+- **Pill icons** come from the Components mockup for the three in-play phases. Half-time uses two bars and full time a flag; those two are our own.
+
+**Checked by eye:** the predict, line-break review and counter-press review fixtures were rendered with headless Chrome at 390 px, in both themes. Two fixes came from it: the heading's focus ring is gone, and "Your pick" no longer wraps in the row layout. A counter-press review's path covers the whole spell from the loss to the regain, so its moment crop is nearly the full pitch. That is the engine's path, drawn as it is.
+**Why:** the plan left these details open; the layouts and fixes came from looking at real labels.
+**Affects:**
+- **T6** reuses `AnswerGroup` with `outcome` for the reveal.
+- **T7** gives the sheet `key={pack_id}`, turns 409 from the answer into a fresh `/next`, and passes `busy` while the answer is sent.

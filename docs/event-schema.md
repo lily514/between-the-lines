@@ -42,7 +42,9 @@ Defined as enums in `btl/schema/vocab.py`. The enum value is the SPADL id, and a
 Kept outside the SPADL frame because the schema is strict:
 
 - `possession_id: int`
-- `phase`: open play, set piece, or transition. In simulated matches, a set piece is the action that restarts play: a kickoff (SPADL type `pass`), `throw_in`, `goalkick`, `corner_crossed` or `corner_short`. Transition covers the action that wins the ball in open play and anything that team does in the next 8 seconds, unless play stops first. Everything else is open play.
+- `phase`: open play, set piece, or transition. In simulated matches, a set piece is the action that restarts play: a kickoff (SPADL type `pass`), `throw_in`, `goalkick`, `corner_crossed`, `corner_short`, or a free kick (`freekick_short`, `freekick_crossed` for one played long, `shot_freekick`, `shot_penalty`). Transition covers the action that wins the ball in open play and anything that team does in the next 8 seconds, unless play stops first. Everything else is open play.
+- **Fouls in simulated matches** are `foul` actions by the team without the ball, inside the other team's possession; the result is `fail`, or `yellow_card` when booked. Play then usually stops for a free kick to the fouled team, from the same spot (a penalty from the spot if the foul was in the box); sometimes the referee plays advantage and play goes on.
+- **Offsides in simulated matches** are passes with result `offside`: open-play passes going forward into the attacking third, flagged at random rather than from where the players stand. The possession ends, and the other team takes a free kick where the pass was headed.
 - `planted_moment_id: int | None`: which planted moment the action was written for, if any (an index into the match's planted moments).
 
 ## Snapshots

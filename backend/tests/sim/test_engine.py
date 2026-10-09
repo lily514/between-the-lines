@@ -128,7 +128,8 @@ def test_everything_happens_on_the_pitch(seed: int) -> None:
 
 @pytest.mark.parametrize("seed", [*SEEDS, *PLANTED_SEEDS])
 def test_possession_changes_hands_every_time_it_changes(seed: int) -> None:
-    events = match(seed).events
+    # A foul is made by the team without the ball, inside the other team's possession.
+    events = [e for e in match(seed).events if e.action_type is not ActionType.FOUL]
 
     by_possession: dict[int, set[int]] = {}
     for event in events:
@@ -232,3 +233,24 @@ def test_a_moment_cut_off_by_the_whistle_is_an_error() -> None:
 
     with pytest.raises(RuntimeError, match="period 1 ended"):
         simulate_match(home, away, 0, with_snapshots=False, director=CutOffByTheWhistle())
+
+
+@pytest.mark.parametrize("seed", SEEDS)
+def test_a_foul_is_by_the_team_without_the_ball_and_on_the_ball(seed: int) -> None:
+    played = match(seed)
+    assert played.positions is not None
+    fouls = [e for e in played.events if e.action_type is ActionType.FOUL]
+
+    assert fouls
+    for foul in fouls:
+        before, after = played.events[foul.action_id - 1], played.events[foul.action_id + 1]
+        # Inside the fouled team's possession, which carries on with its free kick or play,
+        # unless the half ends first.
+        assert foul.possession_id == before.possession_id
+        assert foul.team_id != before.team_id
+        if after.period_id == foul.period_id:
+            assert after.possession_id == foul.possession_id and after.team_id == before.team_id
+        snapshot = played.snapshot(foul.action_id)
+        assert snapshot is not None
+        (fouler,) = [p for p in snapshot.positions if p.is_actor]
+        assert (fouler.team_id, fouler.x, fouler.y) == (foul.team_id, foul.start_x, foul.start_y)

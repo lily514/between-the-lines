@@ -219,7 +219,8 @@ def test_moments_shows_a_counter_press_from_just_after_the_ball_is_lost(tmp_path
     match, _ = load_match(tmp_path / "match-0007")
     (moment,) = match.planted
     assert f"the pitch at #{moment.pause_action_id + 1}" in shown.output
-    assert "Detector: counter press · seconds to win back" in shown.output
+    assert "Detector: counter press · difficulty " in shown.output
+    assert "· seconds to win back " in shown.output
     assert "None" not in shown.output
 
 

@@ -35,6 +35,7 @@ def test_winning_it_back_in_4_seconds_in_the_opponents_half_is_a_counter_press()
     assert tag.action_id == 4
     assert tag.span == (1, 4)
     assert tag.evidence == {"seconds to win back": 4.0, "metres from goal": 35.0}
+    assert tag.difficulty == 1.0
 
 
 def test_winning_it_back_after_7_seconds_is_too_slow() -> None:
@@ -107,3 +108,14 @@ def test_in_simulated_play_every_tag_is_a_quick_regain_in_the_opponents_half(see
         assert 0 <= tag.evidence["seconds to win back"] <= 5
         between = [events[ActionId(i)] for i in range(tag.span[0] + 1, tag.action_id)]
         assert any(event.team_id != regain.team_id for event in between)
+
+
+@pytest.mark.parametrize(
+    ("seconds", "difficulty"), [(0.5, 0.0), (1.0, 0.0), (2.5, 0.5), (4.0, 1.0), (5.0, 1.0)]
+)
+def test_the_longer_the_opponent_keeps_the_ball_the_harder_the_press_is_to_spot(
+    seconds: float, difficulty: float
+) -> None:
+    (tag,) = detect(lost_and_won_back(seconds, OPPONENT_HALF))
+
+    assert tag.difficulty == difficulty

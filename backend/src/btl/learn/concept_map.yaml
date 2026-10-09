@@ -1,0 +1,423 @@
+# Concept map for the adaptive football learning layer.
+#
+# Each concept is a knowledge component tracked by a knowledge model (Bayesian Knowledge
+# Tracing, BKT, by default). The moment selector picks from the "frontier": concepts whose
+# prerequisites are all above the model's unlock threshold but which are not yet above its
+# mastery threshold.
+#
+# Only concepts the app can ask about are "active"; the rest are the curriculum still to
+# build. A prerequisite that isn't active yet counts as met, so the frontier gets stricter by
+# itself as concepts are built. Read by btl/learn/concept_map.py, which checks every rule below.
+#
+# Conventions
+# - Text in {braces} is a placeholder filled by code from the evidence pack.
+#   Every placeholder must appear in that concept's evidence_fields, except {home_team}
+#   and {away_team}, which every match provides. The Tutor never writes numbers itself.
+# - explanations are anchor text written by a human. The Tutor may rephrase and
+#   expand them, but should not contradict them.
+# - misconceptions double as wrong answer options where a question's options are statements,
+#   and otherwise appear in feedback after a wrong answer.
+# - detector is the btl ConceptId of the detector that finds the concept, or null if none
+#   exists yet.
+# - data_requirements says what the simulator must produce for the detector to work:
+#     events   = event stream only
+#     snapshot = frozen player positions at the moment
+#     window   = aggregation over a stretch of play (for example, 10-15 minutes)
+# - The guess parameter is not set here. It comes from each question (1 / number of options).
+
+version: 1
+
+# Settings for each knowledge model, by model name. Thresholds belong to the model, because
+# each model's number means something slightly different.
+learner_models:
+  bkt:
+    thresholds:
+      unlock: 0.8     # all prerequisites above this -> concept becomes eligible
+      mastery: 0.95   # above this -> concept moves to spaced review
+    # Default parameters by tier. A concept can override any of them under its own
+    # learner_models.bkt.
+    # Priors fall with tier: many newcomers already know what a goal is; few know PPDA.
+    tier_defaults:
+      0: {prior: 0.40, learn: 0.20, slip: 0.10}
+      1: {prior: 0.25, learn: 0.15, slip: 0.10}
+      2: {prior: 0.15, learn: 0.15, slip: 0.10}
+      3: {prior: 0.05, learn: 0.10, slip: 0.10}
+
+tiers:
+  0: {name: Newcomer, goal: "Follow what is happening in a match."}
+  1: {name: Casual fan, goal: "Read the flow of play and recognize common patterns."}
+  2: {name: Engaged fan, goal: "Use tactical vocabulary to explain why moments matter."}
+  3: {name: Analyst, goal: "Make evidence-based judgments under uncertainty."}
+
+strands:
+  possession: "Keeping and moving the ball."
+  pressure: "Winning the ball back and denying space."
+  chances: "Creating and judging scoring opportunities."
+  game_flow: "Rules, phases of play, and how matches change over time."
+
+question_types:
+  identify: "Recognize whether a concept is present in a moment."
+  predict: "Freeze the moment and choose what should happen next."
+  explain: "Say why something matters, in the viewer's own words (free text)."
+  evaluate: "Judge a stretch of play using evidence; used for window-based concepts."
+
+concepts:
+
+  # ---------------------------------------------------------------- Tier 0
+
+  - id: possession
+    name: Possession
+    strand: possession
+    tier: 0
+    prerequisites: []
+    objective: "Tell which team has the ball and notice when it changes hands."
+    detector: null
+    data_requirements: [events]
+    question_types: [identify]
+    example_prompt: "Which team has the ball right now?"
+    explanations:
+      beginner: "One team has the ball at a time. When the other team takes it, possession changes."
+      intermediate: "{team} have had {possession_pct}% of the ball. Possession shows who is controlling the play, not who is winning."
+      analyst: "{team} hold {possession_pct}% possession, but their average possession lasts {avg_sequence_passes} passes, so control is shallower than the headline number suggests."
+    misconceptions:
+      - "More possession means a team is winning."
+      - "The team with the ball is always attacking."
+    evidence_fields: [team, possession_pct, avg_sequence_passes]
+
+  - id: tackles
+    name: Tackles and turnovers
+    strand: pressure
+    tier: 0
+    prerequisites: []
+    objective: "Recognize how a team wins the ball back: tackles, interceptions, and loose balls."
+    detector: null
+    data_requirements: [events]
+    question_types: [identify]
+    example_prompt: "How did the defending team just win the ball back?"
+    explanations:
+      beginner: "A tackle is when a defender takes the ball off an opponent. An interception is when they cut out a pass."
+      intermediate: "{team} won the ball by {recovery_type} in the {pitch_third}. Where a team wins the ball matters as much as how."
+      analyst: "{team} have made {high_recoveries} recoveries in the attacking third, against a match average of {avg_high_recoveries}. Those high turnovers are the starting point for transitions."
+    misconceptions:
+      - "Winning the ball deep in your own half is just as useful as winning it high."
+      - "Tackles are the main way teams win the ball back."
+    evidence_fields: [team, recovery_type, pitch_third, high_recoveries, avg_high_recoveries]
+
+  - id: shots_and_goals
+    name: Shots and goals
+    strand: chances
+    tier: 0
+    prerequisites: []
+    objective: "Recognize shots, shots on target, saves, and goals."
+    detector: null
+    data_requirements: [events]
+    question_types: [identify]
+    example_prompt: "Was that shot on target?"
+    explanations:
+      beginner: "A goal is scored when the whole ball crosses the line between the posts. A shot on target is one the goalkeeper would have to stop."
+      intermediate: "{team} have taken {shots} shots, {shots_on_target} on target. Shot counts are a starting point, but they do not show how good the chances were."
+      analyst: "{team} lead the shot count {shots} to {opp_shots}, but shot volume alone says little; chance quality decides most matches."
+    misconceptions:
+      - "The team with more shots is the better team."
+      - "Every shot on target was a real chance to score."
+    evidence_fields: [team, shots, shots_on_target, opp_shots]
+
+  # Candidate for splitting later: this concept bundles several rules. If BKT shows
+  # viewers mastering some rules but not others, split it into offside, set_pieces,
+  # and fouls_and_cards.
+  - id: rules
+    name: Key rules
+    strand: game_flow
+    tier: 0
+    prerequisites: []
+    objective: "Explain why play stopped: offside, fouls and cards, and set pieces (corners, free kicks, throw-ins, penalties)."
+    detector: null
+    data_requirements: [events, snapshot]
+    question_types: [identify, predict]
+    example_prompt: "Play has stopped. Why?"
+    explanations:
+      beginner: "Play stops for fouls, when the ball goes out, or for offside. The restart (a corner, throw-in, or free kick) depends on why it stopped."
+      intermediate: "That was {stoppage_type}. {rule_note}"
+      analyst: "{stoppage_type} at {minute}. Set pieces like this account for {set_piece_goal_share}% of goals in this league, so restarts are worth watching."
+    misconceptions:
+      - "Being in an offside position is always an offence."
+      - "Offside is judged when the player receives the ball, not when the pass is played."
+      - "You can be offside from a throw-in."
+    evidence_fields: [stoppage_type, rule_note, minute, set_piece_goal_share]
+
+  # ---------------------------------------------------------------- Tier 1
+
+  - id: passing
+    name: Passing and pass difficulty
+    strand: possession
+    tier: 1
+    prerequisites: [possession]
+    objective: "Distinguish pass types (short, long, forward, backward) and judge how difficult a pass was."
+    detector: null
+    data_requirements: [events, snapshot]
+    question_types: [identify, predict]
+    brief_links: ["Pass quality: pass distance, pass accuracy and a pass difficulty rating"]
+    example_prompt: "Which of these passes was hardest to complete?"
+    explanations:
+      beginner: "Some passes are easy, like a short pass to a free teammate. Others are hard, like a long ball over defenders."
+      intermediate: "That was a {pass_distance_m} m {pass_direction} pass with a difficulty of {difficulty_rating} out of 5. Passes get harder with distance, speed, and defenders nearby."
+      analyst: "Difficulty {difficulty_rating}/5: {pass_distance_m} m under {pressure_level} pressure. {player} completes {player_hard_pass_pct}% of passes rated 4 or higher, against a league average of {league_hard_pass_pct}%."
+    misconceptions:
+      - "Backward passes are always negative."
+      - "Long passes are more valuable than short ones."
+    evidence_fields: [pass_distance_m, pass_direction, difficulty_rating, pressure_level, player, player_hard_pass_pct, league_hard_pass_pct]
+
+  - id: pressing
+    name: Pressing
+    strand: pressure
+    tier: 1
+    prerequisites: [tackles]
+    objective: "Recognize when a team is pressing: closing down the ball carrier to force a mistake or win it back."
+    detector: null
+    data_requirements: [events]
+    question_types: [identify, predict]
+    example_prompt: "Is the defending team pressing right now, or waiting?"
+    explanations:
+      beginner: "Pressing means rushing the player with the ball so they have less time to pass. Teams do it to win the ball back quickly."
+      intermediate: "{team} pressed with {pressers} players and won the ball in {seconds_to_regain} seconds. A good press works as a group, not one player chasing."
+      analyst: "{team} applied {pressure_events} pressure events in this spell and regained possession within {seconds_to_regain} s, well above their match rate of {match_regain_rate}%."
+    misconceptions:
+      - "Pressing means everyone sprints at the ball."
+      - "Only forwards press."
+    evidence_fields: [team, pressers, seconds_to_regain, pressure_events, match_regain_rate]
+
+  - id: chance_quality
+    name: Chance quality
+    strand: chances
+    tier: 1
+    prerequisites: [shots_and_goals, passing]
+    objective: "Judge whether a chance was good or poor from shot location, angle, and the build-up."
+    detector: null
+    data_requirements: [events, snapshot]
+    question_types: [identify, predict]
+    example_prompt: "Of these two chances, which was more likely to be scored?"
+    explanations:
+      beginner: "Not all shots are equal. A shot close to the goal and straight in front of it is much more likely to go in than one from far out or a tight angle."
+      intermediate: "That shot came from {shot_distance_m} m at a {angle_desc} angle after a {assist_type}. Chances like that are scored about {conversion_pct}% of the time."
+      analyst: "From {shot_distance_m} m with {defenders_in_path} defenders in the path, this was a low-quality effort; {team} are taking {pct_low_quality}% of their shots from similar positions."
+    misconceptions:
+      - "A shot hit hard from distance is a good chance."
+      - "Shots on target are always good chances."
+    evidence_fields: [shot_distance_m, angle_desc, assist_type, conversion_pct, defenders_in_path, team, pct_low_quality]
+
+  - id: transitions
+    name: Transitions and counterattacks
+    strand: game_flow
+    tier: 1
+    prerequisites: [rules, tackles]
+    objective: "Recognize the moment after a turnover, when both teams are briefly out of shape, and spot a counterattack."
+    detector: counter_attack
+    data_requirements: [events]
+    question_types: [identify, predict]
+    example_prompt: "The ball has just changed hands. Should they attack fast or slow down?"
+    explanations:
+      beginner: "Right after a team wins the ball, the other team is out of position. Attacking fast before they recover is called a counterattack."
+      intermediate: "{team} reached the opponent's box {seconds_to_box} seconds after winning the ball. Counterattacks are dangerous because defenders have not had time to get back."
+      analyst: "{team} have created {transition_shots} shots from transitions against {settled_shots} from settled possession, so their danger comes from turnovers, not build-up."
+    misconceptions:
+      - "Teams with less possession cannot be dangerous."
+      - "A counterattack is any fast attack."
+    evidence_fields: [team, seconds_to_box, transition_shots, settled_shots]
+
+  - id: phase_of_play
+    name: Phase of play
+    strand: game_flow
+    tier: 1
+    prerequisites: [possession]
+    objective: "Tell whether play is settled, in transition, or stopped, and why that changes what teams try to do."
+    detector: null
+    data_requirements: [events]
+    question_types: [identify]
+    example_prompt: "The ball changed hands a moment ago. Is play settled yet?"
+    explanations:
+      beginner: "Play is settled when a team has the ball and time to organize. Just after the ball changes hands, both teams are out of shape: that is a transition."
+      intermediate: "{team} have made {passes_since_turnover} passes since winning the ball, so play has settled and the defence has had time to get back into shape."
+      analyst: "Questions here are only asked in settled play or at stoppages; {team}'s spell began as a transition and settled after {passes_since_turnover} passes."
+    misconceptions:
+      - "Play is either attacking or defending; there is nothing in between."
+      - "A team that has just won the ball should always slow down."
+    evidence_fields: [team, passes_since_turnover]
+
+  # ---------------------------------------------------------------- Tier 2
+
+  - id: line_breaking_pass
+    name: Line-breaking passes
+    strand: possession
+    tier: 2
+    prerequisites: [passing]
+    objective: "Spot passes that cut through a defensive line and explain why they create danger."
+    detector: line_breaking_pass
+    data_requirements: [events, snapshot]
+    question_types: [identify, predict, explain]
+    example_prompt: "Where should #8 pass to break the most lines?"
+    explanations:
+      beginner: "That pass skipped past several defenders at once. Getting the ball behind defenders is how teams create chances."
+      intermediate: "A line-breaking pass cuts through a defensive line; this one broke {lines_broken}, through a gap {gap_m} m wide. The receiver was standing in the space between the lines."
+      analyst: "Breaking {lines_broken} lines into the {receiver_zone} raised expected threat from {xt_before} to {xt_after}."
+    misconceptions:
+      - "Backward passes are always negative."
+      - "Long passes break more lines than short ones."
+    evidence_fields: [lines_broken, gap_m, receiver_zone, xt_before, xt_after]
+
+  - id: counter_press
+    name: Counter-pressing
+    strand: pressure
+    tier: 2
+    prerequisites: [pressing]
+    objective: "Recognize a counter-press: winning the ball straight back after losing it, before the opponent can organize."
+    detector: counter_press
+    data_requirements: [events, snapshot]
+    question_types: [identify]
+    example_prompt: "{team} lost the ball a moment ago. How long did they take to win it back?"
+    explanations:
+      beginner: "After losing the ball, {team} hunted it straight back instead of retreating. Winning it back quickly catches the opponent before they can spread out."
+      intermediate: "{team} won the ball back {seconds_to_regain} seconds after losing it, with {pressers} players close to the ball. A counter-press works as a group, while the opponent is still turning to play forward."
+      analyst: "{team} regained possession {seconds_to_regain} s after losing it, {metres_from_goal} m from goal. A press that wins the ball this high starts an attack close to goal, but it leaves space behind if it fails."
+    misconceptions:
+      - "Pressing means everyone sprints at the ball."
+      - "A team that loses the ball should always drop back first."
+    evidence_fields: [team, seconds_to_regain, pressers, metres_from_goal]
+
+  - id: press_triggers
+    name: Pressing triggers and block height
+    strand: pressure
+    tier: 2
+    prerequisites: [pressing]
+    objective: "Predict when a team will press (its triggers) and describe how high or deep it defends."
+    detector: null
+    data_requirements: [events, snapshot]
+    question_types: [predict, explain]
+    example_prompt: "The ball has gone to the full-back. Will the defending team press now?"
+    explanations:
+      beginner: "Teams often wait for a signal to press, like a pass toward the sideline, where the touchline acts as an extra defender."
+      intermediate: "{team} pressed on a {trigger_type}. They defend in a {block_height} block, meaning their defensive line sits {line_height_m} m from their own goal."
+      analyst: "{trigger_type} has triggered {team}'s press {trigger_count} times, with {trigger_success_pct}% ending in a regain inside {regain_window_s} s. Their {block_height} block leaves {space_behind_m} m of space behind the line."
+    misconceptions:
+      - "Teams press randomly or all the time."
+      - "A deep block means a team is not trying to win."
+    evidence_fields: [team, trigger_type, block_height, line_height_m, trigger_count, trigger_success_pct, regain_window_s, space_behind_m]
+
+  - id: expected_goals
+    name: Expected goals (xG)
+    strand: chances
+    tier: 2
+    prerequisites: [chance_quality]
+    objective: "Explain xG as the probability a shot becomes a goal, and use it to compare chances."
+    detector: null
+    data_requirements: [events, snapshot]
+    question_types: [identify, predict, explain]
+    example_prompt: "Which of these shots had the higher xG?"
+    explanations:
+      beginner: "Expected goals, or xG, puts a number on how good a chance was. A chance with 0.5 xG goes in about half the time."
+      intermediate: "That chance was worth {shot_xg} xG: about {shot_xg_pct}% of shots like it are scored. {team} have {team_xg} xG in total."
+      analyst: "{team} lead on xG {team_xg} to {opp_xg} but trail on goals, so on chance quality they have been the better side so far."
+    misconceptions:
+      - "xG predicts the final score."
+      - "Penalties are certain goals."
+    evidence_fields: [shot_xg, shot_xg_pct, team, team_xg, opp_xg]
+
+  - id: game_state
+    name: Game state
+    strand: game_flow
+    tier: 2
+    prerequisites: [transitions]
+    objective: "Explain how the score and the clock change how teams play."
+    detector: null
+    data_requirements: [events, window]
+    question_types: [predict, explain]
+    example_prompt: "{home_team} just went 1-0 up with 20 minutes left. What will {away_team} probably do now?"
+    explanations:
+      beginner: "Teams play differently depending on the score. A team that is winning often sits back, and a team that is losing pushes forward."
+      intermediate: "Since going {score} up at {minute}, {team} have dropped deeper; their possession fell from {possession_before}% to {possession_after}%."
+      analyst: "Read stats in context: {team}'s possession and shot numbers since {minute} reflect protecting a lead, not being outplayed."
+    misconceptions:
+      - "A team sitting deep is being outplayed."
+      - "Stats from a match where one team scored early compare fairly with stats from an even match."
+    evidence_fields: [score, minute, team, possession_before, possession_after]
+
+  # ---------------------------------------------------------------- Tier 3
+
+  - id: expected_threat
+    name: Expected threat (xT) and possession value
+    strand: possession
+    tier: 3
+    prerequisites: [line_breaking_pass, chance_quality]
+    objective: "Use xT to value actions that do not end in shots, and explain its limits."
+    detector: null
+    data_requirements: [events]
+    question_types: [predict, explain, evaluate]
+    example_prompt: "Which player added the most threat this half without taking a shot?"
+    explanations:
+      beginner: "Some parts of the pitch are more dangerous than others. Moving the ball into dangerous areas creates value even if nobody shoots."
+      intermediate: "Expected threat (xT) measures how dangerous each area of the pitch is. {player}'s actions have added {player_xt} xT, the most on the pitch."
+      analyst: "{player} leads with {player_xt} xT added. xT values locations, not situations; it ignores where defenders are, so treat it as a guide, not a verdict."
+    misconceptions:
+      - "Only shots and assists create value."
+      - "xT fully judges whether a decision was good."
+    evidence_fields: [player, player_xt]
+
+  - id: pressure_shifts
+    name: Pressure shifts
+    strand: pressure
+    tier: 3
+    prerequisites: [press_triggers]
+    capstone: true
+    brief_links: ["Explainability: tactical pressure changes"]
+    objective: "Detect when a team's pressing intensity changes over a match, and explain likely causes."
+    detector: null
+    data_requirements: [events, window]
+    question_types: [evaluate, explain]
+    example_prompt: "Compare the last 15 minutes with the first 15. Has {home_team}'s press changed?"
+    explanations:
+      beginner: "Teams often press hard early and ease off later, usually because players tire or the score changes."
+      intermediate: "{team} are pressing less: they now allow {ppda_after} opponent passes per defensive action, up from {ppda_before}. A higher number means a gentler press."
+      analyst: "{team}'s PPDA rose from {ppda_before} to {ppda_after} after {minute}, coinciding with {likely_cause}. Lower PPDA is not always better; it depends on the game plan."
+    misconceptions:
+      - "A team's pressing intensity stays the same all match."
+      - "A lower PPDA is always better."
+    evidence_fields: [team, ppda_before, ppda_after, minute, likely_cause]
+
+  - id: variance
+    name: Variance and results
+    strand: chances
+    tier: 3
+    prerequisites: [expected_goals]
+    objective: "Separate performance from results, and reason about luck and sample size."
+    detector: null
+    data_requirements: [events, window]
+    question_types: [evaluate, explain]
+    example_prompt: "{away_team} won 2-0 from 0.6 xG against 2.4. Who played better, and how sure can we be?"
+    explanations:
+      beginner: "The better team does not always win a single match. Over many matches, though, the better team usually comes out ahead."
+      intermediate: "{team} scored {goals} from {xg} xG. Finishing like that rarely lasts; over a season, results tend to move toward xG."
+      analyst: "A gap of {xg_gap} between goals and xG in one match is mostly noise. Across {season_matches} matches, {team} are {season_xg_diff} on goals versus xG, which is more informative."
+    misconceptions:
+      - "Scoring more goals than xG proves a team has elite finishers."
+      - "One match shows which team is better."
+    evidence_fields: [team, goals, xg, xg_gap, season_matches, season_xg_diff]
+
+  - id: control_vs_chaos
+    name: Control vs. chaos
+    strand: game_flow
+    tier: 3
+    prerequisites: [game_state, pressing]
+    capstone: true
+    brief_links: ["Explainability: control vs. chaos", "Explainability: game rhythm patterns"]
+    objective: "Judge whether a stretch of play is controlled or chaotic, describe its rhythm, and say which team it favors."
+    detector: null
+    data_requirements: [events, window]
+    question_types: [evaluate, explain]
+    example_prompt: "Over the last 10 minutes, has the match been controlled or chaotic, and who benefits?"
+    explanations:
+      beginner: "Sometimes a match is calm, with one team passing patiently. Other times the ball keeps changing hands. Different teams prefer different kinds of match."
+      intermediate: "The last {window_min} minutes have been chaotic: {turnovers} turnovers and possessions averaging just {avg_sequence_passes} passes. That suits {favored_team}, who are dangerous on the counterattack."
+      analyst: "Tempo shifted at {minute}: turnovers per minute rose from {turnover_rate_before} to {turnover_rate_after}, and the share of transition shots rose to {transition_shot_pct}%. {favored_team} have generated {favored_xg} xG in this phase."
+    misconceptions:
+      - "Control just means having more possession."
+      - "A chaotic match is always a sign of poor play."
+    evidence_fields: [window_min, turnovers, avg_sequence_passes, favored_team, minute, turnover_rate_before, turnover_rate_after, transition_shot_pct, favored_xg]

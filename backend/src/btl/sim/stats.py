@@ -10,6 +10,14 @@ from btl.sim.pitch import PITCH_WIDTH
 
 SHOTS = frozenset({ActionType.SHOT, ActionType.SHOT_FREEKICK, ActionType.SHOT_PENALTY})
 CORNERS = frozenset({ActionType.CORNER_CROSSED, ActionType.CORNER_SHORT})
+FREE_KICKS = frozenset(
+    {
+        ActionType.FREEKICK_SHORT,
+        ActionType.FREEKICK_CROSSED,
+        ActionType.SHOT_FREEKICK,
+        ActionType.SHOT_PENALTY,
+    }
+)
 # How close to a touchline an action has to start to count as on it.
 TOUCHLINE_STRIP = 2.0
 
@@ -19,9 +27,10 @@ class MatchStats:
     """Counts for both teams together.
 
     ``passes`` counts only SPADL ``pass`` actions (kickoffs included); crosses, throw-ins, goal
-    kicks and corners are counted separately. ``throw_in_lengths`` are in metres, from where
-    each successful throw was taken to the teammate who got it. ``on_touchline`` counts actions
-    that start within ``TOUCHLINE_STRIP`` metres of either touchline, throw-ins included.
+    kicks, corners and free kicks are counted separately. ``free_kicks`` includes penalties.
+    ``throw_in_lengths`` are in metres, from where each successful throw was taken to the
+    teammate who got it. ``on_touchline`` counts actions that start within ``TOUCHLINE_STRIP``
+    metres of either touchline, throw-ins included.
     """
 
     passes: int
@@ -31,6 +40,11 @@ class MatchStats:
     throw_ins: int
     goal_kicks: int
     corners: int
+    fouls: int
+    offsides: int
+    yellow_cards: int
+    free_kicks: int
+    penalties: int
     throw_in_lengths: tuple[float, ...]
     actions: int
     on_touchline: int
@@ -55,6 +69,14 @@ def match_stats(match: Match) -> MatchStats:
         throw_ins=counts[ActionType.THROW_IN],
         goal_kicks=counts[ActionType.GOALKICK],
         corners=sum(counts[corner] for corner in CORNERS),
+        fouls=counts[ActionType.FOUL],
+        offsides=sum(event.result is Result.OFFSIDE for event in match.events),
+        yellow_cards=sum(
+            event.action_type is ActionType.FOUL and event.result is Result.YELLOW_CARD
+            for event in match.events
+        ),
+        free_kicks=sum(counts[kick] for kick in FREE_KICKS),
+        penalties=counts[ActionType.SHOT_PENALTY],
         throw_in_lengths=tuple(
             math.hypot(event.end_x - event.start_x, event.end_y - event.start_y)
             for event in match.events

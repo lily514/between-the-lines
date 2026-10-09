@@ -1,8 +1,10 @@
 """The `btl` command and its subcommands."""
 
 import time
+import zlib
 from collections import Counter
 from collections.abc import Sequence
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated
 
@@ -10,6 +12,7 @@ import numpy as np
 import typer
 from rich.console import Console
 from rich.live import Live
+from rich.rule import Rule
 from rich.text import Text
 
 from btl.cli.render import (
@@ -24,6 +27,13 @@ from btl.cli.render import (
     tags_table,
     threat_grid,
 )
+from btl.cli.viewer import (
+    TerminalViewer,
+    progress_bars,
+    show_feedback,
+    show_match_start,
+    show_question,
+)
 from btl.concepts.base import ConceptTag, match_context
 from btl.concepts.registry import detect_all
 from btl.io import (
@@ -35,6 +45,8 @@ from btl.io import (
     saved_match_directories,
 )
 from btl.league.league import Club, League, generate_league, season_fixtures
+from btl.learn.learner import MATCHES_PER_SESSION
+from btl.learn.session import LEAGUE_SEED, Asked, Course, DemoViewer, start_session, watch_match
 from btl.plant.planter import simulate_with_moments
 from btl.plant.spec import parse_plant
 from btl.replay import DEFAULT_FPS, answer_frames, frame_at, lead_up_frames, question_action
@@ -46,7 +58,11 @@ from btl.schema.moment import PlantedMoment
 from btl.schema.vocab import ConceptId
 from btl.sim.engine import simulate_match
 from btl.sim.shape import FOUR_FOUR_TWO
-from btl.value.xt import fit_on_simulated_matches, rate_match
+from btl.store.base import check_viewer_id
+from btl.store.json_files import JsonLearnerStore
+from btl.store.memory import MemoryLearnerStore
+from btl.tutor.templates import TemplateTutor
+from btl.value.xt import ThreatModel, fit_on_simulated_matches, rate_match
 
 EXAMPLES = (
     ("btl simulate --seed 7 --plant counter_press:1", "saves data/matches/match-0007"),
@@ -54,6 +70,8 @@ EXAMPLES = (
     ("btl inspect data/matches/match-0007", "events, tags, moments too"),
     ("btl moments examples/match-0007", "the sample match in the repo"),
     ("btl replay examples/match-0007 --moment 3", "watch a moment play out"),
+    ("btl learn --viewer lily", "watch your next match and answer questions"),
+    ("btl demo-viewer", "a scripted viewer improving over three matches"),
 )
 
 
@@ -74,6 +92,14 @@ app = typer.Typer(
 console = Console()
 DEFAULT_MODEL = Path("data/models/expected-threat.json")
 DEFAULT_MATCHES = Path("data/matches")
+DEFAULT_LEARNERS = Path("data/learners")
+ModelPath = Annotated[
+    Path,
+    typer.Option(
+        "--model",
+        help="The threat model file; fitted on 200 simulated matches and saved if missing.",
+    ),
+]
 MatchDir = Annotated[
     Path,
     typer.Argument(
@@ -412,3 +438,85 @@ def fit_xt(
         f"Fitted on {matches:,} matches ({fitted.fitted_on.actions:,} actions) · seed {seed}"
         f" · saved to {out}"
     )
+
+
+def _threat_model_or_fit(path: Path) -> ThreatModel:
+    if path.exists():
+        return load_threat_model(path)
+    with console.status("No threat model yet: simulating 200 matches and fitting one…"):
+        fitted = fit_on_simulated_matches(_league(LEAGUE_SEED), LEAGUE_SEED, 200, 0)
+    save_threat_model(fitted, path)
+    console.print(f"Saved the threat model to {path}.")
+    return fitted
+
+
+def _now() -> str:
+    return datetime.now(UTC).isoformat(timespec="seconds")
+
+
+@app.command()
+def learn(
+    viewer: Annotated[str, typer.Option(help="Your viewer name: lower-case letters and digits.")],
+    seed: Annotated[
+        int | None, typer.Option(help="Which three matches; by default chosen from your name.")
+    ] = None,
+    learners: Annotated[Path, typer.Option(help="Folder for learner records.")] = DEFAULT_LEARNERS,
+    model: ModelPath = DEFAULT_MODEL,
+    reset: Annotated[bool, typer.Option(help="Forget this viewer and start again.")] = False,
+) -> None:
+    """Watch your next match. Play pauses for questions; your answers shape the next ones.
+
+    Each run plays one match of three. Quit at any time with Ctrl+C: answers are saved as you
+    go, and the next run carries on where you stopped.
+    """
+    try:
+        check_viewer_id(viewer)
+    except ValueError as error:
+        raise typer.BadParameter(str(error), param_hint="--viewer") from None
+    store = JsonLearnerStore(learners)
+    if reset:
+        (learners / f"{viewer}.json").unlink(missing_ok=True)
+    stored = start_session(
+        store, viewer, zlib.crc32(viewer.encode()) % 10_000 if seed is None else seed
+    )
+    course = Course(_threat_model_or_fit(model), TemplateTutor())
+    if stored.state.finished:
+        console.print(f"{viewer} has watched all three matches. `--reset` starts again.")
+        console.print(progress_bars(course.bars(stored.state)))
+        return
+    terminal = TerminalViewer(console, lambda prompt: typer.prompt(prompt))
+    state = watch_match(course, store, viewer, terminal, _now)
+    if state.finished:
+        console.print("That was your last match. `--reset` starts again.")
+    else:
+        console.print(f"Run `btl learn --viewer {viewer}` again for match {state.match_number}.")
+
+
+@app.command(name="demo-viewer")
+def demo_viewer(
+    seed: Annotated[int, typer.Option(help="Which three matches.")] = 7,
+    model: ModelPath = DEFAULT_MODEL,
+) -> None:
+    """A scripted viewer watches three matches and gets better as they go.
+
+    It answers one question in three correctly in the first match, one in two in the second,
+    and all of them in the third. Each question shows why it is asked now, the viewer's
+    answer, the feedback, and how the progress bars move.
+    """
+    course = Course(_threat_model_or_fit(model), TemplateTutor())
+    store = MemoryLearnerStore()
+    start_session(store, "demo", seed)
+
+    def show_answer(asked: Asked, key: str) -> None:
+        show_question(console, asked)
+        console.print(f"The demo viewer picks [bold]{key}[/bold].")
+
+    viewer = DemoViewer(
+        on_begin=lambda start: show_match_start(console, start),
+        on_ask=show_answer,
+        on_tell=lambda told: show_feedback(console, told),
+    )
+    for _ in range(MATCHES_PER_SESSION):
+        watch_match(course, store, "demo", viewer, lambda: "2026-10-08T12:00:00+00:00")
+    console.print(Rule("After three matches"))
+    console.print(progress_bars(viewer.seen[-1].mastery))

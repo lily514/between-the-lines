@@ -80,6 +80,28 @@ def test_every_planted_counter_press_is_found_by_the_detector(seed: int) -> None
         assert marked[-1] == moment.answer_action_id
 
 
+def test_planted_counter_presses_are_detected_in_order_of_difficulty() -> None:
+    # Unlike a line-breaking gap, a counter-press's difficulty comes from random touch times,
+    # and neighbouring levels overlap a little (level 1 takes up to 1.8 s, level 2 from 1.6 s).
+    # So level 3 is always the hardest, and level 1 is easier than level 2 on average and in
+    # nearly every match.
+    request = parse_plant(["counter_press:1,2,3"])
+    by_level: list[list[float]] = [[], [], []]
+    for seed in range(40):
+        match = simulate_with_moments(*clubs(), seed, request, with_snapshots=False)
+        found = {tag.action_id: tag for tag in CounterPress().detect(match_context(match))}
+        detected = [found[moment.answer_action_id].difficulty for moment in match.planted]
+        scores = [d for d in detected if d is not None]
+        assert [moment.difficulty for moment in match.planted] == [1, 2, 3]
+        assert len(scores) == 3 and scores[2] > max(scores[:2])
+        for level, score in enumerate(scores):
+            by_level[level].append(score)
+
+    in_order = sum(one < two for one, two in zip(*by_level[:2], strict=True))
+    assert np.mean(by_level[0]) < np.mean(by_level[1]) < np.mean(by_level[2])
+    assert in_order >= 0.9 * len(by_level[0])
+
+
 def test_play_before_the_first_moment_is_the_unplanted_match() -> None:
     match = planted(0)
     plain = simulate_match(*clubs(), 0)

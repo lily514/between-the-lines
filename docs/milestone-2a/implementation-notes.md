@@ -1,0 +1,350 @@
+# Milestone 2a: Implementation notes
+
+Where implementation diverged from [plan.md](plan.md), or something surprising was learned. One note per occurrence, added in the same commit as the change.
+
+## Summary (2026-10-08)
+
+Milestone 2a is done. T1 to T13 are all in, plus three simulator changes the plan didn't foresee: a check of the phases of play against real matches, fouls and free kicks, and offsides. A viewer can play the learning loop in the terminal with `btl learn`, and `btl demo-viewer` shows a scripted viewer going from 15% to about 97% on both concepts over three matches.
+
+**Biggest changes from the plan**
+- **Lily's concept map drives the curriculum** (T2). BKT's parameters and thresholds come from it, grouped by model. Concepts nothing can ask about yet count as met prerequisites, so the frontier gets stricter by itself as concepts are built.
+- **The evidence pack hides every outcome fact before an answer, not just the asked one** (T8). Numbers are shown as the detectors round them, and threat to two significant figures.
+- **Wording is the Tutor's alone.** Questions record what they ask, and the code-written verdict belongs to the grade (T7, T10).
+- **Predict alternatives are chosen to keep the numbers honest.** The plan's "free teammate" was dropped, because it could beat the right answer (T7).
+- **Questions per match.** The amended caps allow up to 8 questions (median about 6) rather than the original "two to four". Live questions are rare (about 6%); most wait for stoppages (T9).
+- **The simulator now has fouls, free kicks, penalties and offsides.** These came from checking the phases of play against 40 real matches: the simulator had half the real stoppages and too much transition. Planting a designed match now tolerates a moment that doesn't fit (1 seed in 100).
+
+**Cut:** nothing in the plan. The cached model state was left out (T9), since replaying a session's answers takes microseconds.
+
+**Carries over**
+- **To 2b:** the Foundry Tutor slots into `Course` in place of `TemplateTutor`, behind a Verifier that checks slots with `question_values` and `feedback_values` and falls back to the templates. The Azure decisions are in the project's planning notes: the subscription, the resource group, gpt-5.4-nano and Entra ID.
+- **To 2c:** a web `Viewer` drawing `pack.picture` and each option's `target_at`. The terminal's `pitch_picture` shows what to hide before an answer.
+- **To Milestone 3:** a Cosmos DB `LearnerStore` joins the contract suite, using the same document shape.
+- **The simulator against real football:** slower tempo (0.4 actions a second against 0.6), so transition is 56% of playing time against 49%; about 80% of the real stoppages long enough for a question; penalties low (0.18 against 0.28); offsides random rather than positional.
+- **Map text:** some of it reads stiffly once filled in ("this one broke one"); `phase_of_play`'s analyst text talks about the app rather than football.
+- **More concepts:** possession, tackles, passing and pressing were costed at about 2 days. `switch_of_play` has a detector but no concept in the map.
+
+## T1 — Groundwork (2026-10-08)
+**Plan said:** a public function `line_breaking.lines_broken(snapshot, team_id, start, end)`, used by the detector; CLI tests pass with `FORCE_COLOR` set.
+**We did:**
+- `lines_broken` is a method on `LineBreakingPass`, not a module function. It returns the width of the gap the pass goes through in each line it breaks, nearest first, so its length is the number of lines broken. `detect` now calls it.
+- A root `tests/conftest.py` clears `FORCE_COLOR` before the CLI is imported. The CLI itself is unchanged.
+
+**Why:**
+- The rule's thresholds (how far apart players can be and still form a line, and how many make a line) are fields of the detector. A module function would need them as extra arguments, or would ignore a detector built with other values. The answer options also need the gap widths, not only the count.
+- The CLI's rich console is created when `btl.cli.app` is imported, and rich reads `FORCE_COLOR` at that moment, so the tests' per-call environment couldn't undo it. With the variable set, output was coloured, and `btl replay` believed it ran in a terminal: it animated and waited for Enter. Honouring `FORCE_COLOR` is right for real use, so the fix belongs in the tests.
+
+**Affects:** T7 measures answer options with `LineBreakingPass().lines_broken`.
+
+## T2 — Concept map (2026-10-08)
+**Plan said:** commit Lily's map with the agreed edits; validation tests, including that every active concept's evidence fields are produced by its evidence builder; only `concept_map.py` reads the file.
+**We did:**
+- **The agreed edits:**
+  - `thresholds` and the per-tier defaults (now `tier_defaults`) moved under `learner_models.bkt`;
+  - added `counter_press` and an inactive `phase_of_play`;
+  - the line-breaking explanation now also uses the gap width, and line-breaking accepts `identify` questions;
+  - `detector:` holds a `ConceptId` value or null;
+  - club names in example prompts became `{home_team}` / `{away_team}`;
+  - the header comment explains active concepts.
+  - The map had 16 concepts, not 17 as said in planning; it now has 18.
+- **`transitions` names the counter-attack detector,** because its objective is to "spot a counterattack" and that detector finds exactly those. It isn't active, since no questions exist for it yet.
+- **Two more rules than the plan listed:** data requirements must be one of the declared kinds, and no detector may belong to two concepts. A detector's tags must map to a single concept.
+- **The evidence-fields check moves to T8,** because evidence builders don't exist yet.
+- **Reading the file.** `load_concept_map()` reads the YAML with `importlib.resources`, inside `concept_map.py`, although CLAUDE.md keeps I/O in `io.py`, `store/` and `cli/`. The file ships inside the package and never changes at run time, so reading it is closer to importing code than to reading data. `parse_concept_map(text)` is pure and is what the tests use.
+- **Spelling.** The two new concepts follow the map's American spelling ("organize"), not the repo's British, so the file reads consistently.
+
+**Why:** the plan left these details open.
+**Affects:**
+- **`switch_of_play` has a detector but no concept in the map,** so its tags count towards nothing. That's harmless in 2a; a later milestone can add a concept for it.
+- **T8** adds the evidence-fields test.
+
+## T4 — Counter-press difficulty (2026-10-08)
+**Plan said:** the detector gives a difficulty from 0 to 1 from the seconds taken to win the ball back, with named thresholds; planted levels are detected in difficulty order over 40 seeds.
+**We did:** as planned. Difficulty rises in a straight line from 0 at `QUICK_REGAIN` = 1 s to 1 at `SLOW_REGAIN` = 4 s, rounded to two places. The thresholds were chosen from measurements over 40 seeds:
+
+| Seconds to win back | Lowest | 10th percentile | Median | 90th percentile | Highest | Difficulty, 10th–90th percentile |
+|---|---|---|---|---|---|---|
+| Planted level 1 | 0.9 | 1.1 | 1.3 | 1.5 | 1.8 | 0.03–0.17 |
+| Planted level 2 | 1.6 | 2.0 | 2.3 | 2.6 | 2.8 | 0.33–0.53 |
+| Planted level 3 | 2.5 | 2.8 | 3.2 | 3.5 | 3.9 | 0.60–0.84 |
+| Natural (27.5 per match) | — | 2.2 | 3.2 | 4.5 | — | 0.40–1.00 |
+
+The three levels never swapped order within a match. The middle 80% of each level lands inside the selector's band for that level (0–0.4, 0.3–0.7, 0.6–1).
+
+**Why:** within about a second the ball has barely left, so the press is unmistakable. By four seconds the opponent has strung passes together, and the regain looks like ordinary defending.
+
+**Affects:**
+- **Natural counter-presses are mostly hard** (median difficulty 0.73), so beginners will mostly be asked about the planted level-1 ones. That's fine; it's what they're for.
+- **`btl moments` now prints a difficulty for counter-presses**, and its test was updated.
+
+## T5 — Phase timeline (2026-10-08)
+**Plan said:** `phase_timeline(match)` splits the match into settled, transition, dead-ball and break segments, from events only. Dead-ball windows run from the stoppage to the restart, and those of 15 s or more fall in a stated band. Planted line-breaks and counter-presses are transitions. It broadly agrees with the simulator's own `phase` field.
+**We did:** as planned, with these choices:
+- **Names.** The phases are `PhaseOfPlay`, because the schema already has a `Phase` vocabulary: the simulator's per-event label. It keeps the plan's constants: 4 passes, 12 s, and a 15 s minimum window.
+- **What counts.** A transition counts completed passes and crosses. A possession that starts with a restart, or with the kickoff after a goal, is settled.
+- **Where segments start and end.** Each action's stretch of play runs to the next action. When play stops after an action, the dead ball starts at that action's time, which includes the ball's flight out of play, and runs to the restart. Breaks are zero-length segments after each period's last action.
+- **Two views of the result.** The timeline also gives each action's own phase (`phase_of`), which is what the selector needs to place a candidate.
+
+**Measured over 40 seeds** (all moments planted, snapshots off):
+
+| | Result |
+|---|---|
+| Dead-ball windows of 15 s or more, per match | 25–48, median 35 |
+| Simulator transition actions that are also transitions here | 100% (the simulator's rule is narrower: 8 s, with no pass count) |
+| Planted moments classified as transitions | 240 of 240 |
+| Line-breaks found in settled play, per match (median, before T6's quality filter) | 82 |
+| Share of all actions in a transition | 63% |
+
+**Why:** the plan left these details open.
+**Affects:**
+- **Most moments will be deferred.** 63% of actions are transitions, because simulated possessions usually start with an interception and end before 4 passes or 12 s. That's high, but no real figure has been checked against it yet: StatsBomb's open data could. Most live questions will be line-break predict questions from the settled third of play, and most others will wait for a stoppage.
+- **T9's selector** reads `phase_of` and the dead-ball and break segments that are long enough to ask in.
+
+## T6 — Candidates (2026-10-08)
+**Plan said:** a natural line break must go forward at least 15 m, add threat, and allow a consistent set of options. Every planted moment must pass. Natural settled line-break candidates per match, per difficulty band, land in a stated band.
+**We did:**
+- **The forward threshold is 12 m (`MIN_FORWARD`), not 15 m.** The planted line-breaking pass goes exactly 14 m forward (7 m to the line, 7 m beyond), so at 15 m none of them passed. At 12 m every planted moment passes, with a 2 m margin, and the weakest natural ones are still dropped.
+- **The third condition, a consistent set of options, moves to T7,** where options are built. A candidate whose options can't satisfy the invariant will be dropped there.
+- **Counter-presses have no extra quality rule;** the detector is already strict.
+- **The candidate finder never reads planting records,** checked two ways: a test parses the module and finds no `.planted`, and another shows the candidates are identical when a match's planting records are removed.
+
+**Measured over 40 seeds** (12 m, threat added > 0, settled play, planted moments excluded), out of about 208 line-breaks detected per match:
+
+| Difficulty band | Per match: lowest | Median |
+|---|---|---|
+| All | 36 | 50 |
+| Level 1 (0–0.4) | 0 | 1 |
+| Level 2 (0.3–0.7) | 14 | 22 |
+| Level 3 (0.6–1) | 25 | 37 |
+
+**Why:** the plan's 15 m would have rejected every planted moment, which the plan also required to pass.
+**Affects:**
+- **Live level-1 questions about line-breaks will be rare,** because natural gaps are seldom wider than 14 m. Level-1 questions are identify questions, so they can come from the planted level-1 moment instead, as a deferred review. T9's selector must allow for that.
+- **The band test takes about 8 s,** because line-breaks need full snapshots.
+
+## T7 — Questions and options (2026-10-08)
+**Plan said:** forms by level and delivery; counter-presses never predicted; wrong options get closer as the level rises. At level 3 the alternatives are "the free teammate and the best forward pass that breaks no line". The options invariant holds over 40 seeds. T6 moved the "consistent set of options" check here.
+**We did:**
+- **Wording is left to the Tutor.** A question records *what* it asks (`Asks`: where to pass, lines broken, gap width, what they did, seconds to win back), its three options and the picture to show. Pass options are labelled `Pass to {target}`, and the evidence pack fills in the name.
+- **Predict alternatives are chosen from fair passes:** passes to teammates that break fewer lines and add no more threat than the real one.
+  - **Level 2:** the most backward and the most sideways of them.
+  - **Level 3:** the two that add the most threat, the closest in value.
+
+  The plan's "free teammate" is dropped: it could add more threat than the right answer and contradict the feedback. If fewer than two fair passes exist, the moment can't be asked as predict.
+- **Identify questions get harder through finer detail:**
+
+  | Level | Line-breaking pass | Counter-press |
+  |---|---|---|
+  | 1 | How many lines? (none, one, two) | What did they do? (won it back, dropped back, fouled) |
+  | 2 | Gap width: under 8 m, 8–14 m, 14 m or more | Seconds to win back: under 2, 2–3.5, 3.5 or more |
+  | 3 | Gap width in 3 m ranges around the real one | Seconds in 1-second ranges |
+
+  The true narrow range sits first, second or third at random. Ranges use the detector's own rounded figures, so the shown number and its range always agree.
+- **Options are shuffled with a sort key drawn per option.** numpy's `permutation` isn't fully typed in this version, so strict pyright rejects it.
+- **`active_concepts(concept_map)`:** the map's concepts whose detector has questions here.
+- **Test helpers move to `tests/fixtures/learning.py`,** so each test run simulates the 40-seed matches once and shares them.
+
+**Measured over 40 seeds:** every one of 5,067 line-break candidates, natural and planted, had a fair predict question at both levels 2 and 3, and the invariant held in all of them. In practice no candidate is dropped. Level-3 alternatives are on average closer in threat to the answer than level-2 ones (tested).
+**Why:** the plan's level-3 rule could break its own invariant, and the plan left the identify forms open.
+**Affects:**
+- **T8** turns option facts into displayed `Fact`s and fills `{target}` with the player's name and shirt number.
+- **T10's templates** word each `Asks` kind.
+
+## T8 — Evidence pack (2026-10-08)
+**Plan said:** `EvidencePack` with `Fact`s (value plus number-only display) and a deterministic `pack_id`; phase, occurred-at, delivered-at and delivery fields; each question form hides exactly its own answer facts; `question_view()` and `feedback_view()`. T2 moved the "every active concept's evidence fields are produced" test here.
+**We did:**
+- **Context and outcome facts.** Facts are split in two. Context facts are known before answering: the clubs, the score, the clock, and the passer for a line-breaking pass. Outcome facts are everything measured about the play. The question view leaves out **every** outcome fact in every form, not just the one being asked, plus the right answer and the correct flags. That's simpler than a per-form list and can't leak by omission. The feedback view is the whole pack, so there is no `feedback_view()`.
+- **Who won the ball back is an outcome fact.** For a counter-press, naming the player who won it back hints at the answer to "what did they do?", so it isn't in the context.
+- **How numbers are shown:**
+  - Counts as words ("one", "two"), so the map's text reads naturally ("with two players close to the ball").
+  - Metres and seconds to one decimal, as the detectors round them, dropping a trailing ".0". So the number shown after answering always falls in the identify range marked right (tested).
+  - Threat to two significant figures ("0.29%", "+0.11%"). In midfield, threat values are around 0.3%, so whole percentages showed "0%" both before and after a pass, and different options looked identical.
+- **The pack carries the concept's text from the map:** name, objective, the three explanations and the misconceptions. The Tutor needs nothing but the pack and the viewer's level.
+- **The picture** holds every player as shirt number, side, position and role, plus the ball, all with the team on the ball attacking left to right. An identify question also gets the play's path.
+- **`pressers`** counts the pressing team's outfield players within 10 m of the ball when it is won back, including the one who wins it. **`receiver_zone`** is the pitch third where the pass ends.
+- **When a question is asked** arrives as a small `Delivered` record (delivery, time, phase, restart), which T9's selector fills in.
+- **`match_clock` and `goals` moved** from `cli/render.py` to a new `schema/scoreboard.py`, so `learn/` doesn't import the CLI. `goals` can now count only the goals before an action. The CLI's output is unchanged.
+
+**Why:** hiding every outcome fact is the safer reading of "never reveals the answer before the viewer commits". The display rules came from looking at real packs.
+**Affects:** T10's templates fill slots from `Fact.display`. 2b's Verifier checks the Tutor's slots against the same facts.
+
+## T9 — Live selector, gate and queue (2026-10-08)
+**Plan said:** a live selector over the frontier, difficulty bands, 8-minute spacing, at most 4 in-play questions and 2 at each break. Moments in transitions are queued and asked at the next dead ball of 15 s or more, or at a break, re-levelled at delivery, and dropped once mastered. The breaks guarantee a minimum of 2 questions. Occasional level-3 review once everything is mastered. Plus the learner's record.
+**We did:** as planned, with these choices:
+- **`run_match` walks the match** in the order a viewer meets things: candidate moments, then the dead balls long enough to ask in, then the breaks. It hands each question to an `ask` callback, and reads mastery through another callback at every decision, so an answer changes the very next decision. With the same answers it makes the same decisions, which is what lets T12 resume a session.
+- **Queue limits.** At most 2 moments wait at once, never two of the same concept, so a stoppage asks about recent play rather than a backlog. A question that can't be built doesn't count.
+- **Review is "occasional"** in a measurable way: with every active concept mastered, review questions are level 3 and at most 1 while the match is on (`REVIEW_CAP`). The breaks can still add theirs.
+- **Restart names** for the "Dead ball (goal kick)" opening come from the restart's action type.
+- **`LearnerState`** holds the viewer id, the session seed, the match being watched and every `Attempt`. Mastery isn't stored; `model_state()` replays the answers. **The cached model state the plan mentioned is left out:** replaying a session's dozen or so answers takes microseconds.
+
+**Measured over 40 seeds,** with a viewer whose mastery rises 0.15 per answer, and one whose mastery never moves:
+
+| Viewer | Questions per match (lowest, median, highest) | Live | Dead ball | Half-time | Full time |
+|---|---|---|---|---|---|
+| Always improving | 5, 7, 8 | 9% | 50% | 16% | 26% |
+| Never improving | 3, 6, 7 | 5% | 63% | 9% | 23% |
+
+**Why:** the plan left these details open.
+**Affects:**
+- **More questions than the original "two to four" per match.** The amended plan's caps allow 4 in play plus 2 at each break, up to 8, and the median is 7. Lowering `BREAK_CAP` or `IN_PLAY_CAP` changes that in one place.
+- **Live questions are rare** (5–9%), as T5 and T6 predicted. Two-thirds of play is transition, and natural settled line-breaks seldom fit level 1.
+- **T12** uses `run_match` with the real question flow as `ask`.
+
+## T10 — Grader, Tutor protocol, slots and templates (2026-10-08)
+**Plan said:** `ChoiceGrader`; a `Tutor` protocol; fact slots; a `TemplateTutor` whose wording differs by level, whose deferred questions open with phase context, and whose every slot fills; an import rule for `tutor/`.
+**We did:** as planned, with these choices:
+- **Slot syntax** (`tutor/slots.py`):
+  - `{team}` is a pack fact;
+  - `{B.threat_added}` is an option's fact, and `{B.label}` its label;
+  - `{answer}` and `{chosen}`, with their facts (`{answer.lines_broken}`), are the right option and the viewer's pick, after answering;
+  - `{occurred_at}`, `{delivered_at}` and `{restart}` come from the timing.
+
+  Question wording is filled from the question view alone, so wording that cites an outcome fails with a `SlotError` instead of giving the answer away.
+- **The verdict belongs to the grade,** not the Tutor: `Grade.verdict` is "Spot on." or "Not quite.". A Tutor's text can't contradict the grade, because it never says whether the viewer was right.
+- **`Answer` is a tagged type** (`ChoiceAnswer`, kind "choice"), so free text can join it later. The knowledge model only sees `Grade.correct`.
+- **Feedback:**
+  - the concept map's explanation at the viewer's level (level 1 beginner, 2 intermediate, 3 analyst);
+  - then a sentence confirming or comparing: for a pass, the right pass's lines broken and threat added against the pick's;
+  - after a wrong answer, one of the map's misconceptions, chosen from the pack id so it never changes for the same question.
+
+  The takeaway is the concept's objective from the map.
+- **A pass option now carries its receiver's name as a neutral fact (`target`),** so feedback can say "the pass to #9 Niels Meiner". The option's label already showed the name, so nothing new is revealed early.
+- **The import rule** is tested by parsing every module in `tutor/`: no imports from `sim`, `value`, `concepts` or `plant`.
+
+**Why:** the plan left the slot syntax and the feedback's structure open.
+**Affects:**
+- **2b's Verifier** checks a model's slots with the same `question_values` and `feedback_values`, and falls back to these templates.
+- **Map text read in a sentence.** Some of the map's wording reads a little stiffly once filled, for example "this one broke one". Rewording the map would fix that.
+
+## T11 — Learner store (2026-10-08)
+**Plan said:** a `LearnerStore` protocol with memory and JSON-file implementations; one contract suite run on both (create, get, put, a stale etag refused).
+**We did:** as planned, plus:
+- **The saved document is shaped like a Cosmos DB item:** `id` and `viewer_id` (the future partition key), `version`, `seed`, `match_number`, and every attempt inside. `to_document` and `from_document` live in `store/base.py`, so Milestone 3's Cosmos store reuses them. A record from another version is refused, like old match files.
+- **Viewer ids are kept plain** (lower-case letters, digits, `-` and `_`, up to 64 characters), because they become file names and document ids. That also stops a viewer id like `../escape` from writing outside the folder.
+- **Etags.** The JSON store's etag is a hash of the file. The memory store's counts writes. Files are written to a temporary name and then moved into place, so a crash never leaves half a file.
+
+**Why:** the plan left these details open.
+**Affects:** T12 keeps learners in `data/learners/` (already gitignored under `backend/data/`). Milestone 3 adds a Cosmos DB store to the contract suite's `STORES`.
+
+## T12 — Session and terminal (2026-10-08)
+**Plan said:** `btl learn --viewer NAME` plays the next match (pitch and text, an A/B/C prompt, feedback, the update sentence, progress bars) and resumes across runs; the terminal shows why it's asking now. End to end, the scripted demo viewer watches three matches: nothing is asked in a transition, mastery ends higher for both concepts, and levels rise within and across matches. The threat model is fitted on first use if missing.
+**We did:** as planned, with these choices:
+- **`learn/session.py` holds the loop.**
+  - `Course` is what every viewer shares: the concept map, the BKT model, the league, the threat model and the Tutor.
+  - `watch_match` plays one match. For each prompt from the selector, it builds the question and the pack, has the Tutor word it, asks the viewer, grades the answer, saves the record, and tells the viewer the verdict, explanation, takeaway, update sentence and bars.
+  - The viewer is anything with `begin`, `ask`, `tell` and `end`: the terminal now, and the web page in 2c.
+- **One match per `btl learn` run.** Each viewer's three matches come from a seed, by default derived from their name. `--reset` starts again.
+- **Stopping and carrying on.** Answers are saved one by one. On the next run the match is simulated again, and the answers already given are fed back in order instead of being asked. The selector reads mastery as it stood at each point, so it arrives at exactly the next unasked question. A test stops a match after two answers and checks the finished record equals an uninterrupted one.
+- **The pitch picture** (`cli/render.py`) gained `show_path` and `marks`:
+  - A predict question hides the pass's path, because showing it would give away the answer.
+  - It marks each option's receiver with its letter, since an ASCII pitch can't show shirt numbers.
+  - An identify question shows the path.
+- **A pass option is marked where its receiver stands,** the right one included (this changes T7). Previously the right option sat where the pass was received, off any `o`, which an attentive viewer could spot. Its facts are still measured along the real pass. Packs now carry each option's position (`target_at`) for the pictures, here and in 2c.
+- **The question line says why it's asking now:** "Dead ball (goal kick), 14:30 · about play at 11:33", or "30:25 · live, in settled play".
+- **Wording tweaks** from watching the demo: "How many defensive lines did that pass go through?", which avoids "Ripon Wardens's", and no automatic number highlighting on learning screens.
+- **`btl demo-viewer`** runs the scripted viewer through three matches in memory and prints every question, pick, feedback and bar. It answers one question in three correctly in match 1, one in two in match 2, and all in match 3.
+
+**Measured with the default 200-match threat model, seed 7:** 19 questions over three matches, one of them live (a level-2 predict question in match 3). Both concepts go from 15% to 97%. Three matches take under 2 s.
+**Why:** the plan left these details open; the pitch changes came from seeing the demo.
+**Affects:**
+- **2b** replaces `TemplateTutor` in `Course` with the Foundry Tutor behind the Verifier.
+- **2c** writes a web `Viewer` that draws `pack.picture` and `target_at` instead of the ASCII pitch.
+
+## Phases of play checked against real matches (2026-10-08)
+**Plan said:** nothing. T5 left the 63% transition share unchecked against real data and suggested StatsBomb's open data.
+**We did:** ran the same `phase_timeline` on 40 real matches and 40 simulated ones.
+- **Real:** 40 matches from StatsBomb's open data for the 2015/16 season of the real top-flight English league, sampled as in Milestone 1's T8 note and converted to SPADL with socceraction's StatsBomb converter.
+- **Simulated:** 40 seeds of plain play, following the season's fixtures.
+- Neither the data nor the throwaway script is in the repo.
+
+| Per match | Real | Simulated |
+|---|---|---|
+| Share of actions in a transition | 47% (36–62%) | 63% (60–67%) |
+| Open-play turnovers | 252 | 277 |
+| Transitions that end in a dead ball | 48% | 25% |
+| Dead balls | 103 | 64 |
+| Dead balls of 15 s or more | 70 | 38 |
+| Free kicks: count, median time to restart, share of 15 s or more | 26, 28 s, 77% | none |
+| Throw-ins | 45, 14 s, 44% | 34, 14 s, 24% |
+| Goal kicks | 17, 29 s, 94% | 18, 21 s, 100% |
+| Corners | 11, 26 s, 96% | 10, 27 s, 100% |
+| Kickoffs after a goal | 2.2, 58 s | 2.2, 46 s |
+
+**Why:** to check T5's surprising 63%, and how many places to ask the gate really has.
+**Affects:**
+- **The simulator overstates transition, and understates stoppages by about half.** Turnovers are similar. The difference is that real transitions are often ended by a foul or the ball going out, and the simulator has no fouls at all. Free kicks are the largest single missing source of stoppages (26 per match), and real throw-ins and goal kicks take longer to restart.
+- **The design still holds:** nearly half of real play is transition, so mostly-deferred questions are a feature of football, not a quirk of the simulator. On real matches the gate would have about twice as many places to ask, so the caps would fill sooner and more questions would be asked live.
+- **Next: fouls and free kicks in the simulator** (Lily's choice).
+- **Caveats:** the data is ten years old, from before the 2019 law change after which goal kicks are mostly played short. "Time to restart" is measured from the action that stopped play, so it includes the ball's flight out.
+
+## Fouls and free kicks in the simulator (2026-10-08)
+**Plan said:** nothing. Milestone 1 simulated no fouls. The real-match check above found free kicks to be the largest missing source of stoppages, and Lily chose to add them.
+**We did:**
+- **Fouls.** Before each open-play action by an outfield player, the nearest defender may foul the player on the ball. The rate is 2.2% per action in each third, and 0.5% inside the box, where defenders rarely risk one.
+  - **Bookings and advantage:** 13% of fouls are booked (SPADL result `yellow_card`). After 12% the referee plays advantage and the fouled team plays on, and isn't fouled again on the same spot.
+  - **No red cards,** which would need a team to play on with ten.
+- **Free kicks.** Otherwise the fouled team restarts from the spot:
+  - a penalty if the foul was in the box (scored 76% of the time, else mostly saved);
+  - within 30 m and in the centre lane, usually a shot at goal (`shot_freekick`);
+  - otherwise half are played long (`freekick_crossed`: a cross from the attacking third, a long ball from elsewhere) and half short (`freekick_short`).
+  - **Waits before the restart,** from the real medians: short 6–30 s, long 20–50 s, a shot 60 s, a penalty 55 s.
+- **The engine.** A `Step` can now be `by_defence`. The engine records it under the defending team and player and puts that player on the ball in the snapshot, while positions stay in the attacking team's direction. The shared possession rule already keeps a foul inside the fouled team's possession, so detectors needed no change.
+- **Missed passes run on up to 25 m (was 20 m),** so that throw-ins stay in their band. Fouls stop some play that used to end with the ball going out, and throw-ins had fallen from 34 to 30.
+- **New calibration bands:** fouls 15–35, free kicks 12–32, bookings 0–7, mean penalties 0.1–0.6. **The phase bands are re-anchored to real football:** dead balls of 15 s or more have a median of 40–80 (real 70), and the share of playing time in transition is 40–62% on average (real 49%).
+
+| Per match | Real | Before | After |
+|---|---|---|---|
+| Fouls / bookings | 25.9 / 3.3 | 0 | 23.5 / 3.1 |
+| Where the fouled team was (own / middle / attacking third) | 23 / 55 / 22% | — | 29 / 49 / 22% |
+| Free kicks: long, short, shots, penalties | 12.7, 12.5, 1.1, 0.28 | none | 9.6, 9.6, 0.8, 0.5 |
+| Dead balls | 103 | 64 | 83 |
+| Dead balls of 15 s or more | 70 | 38 | 53 |
+| Open-play turnovers | 252 | 277 | 237 |
+| Share of actions in transition | 47% | 63% | 60% |
+| Share of playing time in transition | 49% (39–61%) | — | 56% (50–61%) |
+| Throw-ins / goal kicks / corners | 45 / 17 / 11 | 34 / 18 / 10 | 36 / 16 / 8 |
+| Passes, completion, shots, goals | 717, 79%, 25, 2.7 | ~960, 75%, 25, 2.1 | 815, 75%, 23, 2.1 |
+
+**Why:** a third of the missing stoppages came from fouls, and they matter to the learning loop, because the gate asks most questions at stoppages.
+**Affects:**
+- **The transition gap is mostly about tempo, not fouls.** By actions, the simulator's transition share barely moved (63% → 60%). By playing time it is 56%, against 49% real, with most simulated matches inside the real range. The simulator plays about 0.4 actions a second against 0.6 in real data, so the 12-second limit ends its transitions rather than the 4 passes. That is left as it is.
+- **Smaller gaps left as they are:** penalties run high (0.5 against 0.28); there are no offside free kicks (about 3.5 a match in real data); real throw-ins outnumber simulated ones.
+- **Planting can now fail.** With more stoppages, a designed moment occasionally finds no room before the whistle (seed 34 in 100). The learning loop now uses `play_designed_match`, which plants as many moments as fit. `btl simulate --plant` still insists on all of them. **The counter-press level test is relaxed** to: level 3 hardest in every match, and level 1 below level 2 on average and in 90% of matches. Neighbouring levels overlap a little, and the new random draws exposed it.
+- **The learning loop:** over 40 seeds, 2–8 questions per match (median 6.5 for an improving viewer, 5 for one who doesn't improve); 54–69% at dead balls, 6–7% live. The demo viewer asks 21 questions, 2 of them live, and both concepts end at 97%.
+- **Every simulated match is different again.** T13 must regenerate the sample match, refit the threat grid in `expected-threat.md`, and refresh the README's output.
+
+## Offsides in the simulator (2026-10-08)
+**Plan said:** nothing. The real matches have 3.9 offsides a match. SPADL records each as a pass with result `offside`, followed by the other team's free kick (median 26 s later, 83% of waits 15 s or more). 82% of them are passes into the attacking third.
+**We did:**
+- **Which passes can be flagged.** An open-play pass going at least 5 m forward into the attacking third is flagged offside 2.7% of the time (`offside_share`). The possession ends, and the other team takes a short or long free kick where the pass was headed, with the same waits as other free kicks.
+- **Decided by chance, not by positions.** The simulator's events never depend on where players stand: turning snapshots off must give the same events. So the flag is not a check of the receiver against the last defender, and a flagged pass's picture can show the receiver onside. Nothing in 2a asks about offside. The map's `rules` concept would need a position-based rule.
+- **Goals.** Offsides cut short attacks, and the goal model's intercept moved from −2.2 to −1.9 to keep goals in their band.
+- **New band:** offsides 0–9 a match.
+
+| Per match | Real | Before offsides | After |
+|---|---|---|---|
+| Offsides | 3.9 | 0 | 3.8 |
+| Free kicks | 26.6 | 19.2 | 23.3 |
+| Dead balls / of 15 s or more | 103 / 70 | 83 / 53 | 86 / 56 |
+| Goals / shots | 2.7 / 25 | 2.1 / 23 | 2.2 / 22 |
+| Penalties | 0.28 | 0.5 | 0.18 |
+| Share of playing time in transition | 49% | 56% | 56% |
+
+**Why:** they are the stoppage the earlier fouls note left out, and long enough to ask a question in.
+**Affects:**
+- **The demo viewer (seed 7) still asks 21 questions** and both concepts still end at 96–97%, but its two live questions became deferred ones. Every match changed, and live questions are rare (about 6%). T13 refreshes the README's demo output.
+- **The same T13 refresh as for fouls:** the sample match, the threat grid in `expected-threat.md`, and the README's output.
+
+## T13 — Wrap-up (2026-10-08)
+**Plan said:** a README "Try the learning loop" section with an honest-limits line; the summary at the top of this file; merge `--no-ff`.
+**We did:** as planned. The README also gained:
+- an "Honest limits" section with five points, not one;
+- Milestones 2a, 2b and 2c in its status table.
+
+The fouls and offsides notes had left three things to refresh, and these were refreshed too:
+- **The sample match** (`backend/examples/match-0007`) was regenerated with the same command. Seed 7 is now a 1-0 away win with 1,420 events, and all six moments are still planted and detected.
+- **The threat grid in `docs/milestone-1/expected-threat.md`** was refitted on about 284,000 actions (was 331,000). It keeps its shape, and its peak is now about 13%.
+- **The README's example output** now shows the new moment 3 and a demo-viewer excerpt.
+
+**Why:** fouls and offsides changed every simulated match.
+**Affects:** nothing.

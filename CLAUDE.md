@@ -1,13 +1,29 @@
 # CLAUDE.md — Between the Lines
 
 ## Git workflow
-- GitHub remote, no PRs. One branch per milestone, named after the milestone (M1 "The Data Engine": `feature/data-engine`).
+- GitHub remote, no PRs. One branch per milestone, named after the milestone (M1 "The Data Engine": `feature/data-engine`;
+  M2a "The loop in the terminal": `feature/learning-loop`).
 - Each plan task is one commit on the milestone branch, made after Lily reviews the diff.
 - When a milestone is done, merge it into main with `git merge --no-ff`, so each milestone shows up as one merge in the graph.
 - Claude commits locally only; Lily pushes when ready. CI runs on every push, to any branch.
 
 ## What this is
-Adaptive football-learning tool on synthetic match data. Milestone 1 = data engine only.
+Adaptive football-learning tool on synthetic match data. Milestone 1 built the data engine; Milestone 2
+is split into 2a (the learning engine, played in the terminal), 2b (the Foundry Tutor and Verifier) and
+2c (the web page).
+
+## Learning design rules
+- The match never depends on the viewer. Adaptation lives in which moments we ask about, when, and
+  how. Candidate moments come from the detectors, never from `match.planted`, so the loop would work
+  unchanged on real data.
+- Never prompt during a transition. Delivery is decided by phase of play, computed from match events
+  only (`concepts/phase.py`). Deferred questions are review questions, never predict.
+- The curriculum is `btl/learn/concept_map.yaml`; only `learn/concept_map.py` reads it.
+- The learner model sits behind the `KnowledgeModel` protocol. The attempt log is the source of truth;
+  a model's state is derived from it. Only the session chooses which model to use.
+- Every number shown to the viewer comes from the evidence pack, through a fact slot such as
+  `{B.threat_added}`. `tutor/` never imports sim, value, concepts or plant.
+- `learn/` takes time as a parameter and never reads the clock.
 
 ## Hard rules
 - All data synthetic: fictional league/clubs/players only. No real league, club, or player names or marks.
@@ -17,8 +33,9 @@ Adaptive football-learning tool on synthetic match data. Milestone 1 = data engi
 - Every setup step goes in docs/setup.md in the same commit that needs it.
 
 ## Docs
-- `docs/milestone-N/` holds what was written for that milestone: `plan.md` plus write-ups.
-- `docs/` root holds living references that every milestone updates (setup, event schema).
+- `docs/milestone-N/` holds what was written for that milestone: `plan.md` plus write-ups. Split
+  milestones get their own folder (`docs/milestone-2a/`).
+- `docs/` root holds living references that every milestone updates (setup, event schema, concept map).
 - Name documents in full words, never abbreviations (`expected-threat.md`, not `xt.md`).
 - `plan.md` is frozen once committed. Divergences go in `docs/milestone-N/implementation-notes.md`.
 - Whenever implementation differs from the plan, or something surprising is learned, add a note
@@ -32,12 +49,13 @@ Adaptive football-learning tool on synthetic match data. Milestone 1 = data engi
 - Test: `uv run pytest` (fast) · `uv run pytest -m slow` (batch xT fit)
 - Lint/format: `uv run ruff check --fix && uv run ruff format`
 - Types: `uv run pyright`
-- CLI: `uv run btl --help`
+- CLI: `uv run btl --help` · learning loop: `uv run btl learn --viewer NAME`, `uv run btl demo-viewer`
 
 ## Layout
 Monorepo layout: Python lives in `backend/` (src layout: `backend/src/btl/`, tests in
 `backend/tests/` mirroring package paths). `frontend/` arrives in a later milestone.
-One concept per module. Subpackages: schema, league, sim, value, concepts, cli.
+One concept per module. Subpackages: schema, league, sim, plant, value, concepts, learn, tutor, store,
+cli, plus `replay.py`.
 
 ## Python style
 - ruff format (line length 100); ruff rules: E, F, I, B, UP, SIM, RUF, N, D (Google convention).
@@ -52,7 +70,7 @@ One concept per module. Subpackages: schema, league, sim, value, concepts, cli.
   `btl/schema/__init__.py`; do not invent another one. Direction flipping happens only in `frames.py`.
 - pandas only in `schema/frames.py`, `io.py` (parquet files), `value/`, and `cli/`. Everything else uses typed dataclasses.
   pandas and socceraction are only partly typed, so only those edge modules may start with `# pyright: basic`; nowhere else.
-- Pure functions where possible; I/O only in `btl/io.py` and `btl/cli/`.
+- Pure functions where possible; I/O only in `btl/io.py`, `btl/store/` and `btl/cli/`.
 
 ## Naming
 - Modules/functions: snake_case; functions are verbs (`simulate_match`), data types are nouns (`Snapshot`).

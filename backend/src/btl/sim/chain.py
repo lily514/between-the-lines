@@ -48,6 +48,7 @@ SIX_YARD_DEPTH = 5.5
 # How far in front of the goal line a keeper picks up a ball running through.
 KEEPER_PICK_UP_DEPTH = 2.0
 SIX_YARD_HALF_WIDTH = 9.16
+PENALTY_SPOT = Point(PITCH_LENGTH - 11.0, PITCH_WIDTH / 2)
 
 
 class Restart(Enum):
@@ -57,6 +58,10 @@ class Restart(Enum):
     THROW_IN = "throw_in"
     GOAL_KICK = "goal_kick"
     CORNER = "corner"
+    FREE_KICK_SHORT = "free_kick_short"
+    FREE_KICK_LONG = "free_kick_long"
+    FREE_KICK_SHOT = "free_kick_shot"
+    PENALTY = "penalty"
 
 
 @dataclass(frozen=True, slots=True)
@@ -92,7 +97,9 @@ class Start:
 class Step:
     """One action, with ``slot`` the actor's formation slot.
 
-    ``duration`` is the time until the next action starts.
+    ``duration`` is the time until the next action starts. ``by_defence`` marks an action by the
+    team without the ball, such as a foul: ``slot`` is then in the defending team's formation,
+    while positions stay in the attacking team's direction like every other step.
     """
 
     slot: int
@@ -103,6 +110,7 @@ class Step:
     end: Point
     duration: float
     phase: Phase
+    by_defence: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -128,13 +136,13 @@ class _Play:
 class _Outcome:
     """One action, then what happens next.
 
-    Play goes on with ``receiver`` on the ball, unless ``corner`` gives the same team a corner
-    or ``handover`` says how the other team's possession starts.
+    Play goes on with ``receiver`` on the ball, unless ``set_piece`` gives the same team a
+    corner or a free kick, or ``handover`` says how the other team's possession starts.
     """
 
     step: Step
     receiver: int
-    corner: Start | None = None
+    set_piece: Start | None = None
     handover: Start | None = None
 
 
@@ -226,12 +234,15 @@ def _play_from(
         else:
             elapsed = sum(step.duration for step in steps)
             transition = in_transition and elapsed < play.params.transition_seconds
-            outcome = _open_play(slot, ball, after_cross, play, transition)
+            # After advantage the fouled team plays on; it isn't fouled again on the spot.
+            can_foul = not (steps and steps[-1].action_type is ActionType.FOUL)
+            outcome = _open_play(slot, ball, after_cross, play, transition, can_foul)
         steps.append(outcome.step)
         if outcome.handover is not None:
             return Chain(tuple(steps), outcome.handover)
-        if outcome.corner is not None:
-            ball, slot, restart = outcome.corner.ball, outcome.corner.slot, Restart.CORNER
+        if outcome.set_piece is not None:
+            set_piece = outcome.set_piece
+            ball, slot, restart = set_piece.ball, set_piece.slot, set_piece.restart
             after_cross = False
         else:
             ball, slot, restart = outcome.step.end, outcome.receiver, None
@@ -239,11 +250,18 @@ def _play_from(
 
 
 def _open_play(
-    slot: int, ball: Point, after_cross: bool, play: _Play, transition: bool
+    slot: int, ball: Point, after_cross: bool, play: _Play, transition: bool, can_foul: bool
 ) -> _Outcome:
     rng, params = play.rng, play.params
     phase = Phase.TRANSITION if transition else Phase.OPEN_PLAY
     is_keeper = play.attack.formation.slots[slot].role is Role.GOALKEEPER
+    foul_share = (
+        params.foul_share_in_box
+        if in_penalty_area(ball)
+        else params.foul_share.of(zone_of(ball).third)
+    )
+    if can_foul and not is_keeper and rng.random() < foul_share:
+        return _fouled(slot, ball, phase, play)
     action = _choose_action(ball, is_keeper, after_cross, rng, params)
     if action is ActionType.SHOT:
         return _shoot(slot, ball, after_cross, phase, play)
@@ -279,6 +297,20 @@ def _restart(restart: Restart, slot: int, ball: Point, play: _Play) -> _Outcome:
     if restart is Restart.GOAL_KICK:
         target = _kick(ball, params.keeper_pass_length_mean, params.keeper_pass_kappa, play)
         return _pass(slot, ball, target, phase, play, ActionType.GOALKICK)
+    if restart is Restart.FREE_KICK_SHORT:
+        target = _kick(ball, params.free_kick_short_length_mean, params.pass_kappa.middle, play)
+        return _pass(slot, ball, target, phase, play, ActionType.FREEKICK_SHORT)
+    if restart is Restart.FREE_KICK_LONG:
+        if zone_of(ball).third is Third.ATTACKING:
+            return _cross(
+                slot, ball, phase, play, ActionType.FREEKICK_CROSSED, params.corner_success
+            )
+        target = _kick(ball, params.free_kick_long_length_mean, params.keeper_pass_kappa, play)
+        return _pass(slot, ball, target, phase, play, ActionType.FREEKICK_CROSSED)
+    if restart is Restart.FREE_KICK_SHOT:
+        return _shoot(slot, ball, False, phase, play, ActionType.SHOT_FREEKICK)
+    if restart is Restart.PENALTY:
+        return _penalty(slot, phase, play)
     if rng.random() < params.corner_short_share:
         infield = 1.0 if ball.y < PITCH_WIDTH / 2 else -1.0
         target = Point(ball.x - rng.uniform(4, 15), ball.y + infield * rng.uniform(3, 12))
@@ -453,7 +485,7 @@ def _cross(
     failed = Step(slot, action, Result.FAIL, BodyPart.FOOT, ball, end, flight, phase)
     if rng.random() < params.cross_out_for_corner:
         corner = _corner(play.attack, ball.y, params.corner_delay)
-        return _Outcome(_wait(failed, corner.delay), slot, corner=corner)
+        return _Outcome(_wait(failed, corner.delay), slot, set_piece=corner)
     if rng.random() < params.keeper_claim_share:
         handover = Start(mirror(end), _keeper(play.defence.formation), ActionType.KEEPER_CLAIM)
     else:
@@ -462,7 +494,14 @@ def _cross(
     return _Outcome(failed, slot, handover=handover)
 
 
-def _shoot(slot: int, ball: Point, header: bool, phase: Phase, play: _Play) -> _Outcome:
+def _shoot(
+    slot: int,
+    ball: Point,
+    header: bool,
+    phase: Phase,
+    play: _Play,
+    action: ActionType = ActionType.SHOT,
+) -> _Outcome:
     """A shot: a goal, a save, a miss that goes out for a goal kick, or a deflection for a corner.
 
     Only the corner leaves the ball with the shooting team.
@@ -477,7 +516,7 @@ def _shoot(slot: int, ball: Point, header: bool, phase: Phase, play: _Play) -> _
     on_target = Point(PITCH_LENGTH, PITCH_WIDTH / 2 + rng.uniform(-1, 1) * (GOAL_WIDTH / 2 - 0.3))
 
     def shot(result: Result, end: Point) -> Step:
-        return Step(slot, ActionType.SHOT, result, bodypart, ball, end, params.shot_flight, phase)
+        return Step(slot, action, result, bodypart, ball, end, params.shot_flight, phase)
 
     if _succeeds(1 / (1 + math.exp(-logit)), play):
         handover = kickoff(play.defence, delay=params.goal_restart_delay)
@@ -490,7 +529,71 @@ def _shoot(slot: int, ball: Point, header: bool, phase: Phase, play: _Play) -> _
     missed = shot(Result.FAIL, Point(PITCH_LENGTH, PITCH_WIDTH / 2 + wide))
     if rng.random() < params.miss_out_for_corner:
         corner = _corner(play.attack, missed.end.y, params.corner_delay)
-        return _Outcome(_wait(missed, corner.delay), slot, corner=corner)
+        return _Outcome(_wait(missed, corner.delay), slot, set_piece=corner)
+    return _Outcome(missed, slot, handover=_goal_kick(play.defence, play))
+
+
+def _fouled(slot: int, ball: Point, phase: Phase, play: _Play) -> _Outcome:
+    """The nearest defender fouls the player on the ball.
+
+    Play usually stops for a free kick to the fouled team where the foul happened: a penalty in
+    the box, sometimes a shot at goal within range, otherwise played long or short. After a
+    share of fouls the referee lets play go on (advantage). A share are booked.
+    """
+    rng, params = play.rng, play.params
+    fouler = _nearest(play.defence.formation, mirror(ball), in_possession=False)
+    result = Result.YELLOW_CARD if rng.random() < params.yellow_card_share else Result.FAIL
+
+    def foul(duration: float) -> Step:
+        return Step(
+            fouler, ActionType.FOUL, result, BodyPart.FOOT, ball, ball, duration, phase, True
+        )
+
+    if rng.random() < params.advantage_share:
+        return _Outcome(foul(_between(rng, params.reaction_time)), slot)
+    kind, spot, delay = _free_kick(ball, play)
+    return _Outcome(foul(delay), slot, set_piece=Start(spot, slot, restart=kind, delay=delay))
+
+
+def _free_kick(ball: Point, play: _Play) -> tuple[Restart, Point, float]:
+    """Which kind of free kick a foul at ``ball`` gives, where it is taken, and the wait."""
+    rng, params = play.rng, play.params
+    if in_penalty_area(ball):
+        return Restart.PENALTY, PENALTY_SPOT, params.penalty_delay
+    in_range = distance_to_goal(ball) <= params.shot_range and zone_of(ball).lane is Lane.CENTRE
+    if in_range and rng.random() < params.free_kick_shot_share:
+        return Restart.FREE_KICK_SHOT, ball, params.free_kick_shot_delay
+    if rng.random() < params.free_kick_long_share:
+        return Restart.FREE_KICK_LONG, ball, _between(rng, params.free_kick_long_delay)
+    return Restart.FREE_KICK_SHORT, ball, _between(rng, params.free_kick_short_delay)
+
+
+def _penalty(slot: int, phase: Phase, play: _Play) -> _Outcome:
+    """A penalty: scored, saved by the keeper, or missed for a goal kick."""
+    rng, params = play.rng, play.params
+    on_target = Point(PITCH_LENGTH, PITCH_WIDTH / 2 + rng.uniform(-1, 1) * (GOAL_WIDTH / 2 - 0.3))
+
+    def kick(result: Result, end: Point) -> Step:
+        return Step(
+            slot,
+            ActionType.SHOT_PENALTY,
+            result,
+            BodyPart.FOOT,
+            PENALTY_SPOT,
+            end,
+            params.shot_flight,
+            phase,
+        )
+
+    if rng.random() < params.penalty_conversion:
+        handover = kickoff(play.defence, delay=params.goal_restart_delay)
+        return _Outcome(kick(Result.SUCCESS, on_target), slot, handover=handover)
+    if rng.random() < params.penalty_save_share:
+        save_at = Point(PITCH_LENGTH - 1, on_target.y)
+        handover = Start(mirror(save_at), _keeper(play.defence.formation), ActionType.KEEPER_SAVE)
+        return _Outcome(kick(Result.FAIL, on_target), slot, handover=handover)
+    wide = rng.choice((-1.0, 1.0)) * rng.uniform(GOAL_WIDTH / 2 + 0.5, 6)
+    missed = kick(Result.FAIL, Point(PITCH_LENGTH, PITCH_WIDTH / 2 + wide))
     return _Outcome(missed, slot, handover=_goal_kick(play.defence, play))
 
 

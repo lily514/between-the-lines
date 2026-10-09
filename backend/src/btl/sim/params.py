@@ -65,7 +65,7 @@ class SimParams:
 
     # A failed pass carries on past its target by a random distance in this range. If that takes
     # it off the pitch, it goes out of play instead of to an opponent.
-    run_on: tuple[float, float] = (0.0, 20.0)
+    run_on: tuple[float, float] = (0.0, 25.0)
     # Of the failed passes running over the goal line in front of goal, the share the keeper
     # picks up before they go out for a goal kick.
     keeper_pick_up_share: float = 0.9
@@ -88,6 +88,26 @@ class SimParams:
     # Of the shots that miss, the share deflected out for a corner rather than a goal kick.
     miss_out_for_corner: float = 0.1
 
+    # Fouls: before each open-play action by an outfield player, the chance a defender fouls the
+    # player on the ball, by the third the ball is in. Real: 26 fouls a match, the fouled team
+    # in the middle third 55% of the time, its own third 23%, the attacking third 22%.
+    foul_share: PerThird = PerThird(0.022, 0.022, 0.022)
+    # Defenders rarely risk a foul in their own box. Real: 0.28 penalties a match.
+    foul_share_in_box: float = 0.005
+    # Real: 3.3 bookings in 26 fouls, and play goes on (advantage) after about 1 in 8.
+    yellow_card_share: float = 0.13
+    advantage_share: float = 0.12
+    # Free kicks outside the box. Within ``shot_range`` and in the centre lane, this share are
+    # shot at goal; of the rest, ``free_kick_long_share`` are played long. Real: 12.7 long and
+    # 12.5 short a match, 1.1 shots and 0.28 penalties.
+    free_kick_shot_share: float = 0.8
+    free_kick_long_share: float = 0.5
+    free_kick_short_length_mean: float = 16.0
+    free_kick_long_length_mean: float = 45.0
+    penalty_conversion: float = 0.76
+    # Of the penalties that aren't scored, the share the keeper saves.
+    penalty_save_share: float = 0.7
+
     # A team's success odds are multiplied by (its strength / opponent's strength) ** this.
     strength_exponent: float = 0.5
 
@@ -101,6 +121,12 @@ class SimParams:
     goal_kick_delay: float = 20.0
     throw_in_delay: float = 12.0
     corner_delay: float = 25.0
+    # Real median times to restart: short free kicks 16 s (6 to 38 for most), long 34 s
+    # (21 to 57), shots at goal 65 s, penalties 53 s. Short and long are drawn from a range.
+    free_kick_short_delay: tuple[float, float] = (6.0, 30.0)
+    free_kick_long_delay: tuple[float, float] = (20.0, 50.0)
+    free_kick_shot_delay: float = 60.0
+    penalty_delay: float = 55.0
 
     # Actions this soon after winning the ball in open play count as a transition.
     transition_seconds: float = 8.0

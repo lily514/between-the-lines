@@ -13,12 +13,13 @@ from btl.concepts.phase import (
     phase_timeline,
 )
 from btl.league.league import generate_league
-from btl.plant.planter import simulate_with_moments
+from btl.plant.planter import Planter
 from btl.plant.spec import parse_plant
 from btl.schema.event import Event
 from btl.schema.match import Match
 from btl.schema.possession import changes_hands_in_open_play, split_possessions
 from btl.schema.vocab import ActionType, Phase, Result
+from btl.sim.engine import simulate_match
 from tests.fixtures.matches import (
     AWAY,
     AWAY_MIDFIELDER,
@@ -156,7 +157,8 @@ def test_each_period_ends_with_its_break() -> None:
 @cache
 def simulated(seed: int) -> tuple[Match, PhaseTimeline]:
     home, away = generate_league(np.random.default_rng(0)).clubs[:2]
-    match = simulate_with_moments(home, away, seed, EVERY_MOMENT, with_snapshots=False)
+    # Plants as many moments as fit: about 1 seed in 100 has room for only five.
+    match = simulate_match(home, away, seed, with_snapshots=False, director=Planter(EVERY_MOMENT))
     return match, phase_timeline(match)
 
 
@@ -200,10 +202,25 @@ def test_dead_balls_long_enough_for_a_question_are_common() -> None:
         for seed in range(40)
     ]
 
-    # Measured 25-48 a match (median 35): goal kicks, corners and goals; most throw-ins are
-    # under 15 s.
-    assert min(windows) >= 15
-    assert 25 <= float(np.median(windows)) <= 50
+    # Real (40 matches of a real season, see implementation notes): 70 a match, 58-78 for most.
+    # Simulated: 41-64, median 54.5. Free kicks, goal kicks, corners and goals; most throw-ins
+    # are under 15 s.
+    assert min(windows) >= 30
+    assert 40 <= float(np.median(windows)) <= 80
+
+
+def test_about_half_of_playing_time_is_a_transition() -> None:
+    shares: list[float] = []
+    for seed in range(40):
+        segments = simulated(seed)[1].segments
+        transition = sum(s.seconds for s in segments if s.phase is TRANSITION)
+        settled = sum(s.seconds for s in segments if s.phase is SETTLED)
+        shares.append(transition / (transition + settled))
+
+    # Real: 49% of playing time, 39-61% in single matches. Simulated: 56%, 50-62%; the
+    # simulator plays at about 0.4 actions a second against real football's 0.6.
+    assert 0.40 <= float(np.mean(shares)) <= 0.62
+    assert all(0.35 <= share <= 0.70 for share in shares)
 
 
 def test_every_action_the_simulator_calls_a_transition_is_one_here() -> None:

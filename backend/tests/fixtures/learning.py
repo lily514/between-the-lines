@@ -7,9 +7,8 @@ import numpy as np
 from btl.concepts.base import MatchContext, match_context
 from btl.concepts.phase import phase_timeline
 from btl.league.league import generate_league
-from btl.learn.candidates import MATCH_DESIGN, Candidate, find_candidates
+from btl.learn.candidates import Candidate, find_candidates, play_designed_match
 from btl.learn.concept_map import ConceptKey, load_concept_map
-from btl.plant.planter import simulate_with_moments
 from btl.schema.match import Match
 from btl.value.xt import ThreatModel, fit_on_simulated_matches, rate_match
 
@@ -26,7 +25,7 @@ def threat_model() -> ThreatModel:
 @cache
 def designed(seed: int) -> Match:
     home, away = generate_league(np.random.default_rng(0)).clubs[:2]
-    return simulate_with_moments(home, away, seed, MATCH_DESIGN)
+    return play_designed_match(home, away, seed)
 
 
 def context(match: Match) -> MatchContext:

@@ -16,9 +16,13 @@ from dataclasses import dataclass
 from btl.concepts.base import ConceptTag, Detector, MatchContext
 from btl.concepts.phase import PhaseOfPlay, PhaseTimeline
 from btl.concepts.registry import ALL_DETECTORS, detect_all
+from btl.league.league import Club
 from btl.learn.concept_map import ConceptKey, ConceptMap
+from btl.plant.planter import Planter
 from btl.plant.spec import LEVELS, MomentSpec, PlantRequest
+from btl.schema.match import Match
 from btl.schema.vocab import ConceptId
+from btl.sim.engine import simulate_match
 
 # Each concept that can be planted, at every level, in every match.
 MATCH_DESIGN = PlantRequest(
@@ -32,6 +36,16 @@ MATCH_DESIGN = PlantRequest(
 # many 9-11 m passes between two level midfielders count as breaking a line, which is correct
 # but shows little. Planted ones go 14 m forward.
 MIN_FORWARD = 12.0
+
+
+def play_designed_match(home: Club, away: Club, seed: int) -> Match:
+    """Simulate a match to `MATCH_DESIGN`, planting as many of its moments as fit.
+
+    Unlike `btl.plant.planter.simulate_with_moments`, a moment that finds no room before the
+    whistle is simply left out (about 1 match in 100): planting only stands in for a real
+    match's good moments, and the learning loop takes whatever the detectors find.
+    """
+    return simulate_match(home, away, seed, director=Planter(MATCH_DESIGN))
 
 
 @dataclass(frozen=True, slots=True)

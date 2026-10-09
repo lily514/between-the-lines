@@ -131,7 +131,7 @@ def simulate_match(
                         len(events),
                         period_id,
                         clock,
-                        lineups[team],
+                        lineups[1 - team if step.by_defence else team],
                         team,
                         step,
                         possession_id,
@@ -193,6 +193,11 @@ def _event(
     possession_id: int,
     planted_moment_id: int | None,
 ) -> Event:
+    """One step as an event.
+
+    ``team`` is the attacking team, whose direction positions are in; ``lineup`` is the actor's
+    team, the defending one for a step ``by_defence``.
+    """
     start, end = _stored(step.start, team), _stored(step.end, team)
     return Event(
         game_id=game_id,
@@ -222,7 +227,8 @@ def _snapshot(
     on_ball, off_ball = place_teams(sides[holder].formation, sides[1 - holder].formation, ball, rng)
     xy = _stored_positions(sides, holder, on_ball, off_ball)
     actor = _stored(step.start, team)
-    xy[team * len(sides[HOME].formation.slots) + step.slot] = (actor.x, actor.y)
+    actor_team = 1 - team if step.by_defence else team
+    xy[actor_team * len(sides[HOME].formation.slots) + step.slot] = (actor.x, actor.y)
     return xy
 
 

@@ -254,3 +254,39 @@ The three levels never swapped order within a match. The middle 80% of each leve
 - **The design still holds:** nearly half of real play is transition, so mostly-deferred questions are a feature of football, not a quirk of the simulator. On real matches the gate would have about twice as many places to ask, so the caps would fill sooner and more questions would be asked live.
 - **Next: fouls and free kicks in the simulator** (Lily's choice).
 - **Caveats:** the data is ten years old, from before the 2019 law change after which goal kicks are mostly played short. "Time to restart" is measured from the action that stopped play, so it includes the ball's flight out.
+
+## Fouls and free kicks in the simulator (2026-10-08)
+**Plan said:** nothing. Milestone 1 simulated no fouls. The real-match check above found free kicks to be the largest missing source of stoppages, and Lily chose to add them.
+**We did:**
+- **Fouls.** Before each open-play action by an outfield player, the nearest defender may foul the player on the ball. The rate is 2.2% per action in each third, and 0.5% inside the box, where defenders rarely risk one.
+  - **Bookings and advantage:** 13% of fouls are booked (SPADL result `yellow_card`). After 12% the referee plays advantage and the fouled team plays on, and isn't fouled again on the same spot.
+  - **No red cards,** which would need a team to play on with ten.
+- **Free kicks.** Otherwise the fouled team restarts from the spot:
+  - a penalty if the foul was in the box (scored 76% of the time, else mostly saved);
+  - within 30 m and in the centre lane, usually a shot at goal (`shot_freekick`);
+  - otherwise half are played long (`freekick_crossed`: a cross from the attacking third, a long ball from elsewhere) and half short (`freekick_short`).
+  - **Waits before the restart,** from the real medians: short 6–30 s, long 20–50 s, a shot 60 s, a penalty 55 s.
+- **The engine.** A `Step` can now be `by_defence`. The engine records it under the defending team and player and puts that player on the ball in the snapshot, while positions stay in the attacking team's direction. The shared possession rule already keeps a foul inside the fouled team's possession, so detectors needed no change.
+- **Missed passes run on up to 25 m (was 20 m),** so that throw-ins stay in their band. Fouls stop some play that used to end with the ball going out, and throw-ins had fallen from 34 to 30.
+- **New calibration bands:** fouls 15–35, free kicks 12–32, bookings 0–7, mean penalties 0.1–0.6. **The phase bands are re-anchored to real football:** dead balls of 15 s or more have a median of 40–80 (real 70), and the share of playing time in transition is 40–62% on average (real 49%).
+
+| Per match | Real | Before | After |
+|---|---|---|---|
+| Fouls / bookings | 25.9 / 3.3 | 0 | 23.5 / 3.1 |
+| Where the fouled team was (own / middle / attacking third) | 23 / 55 / 22% | — | 29 / 49 / 22% |
+| Free kicks: long, short, shots, penalties | 12.7, 12.5, 1.1, 0.28 | none | 9.6, 9.6, 0.8, 0.5 |
+| Dead balls | 103 | 64 | 83 |
+| Dead balls of 15 s or more | 70 | 38 | 53 |
+| Open-play turnovers | 252 | 277 | 237 |
+| Share of actions in transition | 47% | 63% | 60% |
+| Share of playing time in transition | 49% (39–61%) | — | 56% (50–61%) |
+| Throw-ins / goal kicks / corners | 45 / 17 / 11 | 34 / 18 / 10 | 36 / 16 / 8 |
+| Passes, completion, shots, goals | 717, 79%, 25, 2.7 | ~960, 75%, 25, 2.1 | 815, 75%, 23, 2.1 |
+
+**Why:** a third of the missing stoppages came from fouls, and they matter to the learning loop, because the gate asks most questions at stoppages.
+**Affects:**
+- **The transition gap is mostly about tempo, not fouls.** By actions, the simulator's transition share barely moved (63% → 60%). By playing time it is 56%, against 49% real, with most simulated matches inside the real range. The simulator plays about 0.4 actions a second against 0.6 in real data, so the 12-second limit ends its transitions rather than the 4 passes. That is left as it is.
+- **Smaller gaps left as they are:** penalties run high (0.5 against 0.28); there are no offside free kicks (about 3.5 a match in real data); real throw-ins outnumber simulated ones.
+- **Planting can now fail.** With more stoppages, a designed moment occasionally finds no room before the whistle (seed 34 in 100). The learning loop now uses `play_designed_match`, which plants as many moments as fit. `btl simulate --plant` still insists on all of them. **The counter-press level test is relaxed** to: level 3 hardest in every match, and level 1 below level 2 on average and in 90% of matches. Neighbouring levels overlap a little, and the new random draws exposed it.
+- **The learning loop:** over 40 seeds, 2–8 questions per match (median 6.5 for an improving viewer, 5 for one who doesn't improve); 54–69% at dead balls, 6–7% live. The demo viewer asks 21 questions, 2 of them live, and both concepts end at 97%.
+- **Every simulated match is different again.** T13 must regenerate the sample match, refit the threat grid in `expected-threat.md`, and refresh the README's output.

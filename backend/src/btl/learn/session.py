@@ -21,14 +21,13 @@ from btl.concepts.base import match_context
 from btl.concepts.phase import phase_timeline
 from btl.league.league import Club, League, generate_league, season_fixtures
 from btl.learn.bkt import BktModel, BktState
-from btl.learn.candidates import MATCH_DESIGN, find_candidates
+from btl.learn.candidates import find_candidates, play_designed_match
 from btl.learn.concept_map import ConceptKey, ConceptMap, load_concept_map
 from btl.learn.evidence import EvidencePack, QuestionView, build_pack, question_view
 from btl.learn.grader import Answer, ChoiceAnswer, ChoiceGrader, Grade
 from btl.learn.learner import Attempt, LearnerState
 from btl.learn.questions import active_concepts, build_question
 from btl.learn.selector import Prompt, run_match
-from btl.plant.planter import simulate_with_moments
 from btl.schema.match import Match
 from btl.store.base import LearnerStore, Stored
 from btl.tutor.base import Tutor
@@ -169,7 +168,7 @@ def watch_match(
     state, etag = stored.state, stored.etag
     number = state.match_number
     home, away, seed = course.fixture(state.seed, number)
-    match = simulate_with_moments(home, away, seed, MATCH_DESIGN)
+    match = play_designed_match(home, away, seed)
     ctx = match_context(match, rate_match(course.threat, match))
     timeline = phase_timeline(match)
     candidates = find_candidates(ctx, timeline, course.concept_map, course.active)

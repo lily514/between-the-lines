@@ -42,6 +42,9 @@ MEASURES: dict[str, Callable[[MatchStats], float]] = {
     "throw-ins": lambda stats: stats.throw_ins,
     "goal kicks": lambda stats: stats.goal_kicks,
     "share of actions on a touchline": lambda stats: stats.on_touchline / stats.actions,
+    "fouls": lambda stats: stats.fouls,
+    "free kicks": lambda stats: stats.free_kicks,
+    "yellow cards": lambda stats: stats.yellow_cards,
 }
 
 
@@ -59,6 +62,11 @@ MEASURES: dict[str, Callable[[MatchStats], float]] = {
         ("goal kicks", 10, 25),
         # Real: 6%, and 4 to 9% in single matches.
         ("share of actions on a touchline", 0, 0.10),
+        # Real: 26 fouls, 26.6 free kicks (penalties included; 3.5 of them follow an offside,
+        # which isn't simulated), 3.3 bookings.
+        ("fouls", 15, 35),
+        ("free kicks", 12, 32),
+        ("yellow cards", 0, 7),
     ],
 )
 def test_matches_fall_in_the_band(name: str, low: float, high: float) -> None:
@@ -71,6 +79,11 @@ def test_matches_fall_in_the_band(name: str, low: float, high: float) -> None:
 
 def test_mean_goals_fall_in_the_band() -> None:
     assert 1.5 <= mean(stats.goals for stats in all_stats()) <= 4
+
+
+def test_penalties_are_rare() -> None:
+    # Real: 0.28 a match.
+    assert 0.1 <= mean(stats.penalties for stats in all_stats()) <= 0.6
 
 
 def test_every_kind_of_restart_happens() -> None:

@@ -2,6 +2,28 @@
 
 Where implementation diverged from [plan.md](plan.md), or something surprising was learned. One note per occurrence, added in the same commit as the change.
 
+## Summary (2026-10-09)
+
+Milestone 2c is done. T1 to T7 are in, plus two changes after Lily's hand check: fixes to the score and the pitch, and the components grouped in folders. A viewer can play the learning loop in a browser with `btl serve`, on a phone or beside their match on a desktop, in light or dark. The records are the same ones `btl learn` uses.
+
+**Biggest changes from the plan**
+- **The server keeps no session,** as planned, and costs little: a match is prepared once (about 0.14 s) and cached, and then each request replays the viewer's answers in about 2 ms (T1, T2).
+- **An answer can never end a match.** Full time and the move to the next match happen only in `/next`, so a repeated or stale answer can't skip a viewer to the next match (T2).
+- **A real bug fixed on the way:** a counter-press's path was drawn with the opponent's actions mirrored. The terminal's pitch was never affected (T6).
+- **The common mix-up is its own field,** no longer part of the explanation, so the page can set it apart (T6).
+- **The pitch keeps shirt numbers readable:** the ball sits beside the carrier, lines start at the ball, and home discs are drawn over away rings. The score uses an en dash in the pack itself (fixes after Lily's check).
+- **The components are grouped in folders,** as in `../Web/orbit-web`. Lily chose this after T7.
+- **TypeScript is 5.9,** not 7, because typescript-eslint doesn't support 7 yet. The test client is `httpx2`, which Starlette now asks for (T2, T3).
+
+**Cut:** nothing in the plan. Not drawn on the reveal: the handoff's defensive lines and their badges, since the pack has no line positions (T4).
+
+**Carries over**
+- **To 2b:** the answer request returns only the feedback, so each request makes at most one Tutor call. The feedback's `source` already reaches the page ("worded by template").
+- **Playing the match at speed:** `MatchStep` takes a span of match time and `onArrive`, so a playback component can replace it. That needs a frames endpoint built on `replay.py` and the cached `PreparedMatch`.
+- **To Milestone 3:** deployment and real identity. The server has one lock for all requests, which is enough for a demo but not for many viewers.
+- **From the handoff, not built:** "Save for the break", Simpler/Deeper, the three-level pitch views, the scouting reports, onboarding and preferences.
+- **Small:** on a review question, the path's arrowhead can cover the receiver's shirt number.
+
 ## T1 — Engine changes for the web (2026-10-08)
 **Plan said:** split the match preparation out of `watch_match` into `prepare_match` so the API layer can cache it; a home flag on each `Marker`; a `reveal_path` that the question view leaves out; the handoff's verdict wording; bump `pack_version`.
 **We did:** as planned, with these choices:

@@ -15,9 +15,9 @@ Built for the "Inside the Game" hackathon.
 | 1. Data engine | Event schema, match simulator, Expected Threat valuation, concept detectors, planted teachable moments, CLI | Done |
 | 2a. The learning loop | Concept map, learner model (Bayesian Knowledge Tracing), phase-of-play gating, live moment selector, adaptive questions, evidence pack, templated feedback, learner storage; played in the terminal | Done |
 | 2b. The AI Tutor | Question and feedback wording from a model in Azure AI Foundry, checked against the evidence by plain code | Planned |
-| 2c. The web page | The same loop in a browser | Planned |
+| 2c. The web page | The same loop in a browser: a React page over a small FastAPI layer, for phone and desktop, in light and dark | Done |
 
-Work in progress lives on milestone branches and is merged to `main` when each milestone is complete.
+Work in progress lives on milestone branches and is merged to `main` when each milestone is complete. 2c was built before 2b, while Azure wasn't set up yet.
 
 ## Quickstart
 
@@ -77,12 +77,39 @@ uv run btl learn --viewer yourname
 
 [docs/concept-map.md](docs/concept-map.md) describes the curriculum, and [docs/milestone-2a/learner-model.md](docs/milestone-2a/learner-model.md) the learner model.
 
+## Try the web page
+
+The same loop in a browser, built to sit beside the match on a second screen: full width on a phone, and a side panel next to your stream on a desktop. It needs [Node 24](docs/setup.md#the-web-page) as well as uv.
+
+```sh
+cd frontend
+npm ci
+npm run build
+cd ../backend
+uv run btl serve      # then open http://127.0.0.1:8000
+```
+
+Type a name to start. Your answers are saved in the same records as `btl learn`, so you can start in the terminal and carry on in the browser. A reload carries on from the question you were on.
+
+<p>
+  <img src="docs/milestone-2c/screenshots/live-question-phone.png" alt="A live question on a phone: the pitch frozen as a pass is played, and three answers to choose from" width="260">
+  <img src="docs/milestone-2c/screenshots/feedback-phone.png" alt="The reveal on a phone: the real pass drawn on the pitch, the right answer marked, the explanation, the numbers behind it, and the progress bar" width="260">
+</p>
+<img src="docs/milestone-2c/screenshots/review-question-desktop.png" alt="A review question at a free kick on a desktop, in the side panel beside the viewer's own match" width="720">
+
+- **Questions in settled play** are asked straight away ("Your read"). Moments from a transition wait for the next stoppage or the break, which the page says when it asks.
+- **Lock in, then the reveal.** The real pass is drawn on the pitch, then the verdict and the explanation appear. Every number on the page comes from the match's evidence. The browser computes nothing itself, and it is never sent the answer before you lock in.
+- **Keyboard:** 1, 2 and 3 (or the arrow keys) pick an answer and Enter locks it in. Light or dark follows your system setting, and reduced motion is respected.
+- **For development,** run `uv run btl serve` in `backend/` and `npm run dev` in `frontend/`; the page reloads as you edit, and `/api` is passed to the server.
+
 ## Honest limits
 
 - **Synthetic matches.** The simulator is calibrated against 40 real matches (see the implementation notes), but it isn't real football. It plays at a slower tempo, so more of its play counts as transition (56% of playing time against 49% in real matches), and it has about 80% of the real stoppages long enough for a question. Offsides are flagged at random rather than from where players stand.
 - **Expected Threat is learned from the simulator,** so it can only rediscover the simulator's own rules.
 - **On a live broadcast you couldn't pause before a play.** Predict questions would have to become quick answer-in-five-seconds prompts while play continues; questions held for a stoppage would work as they are.
-- **The feedback is templated** in this milestone; Milestone 2b words it with a model, checked against the same evidence.
+- **The feedback is templated** for now; Milestone 2b words it with a model, checked against the same evidence.
+- **The web page steps from question to question;** it doesn't play the match. Each question says when it is asked and why, and the page is built so a played-back match can replace the step later.
+- **No accounts.** The web page knows you only by the name you type, which is fine for a demo on your own machine and nothing more.
 - **The learner model's numbers are set by hand,** per tier of the curriculum, not fitted to real learners' answers, and two concepts are askable so far.
 
 ## Walkthrough: the data engine
@@ -164,3 +191,4 @@ uv run btl simulate --seed 7 --plant line_breaking_pass:1,2,3 --plant counter_pr
 - [docs/concept-map.md](docs/concept-map.md): the curriculum, and how a concept becomes askable.
 - [docs/milestone-1/plan.md](docs/milestone-1/plan.md): what Milestone 1 set out to build, and [implementation-notes.md](docs/milestone-1/implementation-notes.md): what changed along the way.
 - [docs/milestone-2a/plan.md](docs/milestone-2a/plan.md): what Milestone 2a set out to build, [implementation-notes.md](docs/milestone-2a/implementation-notes.md): what changed along the way, and [learner-model.md](docs/milestone-2a/learner-model.md): the learner model in plain words.
+- [docs/milestone-2c/plan.md](docs/milestone-2c/plan.md): what Milestone 2c set out to build, [implementation-notes.md](docs/milestone-2c/implementation-notes.md): what changed along the way, and [design/](docs/milestone-2c/design/): the design handoff the page follows.

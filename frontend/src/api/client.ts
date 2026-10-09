@@ -6,6 +6,8 @@ export type Question = Schemas['QuestionOut']
 export type FullTime = Schemas['FullTimeOut']
 export type Feedback = Schemas['FeedbackOut']
 export type NextStep = Question | FullTime
+export type Picture = Schemas['PictureOut']
+export type Marker = Schemas['MarkerOut']
 
 /** A response other than 2xx. `status` lets callers tell a stale question (409) from a bad name (422). */
 export class ApiError extends Error {

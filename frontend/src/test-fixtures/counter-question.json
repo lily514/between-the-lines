@@ -1,0 +1,261 @@
+{
+	"kind": "question",
+	"pack_id": "902285bed659bf0d",
+	"match_number": 1,
+	"home": "Ripon Wardens",
+	"away": "Ludlow Ferrymen",
+	"concept_name": "Counter-pressing",
+	"form": "identify",
+	"asks": "what they did",
+	"level": 1,
+	"text": "Play has stopped for a corner. Back at 03:02: Ripon Wardens lost the ball to Ludlow Ferrymen. What did they do next?",
+	"occurred": {
+		"period": 1,
+		"seconds": 182.8669409280334,
+		"clock": "03:02",
+		"phase": "transition"
+	},
+	"delivered": {
+		"period": 1,
+		"seconds": 218.2488221241259,
+		"clock": "03:38",
+		"phase": "dead ball",
+		"delivery": "deferred",
+		"restart": "corner"
+	},
+	"context": {
+		"home_team": {
+			"value": "Ripon Wardens",
+			"display": "Ripon Wardens"
+		},
+		"away_team": {
+			"value": "Ludlow Ferrymen",
+			"display": "Ludlow Ferrymen"
+		},
+		"team": {
+			"value": "Ripon Wardens",
+			"display": "Ripon Wardens"
+		},
+		"opponent": {
+			"value": "Ludlow Ferrymen",
+			"display": "Ludlow Ferrymen"
+		},
+		"score": {
+			"value": "0-0",
+			"display": "0-0"
+		},
+		"minute": {
+			"value": "03:02",
+			"display": "03:02"
+		}
+	},
+	"options": [
+		{
+			"key": "A",
+			"label": "Stopped the attack with a foul",
+			"neutral": {},
+			"target_at": null
+		},
+		{
+			"key": "B",
+			"label": "Dropped back into their shape",
+			"neutral": {},
+			"target_at": null
+		},
+		{
+			"key": "C",
+			"label": "Hunted the ball straight back and won it",
+			"neutral": {},
+			"target_at": null
+		}
+	],
+	"picture": {
+		"action_id": 51,
+		"markers": [
+			{
+				"shirt": 1,
+				"side": "attacking",
+				"home": true,
+				"x": 14.8,
+				"y": 34.0,
+				"role": "keeper"
+			},
+			{
+				"shirt": 2,
+				"side": "attacking",
+				"home": true,
+				"x": 55.3,
+				"y": 17.9,
+				"role": "player"
+			},
+			{
+				"shirt": 3,
+				"side": "attacking",
+				"home": true,
+				"x": 55.8,
+				"y": 29.6,
+				"role": "player"
+			},
+			{
+				"shirt": 4,
+				"side": "attacking",
+				"home": true,
+				"x": 58.8,
+				"y": 37.5,
+				"role": "player"
+			},
+			{
+				"shirt": 5,
+				"side": "attacking",
+				"home": true,
+				"x": 54.1,
+				"y": 49.3,
+				"role": "player"
+			},
+			{
+				"shirt": 8,
+				"side": "attacking",
+				"home": true,
+				"x": 64.9,
+				"y": 20.2,
+				"role": "player"
+			},
+			{
+				"shirt": 10,
+				"side": "attacking",
+				"home": true,
+				"x": 70.9,
+				"y": 30.2,
+				"role": "player"
+			},
+			{
+				"shirt": 14,
+				"side": "attacking",
+				"home": true,
+				"x": 69.1,
+				"y": 39.3,
+				"role": "player"
+			},
+			{
+				"shirt": 16,
+				"side": "attacking",
+				"home": true,
+				"x": 67.9,
+				"y": 47.6,
+				"role": "player"
+			},
+			{
+				"shirt": 7,
+				"side": "attacking",
+				"home": true,
+				"x": 82.7,
+				"y": 23.5,
+				"role": "player"
+			},
+			{
+				"shirt": 9,
+				"side": "attacking",
+				"home": true,
+				"x": 92.2,
+				"y": 34.5,
+				"role": "on the ball"
+			},
+			{
+				"shirt": 1,
+				"side": "defending",
+				"home": false,
+				"x": 101.1,
+				"y": 32.4,
+				"role": "keeper"
+			},
+			{
+				"shirt": 2,
+				"side": "defending",
+				"home": false,
+				"x": 93.4,
+				"y": 53.2,
+				"role": "player"
+			},
+			{
+				"shirt": 3,
+				"side": "defending",
+				"home": false,
+				"x": 92.8,
+				"y": 40.8,
+				"role": "player"
+			},
+			{
+				"shirt": 4,
+				"side": "defending",
+				"home": false,
+				"x": 95.5,
+				"y": 27.9,
+				"role": "player"
+			},
+			{
+				"shirt": 5,
+				"side": "defending",
+				"home": false,
+				"x": 95.7,
+				"y": 10.7,
+				"role": "player"
+			},
+			{
+				"shirt": 8,
+				"side": "defending",
+				"home": false,
+				"x": 75.6,
+				"y": 57.9,
+				"role": "player"
+			},
+			{
+				"shirt": 10,
+				"side": "defending",
+				"home": false,
+				"x": 74.3,
+				"y": 40.1,
+				"role": "player"
+			},
+			{
+				"shirt": 14,
+				"side": "defending",
+				"home": false,
+				"x": 72.2,
+				"y": 26.4,
+				"role": "player"
+			},
+			{
+				"shirt": 16,
+				"side": "defending",
+				"home": false,
+				"x": 76.6,
+				"y": 11.4,
+				"role": "player"
+			},
+			{
+				"shirt": 7,
+				"side": "defending",
+				"home": false,
+				"x": 53.0,
+				"y": 48.9,
+				"role": "player"
+			},
+			{
+				"shirt": 9,
+				"side": "defending",
+				"home": false,
+				"x": 55.1,
+				"y": 19.7,
+				"role": "player"
+			}
+		],
+		"ball": [92.2, 34.5],
+		"path": [
+			[105.0, 0.0],
+			[14.7, 38.5],
+			[14.7, 38.5],
+			[92.2, 34.5],
+			[92.2, 34.5]
+		]
+	}
+}

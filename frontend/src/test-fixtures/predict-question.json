@@ -1,0 +1,298 @@
+{
+	"kind": "question",
+	"pack_id": "16d8507a1112bd57",
+	"match_number": 3,
+	"home": "Hexham Anchors",
+	"away": "Penrith Sentinels",
+	"concept_name": "Line-breaking passes",
+	"form": "predict",
+	"asks": "where to pass",
+	"level": 2,
+	"text": "#10 Ángel Garlano has the ball for Penrith Sentinels. Where should the pass go?",
+	"occurred": {
+		"period": 1,
+		"seconds": 1965.2651183289806,
+		"clock": "32:45",
+		"phase": "settled"
+	},
+	"delivered": {
+		"period": 1,
+		"seconds": 1965.2651183289806,
+		"clock": "32:45",
+		"phase": "settled",
+		"delivery": "live",
+		"restart": null
+	},
+	"context": {
+		"home_team": {
+			"value": "Hexham Anchors",
+			"display": "Hexham Anchors"
+		},
+		"away_team": {
+			"value": "Penrith Sentinels",
+			"display": "Penrith Sentinels"
+		},
+		"team": {
+			"value": "Penrith Sentinels",
+			"display": "Penrith Sentinels"
+		},
+		"opponent": {
+			"value": "Hexham Anchors",
+			"display": "Hexham Anchors"
+		},
+		"score": {
+			"value": "1-0",
+			"display": "1-0"
+		},
+		"minute": {
+			"value": "32:45",
+			"display": "32:45"
+		},
+		"player": {
+			"value": "#10 Ángel Garlano",
+			"display": "#10 Ángel Garlano"
+		}
+	},
+	"options": [
+		{
+			"key": "A",
+			"label": "Pass to #14 Niels Rosinga",
+			"neutral": {
+				"target": {
+					"value": "#14 Niels Rosinga",
+					"display": "#14 Niels Rosinga"
+				},
+				"distance_m": {
+					"value": 19.4,
+					"display": "19.4"
+				},
+				"direction": {
+					"value": "backward",
+					"display": "backward"
+				}
+			},
+			"target_at": [75.9, 38.1]
+		},
+		{
+			"key": "B",
+			"label": "Pass to #4 Enzo Delavin",
+			"neutral": {
+				"target": {
+					"value": "#4 Enzo Delavin",
+					"display": "#4 Enzo Delavin"
+				},
+				"distance_m": {
+					"value": 38.2,
+					"display": "38.2"
+				},
+				"direction": {
+					"value": "backward",
+					"display": "backward"
+				}
+			},
+			"target_at": [53.3, 37.0]
+		},
+		{
+			"key": "C",
+			"label": "Pass to #9 Paul Chauselle",
+			"neutral": {
+				"target": {
+					"value": "#9 Paul Chauselle",
+					"display": "#9 Paul Chauselle"
+				},
+				"distance_m": {
+					"value": 26.2,
+					"display": "26.2"
+				},
+				"direction": {
+					"value": "forward",
+					"display": "forward"
+				}
+			},
+			"target_at": [91.5, 46.3]
+		}
+	],
+	"picture": {
+		"action_id": 508,
+		"markers": [
+			{
+				"shirt": 1,
+				"side": "defending",
+				"home": true,
+				"x": 100.1,
+				"y": 34.1,
+				"role": "keeper"
+			},
+			{
+				"shirt": 2,
+				"side": "defending",
+				"home": true,
+				"x": 99.0,
+				"y": 44.1,
+				"role": "player"
+			},
+			{
+				"shirt": 3,
+				"side": "defending",
+				"home": true,
+				"x": 93.1,
+				"y": 33.2,
+				"role": "player"
+			},
+			{
+				"shirt": 4,
+				"side": "defending",
+				"home": true,
+				"x": 94.8,
+				"y": 27.0,
+				"role": "player"
+			},
+			{
+				"shirt": 5,
+				"side": "defending",
+				"home": true,
+				"x": 93.6,
+				"y": 14.0,
+				"role": "player"
+			},
+			{
+				"shirt": 8,
+				"side": "defending",
+				"home": true,
+				"x": 77.9,
+				"y": 44.2,
+				"role": "player"
+			},
+			{
+				"shirt": 10,
+				"side": "defending",
+				"home": true,
+				"x": 81.0,
+				"y": 34.3,
+				"role": "player"
+			},
+			{
+				"shirt": 14,
+				"side": "defending",
+				"home": true,
+				"x": 79.2,
+				"y": 24.6,
+				"role": "player"
+			},
+			{
+				"shirt": 16,
+				"side": "defending",
+				"home": true,
+				"x": 81.8,
+				"y": 15.9,
+				"role": "player"
+			},
+			{
+				"shirt": 7,
+				"side": "defending",
+				"home": true,
+				"x": 67.5,
+				"y": 40.0,
+				"role": "player"
+			},
+			{
+				"shirt": 9,
+				"side": "defending",
+				"home": true,
+				"x": 68.5,
+				"y": 19.5,
+				"role": "player"
+			},
+			{
+				"shirt": 1,
+				"side": "attacking",
+				"home": false,
+				"x": 13.5,
+				"y": 30.9,
+				"role": "keeper"
+			},
+			{
+				"shirt": 2,
+				"side": "attacking",
+				"home": false,
+				"x": 53.6,
+				"y": 9.8,
+				"role": "player"
+			},
+			{
+				"shirt": 3,
+				"side": "attacking",
+				"home": false,
+				"x": 53.8,
+				"y": 21.4,
+				"role": "player"
+			},
+			{
+				"shirt": 4,
+				"side": "attacking",
+				"home": false,
+				"x": 53.3,
+				"y": 37.0,
+				"role": "player"
+			},
+			{
+				"shirt": 5,
+				"side": "attacking",
+				"home": false,
+				"x": 53.7,
+				"y": 53.0,
+				"role": "player"
+			},
+			{
+				"shirt": 8,
+				"side": "attacking",
+				"home": false,
+				"x": 74.2,
+				"y": 11.6,
+				"role": "player"
+			},
+			{
+				"shirt": 10,
+				"side": "attacking",
+				"home": false,
+				"x": 89.2,
+				"y": 23.9,
+				"role": "on the ball"
+			},
+			{
+				"shirt": 14,
+				"side": "attacking",
+				"home": false,
+				"x": 75.9,
+				"y": 38.1,
+				"role": "player"
+			},
+			{
+				"shirt": 16,
+				"side": "attacking",
+				"home": false,
+				"x": 75.0,
+				"y": 52.3,
+				"role": "player"
+			},
+			{
+				"shirt": 7,
+				"side": "attacking",
+				"home": false,
+				"x": 99.4,
+				"y": 17.4,
+				"role": "player"
+			},
+			{
+				"shirt": 9,
+				"side": "attacking",
+				"home": false,
+				"x": 91.5,
+				"y": 46.3,
+				"role": "player"
+			}
+		],
+		"ball": [89.2, 23.9],
+		"path": []
+	}
+}

@@ -90,3 +90,28 @@ Where implementation diverged from [plan.md](plan.md), or something surprising w
 **Why:** the plan left these details open; the TypeScript version is what the lint and type tools support today.
 **Affects:**
 - **T4–T7** import types from `src/api/client.ts` (`Question`, `Feedback`, `FullTime`, `Status`). Component CSS uses `var(--…)` only, and handles reduced motion itself. The placeholder `App.tsx` is replaced in T7.
+
+## T4 — Pitch (2026-10-08)
+**Plan said:** a `Pitch` component (with `Pitch.support.ts`) that maps the picture to a portrait pitch attacking up, with `X = 68 − y`, `Y = 105 − x` pinned by a test; markings; home discs and away rings; the ball; a `viewBox` cropped to the moment; option tags at `target_at`; a path layer that animates, or crossfades with reduced motion. The crop keeps every option inside the view.
+**We did:** as planned, with these choices:
+- **Props:** `picture`, `options` (`{key, at}` in picture coordinates), `path` (the play's path: `picture.path` for a review question, `reveal_path` on the reveal), `reveal`, `crop` (`'full'` or `'moment'`) and `label`, the start of what a screen reader hears.
+- **The crop keeps the full width** and cuts only the top and bottom, as the handoff's example `-3 14 74 70` does, so players are drawn the same size in every view. It covers the ball, the carrier, every option and the path, with a 10 m margin and a height of at least 50 m. A view that comes within 10 m of a goal line is stretched to show it, because one that stops just short looks cut off.
+- **Which players take part:** the one on the ball, and anyone within 1.5 m of an option's target or a point on the path. When there are options or a path, the others drop to 35% (discs) or 55% (rings), as the handoff says. With neither, nobody is dimmed.
+- **Options** are dashed arrows from the ball, each with its letter beside the middle of the line, on whichever side is further from the players. A halo marks the carrier, and the ball sits 1.5 m ahead of them.
+- **The path** is drawn with `pathLength="1"`, so the reveal traces it by animating `stroke-dashoffset` from 1 to 0 over `--t-path`. With reduced motion, it fades in over `--t-hover` instead. Both are CSS only.
+- **What a screen reader hears:** the label, "The team on the ball is attacking upwards", who has the ball and where, and where each option is. Places are "on the left, in the attacking third", from the given coordinates split into thirds. That's arithmetic on the picture, not a judgement about the play, so it doesn't break the "browser computes no football" rule.
+- **Fixtures:** `src/test-fixtures/` holds real payloads captured from the API with the template Tutor:
+  - a live predict question and its feedback after a wrong pick (seed 7, match 3);
+  - a review question on lines broken and its feedback after a right pick;
+  - a counter-press review question and its feedback.
+
+  `test-fixtures/index.ts` types them. JSON imports type each pair as `number[]`, so each payload is cast once there.
+- **`client.ts` exports `Picture` and `Marker`.**
+- **Checked by eye:** the three fixtures were rendered with headless Chrome in both themes. The direction agrees with the terminal's ASCII pitch: that pitch attacks right with high `y` on the top rows, and turning it a quarter-turn anticlockwise (so it attacks up) puts those rows on the left, which is where `X = 68 − y` puts them. The first render showed the crop stopping just short of the goal line and two option letters on top of players; both were fixed as described above.
+
+**Why:** the plan left these details open; the goal-line rule and the letter placement came from looking at the render.
+**Affects:**
+- **T5:** the question sheet passes the options (from `target_at`) and `crop="moment"`. A review question also passes `picture.path`; a predict question has none.
+- **T6:** the reveal passes `reveal_path`, `reveal` and `crop="moment"`.
+- **T5–T7** can use the fixtures in `src/test-fixtures/index.ts`.
+- **Not drawn yet:** the handoff's defensive lines and their numbered badges on the reveal. The pack doesn't carry line positions, and the plan doesn't ask for them.

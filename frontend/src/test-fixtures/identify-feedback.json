@@ -1,0 +1,307 @@
+{
+	"pack_id": "35429b1ad2427e98",
+	"correct": true,
+	"chosen": "A",
+	"correct_key": "A",
+	"verdict": "Right read.",
+	"explanation": "That pass skipped past several defenders at once. Getting the ball behind defenders is how teams create chances. The answer was One.",
+	"takeaway": "Spot passes that cut through a defensive line and explain why they create danger.",
+	"source": "template",
+	"update": "Right. A guess is right 1 time in 3, and someone who understands line-breaking passes still slips 10% of the time, so we're now 42% sure you understand it, up from 15%.",
+	"concept_name": "Line-breaking passes",
+	"level": 1,
+	"match_number": 1,
+	"action_id": 84,
+	"match_seed": 7001,
+	"context": {
+		"home_team": {
+			"value": "Ripon Wardens",
+			"display": "Ripon Wardens"
+		},
+		"away_team": {
+			"value": "Ludlow Ferrymen",
+			"display": "Ludlow Ferrymen"
+		},
+		"team": {
+			"value": "Ludlow Ferrymen",
+			"display": "Ludlow Ferrymen"
+		},
+		"opponent": {
+			"value": "Ripon Wardens",
+			"display": "Ripon Wardens"
+		},
+		"score": {
+			"value": "0-0",
+			"display": "0-0"
+		},
+		"minute": {
+			"value": "05:12",
+			"display": "05:12"
+		},
+		"player": {
+			"value": "#10 Chinedu Trankwo",
+			"display": "#10 Chinedu Trankwo"
+		}
+	},
+	"outcome": {
+		"lines_broken": {
+			"value": 1.0,
+			"display": "one"
+		},
+		"gap_m": {
+			"value": 15.0,
+			"display": "15"
+		},
+		"xt_before": {
+			"value": 0.002550540124367151,
+			"display": "0.26%"
+		},
+		"xt_after": {
+			"value": 0.003994166229735255,
+			"display": "0.4%"
+		},
+		"threat_added": {
+			"value": 0.0014436261053681035,
+			"display": "+0.14%"
+		},
+		"receiver_zone": {
+			"value": "middle third",
+			"display": "middle third"
+		}
+	},
+	"options": [
+		{
+			"key": "A",
+			"label": "One",
+			"correct": true,
+			"chosen": true,
+			"neutral": {},
+			"outcome": {},
+			"target_at": null
+		},
+		{
+			"key": "B",
+			"label": "Two",
+			"correct": false,
+			"chosen": false,
+			"neutral": {},
+			"outcome": {},
+			"target_at": null
+		},
+		{
+			"key": "C",
+			"label": "None",
+			"correct": false,
+			"chosen": false,
+			"neutral": {},
+			"outcome": {},
+			"target_at": null
+		}
+	],
+	"picture": {
+		"action_id": 84,
+		"markers": [
+			{
+				"shirt": 1,
+				"side": "defending",
+				"home": true,
+				"x": 94.3,
+				"y": 34.7,
+				"role": "keeper"
+			},
+			{
+				"shirt": 2,
+				"side": "defending",
+				"home": true,
+				"x": 51.9,
+				"y": 48.1,
+				"role": "player"
+			},
+			{
+				"shirt": 3,
+				"side": "defending",
+				"home": true,
+				"x": 51.0,
+				"y": 38.6,
+				"role": "player"
+			},
+			{
+				"shirt": 4,
+				"side": "defending",
+				"home": true,
+				"x": 49.2,
+				"y": 30.4,
+				"role": "player"
+			},
+			{
+				"shirt": 5,
+				"side": "defending",
+				"home": true,
+				"x": 48.3,
+				"y": 15.5,
+				"role": "player"
+			},
+			{
+				"shirt": 8,
+				"side": "defending",
+				"home": true,
+				"x": 38.0,
+				"y": 48.8,
+				"role": "player"
+			},
+			{
+				"shirt": 10,
+				"side": "defending",
+				"home": true,
+				"x": 37.1,
+				"y": 39.5,
+				"role": "player"
+			},
+			{
+				"shirt": 14,
+				"side": "defending",
+				"home": true,
+				"x": 32.8,
+				"y": 25.1,
+				"role": "player"
+			},
+			{
+				"shirt": 16,
+				"side": "defending",
+				"home": true,
+				"x": 35.9,
+				"y": 16.8,
+				"role": "player"
+			},
+			{
+				"shirt": 7,
+				"side": "defending",
+				"home": true,
+				"x": 23.7,
+				"y": 41.0,
+				"role": "player"
+			},
+			{
+				"shirt": 9,
+				"side": "defending",
+				"home": true,
+				"x": 20.7,
+				"y": 22.7,
+				"role": "player"
+			},
+			{
+				"shirt": 1,
+				"side": "attacking",
+				"home": false,
+				"x": 2.7,
+				"y": 34.5,
+				"role": "keeper"
+			},
+			{
+				"shirt": 2,
+				"side": "attacking",
+				"home": false,
+				"x": 11.6,
+				"y": 12.2,
+				"role": "player"
+			},
+			{
+				"shirt": 3,
+				"side": "attacking",
+				"home": false,
+				"x": 9.1,
+				"y": 28.1,
+				"role": "player"
+			},
+			{
+				"shirt": 4,
+				"side": "attacking",
+				"home": false,
+				"x": 10.8,
+				"y": 43.6,
+				"role": "player"
+			},
+			{
+				"shirt": 5,
+				"side": "attacking",
+				"home": false,
+				"x": 11.1,
+				"y": 52.1,
+				"role": "player"
+			},
+			{
+				"shirt": 8,
+				"side": "attacking",
+				"home": false,
+				"x": 30.3,
+				"y": 10.7,
+				"role": "player"
+			},
+			{
+				"shirt": 10,
+				"side": "attacking",
+				"home": false,
+				"x": 21.8,
+				"y": 31.5,
+				"role": "on the ball"
+			},
+			{
+				"shirt": 14,
+				"side": "attacking",
+				"home": false,
+				"x": 29.0,
+				"y": 44.0,
+				"role": "player"
+			},
+			{
+				"shirt": 16,
+				"side": "attacking",
+				"home": false,
+				"x": 31.2,
+				"y": 57.0,
+				"role": "player"
+			},
+			{
+				"shirt": 7,
+				"side": "attacking",
+				"home": false,
+				"x": 52.2,
+				"y": 18.3,
+				"role": "player"
+			},
+			{
+				"shirt": 9,
+				"side": "attacking",
+				"home": false,
+				"x": 48.3,
+				"y": 47.2,
+				"role": "player"
+			}
+		],
+		"ball": [21.8, 31.5],
+		"path": [
+			[21.8, 31.5],
+			[45.9, 33.7]
+		]
+	},
+	"reveal_path": [
+		[21.8, 31.5],
+		[45.9, 33.7]
+	],
+	"concepts": [
+		{
+			"name": "Line-breaking passes",
+			"before": 0.15,
+			"after": 0.4243027888446216
+		},
+		{
+			"name": "Counter-pressing",
+			"before": 0.17191977077363899,
+			"after": 0.17191977077363899
+		}
+	],
+	"thresholds": {
+		"unlock": 0.8,
+		"mastery": 0.95
+	}
+}

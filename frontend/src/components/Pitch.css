@@ -1,0 +1,124 @@
+/* The pitch is the same in both themes: every colour here is a pitch token. */
+
+.pitch {
+	display: block;
+	width: 100%;
+	height: auto;
+	border-radius: var(--r-pitch);
+}
+
+.pitch__grass {
+	fill: var(--pitch);
+}
+
+.pitch__markings {
+	fill: none;
+	stroke: var(--pitch-line);
+	stroke-width: 0.4;
+}
+
+.pitch__spot {
+	fill: var(--pitch-line);
+	stroke: none;
+}
+
+.pitch__player--home circle {
+	fill: var(--home);
+}
+
+.pitch__player--home text {
+	fill: var(--home-ink);
+	font-family: var(--font-display);
+	font-weight: 700;
+	font-size: 2.4px;
+	text-anchor: middle;
+}
+
+.pitch__player--away circle {
+	fill: var(--pitch);
+	stroke: var(--away);
+	stroke-width: 0.65;
+}
+
+/* Players away from the moment step back, so the ones that matter stand out. */
+.pitch__player--home.pitch__player--dim {
+	opacity: 0.35;
+}
+
+.pitch__player--away.pitch__player--dim {
+	opacity: 0.55;
+}
+
+.pitch__ball {
+	fill: var(--ball);
+	stroke: var(--home-ink);
+	stroke-width: 0.35;
+}
+
+.pitch__halo {
+	fill: none;
+	stroke: var(--on-pitch);
+	stroke-width: 0.45;
+}
+
+.pitch__arrowhead {
+	fill: var(--on-pitch);
+}
+
+.pitch__option-line {
+	fill: none;
+	stroke: var(--on-pitch);
+	stroke-width: 0.6;
+	stroke-linecap: round;
+	stroke-dasharray: 1.2 1;
+}
+
+.pitch__tag circle {
+	fill: var(--on-pitch);
+}
+
+.pitch__tag text {
+	fill: var(--home-ink);
+	font-family: var(--font-display);
+	font-weight: 700;
+	font-size: 2.7px;
+	text-anchor: middle;
+}
+
+.pitch__path {
+	fill: none;
+	stroke: var(--on-pitch);
+	stroke-width: 0.9;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+
+/* The reveal traces the real path; pathLength="1" makes the dash one whole path long. */
+.pitch__path--reveal {
+	stroke-dasharray: 1;
+	stroke-dashoffset: 1;
+	animation: pitch-draw var(--t-path) var(--ease-out) forwards;
+}
+
+@keyframes pitch-draw {
+	to {
+		stroke-dashoffset: 0;
+	}
+}
+
+@keyframes pitch-fade {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.pitch__path--reveal {
+		stroke-dasharray: none;
+		stroke-dashoffset: 0;
+		animation: pitch-fade var(--t-hover) linear;
+	}
+}

@@ -1,0 +1,301 @@
+{
+	"pack_id": "902285bed659bf0d",
+	"correct": false,
+	"chosen": "A",
+	"correct_key": "C",
+	"verdict": "Good instinct, not this one.",
+	"explanation": "After losing the ball, Ripon Wardens hunted it straight back instead of retreating. Winning it back quickly catches the opponent before they can spread out. The answer was Hunted the ball straight back and won it. A common mix-up: “A team that loses the ball should always drop back first.”",
+	"takeaway": "Recognize a counter-press: winning the ball straight back after losing it, before the opponent can organize.",
+	"source": "template",
+	"update": "Not this time, which on its own lowers our estimate for counter-pressing. But you've just seen the explanation, and that teaches it 15% of the time, so we're now 17% sure you understand it, up from 15%.",
+	"concept_name": "Counter-pressing",
+	"level": 1,
+	"match_number": 1,
+	"action_id": 51,
+	"match_seed": 7001,
+	"context": {
+		"home_team": {
+			"value": "Ripon Wardens",
+			"display": "Ripon Wardens"
+		},
+		"away_team": {
+			"value": "Ludlow Ferrymen",
+			"display": "Ludlow Ferrymen"
+		},
+		"team": {
+			"value": "Ripon Wardens",
+			"display": "Ripon Wardens"
+		},
+		"opponent": {
+			"value": "Ludlow Ferrymen",
+			"display": "Ludlow Ferrymen"
+		},
+		"score": {
+			"value": "0-0",
+			"display": "0-0"
+		},
+		"minute": {
+			"value": "03:02",
+			"display": "03:02"
+		}
+	},
+	"outcome": {
+		"seconds_to_regain": {
+			"value": 1.8,
+			"display": "1.8"
+		},
+		"metres_from_goal": {
+			"value": 12.8,
+			"display": "12.8"
+		},
+		"pressers": {
+			"value": 1.0,
+			"display": "one"
+		},
+		"player": {
+			"value": "#9 Adama Trafo",
+			"display": "#9 Adama Trafo"
+		}
+	},
+	"options": [
+		{
+			"key": "A",
+			"label": "Stopped the attack with a foul",
+			"correct": false,
+			"chosen": true,
+			"neutral": {},
+			"outcome": {},
+			"target_at": null
+		},
+		{
+			"key": "B",
+			"label": "Dropped back into their shape",
+			"correct": false,
+			"chosen": false,
+			"neutral": {},
+			"outcome": {},
+			"target_at": null
+		},
+		{
+			"key": "C",
+			"label": "Hunted the ball straight back and won it",
+			"correct": true,
+			"chosen": false,
+			"neutral": {},
+			"outcome": {},
+			"target_at": null
+		}
+	],
+	"picture": {
+		"action_id": 51,
+		"markers": [
+			{
+				"shirt": 1,
+				"side": "attacking",
+				"home": true,
+				"x": 14.8,
+				"y": 34.0,
+				"role": "keeper"
+			},
+			{
+				"shirt": 2,
+				"side": "attacking",
+				"home": true,
+				"x": 55.3,
+				"y": 17.9,
+				"role": "player"
+			},
+			{
+				"shirt": 3,
+				"side": "attacking",
+				"home": true,
+				"x": 55.8,
+				"y": 29.6,
+				"role": "player"
+			},
+			{
+				"shirt": 4,
+				"side": "attacking",
+				"home": true,
+				"x": 58.8,
+				"y": 37.5,
+				"role": "player"
+			},
+			{
+				"shirt": 5,
+				"side": "attacking",
+				"home": true,
+				"x": 54.1,
+				"y": 49.3,
+				"role": "player"
+			},
+			{
+				"shirt": 8,
+				"side": "attacking",
+				"home": true,
+				"x": 64.9,
+				"y": 20.2,
+				"role": "player"
+			},
+			{
+				"shirt": 10,
+				"side": "attacking",
+				"home": true,
+				"x": 70.9,
+				"y": 30.2,
+				"role": "player"
+			},
+			{
+				"shirt": 14,
+				"side": "attacking",
+				"home": true,
+				"x": 69.1,
+				"y": 39.3,
+				"role": "player"
+			},
+			{
+				"shirt": 16,
+				"side": "attacking",
+				"home": true,
+				"x": 67.9,
+				"y": 47.6,
+				"role": "player"
+			},
+			{
+				"shirt": 7,
+				"side": "attacking",
+				"home": true,
+				"x": 82.7,
+				"y": 23.5,
+				"role": "player"
+			},
+			{
+				"shirt": 9,
+				"side": "attacking",
+				"home": true,
+				"x": 92.2,
+				"y": 34.5,
+				"role": "on the ball"
+			},
+			{
+				"shirt": 1,
+				"side": "defending",
+				"home": false,
+				"x": 101.1,
+				"y": 32.4,
+				"role": "keeper"
+			},
+			{
+				"shirt": 2,
+				"side": "defending",
+				"home": false,
+				"x": 93.4,
+				"y": 53.2,
+				"role": "player"
+			},
+			{
+				"shirt": 3,
+				"side": "defending",
+				"home": false,
+				"x": 92.8,
+				"y": 40.8,
+				"role": "player"
+			},
+			{
+				"shirt": 4,
+				"side": "defending",
+				"home": false,
+				"x": 95.5,
+				"y": 27.9,
+				"role": "player"
+			},
+			{
+				"shirt": 5,
+				"side": "defending",
+				"home": false,
+				"x": 95.7,
+				"y": 10.7,
+				"role": "player"
+			},
+			{
+				"shirt": 8,
+				"side": "defending",
+				"home": false,
+				"x": 75.6,
+				"y": 57.9,
+				"role": "player"
+			},
+			{
+				"shirt": 10,
+				"side": "defending",
+				"home": false,
+				"x": 74.3,
+				"y": 40.1,
+				"role": "player"
+			},
+			{
+				"shirt": 14,
+				"side": "defending",
+				"home": false,
+				"x": 72.2,
+				"y": 26.4,
+				"role": "player"
+			},
+			{
+				"shirt": 16,
+				"side": "defending",
+				"home": false,
+				"x": 76.6,
+				"y": 11.4,
+				"role": "player"
+			},
+			{
+				"shirt": 7,
+				"side": "defending",
+				"home": false,
+				"x": 53.0,
+				"y": 48.9,
+				"role": "player"
+			},
+			{
+				"shirt": 9,
+				"side": "defending",
+				"home": false,
+				"x": 55.1,
+				"y": 19.7,
+				"role": "player"
+			}
+		],
+		"ball": [92.2, 34.5],
+		"path": [
+			[105.0, 0.0],
+			[14.7, 38.5],
+			[14.7, 38.5],
+			[92.2, 34.5],
+			[92.2, 34.5]
+		]
+	},
+	"reveal_path": [
+		[105.0, 0.0],
+		[14.7, 38.5],
+		[14.7, 38.5],
+		[92.2, 34.5],
+		[92.2, 34.5]
+	],
+	"concepts": [
+		{
+			"name": "Line-breaking passes",
+			"before": 0.15,
+			"after": 0.15
+		},
+		{
+			"name": "Counter-pressing",
+			"before": 0.15,
+			"after": 0.17191977077363899
+		}
+	],
+	"thresholds": {
+		"unlock": 0.8,
+		"mastery": 0.95
+	}
+}

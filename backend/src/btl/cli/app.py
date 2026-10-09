@@ -1,7 +1,7 @@
 """The `btl` command and its subcommands."""
 
+import json
 import time
-import zlib
 from collections import Counter
 from collections.abc import Sequence
 from datetime import UTC, datetime
@@ -10,11 +10,13 @@ from typing import Annotated
 
 import numpy as np
 import typer
+import uvicorn
 from rich.console import Console
 from rich.live import Live
 from rich.rule import Rule
 from rich.text import Text
 
+from btl.api.app import create_app
 from btl.cli.render import (
     counted,
     events_table,
@@ -46,7 +48,15 @@ from btl.io import (
 )
 from btl.league.league import Club, League, generate_league, season_fixtures
 from btl.learn.learner import MATCHES_PER_SESSION
-from btl.learn.session import LEAGUE_SEED, Asked, Course, DemoViewer, start_session, watch_match
+from btl.learn.session import (
+    LEAGUE_SEED,
+    Asked,
+    Course,
+    DemoViewer,
+    seed_for_viewer,
+    start_session,
+    watch_match,
+)
 from btl.plant.planter import simulate_with_moments
 from btl.plant.spec import parse_plant
 from btl.replay import DEFAULT_FPS, answer_frames, frame_at, lead_up_frames, question_action
@@ -72,6 +82,7 @@ EXAMPLES = (
     ("btl replay examples/match-0007 --moment 3", "watch a moment play out"),
     ("btl learn --viewer lily", "watch your next match and answer questions"),
     ("btl demo-viewer", "a scripted viewer improving over three matches"),
+    ("btl serve", "the learning loop in the browser"),
 )
 
 
@@ -93,6 +104,8 @@ console = Console()
 DEFAULT_MODEL = Path("data/models/expected-threat.json")
 DEFAULT_MATCHES = Path("data/matches")
 DEFAULT_LEARNERS = Path("data/learners")
+DEFAULT_FRONTEND = Path("../frontend/dist")
+DEFAULT_PORT = 8000
 ModelPath = Annotated[
     Path,
     typer.Option(
@@ -476,9 +489,7 @@ def learn(
     store = JsonLearnerStore(learners)
     if reset:
         (learners / f"{viewer}.json").unlink(missing_ok=True)
-    stored = start_session(
-        store, viewer, zlib.crc32(viewer.encode()) % 10_000 if seed is None else seed
-    )
+    stored = start_session(store, viewer, seed_for_viewer(viewer) if seed is None else seed)
     course = Course(_threat_model_or_fit(model), TemplateTutor())
     if stored.state.finished:
         console.print(f"{viewer} has watched all three matches. `--reset` starts again.")
@@ -520,3 +531,48 @@ def demo_viewer(
         watch_match(course, store, "demo", viewer, lambda: "2026-10-08T12:00:00+00:00")
     console.print(Rule("After three matches"))
     console.print(progress_bars(viewer.seen[-1].mastery))
+
+
+@app.command()
+def serve(
+    host: Annotated[str, typer.Option(help="Address to listen on.")] = "127.0.0.1",
+    port: Annotated[int, typer.Option(help="Port to listen on.")] = DEFAULT_PORT,
+    learners: Annotated[Path, typer.Option(help="Folder for learner records.")] = DEFAULT_LEARNERS,
+    model: ModelPath = DEFAULT_MODEL,
+    frontend: Annotated[
+        Path, typer.Option(help="The built web page, served outside /api if it exists.")
+    ] = DEFAULT_FRONTEND,
+) -> None:
+    """Serve the learning loop to the web page: the API, and the built page if there is one.
+
+    Learner records are the same files `btl learn` uses, so a viewer can carry on in either.
+    """
+    course = Course(_threat_model_or_fit(model), TemplateTutor())
+    page = frontend if (frontend / "index.html").is_file() else None
+    if page is None:
+        console.print(
+            f"No built page in {frontend}: serving the API only. "
+            "Build it with `npm run build` in frontend/, or use `npm run dev` there."
+        )
+    api = create_app(lambda: course, JsonLearnerStore(learners), _now, page)
+    console.print(f"Serving on http://{host}:{port} (API under /api). Ctrl+C stops it.")
+    uvicorn.run(api, host=host, port=port, log_level="warning")
+
+
+@app.command()
+def openapi(
+    out: Annotated[Path | None, typer.Option(help="File to write; printed if not given.")] = None,
+) -> None:
+    """Write the web API's OpenAPI schema, from which the page's TypeScript types are made."""
+    schema = create_app(_no_course, MemoryLearnerStore(), _now).openapi()
+    text = json.dumps(schema, indent=2, sort_keys=True) + "\n"
+    if out is None:
+        typer.echo(text, nl=False)
+    else:
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(text)
+        console.print(f"Wrote the OpenAPI schema to {out}.")
+
+
+def _no_course() -> Course:
+    raise RuntimeError("the schema needs no course")

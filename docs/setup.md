@@ -27,6 +27,15 @@ Every step needed to get from a clean machine to a working environment, in order
    uv run btl --help
    ```
 
+## The web page's API
+
+`uv sync` also installs FastAPI and uvicorn. From `backend/`, `btl serve` serves the learning loop's API on <http://127.0.0.1:8000> (under `/api`), using the same learner records as `btl learn` (`data/learners/`). If the page has been built (`frontend/dist`), it serves that too; otherwise it says so and serves the API only.
+
+```sh
+uv run btl serve
+uv run btl openapi --out ../frontend/src/api/openapi.json   # the schema the page's types are made from
+```
+
 ## Optional: check generated names against real ones
 
 The committed repo contains no real club, player, place, or league names, not even as a list of names to avoid. To check that generated leagues never produce one, keep a private list at `backend/private/real-names.txt`. The whole `backend/private/` folder is gitignored, so the list is visible in your editor but never committed.

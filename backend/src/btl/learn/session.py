@@ -11,6 +11,7 @@ carry on: replaying a match with the answers already given leads the selector to
 same place.
 """
 
+import zlib
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from typing import Protocol
@@ -39,12 +40,16 @@ LEAGUE_SEED = 0
 
 @dataclass(frozen=True, slots=True)
 class Asked:
-    """A question as the viewer meets it: the pack, its view, and the worded question."""
+    """A question as the viewer meets it: the pack, its view, and the worded question.
+
+    ``prompt`` is the selector's decision: the moment, and when and in what phase it is asked.
+    """
 
     pack: EvidencePack
     view: QuestionView
     text: str
     match: Match
+    prompt: Prompt
 
 
 @dataclass(frozen=True, slots=True)
@@ -160,6 +165,11 @@ def prepare_match(course: Course, seed: int, match_number: int) -> PreparedMatch
     return PreparedMatch(home, away, match_seed, match, ctx, timeline, candidates)
 
 
+def seed_for_viewer(viewer_id: str) -> int:
+    """The session seed a viewer gets unless one is chosen: the same every time for a name."""
+    return zlib.crc32(viewer_id.encode()) % 10_000
+
+
 def start_session(store: LearnerStore, viewer_id: str, seed: int) -> Stored:
     """The viewer's record: read it, or create it with this seed if it is new."""
     stored = store.get(viewer_id)
@@ -252,7 +262,7 @@ def watch_match(
         )
         view = question_view(pack)
         text = fill(course.tutor.question(view).text, question_values(view))
-        answer = viewer.ask(Asked(pack, view, text, match))
+        answer = viewer.ask(Asked(pack, view, text, match, prompt))
         grade = ChoiceGrader().grade(pack, answer)
         attempt = Attempt(
             match_number=number,

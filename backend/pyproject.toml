@@ -6,12 +6,14 @@ authors = [{ name = "Lily Carlson" }]
 license = "MIT"
 requires-python = ">=3.11,<3.12"
 dependencies = [
+    "fastapi>=0.143.0",
     "numpy>=1.26.4",
     "pandas>=2.3.3",
     "pyarrow>=25.0.1",
     "pyyaml>=6.0.3",
     "socceraction==1.5.3",
     "typer>=0.12",
+    "uvicorn>=0.54.0",
 ]
 
 [project.scripts]
@@ -19,6 +21,7 @@ btl = "btl.cli.app:app"
 
 [dependency-groups]
 dev = [
+    "httpx2>=2.13.1",
     "hypothesis>=6.168.5",
     "pyright>=1.1.400",
     "pytest>=8",

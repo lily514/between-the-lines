@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Between the Lines — Desktop side panel</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#9CC8F0}a:hover{color:#C2DDF6}
+button{font:inherit;color:inherit;cursor:pointer}
+kbd{font-family:'JetBrains Mono',monospace;font-size:12px;padding:2px 6px;border:1px solid #7A4A58;border-bottom-width:2px;border-radius:5px;color:#E3D3CB}
+</style>
+</helmet>
+<div style="width: 100%; min-height: 900px; box-sizing: border-box; background: #220C13; color: #F6EDE4; font-family: 'DM Sans', system-ui, sans-serif; display: flex; flex-wrap: wrap">
+
+  <main style="flex: 999 1 560px; min-width: 0; padding: 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 16px">
+    <div style="display: flex; align-items: center; gap: 16px">
+      <div style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 20px; letter-spacing: 0.06em; text-transform: uppercase">Between <span style="color: #C9B3AE">the</span> Lines</div>
+      <div style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 22px; font-variant-numeric: tabular-nums">Northbridge 1–1 Westmere</div>
+      <div style="font-family: 'JetBrains Mono', monospace; font-size: 15px; color: #C9B3AE">58:13</div>
+    </div>
+    <div aria-label="Your match broadcast, outside Between the Lines" style="flex: 1; min-height: 520px; border: 2px dashed #55293A; border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: #B09590">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#7A4A58" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="13" rx="2"></rect><path d="M8 21h8"></path></svg>
+      <div style="font-size: 18px; font-weight: 600">Your match: TV, stream or another tab</div>
+      <div style="font-size: 15px">Between the Lines never covers it. The panel sits beside it.</div>
+    </div>
+  </main>
+
+  <aside aria-label="Between the Lines companion" style="flex: 1 1 400px; max-width: 440px; min-height: 900px; box-sizing: border-box; background: #2B1018; border-left: 1px solid #55293A; display: flex; flex-direction: column">
+    <header style="height: 60px; padding: 0 12px 0 20px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #4A2430">
+      <div style="display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; background: #9CC8F0; color: #2B1018; border-radius: 999px; font-family: 'Bricolage Grotesque', sans-serif; font-size: 15px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase">Your read</div>
+      <span style="font-size: 14px; color: #C9B3AE">Settled possession</span>
+      <button aria-label="Save this question for the next break (Escape)" style="margin-left: auto; height: 40px; padding: 0 10px; border: 0; background: transparent; display: flex; align-items: center; gap: 8px; border-radius: 10px; font-size: 14px; color: #E3D3CB">Save for break <kbd>Esc</kbd></button>
+    </header>
+
+    <div style="padding: 16px 20px 0">
+      <h1 style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-size: 26px; line-height: 1.12; font-weight: 600">#11 has time on the ball. Where should the pass go?</h1>
+    </div>
+
+    <svg viewBox="-3 14 74 70" width="388" height="367" role="img" aria-label="Freeze-frame at 58:13. Number 11 has the ball. A: back to number 12. B: forward to number 16, between Westmere's midfield and back line. C: out wide to number 13." style="display: block; margin: 14px 20px 0; max-width: calc(100% - 40px); height: auto; border-radius: 16px">
+      <defs><marker id="dArr" viewBox="0 0 6 6" refX="5" refY="3" markerWidth="3.6" markerHeight="3.6" orient="auto"><path d="M0 0L6 3L0 6z" fill="#9CC8F0"></path></marker></defs>
+      <rect x="-3" y="14" width="74" height="70" fill="#1E3A30"></rect>
+      <g fill="none" stroke="#F6EDE4" stroke-opacity="0.22" stroke-width="0.4">
+        <rect x="0" y="0" width="68" height="105"></rect>
+        <line x1="0" y1="52.5" x2="68" y2="52.5"></line>
+        <circle cx="34" cy="52.5" r="9.15"></circle>
+        <rect x="13.84" y="0" width="40.32" height="16.5"></rect>
+      </g>
+      <g opacity="0.55" fill="#1E3A30" stroke="#EFA27A" stroke-width="0.65">
+        <circle cx="55.2" cy="27.3" r="1.8"></circle><circle cx="39.3" cy="30.4" r="1.8"></circle><circle cx="31" cy="28.3" r="1.8"></circle><circle cx="18.3" cy="26" r="1.8"></circle>
+        <circle cx="49.5" cy="40.5" r="1.8"></circle><circle cx="40.7" cy="42.1" r="1.8"></circle><circle cx="28.8" cy="39.8" r="1.8"></circle><circle cx="18.4" cy="43.3" r="1.8"></circle>
+        <circle cx="43.7" cy="55.9" r="1.8"></circle><circle cx="23.9" cy="54" r="1.8"></circle>
+      </g>
+      <g opacity="0.35" fill="#F6EDE4">
+        <circle cx="15.3" cy="77.6" r="2.2"></circle><circle cx="27.2" cy="76.2" r="2.2"></circle><circle cx="42.1" cy="76.5" r="2.2"></circle><circle cx="52.5" cy="75.7" r="2.2"></circle><circle cx="13.8" cy="56.1" r="2.2"></circle><circle cx="49" cy="36.2" r="2.2"></circle>
+      </g>
+      <g fill="none" stroke="#9CC8F0" stroke-linecap="round" stroke-width="0.6" stroke-dasharray="1.2 1">
+        <path d="M36.1 48.6 L41.4 56.6" marker-end="url(#dArr)"></path>
+        <path d="M32.9 44.5 L25.8 37.2" marker-end="url(#dArr)"></path>
+        <path d="M37.1 47.3 L53.3 52.9" marker-end="url(#dArr)"></path>
+      </g>
+      <circle cx="34.7" cy="46.4" r="3.8" fill="none" stroke="#9CC8F0" stroke-width="0.45"></circle>
+      <g font-family="'Bricolage Grotesque', sans-serif" font-weight="700" font-size="2.4" text-anchor="middle" fill="#2B1018">
+        <circle cx="34.7" cy="46.4" r="2.2" fill="#F6EDE4"></circle><text x="34.7" y="47.25">11</text>
+        <circle cx="42.9" cy="59" r="2.2" fill="#F6EDE4"></circle><text x="42.9" y="59.85">12</text>
+        <circle cx="23.8" cy="35.2" r="2.2" fill="#F6EDE4"></circle><text x="23.8" y="36.05">16</text>
+        <circle cx="55.9" cy="53.8" r="2.2" fill="#F6EDE4"></circle><text x="55.9" y="54.65">13</text>
+      </g>
+      <circle cx="36.6" cy="44.6" r="0.95" fill="#FFFFFF" stroke="#2B1018" stroke-width="0.35"></circle>
+      <g font-family="'Bricolage Grotesque', sans-serif" font-weight="700" font-size="2.7" text-anchor="middle" fill="#2B1018">
+        <circle cx="35.9" cy="54.6" r="2.4" fill="#9CC8F0"></circle><text x="35.9" y="55.55">A</text>
+        <circle cx="28.9" cy="44.8" r="2.4" fill="#9CC8F0"></circle><text x="28.9" y="45.75">B</text>
+        <circle cx="46.2" cy="47.4" r="2.4" fill="#9CC8F0"></circle><text x="46.2" y="48.35">C</text>
+      </g>
+    </svg>
+
+    <div role="radiogroup" aria-label="Your answer" style="margin: 14px 20px 0; display: flex; flex-direction: column; gap: 8px">
+      <button role="radio" aria-checked="false" style="height: 52px; padding: 0 14px; border: 1px solid #5E3140; background: #3B1A24; border-radius: 12px; display: flex; align-items: center; gap: 12px; text-align: left; font-size: 16px; font-weight: 500">
+        <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 24px; font-weight: 700; width: 18px">A</span><span style="flex: 1">Back to #12</span><kbd>1</kbd>
+      </button>
+      <button role="radio" aria-checked="false" style="height: 52px; padding: 0 14px; border: 1px solid #9CC8F0; background: #3B1A24; border-radius: 12px; display: flex; align-items: center; gap: 12px; text-align: left; font-size: 16px; font-weight: 500; outline: 3px solid #9CC8F0; outline-offset: 2px">
+        <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 24px; font-weight: 700; width: 18px">B</span><span style="flex: 1">Forward into the gap to #16</span><kbd>2</kbd>
+      </button>
+      <button role="radio" aria-checked="false" style="height: 52px; padding: 0 14px; border: 1px solid #5E3140; background: #3B1A24; border-radius: 12px; display: flex; align-items: center; gap: 12px; text-align: left; font-size: 16px; font-weight: 500">
+        <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 24px; font-weight: 700; width: 18px">C</span><span style="flex: 1">Out wide to #13</span><kbd>3</kbd>
+      </button>
+    </div>
+    <p style="margin: 8px 20px 0; font-size: 13px; color: #C9B3AE">B shows the keyboard focus ring. Arrow keys move between options.</p>
+
+    <div style="margin-top: auto; padding: 16px 20px 20px">
+      <button disabled aria-disabled="true" style="width: 100%; height: 52px; border: 1px dashed #7A4A58; background: transparent; color: #B09590; border-radius: 12px; font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 10px">Pick one to lock in <kbd>Enter</kbd></button>
+    </div>
+  </aside>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

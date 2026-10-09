@@ -11,17 +11,18 @@ carry on: replaying a match with the answers already given leads the selector to
 same place.
 """
 
+import zlib
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from typing import Protocol
 
 import numpy as np
 
-from btl.concepts.base import match_context
-from btl.concepts.phase import phase_timeline
+from btl.concepts.base import MatchContext, match_context
+from btl.concepts.phase import PhaseTimeline, phase_timeline
 from btl.league.league import Club, League, generate_league, season_fixtures
 from btl.learn.bkt import BktModel, BktState
-from btl.learn.candidates import find_candidates, play_designed_match
+from btl.learn.candidates import Candidate, find_candidates, play_designed_match
 from btl.learn.concept_map import ConceptKey, ConceptMap, load_concept_map
 from btl.learn.evidence import EvidencePack, QuestionView, build_pack, question_view
 from btl.learn.grader import Answer, ChoiceAnswer, ChoiceGrader, Grade
@@ -39,12 +40,16 @@ LEAGUE_SEED = 0
 
 @dataclass(frozen=True, slots=True)
 class Asked:
-    """A question as the viewer meets it: the pack, its view, and the worded question."""
+    """A question as the viewer meets it: the pack, its view, and the worded question.
+
+    ``prompt`` is the selector's decision: the moment, and when and in what phase it is asked.
+    """
 
     pack: EvidencePack
     view: QuestionView
     text: str
     match: Match
+    prompt: Prompt
 
 
 @dataclass(frozen=True, slots=True)
@@ -59,6 +64,7 @@ class Told:
     source: str
     update: str
     mastery: dict[str, float]
+    misconception: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -127,6 +133,44 @@ class Course:
         return self.league.club(home), self.league.club(away), seed * 1000 + match_number
 
 
+@dataclass(frozen=True)
+class PreparedMatch:
+    """One of a viewer's matches, ready to watch: the same for every viewer with that seed.
+
+    Preparing it is the slow part of watching a match, and it never depends on the viewer's
+    answers, so a server can prepare it once and reuse it.
+    """
+
+    home: Club
+    away: Club
+    seed: int
+    match: Match
+    ctx: MatchContext
+    timeline: PhaseTimeline
+    candidates: tuple[Candidate, ...]
+
+
+def prepare_match(course: Course, seed: int, match_number: int) -> PreparedMatch:
+    """Simulate a viewer's match and find its phases of play and candidate moments.
+
+    Args:
+        course: What every viewer shares.
+        seed: The viewer's session seed.
+        match_number: Which of the viewer's matches.
+    """
+    home, away, match_seed = course.fixture(seed, match_number)
+    match = play_designed_match(home, away, match_seed)
+    ctx = match_context(match, rate_match(course.threat, match))
+    timeline = phase_timeline(match)
+    candidates = find_candidates(ctx, timeline, course.concept_map, course.active)
+    return PreparedMatch(home, away, match_seed, match, ctx, timeline, candidates)
+
+
+def seed_for_viewer(viewer_id: str) -> int:
+    """The session seed a viewer gets unless one is chosen: the same every time for a name."""
+    return zlib.crc32(viewer_id.encode()) % 10_000
+
+
 def start_session(store: LearnerStore, viewer_id: str, seed: int) -> Stored:
     """The viewer's record: read it, or create it with this seed if it is new."""
     stored = store.get(viewer_id)
@@ -142,6 +186,7 @@ def watch_match(
     viewer_id: str,
     viewer: Viewer,
     now: Callable[[], str],
+    prepare: Callable[[int, int], PreparedMatch] | None = None,
 ) -> LearnerState:
     """Watch the viewer's next match, asking questions as the selector decides.
 
@@ -153,6 +198,8 @@ def watch_match(
         viewer_id: Whose session it is.
         viewer: Who answers.
         now: The time of each answer, as ISO 8601.
+        prepare: Gives the prepared match for a session seed and match number; by default
+            `prepare_match`, every time. A server passes a cached one.
 
     Returns:
         The record after the match.
@@ -167,11 +214,12 @@ def watch_match(
         raise ValueError(f"{viewer_id!r} has watched every match")
     state, etag = stored.state, stored.etag
     number = state.match_number
-    home, away, seed = course.fixture(state.seed, number)
-    match = play_designed_match(home, away, seed)
-    ctx = match_context(match, rate_match(course.threat, match))
-    timeline = phase_timeline(match)
-    candidates = find_candidates(ctx, timeline, course.concept_map, course.active)
+    if prepare is None:
+        prepared = prepare_match(course, state.seed, number)
+    else:
+        prepared = prepare(state.seed, number)
+    home, away, seed, match = prepared.home, prepared.away, prepared.seed, prepared.match
+    ctx, timeline, candidates = prepared.ctx, prepared.timeline, prepared.candidates
     model = course.model
     earlier = [a for a in state.attempts if a.match_number < number]
     recorded = [a for a in state.attempts if a.match_number == number]
@@ -215,7 +263,7 @@ def watch_match(
         )
         view = question_view(pack)
         text = fill(course.tutor.question(view).text, question_values(view))
-        answer = viewer.ask(Asked(pack, view, text, match))
+        answer = viewer.ask(Asked(pack, view, text, match, prompt))
         grade = ChoiceGrader().grade(pack, answer)
         attempt = Attempt(
             match_number=number,
@@ -249,6 +297,9 @@ def watch_match(
                 source=feedback.source,
                 update=model.explain(update),
                 mastery=bars(),
+                misconception=None
+                if feedback.misconception is None
+                else fill(feedback.misconception, values),
             )
         )
         return True

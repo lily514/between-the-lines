@@ -1,0 +1,111 @@
+/* Between the Lines — design tokens (Terrace Jacket)
+   Dark is the default. Light applies via [data-theme="light"] or the OS setting.
+   Rule of thumb: --act = anything you can tap/choose or should look at on the pitch.
+                  --know = correct answers and everything about the viewer's understanding.
+   The pitch and everything drawn on it are identical in both themes. */
+
+:root {
+  /* surfaces */
+  --bg: #2B1018;
+  --bg-deep: #220C13;          /* desktop area around the side panel */
+  --surface: #3B1A24;          /* cards, answer tiles, stat tiles */
+  --surface-raised: #4A2430;   /* chips, hover, progress tracks */
+  --selected: #55293A;         /* selected tile fill (+ --act border) */
+  --border: #5E3140;
+  --border-strong: #7A4A58;
+
+  /* text */
+  --text: #F6EDE4;             /* 15.3:1 on --bg */
+  --text-2: #E3D3CB;
+  --text-muted: #C9B3AE;       /* 8.9:1 */
+  --text-faint: #B09590;       /* 6.3:1, timestamps of older notes only */
+
+  /* roles */
+  --act: #9CC8F0;              /* sky blue, 10.0:1 */
+  --act-hover: #C2DDF6;
+  --act-pressed: #7FB1DE;
+  --on-act: #2B1018;
+  --know: #F2CF6E;             /* butter, 11.7:1 */
+  --know-dim: #A88A45;         /* prior part of a progress bar */
+  --know-tint: #4A3A28;        /* correct tile / mastered card fill */
+  --on-know: #2B1018;
+  --incorrect: var(--text-muted); /* never an alarm colour: dashed border + ✕ + "Your pick" */
+  --note: #EFA27A;             /* "Common mix-up" label + ⚠ */
+
+  /* pitch — same in both themes */
+  --pitch: #1E3A30;
+  --pitch-line: rgba(246, 237, 228, 0.22);
+  --home: #F6EDE4;             /* Northbridge: filled disc, number in --home-ink */
+  --home-ink: #2B1018;
+  --away: #EFA27A;             /* Westmere: hollow ring, fill = --pitch */
+  --on-pitch: #9CC8F0;         /* option arrows, A/B/C tags, real ball path, carrier halo */
+  --ball: #FFFFFF;
+  --threat: 246, 237, 228;     /* xT grid: rgba(var(--threat), .02–.38) */
+
+  /* type */
+  --font-display: "Bricolage Grotesque", Georgia, serif;
+  --font-body: "DM Sans", system-ui, sans-serif;
+  --font-data: "JetBrains Mono", ui-monospace, monospace; /* every number from match data */
+
+  --fs-display-xl: 44px;  --lh-display-xl: 1.0;   /* report titles, 700 */
+  --fs-display-l: 26px;   --lh-display-l: 1.12;   /* question prompts, 600 */
+  --fs-display-m: 22px;   --lh-display-m: 1.1;    /* section heads, 700 */
+  --fs-label: 14px;                               /* chips: 700, uppercase, +0.08em */
+  --fs-body-l: 19px;      --lh-body-l: 1.38;      /* captions, explanations, 500 */
+  --fs-body: 17px;        --lh-body: 1.4;
+  --fs-body-s: 15px;
+  --fs-caption: 13px;                             /* minimum anywhere */
+  --fs-data-l: 24px;
+  --fs-data: 15px;
+
+  /* space, radius, size */
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 20px; --s-6: 24px; --s-8: 32px; --s-12: 48px;
+  --gutter: 16px;            /* phone */
+  --gutter-panel: 20px;      /* desktop side panel */
+  --panel-w: 420px;          /* 400–440 */
+  --r-chip: 6px; --r-tile: 12px; --r-btn: 14px; --r-pitch: 16px; --r-pill: 999px;
+  --touch-min: 44px; --tile-h: 112px; --btn-h: 54px;
+
+  /* motion */
+  --t-hover: 120ms;
+  --t-sheet: 240ms;
+  --t-path: 600ms;
+  --ease-out: cubic-bezier(.2, .8, .2, 1);
+}
+
+:root[data-theme="light"] {
+  --bg: #F5EDE0;
+  --bg-deep: #EFE4D4;
+  --surface: #FFFDF9;
+  --surface-raised: #F1E6D8;
+  --selected: #EADBCB;
+  --border: #E3D3C3;
+  --border-strong: #B89F94;
+  --text: #2B1018;            /* 15.2:1 */
+  --text-2: #4A2E35;
+  --text-muted: #6E5058;      /* 6.1:1 */
+  --text-faint: #7E6268;
+  --act: #8C2440;             /* maroon, 7.4:1 */
+  --act-hover: #5E1428;
+  --act-pressed: #6E1A32;
+  --on-act: #FFFFFF;          /* 8.6:1 */
+  --know: #2F5E8C;            /* deep blue, 5.8:1 */
+  --know-dim: #9DB4CC;
+  --know-tint: #E3ECF5;
+  --on-know: #FFFFFF;
+  --note: #9A5B2E;
+  /* butter #F2CF6E may appear in light mode only as a fill or mark, never as text on cream */
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #F5EDE0; --bg-deep: #EFE4D4; --surface: #FFFDF9; --surface-raised: #F1E6D8; --selected: #EADBCB;
+    --border: #E3D3C3; --border-strong: #B89F94; --text: #2B1018; --text-2: #4A2E35; --text-muted: #6E5058;
+    --text-faint: #7E6268; --act: #8C2440; --act-hover: #5E1428; --act-pressed: #6E1A32; --on-act: #FFFFFF;
+    --know: #2F5E8C; --know-dim: #9DB4CC; --know-tint: #E3ECF5; --on-know: #FFFFFF; --note: #9A5B2E;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --t-sheet: 0ms; --t-path: 0ms; }
+}

@@ -1,0 +1,12 @@
+.answer-group {
+	display: grid;
+	gap: var(--s-2);
+}
+
+.answer-group--columns {
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.answer-group--rows {
+	grid-template-columns: minmax(0, 1fr);
+}

@@ -80,7 +80,10 @@ def test_every_feedback_fills_whichever_option_was_picked(seed: int) -> None:
 
             assert "{" not in text
             assert feedback.source == "template"
-            assert ("mix-up" in text) is not grade.correct
+            assert (feedback.misconception is None) is grade.correct
+            assert feedback.misconception is None or feedback.misconception in (
+                pack.concept.misconceptions
+            )
 
 
 def test_the_explanation_follows_the_viewers_level() -> None:
@@ -124,8 +127,8 @@ def test_a_slot_with_nothing_to_fill_it_is_an_error() -> None:
 
 
 def test_the_verdict_is_written_by_code() -> None:
-    assert Grade(True, "A").verdict == "Spot on."
-    assert Grade(False, "B").verdict == "Not quite."
+    assert Grade(True, "A").verdict == "Right read."
+    assert Grade(False, "B").verdict == "Good instinct, not this one."
 
 
 def test_the_grader_checks_the_key_against_the_pack() -> None:

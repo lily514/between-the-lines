@@ -1,0 +1,188 @@
+/* The reveal (S4 Feedback, S4 Mix-up). The path draws first; the verdict and copy fade in after it. With reduced
+   motion there is no drawing and everything crossfades in 120 ms. */
+
+.feedback {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+	padding-bottom: var(--s-5);
+}
+
+.feedback__after-path {
+	animation: feedback-in var(--t-sheet) var(--ease-out) var(--t-path) backwards;
+}
+
+@keyframes feedback-in {
+	from {
+		opacity: 0;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.feedback__after-path {
+		animation: feedback-in var(--t-hover) linear;
+	}
+}
+
+.feedback__bar {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	min-height: var(--touch-min);
+}
+
+.feedback__chip {
+	font-family: var(--font-display);
+	font-size: var(--fs-label);
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--text-2);
+}
+
+.feedback__clock,
+.feedback__source,
+.feedback__number {
+	font-family: var(--font-data);
+}
+
+.feedback__clock {
+	font-size: var(--fs-data);
+	color: var(--text-muted);
+}
+
+.feedback__verdict {
+	display: flex;
+	align-items: center;
+	gap: var(--s-3);
+}
+
+.feedback__verdict-text {
+	font-size: 28px;
+	line-height: 1.05;
+}
+
+.feedback__verdict-text:focus,
+.feedback__verdict-text:focus-visible {
+	/* Focus lands here so screen readers start at the verdict; the heading isn't a control, so no ring. */
+	outline: none;
+}
+
+.feedback__picked {
+	margin: 2px 0 0;
+	font-size: var(--fs-body-s);
+	color: var(--text-muted);
+}
+
+.feedback__copy {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+}
+
+.feedback__copy p {
+	margin: 0;
+}
+
+.feedback__explanation {
+	font-size: 18px;
+	line-height: var(--lh-body-l);
+}
+
+.feedback__mix-up {
+	display: grid;
+	grid-template-columns: 24px 1fr;
+	gap: 10px;
+	padding: var(--s-3) 14px;
+	border-radius: var(--r-tile);
+	background: var(--surface);
+}
+
+.feedback__mix-up-label,
+.feedback__takeaway-label {
+	font-family: var(--font-display);
+	font-size: var(--fs-label);
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.feedback__mix-up-label {
+	color: var(--note);
+}
+
+.feedback .feedback__mix-up-text {
+	margin-top: var(--s-1);
+	font-size: 16px;
+	line-height: var(--lh-body);
+}
+
+.feedback__takeaway {
+	font-size: var(--fs-body-s);
+	color: var(--text-2);
+}
+
+.feedback__takeaway-label {
+	margin-right: var(--s-1);
+	color: var(--know);
+}
+
+.feedback__stats {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: var(--s-2);
+	margin: 0;
+}
+
+.feedback__source {
+	margin-top: calc(-1 * var(--s-1));
+	font-size: var(--fs-caption);
+	color: var(--text-faint);
+}
+
+.feedback__understanding {
+	padding: var(--s-3) 14px;
+	border: 1px solid var(--border);
+	border-radius: var(--r-tile);
+}
+
+.feedback__movement {
+	font-size: 16px;
+}
+
+.feedback__number--now {
+	color: var(--know);
+}
+
+.feedback .feedback__update {
+	margin-top: var(--s-1);
+	font-size: var(--fs-body-s);
+	color: var(--text-muted);
+}
+
+.feedback__continue {
+	height: var(--btn-h);
+	margin-top: var(--s-1);
+	border: 0;
+	border-radius: var(--r-btn);
+	background: var(--act);
+	color: var(--on-act);
+	font-size: var(--fs-body);
+	font-weight: 700;
+	cursor: pointer;
+	transition: background var(--t-hover);
+}
+
+.feedback__continue:hover {
+	background: var(--act-hover);
+}
+
+.feedback__continue:active {
+	background: var(--act-pressed);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.feedback__continue {
+		transition: none;
+	}
+}

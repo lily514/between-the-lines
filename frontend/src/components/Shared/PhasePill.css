@@ -1,0 +1,34 @@
+.phase-pill {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	height: 30px;
+	padding: 0 10px;
+	border: 1px solid var(--border);
+	border-radius: var(--r-pill);
+	background: var(--surface-raised);
+	color: var(--text);
+	font-family: var(--font-display);
+	font-size: var(--fs-label);
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	white-space: nowrap;
+}
+
+.phase-pill--act {
+	border-color: var(--act);
+	background: var(--act);
+	color: var(--on-act);
+}
+
+.phase-pill__icon {
+	width: 13px;
+	height: 13px;
+	flex: none;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2.4;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}

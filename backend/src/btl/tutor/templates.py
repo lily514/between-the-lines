@@ -61,7 +61,8 @@ class TemplateTutor:
     def feedback(self, pack: EvidencePack, grade: Grade) -> TutorFeedback:
         """The concept's explanation at the viewer's level, the comparison, and a misconception.
 
-        The verdict ("Spot on." or "Not quite.") comes from the grade, not from here.
+        The verdict ("Right read." or "Good instinct, not this one.") comes from the grade,
+        not from here.
         """
         sentences = [_explanation(pack)]
         is_pass = pack.asks is Asks.WHERE_TO_PASS
@@ -69,11 +70,11 @@ class TemplateTutor:
             sentences.append(CONFIRM_PASS if is_pass else CORRECT_CHOICE)
         else:
             sentences.append(COMPARE_PASSES if is_pass else CORRECT_CHOICE)
-            sentences.append(f"A common mix-up: “{_misconception(pack)}”")
         return TutorFeedback(
             explanation=" ".join(sentences),
             takeaway=pack.concept.objective,
             source=self.source,
+            misconception=None if grade.correct else _misconception(pack),
         )
 
 

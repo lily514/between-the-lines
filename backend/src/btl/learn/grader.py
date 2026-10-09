@@ -9,7 +9,7 @@ from typing import Literal, Protocol
 
 from btl.learn.evidence import EvidencePack
 
-VERDICTS = {True: "Spot on.", False: "Not quite."}
+VERDICTS = {True: "Right read.", False: "Good instinct, not this one."}
 
 
 @dataclass(frozen=True, slots=True)

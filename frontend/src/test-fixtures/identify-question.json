@@ -1,0 +1,262 @@
+{
+	"kind": "question",
+	"pack_id": "35429b1ad2427e98",
+	"match_number": 1,
+	"home": "Ripon Wardens",
+	"away": "Ludlow Ferrymen",
+	"concept_name": "Line-breaking passes",
+	"form": "identify",
+	"asks": "lines broken",
+	"level": 1,
+	"text": "Play has stopped for a free kick. Back at 05:12: #10 Chinedu Trankwo has just played the ball forward for Ludlow Ferrymen. How many defensive lines did that pass go through?",
+	"occurred": {
+		"period": 1,
+		"seconds": 312.89464155689734,
+		"clock": "05:12",
+		"phase": "transition"
+	},
+	"delivered": {
+		"period": 1,
+		"seconds": 839.3608114444552,
+		"clock": "13:59",
+		"phase": "dead ball",
+		"delivery": "deferred",
+		"restart": "free kick"
+	},
+	"context": {
+		"home_team": {
+			"value": "Ripon Wardens",
+			"display": "Ripon Wardens"
+		},
+		"away_team": {
+			"value": "Ludlow Ferrymen",
+			"display": "Ludlow Ferrymen"
+		},
+		"team": {
+			"value": "Ludlow Ferrymen",
+			"display": "Ludlow Ferrymen"
+		},
+		"opponent": {
+			"value": "Ripon Wardens",
+			"display": "Ripon Wardens"
+		},
+		"score": {
+			"value": "0–0",
+			"display": "0–0"
+		},
+		"minute": {
+			"value": "05:12",
+			"display": "05:12"
+		},
+		"player": {
+			"value": "#10 Chinedu Trankwo",
+			"display": "#10 Chinedu Trankwo"
+		}
+	},
+	"options": [
+		{
+			"key": "A",
+			"label": "One",
+			"neutral": {},
+			"target_at": null
+		},
+		{
+			"key": "B",
+			"label": "Two",
+			"neutral": {},
+			"target_at": null
+		},
+		{
+			"key": "C",
+			"label": "None",
+			"neutral": {},
+			"target_at": null
+		}
+	],
+	"picture": {
+		"action_id": 84,
+		"markers": [
+			{
+				"shirt": 1,
+				"side": "defending",
+				"home": true,
+				"x": 94.3,
+				"y": 34.7,
+				"role": "keeper"
+			},
+			{
+				"shirt": 2,
+				"side": "defending",
+				"home": true,
+				"x": 51.9,
+				"y": 48.1,
+				"role": "player"
+			},
+			{
+				"shirt": 3,
+				"side": "defending",
+				"home": true,
+				"x": 51.0,
+				"y": 38.6,
+				"role": "player"
+			},
+			{
+				"shirt": 4,
+				"side": "defending",
+				"home": true,
+				"x": 49.2,
+				"y": 30.4,
+				"role": "player"
+			},
+			{
+				"shirt": 5,
+				"side": "defending",
+				"home": true,
+				"x": 48.3,
+				"y": 15.5,
+				"role": "player"
+			},
+			{
+				"shirt": 8,
+				"side": "defending",
+				"home": true,
+				"x": 38.0,
+				"y": 48.8,
+				"role": "player"
+			},
+			{
+				"shirt": 10,
+				"side": "defending",
+				"home": true,
+				"x": 37.1,
+				"y": 39.5,
+				"role": "player"
+			},
+			{
+				"shirt": 14,
+				"side": "defending",
+				"home": true,
+				"x": 32.8,
+				"y": 25.1,
+				"role": "player"
+			},
+			{
+				"shirt": 16,
+				"side": "defending",
+				"home": true,
+				"x": 35.9,
+				"y": 16.8,
+				"role": "player"
+			},
+			{
+				"shirt": 7,
+				"side": "defending",
+				"home": true,
+				"x": 23.7,
+				"y": 41.0,
+				"role": "player"
+			},
+			{
+				"shirt": 9,
+				"side": "defending",
+				"home": true,
+				"x": 20.7,
+				"y": 22.7,
+				"role": "player"
+			},
+			{
+				"shirt": 1,
+				"side": "attacking",
+				"home": false,
+				"x": 2.7,
+				"y": 34.5,
+				"role": "keeper"
+			},
+			{
+				"shirt": 2,
+				"side": "attacking",
+				"home": false,
+				"x": 11.6,
+				"y": 12.2,
+				"role": "player"
+			},
+			{
+				"shirt": 3,
+				"side": "attacking",
+				"home": false,
+				"x": 9.1,
+				"y": 28.1,
+				"role": "player"
+			},
+			{
+				"shirt": 4,
+				"side": "attacking",
+				"home": false,
+				"x": 10.8,
+				"y": 43.6,
+				"role": "player"
+			},
+			{
+				"shirt": 5,
+				"side": "attacking",
+				"home": false,
+				"x": 11.1,
+				"y": 52.1,
+				"role": "player"
+			},
+			{
+				"shirt": 8,
+				"side": "attacking",
+				"home": false,
+				"x": 30.3,
+				"y": 10.7,
+				"role": "player"
+			},
+			{
+				"shirt": 10,
+				"side": "attacking",
+				"home": false,
+				"x": 21.8,
+				"y": 31.5,
+				"role": "on the ball"
+			},
+			{
+				"shirt": 14,
+				"side": "attacking",
+				"home": false,
+				"x": 29.0,
+				"y": 44.0,
+				"role": "player"
+			},
+			{
+				"shirt": 16,
+				"side": "attacking",
+				"home": false,
+				"x": 31.2,
+				"y": 57.0,
+				"role": "player"
+			},
+			{
+				"shirt": 7,
+				"side": "attacking",
+				"home": false,
+				"x": 52.2,
+				"y": 18.3,
+				"role": "player"
+			},
+			{
+				"shirt": 9,
+				"side": "attacking",
+				"home": false,
+				"x": 48.3,
+				"y": 47.2,
+				"role": "player"
+			}
+		],
+		"ball": [21.8, 31.5],
+		"path": [
+			[21.8, 31.5],
+			[45.9, 33.7]
+		]
+	}
+}

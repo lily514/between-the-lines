@@ -1,0 +1,1068 @@
+{
+  "components": {
+    "schemas": {
+      "AnswerIn": {
+        "description": "An answer to the pending question, which ``pack_id`` names.",
+        "properties": {
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "pack_id": {
+            "title": "Pack Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "pack_id",
+          "key"
+        ],
+        "title": "AnswerIn",
+        "type": "object"
+      },
+      "Bar": {
+        "description": "One concept's mastery, from 0 to 1.",
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "name",
+          "value"
+        ],
+        "title": "Bar",
+        "type": "object"
+      },
+      "DeliveredTime": {
+        "description": "When a question is asked: live, or deferred to a stoppage or break (``restart`` names it).",
+        "properties": {
+          "clock": {
+            "title": "Clock",
+            "type": "string"
+          },
+          "delivery": {
+            "enum": [
+              "live",
+              "deferred"
+            ],
+            "title": "Delivery",
+            "type": "string"
+          },
+          "period": {
+            "title": "Period",
+            "type": "integer"
+          },
+          "phase": {
+            "title": "Phase",
+            "type": "string"
+          },
+          "restart": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Restart"
+          },
+          "seconds": {
+            "title": "Seconds",
+            "type": "number"
+          }
+        },
+        "required": [
+          "period",
+          "seconds",
+          "clock",
+          "phase",
+          "delivery",
+          "restart"
+        ],
+        "title": "DeliveredTime",
+        "type": "object"
+      },
+      "FactOut": {
+        "description": "A fact: its value, and the text to show for it (number only, as the engine formats it).",
+        "properties": {
+          "display": {
+            "title": "Display",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "value",
+          "display"
+        ],
+        "title": "FactOut",
+        "type": "object"
+      },
+      "FeedbackOption": {
+        "description": "An option after answering: whether it was right or picked, and every fact about it.",
+        "properties": {
+          "chosen": {
+            "title": "Chosen",
+            "type": "boolean"
+          },
+          "correct": {
+            "title": "Correct",
+            "type": "boolean"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "neutral": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/FactOut"
+            },
+            "title": "Neutral",
+            "type": "object"
+          },
+          "outcome": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/FactOut"
+            },
+            "title": "Outcome",
+            "type": "object"
+          },
+          "target_at": {
+            "anyOf": [
+              {
+                "maxItems": 2,
+                "minItems": 2,
+                "prefixItems": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ],
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target At"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "correct",
+          "chosen",
+          "neutral",
+          "outcome",
+          "target_at"
+        ],
+        "title": "FeedbackOption",
+        "type": "object"
+      },
+      "FeedbackOut": {
+        "description": "What the viewer is told after answering, with the whole evidence behind it.",
+        "properties": {
+          "action_id": {
+            "title": "Action Id",
+            "type": "integer"
+          },
+          "chosen": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chosen"
+          },
+          "concept_name": {
+            "title": "Concept Name",
+            "type": "string"
+          },
+          "concepts": {
+            "items": {
+              "$ref": "#/components/schemas/Movement"
+            },
+            "title": "Concepts",
+            "type": "array"
+          },
+          "context": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/FactOut"
+            },
+            "title": "Context",
+            "type": "object"
+          },
+          "correct": {
+            "title": "Correct",
+            "type": "boolean"
+          },
+          "correct_key": {
+            "title": "Correct Key",
+            "type": "string"
+          },
+          "explanation": {
+            "title": "Explanation",
+            "type": "string"
+          },
+          "level": {
+            "title": "Level",
+            "type": "integer"
+          },
+          "match_number": {
+            "title": "Match Number",
+            "type": "integer"
+          },
+          "match_seed": {
+            "title": "Match Seed",
+            "type": "integer"
+          },
+          "misconception": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Misconception"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/FeedbackOption"
+            },
+            "title": "Options",
+            "type": "array"
+          },
+          "outcome": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/FactOut"
+            },
+            "title": "Outcome",
+            "type": "object"
+          },
+          "pack_id": {
+            "title": "Pack Id",
+            "type": "string"
+          },
+          "picture": {
+            "$ref": "#/components/schemas/PictureOut"
+          },
+          "reveal_path": {
+            "items": {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            "title": "Reveal Path",
+            "type": "array"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "takeaway": {
+            "title": "Takeaway",
+            "type": "string"
+          },
+          "thresholds": {
+            "$ref": "#/components/schemas/ThresholdsOut"
+          },
+          "update": {
+            "title": "Update",
+            "type": "string"
+          },
+          "verdict": {
+            "title": "Verdict",
+            "type": "string"
+          }
+        },
+        "required": [
+          "pack_id",
+          "correct",
+          "chosen",
+          "correct_key",
+          "verdict",
+          "explanation",
+          "takeaway",
+          "misconception",
+          "source",
+          "update",
+          "concept_name",
+          "level",
+          "match_number",
+          "action_id",
+          "match_seed",
+          "context",
+          "outcome",
+          "options",
+          "picture",
+          "reveal_path",
+          "concepts",
+          "thresholds"
+        ],
+        "title": "FeedbackOut",
+        "type": "object"
+      },
+      "Fixture": {
+        "description": "The two clubs of a match.",
+        "properties": {
+          "away": {
+            "title": "Away",
+            "type": "string"
+          },
+          "home": {
+            "title": "Home",
+            "type": "string"
+          }
+        },
+        "required": [
+          "home",
+          "away"
+        ],
+        "title": "Fixture",
+        "type": "object"
+      },
+      "FullTimeOut": {
+        "description": "The match just finished: the score, how many questions, and how each concept moved.",
+        "properties": {
+          "away": {
+            "title": "Away",
+            "type": "string"
+          },
+          "away_goals": {
+            "title": "Away Goals",
+            "type": "integer"
+          },
+          "concepts": {
+            "items": {
+              "$ref": "#/components/schemas/Movement"
+            },
+            "title": "Concepts",
+            "type": "array"
+          },
+          "finished": {
+            "title": "Finished",
+            "type": "boolean"
+          },
+          "home": {
+            "title": "Home",
+            "type": "string"
+          },
+          "home_goals": {
+            "title": "Home Goals",
+            "type": "integer"
+          },
+          "kind": {
+            "const": "full_time",
+            "default": "full_time",
+            "title": "Kind",
+            "type": "string"
+          },
+          "match_number": {
+            "title": "Match Number",
+            "type": "integer"
+          },
+          "next_match": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Match"
+          },
+          "questions": {
+            "title": "Questions",
+            "type": "integer"
+          },
+          "thresholds": {
+            "$ref": "#/components/schemas/ThresholdsOut"
+          }
+        },
+        "required": [
+          "match_number",
+          "home",
+          "away",
+          "home_goals",
+          "away_goals",
+          "questions",
+          "concepts",
+          "thresholds",
+          "finished",
+          "next_match"
+        ],
+        "title": "FullTimeOut",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "MarkerOut": {
+        "description": "A player on the picture, with the team on the ball attacking left to right.",
+        "properties": {
+          "home": {
+            "title": "Home",
+            "type": "boolean"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          },
+          "shirt": {
+            "title": "Shirt",
+            "type": "integer"
+          },
+          "side": {
+            "enum": [
+              "attacking",
+              "defending"
+            ],
+            "title": "Side",
+            "type": "string"
+          },
+          "x": {
+            "title": "X",
+            "type": "number"
+          },
+          "y": {
+            "title": "Y",
+            "type": "number"
+          }
+        },
+        "required": [
+          "shirt",
+          "side",
+          "home",
+          "x",
+          "y",
+          "role"
+        ],
+        "title": "MarkerOut",
+        "type": "object"
+      },
+      "MomentTime": {
+        "description": "A point in the match: period, seconds into it, the match clock and the phase of play.",
+        "properties": {
+          "clock": {
+            "title": "Clock",
+            "type": "string"
+          },
+          "period": {
+            "title": "Period",
+            "type": "integer"
+          },
+          "phase": {
+            "title": "Phase",
+            "type": "string"
+          },
+          "seconds": {
+            "title": "Seconds",
+            "type": "number"
+          }
+        },
+        "required": [
+          "period",
+          "seconds",
+          "clock",
+          "phase"
+        ],
+        "title": "MomentTime",
+        "type": "object"
+      },
+      "Movement": {
+        "description": "How one concept's mastery moved: before and after, from 0 to 1.",
+        "properties": {
+          "after": {
+            "title": "After",
+            "type": "number"
+          },
+          "before": {
+            "title": "Before",
+            "type": "number"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "before",
+          "after"
+        ],
+        "title": "Movement",
+        "type": "object"
+      },
+      "OptionOut": {
+        "description": "An answer option as a question shows it. ``target_at`` is where a pass would go.",
+        "properties": {
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "neutral": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/FactOut"
+            },
+            "title": "Neutral",
+            "type": "object"
+          },
+          "target_at": {
+            "anyOf": [
+              {
+                "maxItems": 2,
+                "minItems": 2,
+                "prefixItems": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ],
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target At"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "neutral",
+          "target_at"
+        ],
+        "title": "OptionOut",
+        "type": "object"
+      },
+      "PictureOut": {
+        "description": "The players and the ball at the moment, and the play's path when the form shows it.",
+        "properties": {
+          "action_id": {
+            "title": "Action Id",
+            "type": "integer"
+          },
+          "ball": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "title": "Ball",
+            "type": "array"
+          },
+          "markers": {
+            "items": {
+              "$ref": "#/components/schemas/MarkerOut"
+            },
+            "title": "Markers",
+            "type": "array"
+          },
+          "path": {
+            "items": {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            "title": "Path",
+            "type": "array"
+          }
+        },
+        "required": [
+          "action_id",
+          "markers",
+          "ball",
+          "path"
+        ],
+        "title": "PictureOut",
+        "type": "object"
+      },
+      "QuestionOut": {
+        "description": "The next question, built from its question view only.",
+        "properties": {
+          "asks": {
+            "title": "Asks",
+            "type": "string"
+          },
+          "away": {
+            "title": "Away",
+            "type": "string"
+          },
+          "concept_name": {
+            "title": "Concept Name",
+            "type": "string"
+          },
+          "context": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/FactOut"
+            },
+            "title": "Context",
+            "type": "object"
+          },
+          "delivered": {
+            "$ref": "#/components/schemas/DeliveredTime"
+          },
+          "form": {
+            "enum": [
+              "identify",
+              "predict"
+            ],
+            "title": "Form",
+            "type": "string"
+          },
+          "home": {
+            "title": "Home",
+            "type": "string"
+          },
+          "kind": {
+            "const": "question",
+            "default": "question",
+            "title": "Kind",
+            "type": "string"
+          },
+          "level": {
+            "title": "Level",
+            "type": "integer"
+          },
+          "match_number": {
+            "title": "Match Number",
+            "type": "integer"
+          },
+          "occurred": {
+            "$ref": "#/components/schemas/MomentTime"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/OptionOut"
+            },
+            "title": "Options",
+            "type": "array"
+          },
+          "pack_id": {
+            "title": "Pack Id",
+            "type": "string"
+          },
+          "picture": {
+            "$ref": "#/components/schemas/PictureOut"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "pack_id",
+          "match_number",
+          "home",
+          "away",
+          "concept_name",
+          "form",
+          "asks",
+          "level",
+          "text",
+          "occurred",
+          "delivered",
+          "context",
+          "options",
+          "picture"
+        ],
+        "title": "QuestionOut",
+        "type": "object"
+      },
+      "StartIn": {
+        "description": "Start watching, or carry on. Without a seed, the viewer's name chooses their matches.",
+        "properties": {
+          "seed": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seed"
+          },
+          "viewer_id": {
+            "title": "Viewer Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "viewer_id"
+        ],
+        "title": "StartIn",
+        "type": "object"
+      },
+      "StatusOut": {
+        "description": "Where a viewer stands: which match is next, and their mastery of each concept.",
+        "properties": {
+          "concepts": {
+            "items": {
+              "$ref": "#/components/schemas/Bar"
+            },
+            "title": "Concepts",
+            "type": "array"
+          },
+          "finished": {
+            "title": "Finished",
+            "type": "boolean"
+          },
+          "fixture": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Fixture"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "match_number": {
+            "title": "Match Number",
+            "type": "integer"
+          },
+          "matches": {
+            "title": "Matches",
+            "type": "integer"
+          },
+          "thresholds": {
+            "$ref": "#/components/schemas/ThresholdsOut"
+          },
+          "viewer_id": {
+            "title": "Viewer Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "viewer_id",
+          "match_number",
+          "matches",
+          "finished",
+          "fixture",
+          "concepts",
+          "thresholds"
+        ],
+        "title": "StatusOut",
+        "type": "object"
+      },
+      "ThresholdsOut": {
+        "description": "When a concept unlocks the ones that need it, and when it counts as mastered.",
+        "properties": {
+          "mastery": {
+            "title": "Mastery",
+            "type": "number"
+          },
+          "unlock": {
+            "title": "Unlock",
+            "type": "number"
+          }
+        },
+        "required": [
+          "unlock",
+          "mastery"
+        ],
+        "title": "ThresholdsOut",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "Between the Lines",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/viewers": {
+      "post": {
+        "description": "Start watching, or carry on where the viewer stopped.",
+        "operationId": "start_api_viewers_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Start"
+      }
+    },
+    "/api/viewers/{viewer_id}": {
+      "get": {
+        "description": "Where a viewer stands.",
+        "operationId": "get_status_api_viewers__viewer_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "viewer_id",
+            "required": true,
+            "schema": {
+              "title": "Viewer Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Status"
+      }
+    },
+    "/api/viewers/{viewer_id}/answers": {
+      "post": {
+        "description": "Answer the waiting question and hear the feedback.",
+        "operationId": "answer_api_viewers__viewer_id__answers_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "viewer_id",
+            "required": true,
+            "schema": {
+              "title": "Viewer Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnswerIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedbackOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Answer"
+      }
+    },
+    "/api/viewers/{viewer_id}/next": {
+      "post": {
+        "description": "The question waiting to be answered, or full time if the match has no more.",
+        "operationId": "next_step_api_viewers__viewer_id__next_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "viewer_id",
+            "required": true,
+            "schema": {
+              "title": "Viewer Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "discriminator": {
+                    "mapping": {
+                      "full_time": "#/components/schemas/FullTimeOut",
+                      "question": "#/components/schemas/QuestionOut"
+                    },
+                    "propertyName": "kind"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/QuestionOut"
+                    },
+                    {
+                      "$ref": "#/components/schemas/FullTimeOut"
+                    }
+                  ],
+                  "title": "Response Next Step Api Viewers  Viewer Id  Next Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Next Step"
+      }
+    }
+  }
+}

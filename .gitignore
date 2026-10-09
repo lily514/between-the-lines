@@ -18,3 +18,8 @@ backend/runs/
 !.vscode/settings.json
 !.vscode/extensions.json
 .idea/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/coverage/

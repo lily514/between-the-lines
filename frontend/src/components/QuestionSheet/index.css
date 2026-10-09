@@ -1,0 +1,86 @@
+/* The question sheet (S2 Predict, S3 Review). It slides up; with reduced motion it only fades. */
+
+.question-sheet {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+	padding-bottom: var(--s-5);
+	animation: question-sheet-in var(--t-sheet) var(--ease-out);
+}
+
+@keyframes question-sheet-in {
+	from {
+		opacity: 0;
+		transform: translateY(32px);
+	}
+}
+
+@keyframes question-sheet-fade {
+	from {
+		opacity: 0;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.question-sheet {
+		animation: question-sheet-fade var(--t-hover) linear;
+	}
+}
+
+.question-sheet__bar {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	min-height: 44px;
+}
+
+.question-sheet__clock,
+.question-sheet__time {
+	font-family: var(--font-data);
+	font-size: var(--fs-data);
+	color: var(--text-2);
+}
+
+.question-sheet__time {
+	color: var(--text);
+}
+
+.question-sheet__earlier {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	margin: 0;
+	font-size: var(--fs-body-s);
+	color: var(--text-muted);
+}
+
+.question-sheet__icon {
+	width: 16px;
+	height: 16px;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2;
+	stroke-linecap: round;
+}
+
+.question-sheet__question {
+	font-size: var(--fs-display-l);
+	line-height: var(--lh-display-l);
+	font-weight: 600;
+}
+
+.question-sheet__question:focus,
+.question-sheet__question:focus-visible {
+	/* Focus lands here so screen readers start at the question; the heading isn't a control, so no ring. */
+	outline: none;
+}
+
+.question-sheet__note {
+	margin: calc(-1 * var(--s-1)) 0 0;
+	font-size: var(--fs-caption);
+	color: var(--text-muted);
+}
+
+.question-sheet__actions {
+	margin-top: var(--s-1);
+}

@@ -1,0 +1,151 @@
+/* Answer tiles (Components: "Answer button"). Every state has an icon or a word as well as a colour. */
+
+.answer-tile {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: var(--s-1);
+	min-height: var(--touch-min);
+	padding: 10px;
+	border: 1px solid var(--border);
+	border-radius: var(--r-btn);
+	background: var(--surface);
+	color: var(--text);
+	text-align: left;
+	cursor: pointer;
+	transition:
+		background var(--t-hover),
+		border-color var(--t-hover);
+}
+
+.answer-tile--columns {
+	height: var(--tile-h);
+}
+
+/* Long labels ("Pass to #14 Niels Rosinga") get a full-width row: letter on the left, label beside it. */
+.answer-tile--rows {
+	flex-direction: row;
+	align-items: center;
+	justify-content: flex-start;
+	gap: var(--s-3);
+	min-height: 64px;
+	padding: var(--s-2) var(--s-3);
+}
+
+.answer-tile:hover:not([aria-disabled='true']) {
+	background: var(--surface-raised);
+	border-color: var(--border-strong);
+}
+
+.answer-tile__key {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-family: var(--font-display);
+	font-size: 34px;
+	font-weight: 700;
+	line-height: 1;
+}
+
+.answer-tile--rows .answer-tile__key {
+	min-width: 1.4em;
+}
+
+.answer-tile__label {
+	font-size: var(--fs-body-s);
+	font-weight: 600;
+	line-height: 1.2;
+}
+
+.answer-tile--rows .answer-tile__label {
+	font-size: var(--fs-body);
+}
+
+.answer-tile__word {
+	font-size: var(--fs-caption);
+	font-weight: 700;
+	white-space: nowrap;
+}
+
+.answer-tile__icon {
+	width: 20px;
+	height: 20px;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 3;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+
+.answer-tile__dot {
+	position: absolute;
+	top: 10px;
+	right: 10px;
+	width: 18px;
+	height: 18px;
+	fill: none;
+	stroke: var(--act);
+	stroke-width: 2.4;
+}
+
+.answer-tile__dot-fill {
+	fill: var(--act);
+	stroke: none;
+}
+
+.answer-tile--selected {
+	border: 2px solid var(--act);
+	background: var(--selected);
+	padding: 9px;
+}
+
+.answer-tile--rows.answer-tile--selected {
+	padding: 7px 11px;
+}
+
+.answer-tile--correct {
+	border: 2px solid var(--know);
+	background: var(--know-tint);
+	padding: 9px;
+	cursor: default;
+}
+
+.answer-tile--correct .answer-tile__icon,
+.answer-tile--correct .answer-tile__word {
+	color: var(--know);
+}
+
+.answer-tile--incorrect {
+	border: 2px dashed var(--incorrect);
+	padding: 9px;
+	cursor: default;
+}
+
+.answer-tile--incorrect .answer-tile__icon,
+.answer-tile--incorrect .answer-tile__word {
+	color: var(--incorrect);
+}
+
+.answer-tile--rows.answer-tile--correct,
+.answer-tile--rows.answer-tile--incorrect {
+	padding: 7px 11px;
+}
+
+.answer-tile--missed {
+	border-color: var(--selected);
+	background: transparent;
+	color: var(--text-faint);
+	cursor: default;
+}
+
+.answer-tile[aria-disabled='true'] {
+	cursor: default;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.answer-tile {
+		transition: none;
+	}
+}

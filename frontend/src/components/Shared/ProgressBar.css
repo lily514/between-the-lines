@@ -1,0 +1,56 @@
+/* A concept's progress bar (Components: progress bar): prior part, gain, and the unlock and mastery ticks. */
+
+.progress-bar__track {
+	position: relative;
+	display: flex;
+	height: 6px;
+	margin: 8px 0;
+	border-radius: var(--r-pill);
+	background: var(--surface-raised);
+}
+
+.progress-bar__kept {
+	border-radius: var(--r-pill) 0 0 var(--r-pill);
+	background: var(--know-dim);
+}
+
+.progress-bar__gained {
+	background: var(--know);
+}
+
+.progress-bar__lost {
+	/* What this answer cost: outlined rather than filled, so a fall reads as a fall. */
+	border: 1px dashed var(--know-dim);
+}
+
+.progress-bar__tick {
+	position: absolute;
+	top: -5px;
+	bottom: -5px;
+	border-left: 1.5px solid var(--text-muted);
+}
+
+.progress-bar__tick--mastery {
+	border-left-style: dashed;
+}
+
+.progress-bar__legend {
+	display: flex;
+	justify-content: flex-end;
+	gap: 14px;
+	margin: 0;
+	font-size: var(--fs-caption);
+	color: var(--text-muted);
+}
+
+.progress-bar__key {
+	display: inline-block;
+	height: 11px;
+	margin-right: 4px;
+	vertical-align: -1px;
+	border-left: 1.5px solid var(--text-muted);
+}
+
+.progress-bar__key--mastery {
+	border-left-style: dashed;
+}

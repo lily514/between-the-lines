@@ -157,3 +157,47 @@ Where implementation diverged from [plan.md](plan.md), or something surprising w
 - **The fixtures** were recaptured: feedback now has `misconception`, and the counter-press fixtures have the corrected path.
 - **T4's crop test** for a play from one end to the other used the counter-press fixture's mirrored path. It now uses a made-up end-to-end path, so it still checks that both goal lines show.
 - **2b:** a model's feedback fills `misconception` separately.
+
+## T7 — The loop in the browser (2026-10-09)
+**Plan said:** Welcome → MatchStep → question → feedback → … → FullTime → next match, against the real API; resuming after a reload; the desktop side panel; an accessibility and reduced-motion pass; Lily plays one match by hand in both themes, at a phone width and on desktop.
+**We did:** as planned, with these choices:
+- **The flow is a reducer** (`App.support.ts`), tested on its own. `App.tsx` makes the requests and dispatches what comes back.
+  - **Screens:** welcome, loading, step, question, feedback, full time and error.
+  - **The step remembers where the last question was asked,** so it can say "The match moves on from 13:59 to 23:55". A new match starts again from kick-off.
+- **`Welcome`** asks for a name and lower-cases it as it is typed. It leaves the rule itself to the API: a refused name shows FastAPI's own message beside the field, with the name kept. Once the record is found, it shows "Match 1 of 3: Home v Away", each concept's bar, and "Watch match 1".
+- **Coming back.** The name is remembered in `localStorage` (`btl.viewer`, every access guarded). On load, a remembered viewer goes straight to `/next`, so a reload returns to the waiting question. "Not lily?" in the header forgets the name. If the server no longer has the record (404), the page forgets it and asks for a name.
+- **`MatchStep`** takes a span of match time (`from` clock → `to`, the question's `delivered`) plus the clubs and `onArrive`, not a question, so a playback component can take its place later.
+  - It shows Match N, the clubs and the clock, then the phase pill and a heading such as "Play has stopped for a free kick at 23:55" or "Settled possession at 03:35".
+  - Then why the question comes now ("A question about the play at 11:42, saved until play stopped").
+  - Then "See the question", or "Make your read" for a live question.
+
+  Every phrase is built from payload fields. The score shows only for a live question, as in T5.
+- **`FullTime`** shows the score, the number of questions, and each concept from kick-off to now as a bar. "On to match N" takes the viewer to the next match's first question, since `/next` has already moved them on (T2). After the last match, "See where you stand" shows the finished status.
+- **Errors.** A 409 on an answer fetches `/next` again, without asking the viewer. Any other failure shows `ErrorPanel` with the reason and "Try again", which repeats exactly the request that failed: start, next, status or the answer.
+- **The desktop side panel.** From 900 px, the companion is a 420 px (`--panel-w`) panel on the right, scrolling on its own. Beside it, on `--bg-deep`, a dashed area stands for the viewer's stream, with the match and clock above it, as in `D-Live`. That area is `aria-hidden`, because the panel says everything in it. The question screen shows the keys (1 2 3, Enter) at desktop width only.
+- **Shared styles** in `base.css`: `.primary-button`, `.text-button`, `.visually-hidden`, and `.screen-heading`, which lets a heading take focus without a ring.
+- **Accessibility:**
+  - Each screen's heading takes focus when it opens.
+  - Loading is a `role="status"` region; an error is `role="alert"`.
+  - The panel is the page's `main` landmark, under the `h1` brand.
+  - The step's entrance slides 8 px over 240 ms, or crossfades in 120 ms with reduced motion.
+- **Tests:**
+  - the reducer;
+  - each new screen;
+  - an App test against a fake server: name → question by keyboard → feedback → full time, plus resuming, a 409, a refused name, a failure and retry, a missing record, and changing name.
+
+  jsdom has no media queries, so the side panel's layout was checked in the browser rather than in a test.
+
+**End to end** (`btl serve` with a temporary learners folder, Chrome driven by puppeteer-core from outside the repo, by keyboard only):
+- One whole match: five questions answered, all review questions at dead balls; the last was asked at full time.
+- A reload before the second question came back to the same question.
+- No question response held `correct`, `correct_key`, `outcome`, `reveal_path`, `explanation` or `chosen`, and no console errors.
+- A live question (viewer seed 2, at 03:35) went through the same steps with "Make your read".
+- Screenshots of every screen at 390 px and 1440 px in both themes led to one fix: the clock on the step no longer wraps under a long fixture.
+- The test learner records were deleted.
+
+**Why:** the plan left these details open.
+**Affects:**
+- **Lily's hand check** (one match by hand in both themes, at a phone width and on desktop) is still to do.
+- **T8:** the README's "Try the web page" section can use `npm run build` then `uv run btl serve`, and screenshots like these.
+- **Later playback:** `MatchPlayback` takes `MatchStep`'s props.

@@ -49,9 +49,67 @@ a:hover {
 	outline-offset: 2px;
 }
 
-.app {
-	padding: var(--gutter);
-}
-
 /* Reduced motion is handled per component: sliding and path drawing become a 120 ms crossfade
    (HANDOFF §4), which a blanket override here would also remove. */
+
+/* The page's main action on each screen (54 px, filled with the action colour). */
+.primary-button {
+	width: 100%;
+	height: var(--btn-h);
+	border: 0;
+	border-radius: var(--r-btn);
+	background: var(--act);
+	color: var(--on-act);
+	font-size: var(--fs-body);
+	font-weight: 700;
+	cursor: pointer;
+	transition: background var(--t-hover);
+}
+
+.primary-button:hover {
+	background: var(--act-hover);
+}
+
+.primary-button:active {
+	background: var(--act-pressed);
+}
+
+/* A quieter action beside the main one, such as changing the viewer's name. */
+.text-button {
+	min-height: var(--touch-min);
+	padding: 0 var(--s-2);
+	border: 0;
+	background: transparent;
+	color: var(--act);
+	font-size: var(--fs-body-s);
+	font-weight: 600;
+	text-decoration: underline;
+	text-underline-offset: 3px;
+	cursor: pointer;
+}
+
+.text-button:hover {
+	color: var(--act-hover);
+}
+
+/* A label for screen readers only. */
+.visually-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+/* Screen headings take focus when a screen opens, so screen readers start there; they aren't controls, so no ring. */
+.screen-heading:focus,
+.screen-heading:focus-visible {
+	outline: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.primary-button {
+		transition: none;
+	}
+}

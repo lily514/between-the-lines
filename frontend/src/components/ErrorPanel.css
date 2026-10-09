@@ -1,0 +1,15 @@
+.error-panel {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+}
+
+.error-panel__heading {
+	font-size: var(--fs-display-m);
+	line-height: var(--lh-display-m);
+}
+
+.error-panel__message {
+	margin: 0;
+	color: var(--text-2);
+}

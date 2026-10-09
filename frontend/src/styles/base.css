@@ -1,0 +1,57 @@
+/* Page-wide defaults. Colours, type and motion come from tokens.css only. */
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html {
+	color-scheme: dark light;
+	-webkit-text-size-adjust: 100%;
+}
+
+body {
+	margin: 0;
+	min-height: 100dvh;
+	background: var(--bg);
+	color: var(--text);
+	font-family: var(--font-body);
+	font-size: var(--fs-body);
+	line-height: var(--lh-body);
+}
+
+h1,
+h2,
+h3 {
+	font-family: var(--font-display);
+	font-weight: 700;
+	margin: 0;
+}
+
+button,
+input,
+select {
+	font: inherit;
+	color: inherit;
+}
+
+a {
+	color: var(--act);
+}
+
+a:hover {
+	color: var(--act-hover);
+}
+
+:focus-visible {
+	outline: 3px solid var(--act);
+	outline-offset: 2px;
+}
+
+.app {
+	padding: var(--gutter);
+}
+
+/* Reduced motion is handled per component: sliding and path drawing become a 120 ms crossfade
+   (HANDOFF §4), which a blanket override here would also remove. */

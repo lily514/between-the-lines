@@ -69,3 +69,24 @@ Where implementation diverged from [plan.md](plan.md), or something surprising w
 - **T3:** `uv run btl openapi --out ../frontend/src/api/openapi.json` gives the schema for the generated types. `btl serve` listens on port 8000, so the Vite dev server proxies `/api` there.
 - **T5–T7:** build against the shapes above. Show `delivered.restart` and `delivered.phase` for why it's asking now, and `occurred.clock` for when the play happened.
 - **2b:** an answer request words only the feedback, and `/next` only the question.
+
+## T3 — Frontend scaffold (2026-10-08)
+**Plan said:** Vite + React + strict TypeScript on Node 24, formatted like `../Web`, ESLint with typescript-eslint, react-hooks and react-refresh; Vitest + Testing Library; `tokens.css` as delivered, with no colour literals in component CSS; generated API types with an up-to-date check; the Vite proxy; a CI job; `docs/setup.md`.
+**We did:** as planned, with these choices:
+- **Versions** (exact, so the lockfile and `package.json` agree): React 19.3, Vite 8.3, Vitest 5.0, ESLint 10.12 with typescript-eslint 8.71, Prettier 3.9, openapi-typescript 7.13, jsdom 30.
+- **TypeScript 5.9.3, not the latest 7.0.** typescript-eslint supports TypeScript below 6.1, and openapi-typescript needs 5.x. Moving up waits for both.
+- **Strictness** beyond `strict`: `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `verbatimModuleSyntax`, unused locals and parameters. ESLint uses typescript-eslint's `strictTypeChecked` and `stylisticTypeChecked` rule sets.
+- **Formatting** copies `../Web`'s `.prettierrc` and `.editorconfig`: tabs, no semicolons, single quotes, no trailing commas, 120 wide. `npm run lint` runs ESLint, `prettier --check` and the colour check.
+- **The colour check** (`scripts/check-css-colours.mjs`) scans every `.css` file under `src/` except `styles/tokens.css` for hex colours and `rgb()`/`hsl()` calls, and fails with each file and line.
+- **API types, two checks:**
+  - a backend test runs `btl openapi` and compares it with the committed `frontend/src/api/openapi.json`;
+  - a frontend test runs openapi-typescript on that file and compares the result with the committed `src/api/schema.d.ts`.
+
+  Each failure says which command to run.
+- **`src/api/client.ts`** has one function per endpoint (`startViewer`, `getStatus`, `nextStep`, `answer`), typed from the generated schema. A failed request throws `ApiError` with the HTTP status, so the page can tell a stale question (409) from a bad name (422). FastAPI's error text becomes the message.
+- **Reduced motion is left to each component.** A page-wide rule shortening every transition would also remove the 120 ms crossfade the handoff keeps for reduced motion.
+- **Light theme:** `tokens.css` already follows the OS setting, and `color-scheme: dark light` lets form controls follow it too.
+
+**Why:** the plan left these details open; the TypeScript version is what the lint and type tools support today.
+**Affects:**
+- **T4–T7** import types from `src/api/client.ts` (`Question`, `Feedback`, `FullTime`, `Status`). Component CSS uses `var(--…)` only, and handles reduced motion itself. The placeholder `App.tsx` is replaced in T7.

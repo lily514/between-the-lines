@@ -1,0 +1,17 @@
+{
+	"trailingComma": "none",
+	"semi": false,
+	"singleQuote": true,
+	"bracketSameLine": true,
+	"arrowParens": "avoid",
+	"endOfLine": "auto",
+	"overrides": [
+		{
+			"files": "*.yml",
+			"options": {
+				"useTabs": false,
+				"tabWidth": 2
+			}
+		}
+	]
+}

@@ -30,6 +30,19 @@ def test_openapi_writes_the_schema_the_page_s_types_are_made_from(tmp_path: Path
     assert {"QuestionOut", "FullTimeOut", "FeedbackOut"} <= set(schema["components"]["schemas"])
 
 
+def test_the_page_s_committed_schema_matches_the_api() -> None:
+    committed = Path(__file__).parents[3] / "frontend" / "src" / "api" / "openapi.json"
+
+    result = runner.invoke(app, ["openapi"], env=WIDE)
+
+    assert result.exit_code == 0, result.output
+    assert result.output == committed.read_text(), (
+        "frontend/src/api/openapi.json is out of date. From backend/ run "
+        "`uv run btl openapi --out ../frontend/src/api/openapi.json`, then from frontend/ "
+        "`npm run api-types`."
+    )
+
+
 def test_serve_runs_the_api_and_says_when_there_is_no_built_page(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

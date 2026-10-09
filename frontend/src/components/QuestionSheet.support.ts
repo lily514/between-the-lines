@@ -13,9 +13,7 @@ export const sheetPill = (question: Question): { phase: string; detail: string |
  * which may be out of date by now, so it isn't shown. */
 export const clockLine = (question: Question): string => {
 	const score = question.context.score?.display
-	return isLive(question) && score !== undefined
-		? `${question.delivered.clock} · ${score.replace('-', '–')}`
-		: question.delivered.clock
+	return isLive(question) && score !== undefined ? `${question.delivered.clock} · ${score}` : question.delivered.clock
 }
 
 /** When a review question's play happened, unless the worded question already says so ("Back at 05:12: …"). */

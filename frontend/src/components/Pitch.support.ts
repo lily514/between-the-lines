@@ -31,7 +31,8 @@ const CROP_MARGIN = 10
 const MIN_CROP_HEIGHT = 50
 // A marker this close to the ball, a target or the path is part of the moment.
 const INVOLVED_WITHIN = 1.5
-const BALL_OFFSET = 1.1
+// The ball sits just outside the carrier's disc (radius 2.2), so it never covers the shirt number.
+const BALL_OFFSET = 2.1
 const TAG_OFFSET = 2.6
 
 /**
@@ -108,6 +109,10 @@ export const ballOnScreen = (picture: Picture): Point => {
 	}
 	return [x + BALL_OFFSET, y - BALL_OFFSET]
 }
+
+/** Whether a path point is where the ball is, so the drawn path can start at the drawn ball. */
+export const startsAtBall = (point: Point, picture: Picture) =>
+	Math.hypot(point[0] - picture.ball[0], point[1] - picture.ball[1]) <= 1
 
 /** An SVG path through the screen points. */
 export const pathData = (points: readonly Point[]) =>

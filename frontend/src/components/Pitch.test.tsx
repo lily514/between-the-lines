@@ -68,3 +68,36 @@ test('the pitch has a label for screen readers', () => {
 		screen.getByRole('img', { name: /Freeze-frame at 05:12\. The team on the ball is attacking upwards\./ })
 	).toBeInTheDocument()
 })
+
+test('home discs are drawn over away rings, so shirt numbers stay readable', () => {
+	render(<Pitch picture={predict.picture} options={options} label="Freeze-frame" />)
+	for (const dimmed of [true, false]) {
+		const shapes = screen
+			.getAllByTestId(/^player-/)
+			.filter(p => p.classList.contains('pitch__player--dim') === dimmed)
+			.map(p => p.dataset.testid)
+		const firstHome = shapes.indexOf('player-home')
+		const lastAway = shapes.lastIndexOf('player-away')
+		if (firstHome !== -1 && lastAway !== -1) expect(lastAway).toBeLessThan(firstHome)
+	}
+})
+
+test('the path and the option lines start at the drawn ball, not on the player', () => {
+	const { container } = render(
+		<Pitch picture={identify.picture} path={identify.picture.path} options={options} label="Freeze-frame" />
+	)
+	const ball = container.querySelector('.pitch__ball')
+	const start = (d: string | null) =>
+		d
+			?.match(/^M(\S+) (\S+)/)
+			?.slice(1)
+			.map(Number)
+	const at = [Number(ball?.getAttribute('cx')), Number(ball?.getAttribute('cy'))]
+	const path = start(screen.getByTestId('pitch-path').getAttribute('d'))
+	expect(path?.[0]).toBeCloseTo(at[0] ?? NaN, 1)
+	expect(path?.[1]).toBeCloseTo(at[1] ?? NaN, 1)
+	for (const line of container.querySelectorAll('.pitch__option-line')) {
+		const from = start(line.getAttribute('d'))
+		expect(from?.[0]).toBeCloseTo(at[0] ?? NaN, 1)
+	}
+})

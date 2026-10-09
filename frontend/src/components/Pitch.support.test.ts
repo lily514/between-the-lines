@@ -4,6 +4,8 @@ import {
 	FULL_VIEW,
 	PITCH_LENGTH,
 	PITCH_WIDTH,
+	ballOnScreen,
+	carrierOf,
 	cropTo,
 	describePitch,
 	isInvolved,
@@ -115,4 +117,13 @@ test('an option\u2019s letter goes on the side of its line away from a player', 
 test('a view that comes close to a goal line shows the goal line', () => {
 	const view = cropTo([[34, 5]])
 	expect(view.y).toBe(FULL_VIEW.y)
+})
+
+test('the ball sits beside the player on it, clear of the shirt number', () => {
+	const carrier = carrierOf(predict.picture)
+	if (carrier === undefined) throw new Error('the fixture has a player on the ball')
+	const [cx, cy] = toScreen([carrier.x, carrier.y])
+	const [bx, by] = ballOnScreen(predict.picture)
+	// The disc has radius 2.2; with its centre outside it, the ball only touches the disc's edge.
+	expect(Math.hypot(bx - cx, by - cy)).toBeGreaterThan(2.2)
 })

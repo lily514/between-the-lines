@@ -41,7 +41,7 @@ const MatchStep = ({ home, away, matchNumber, from, to, occurred, score, onArriv
 				</span>
 				<span className="match-step__clock">
 					{to.clock}
-					{score !== null && ` · ${score.replace('-', '–')}`}
+					{score !== null && ` · ${score}`}
 				</span>
 			</header>
 			<p className="match-step__moved">{movedOn(from, to)}</p>

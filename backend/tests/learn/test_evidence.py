@@ -217,6 +217,12 @@ def test_each_player_says_whether_they_play_for_the_home_club() -> None:
     assert all(m.home == on_ball.home for m in markers if m.side == "attacking")
 
 
+def test_the_score_is_written_with_a_dash_between_the_goals() -> None:
+    pack = pack_for(first_line_break(), 2, Delivery.LIVE)
+
+    assert re.fullmatch(r"\d+\N{EN DASH}\d+", pack.context["score"].display)
+
+
 def test_the_timing_says_when_it_happened_and_when_it_is_asked() -> None:
     pack = pack_for(first_line_break(), 1, Delivery.DEFERRED)
 

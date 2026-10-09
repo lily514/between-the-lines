@@ -11,6 +11,7 @@ import {
 	isInvolved,
 	momentPoints,
 	pathData,
+	startsAtBall,
 	tagPosition,
 	toScreen,
 	viewBoxText,
@@ -38,12 +39,13 @@ const Pitch = ({ picture, options = [], path = [], reveal = false, crop = 'full'
 	const view = crop === 'moment' ? cropTo(momentPoints(picture, options, path)) : FULL_VIEW
 	const ball = ballOnScreen(picture)
 	const carrier = carrierOf(picture)
-	const from = toScreen(picture.ball)
+	// Lines start at the ball as drawn, beside the carrier, so they never cross the shirt number.
+	const from = ball
 	const focused = options.length > 0 || path.length > 0
 	const playerPoints = picture.markers.map(m => toScreen([m.x, m.y]))
-	const players = [...picture.markers].sort(
-		(a, b) => Number(isInvolved(a, options, path)) - Number(isInvolved(b, options, path))
-	)
+	// Involved players on top of dimmed ones, and within each, home discs over away rings so numbers stay readable.
+	const layer = (m: Picture['markers'][number]) => Number(isInvolved(m, options, path)) * 2 + Number(m.home)
+	const players = [...picture.markers].sort((a, b) => layer(a) - layer(b))
 	return (
 		<svg
 			className="pitch"
@@ -128,7 +130,9 @@ const Pitch = ({ picture, options = [], path = [], reveal = false, crop = 'full'
 				<path
 					className={`pitch__path${reveal ? ' pitch__path--reveal' : ''}`}
 					data-testid="pitch-path"
-					d={pathData(path.map(toScreen))}
+					d={pathData(
+						path.map((point, i) => (i === 0 && startsAtBall(point, picture) ? ball : toScreen(point)))
+					)}
 					pathLength={1}
 					markerEnd={`url(#${arrowId})`}
 				/>

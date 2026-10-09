@@ -201,3 +201,17 @@ Where implementation diverged from [plan.md](plan.md), or something surprising w
 - **Lily's hand check** (one match by hand in both themes, at a phone width and on desktop) is still to do.
 - **T8:** the README's "Try the web page" section can use `npm run build` then `uv run btl serve`, and screenshots like these.
 - **Later playback:** `MatchPlayback` takes `MatchStep`'s props.
+
+## Fixes after Lily's check (2026-10-09)
+**Plan said:** nothing. These came from T7's screenshots, after Lily's hand check.
+**We did:**
+- **The score is written with an en dash ("1–0") in the evidence pack,** so every view shows it the same way. The page no longer swaps the hyphen itself. In JetBrains Mono an en dash fills its character cell, so on screen it looks close to a hyphen.
+- **Shirt numbers stay readable on the pitch:**
+  - the ball sits just outside the carrier's disc, 2.1 m right and up instead of 1.1 m, and no longer covers the second digit;
+  - the path and the option lines start at the ball as drawn, not at the carrier's centre;
+  - home discs are drawn over away rings.
+
+  A screenshot had shown the carrier as "13" when the question named "#16": the data was right, and the ball and the path covered the "6".
+
+**Why:** a number the viewer can't read sends them to the wrong player.
+**Affects:** the handoff puts the ball about 1.5 m from the carrier; it is now about 3 m. Pack ids change, because the score's text changed.

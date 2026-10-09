@@ -200,7 +200,7 @@ def build_pack(
         "away_team": _text(names.club(away)),
         "team": _text(names.club(event.team_id)),
         "opponent": _text(names.club(other)),
-        "score": _text(f"{score[home]}-{score[away]}"),
+        "score": _text(f"{score[home]}\N{EN DASH}{score[away]}"),
         "minute": _text(clock(event.period_id, event.time_seconds)),
     }
     if tag.concept is ConceptId.LINE_BREAKING_PASS:

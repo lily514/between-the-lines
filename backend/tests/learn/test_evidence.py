@@ -100,7 +100,7 @@ def test_a_question_view_never_holds_the_answer_or_an_outcome(seed: int) -> None
         names = keys_in(view)
 
         assert not names & OUTCOME_NAMES, pack.asks
-        assert not names & {"correct", "correct_key", "outcome"}
+        assert not names & {"correct", "correct_key", "outcome", "reveal_path"}
         assert all("{" not in option["label"] for option in view["options"])
 
 
@@ -171,6 +171,26 @@ def test_a_predict_picture_stops_before_the_pass_and_an_identify_one_shows_the_p
     for pack in (predict, identify):
         assert len(pack.picture.markers) == 22
         assert [m.role for m in pack.picture.markers].count("on the ball") == 1
+
+
+def test_every_pack_holds_the_real_path_to_reveal_after_answering() -> None:
+    candidate = first_line_break()
+
+    predict = pack_for(candidate, 2, Delivery.LIVE)
+    identify = pack_for(candidate, 2, Delivery.DEFERRED)
+
+    assert len(predict.reveal_path) >= 2
+    assert predict.reveal_path == identify.reveal_path == identify.picture.path
+
+
+def test_each_player_says_whether_they_play_for_the_home_club() -> None:
+    pack = pack_for(first_line_break(), 2, Delivery.LIVE)
+    markers = pack.picture.markers
+
+    assert sum(m.home for m in markers) == 11
+    (on_ball,) = [m for m in markers if m.role == "on the ball"]
+    assert on_ball.home == (pack.context["team"] == pack.context["home_team"])
+    assert all(m.home == on_ball.home for m in markers if m.side == "attacking")
 
 
 def test_the_timing_says_when_it_happened_and_when_it_is_asked() -> None:

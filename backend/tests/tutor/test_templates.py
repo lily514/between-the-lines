@@ -124,8 +124,8 @@ def test_a_slot_with_nothing_to_fill_it_is_an_error() -> None:
 
 
 def test_the_verdict_is_written_by_code() -> None:
-    assert Grade(True, "A").verdict == "Spot on."
-    assert Grade(False, "B").verdict == "Not quite."
+    assert Grade(True, "A").verdict == "Right read."
+    assert Grade(False, "B").verdict == "Good instinct, not this one."
 
 
 def test_the_grader_checks_the_key_against_the_pack() -> None:

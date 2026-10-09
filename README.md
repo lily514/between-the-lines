@@ -53,7 +53,7 @@ Ferrymen. What did they do next?
   B  Dropped back into their shape
   C  Hunted the ball straight back and won it
 The demo viewer picks C.
-Spot on. After losing the ball, Ripon Wardens hunted it straight back instead of
+Right read. After losing the ball, Ripon Wardens hunted it straight back instead of
 retreating. Winning it back quickly catches the opponent before they can spread out.
 The answer was Hunted the ball straight back and won it.
 Takeaway: Recognize a counter-press: winning the ball straight back after losing it,

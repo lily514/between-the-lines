@@ -32,7 +32,7 @@ from btl.schema.scoreboard import clock, goals
 from btl.schema.vocab import ConceptId
 from btl.value.xt import ThreatModel
 
-PACK_VERSION = 1
+PACK_VERSION = 2
 # Pressing players count if they stand this close to the ball when it is won back.
 PRESSING_DISTANCE = 10.0
 COUNT_WORDS = ("no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine")
@@ -64,10 +64,14 @@ class PackOption:
 
 @dataclass(frozen=True, slots=True)
 class Marker:
-    """A player on the pitch picture, seen with the team on the ball attacking left to right."""
+    """A player on the pitch picture, seen with the team on the ball attacking left to right.
+
+    ``side`` is relative to the ball ("attacking" or "defending"); ``home`` says which club.
+    """
 
     shirt: int
     side: str
+    home: bool
     x: float
     y: float
     role: str
@@ -110,7 +114,11 @@ class Timing:
 
 @dataclass(frozen=True, slots=True)
 class EvidencePack:
-    """Everything about one question. Built once; ``pack_id`` is a hash of the rest."""
+    """Everything about one question. Built once; ``pack_id`` is a hash of the rest.
+
+    ``reveal_path`` is the play's real path, for every form, shown after answering. The
+    question view leaves it out; a predict question's picture has no path at all.
+    """
 
     pack_id: str
     pack_version: int
@@ -124,6 +132,7 @@ class EvidencePack:
     options: tuple[PackOption, ...]
     correct_key: str
     picture: Picture
+    reveal_path: tuple[tuple[float, float], ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -230,6 +239,7 @@ def build_pack(
         options=tuple(_pack_option(option, names) for option in question.options),
         correct_key=question.correct_key,
         picture=_picture(question, ctx, league),
+        reveal_path=_play_path(question, ctx),
     )
     return _with_id(pack)
 
@@ -340,7 +350,6 @@ def _pack_option(option: Option, names: _Names) -> PackOption:
 
 
 def _picture(question: Question, ctx: MatchContext, league: League) -> Picture:
-    tag = question.candidate.tag
     event = ctx.events[question.picture]
     snapshot = ctx.snapshot(question.picture)
     markers: list[Marker] = []
@@ -352,24 +361,26 @@ def _picture(question: Question, ctx: MatchContext, league: League) -> Picture:
                 Marker(
                     shirt=league.player(p.player_id).shirt_number,
                     side="attacking" if ours else "defending",
+                    home=p.team_id == ctx.match.home_team_id,
                     x=round(p.x, 1),
                     y=round(p.y, 1),
                     role=role,
                 )
             )
-    path: tuple[tuple[float, float], ...] = ()
-    if question.form is Form.IDENTIFY:
-        first, last = tag.span
-        played = [ctx.events[a] for a in range(first, last + 1)]
-        path = (
-            *((round(e.start_x, 1), round(e.start_y, 1)) for e in played),
-            (round(played[-1].end_x, 1), round(played[-1].end_y, 1)),
-        )
     return Picture(
         action_id=question.picture,
         markers=tuple(markers),
         ball=(round(event.start_x, 1), round(event.start_y, 1)),
-        path=path,
+        path=_play_path(question, ctx) if question.form is Form.IDENTIFY else (),
+    )
+
+
+def _play_path(question: Question, ctx: MatchContext) -> tuple[tuple[float, float], ...]:
+    first, last = question.candidate.tag.span
+    played = [ctx.events[a] for a in range(first, last + 1)]
+    return (
+        *((round(e.start_x, 1), round(e.start_y, 1)) for e in played),
+        (round(played[-1].end_x, 1), round(played[-1].end_y, 1)),
     )
 
 

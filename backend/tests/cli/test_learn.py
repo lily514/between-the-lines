@@ -60,7 +60,7 @@ def test_learn_carries_on_with_the_next_match_and_can_start_again(tmp_path: Path
 def test_learn_explains_each_question_and_how_the_bars_moved(tmp_path: Path) -> None:
     output = learn(tmp_path)
 
-    assert "Spot on." in output or "Not quite." in output
+    assert "Right read." in output or "Good instinct, not this one." in output
     assert "Takeaway:" in output
     assert "sure you understand it" in output
     assert "Line-breaking passes" in output and "Counter-pressing" in output

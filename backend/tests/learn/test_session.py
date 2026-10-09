@@ -11,7 +11,9 @@ from btl.learn.session import (
     Course,
     DemoViewer,
     MatchStart,
+    PreparedMatch,
     Told,
+    prepare_match,
     start_session,
     watch_match,
 )
@@ -131,3 +133,29 @@ def test_each_viewer_gets_the_same_three_matches_for_a_seed() -> None:
 
     assert fixtures == [course().fixture(seed=7, match_number=n) for n in (1, 2, 3)]
     assert len({seed for _, _, seed in fixtures}) == 3
+
+
+def test_a_prepared_match_can_be_reused_without_changing_what_is_asked() -> None:
+    shared = course()
+    cache: dict[tuple[int, int], PreparedMatch] = {}
+    calls: list[tuple[int, int]] = []
+
+    def cached(seed: int, number: int) -> PreparedMatch:
+        calls.append((seed, number))
+        if (seed, number) not in cache:
+            cache[seed, number] = prepare_match(shared, seed, number)
+        return cache[seed, number]
+
+    plain, reused = MemoryLearnerStore(), MemoryLearnerStore()
+    for store in (plain, reused):
+        start_session(store, "lily", seed=3)
+    watch_match(shared, plain, "lily", AlwaysRight(), lambda: NOW)
+    # Stop after one answer and carry on, so the cached match is used twice.
+    with pytest.raises(StoppedError):
+        watch_match(shared, reused, "lily", AlwaysRight(stop_after=1), lambda: NOW, cached)
+    watch_match(shared, reused, "lily", AlwaysRight(), lambda: NOW, cached)
+
+    plain_state, reused_state = plain.get("lily"), reused.get("lily")
+    assert plain_state is not None and reused_state is not None
+    assert plain_state.state.attempts == reused_state.state.attempts
+    assert calls == [(3, 1), (3, 1)] and len(cache) == 1

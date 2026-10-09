@@ -61,7 +61,8 @@ class TemplateTutor:
     def feedback(self, pack: EvidencePack, grade: Grade) -> TutorFeedback:
         """The concept's explanation at the viewer's level, the comparison, and a misconception.
 
-        The verdict ("Spot on." or "Not quite.") comes from the grade, not from here.
+        The verdict ("Right read." or "Good instinct, not this one.") comes from the grade,
+        not from here.
         """
         sentences = [_explanation(pack)]
         is_pass = pack.asks is Asks.WHERE_TO_PASS

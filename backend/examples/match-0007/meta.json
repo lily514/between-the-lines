@@ -11,38 +11,38 @@
     {
       "concept": "line_breaking_pass",
       "difficulty": 1,
-      "pause_action_id": 202,
-      "answer_action_id": 203
+      "pause_action_id": 200,
+      "answer_action_id": 201
     },
     {
       "concept": "counter_press",
       "difficulty": 1,
-      "pause_action_id": 396,
-      "answer_action_id": 398
+      "pause_action_id": 389,
+      "answer_action_id": 391
     },
     {
       "concept": "line_breaking_pass",
       "difficulty": 2,
-      "pause_action_id": 570,
-      "answer_action_id": 571
+      "pause_action_id": 549,
+      "answer_action_id": 550
     },
     {
       "concept": "counter_press",
       "difficulty": 2,
-      "pause_action_id": 952,
-      "answer_action_id": 955
+      "pause_action_id": 886,
+      "answer_action_id": 889
     },
     {
       "concept": "line_breaking_pass",
       "difficulty": 3,
-      "pause_action_id": 1151,
-      "answer_action_id": 1152
+      "pause_action_id": 1056,
+      "answer_action_id": 1057
     },
     {
       "concept": "counter_press",
       "difficulty": 3,
-      "pause_action_id": 1375,
-      "answer_action_id": 1379
+      "pause_action_id": 1228,
+      "answer_action_id": 1232
     }
   ]
 }

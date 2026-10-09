@@ -2,6 +2,28 @@
 
 Where implementation diverged from [plan.md](plan.md), or something surprising was learned. One note per occurrence, added in the same commit as the change.
 
+## Summary (2026-10-08)
+
+Milestone 2a is done. T1 to T13 are all in, plus three simulator changes the plan didn't foresee: a check of the phases of play against real matches, fouls and free kicks, and offsides. A viewer can play the learning loop in the terminal with `btl learn`, and `btl demo-viewer` shows a scripted viewer going from 15% to about 97% on both concepts over three matches.
+
+**Biggest changes from the plan**
+- **Lily's concept map drives the curriculum** (T2). BKT's parameters and thresholds come from it, grouped by model. Concepts nothing can ask about yet count as met prerequisites, so the frontier gets stricter by itself as concepts are built.
+- **The evidence pack hides every outcome fact before an answer, not just the asked one** (T8). Numbers are shown as the detectors round them, and threat to two significant figures.
+- **Wording is the Tutor's alone.** Questions record what they ask, and the code-written verdict belongs to the grade (T7, T10).
+- **Predict alternatives are chosen to keep the numbers honest.** The plan's "free teammate" was dropped, because it could beat the right answer (T7).
+- **Questions per match.** The amended caps allow up to 8 questions (median about 6) rather than the original "two to four". Live questions are rare (about 6%); most wait for stoppages (T9).
+- **The simulator now has fouls, free kicks, penalties and offsides.** These came from checking the phases of play against 40 real matches: the simulator had half the real stoppages and too much transition. Planting a designed match now tolerates a moment that doesn't fit (1 seed in 100).
+
+**Cut:** nothing in the plan. The cached model state was left out (T9), since replaying a session's answers takes microseconds.
+
+**Carries over**
+- **To 2b:** the Foundry Tutor slots into `Course` in place of `TemplateTutor`, behind a Verifier that checks slots with `question_values` and `feedback_values` and falls back to the templates. The Azure decisions are in the project's planning notes: the subscription, the resource group, gpt-5.4-nano and Entra ID.
+- **To 2c:** a web `Viewer` drawing `pack.picture` and each option's `target_at`. The terminal's `pitch_picture` shows what to hide before an answer.
+- **To Milestone 3:** a Cosmos DB `LearnerStore` joins the contract suite, using the same document shape.
+- **The simulator against real football:** slower tempo (0.4 actions a second against 0.6), so transition is 56% of playing time against 49%; about 80% of the real stoppages long enough for a question; penalties low (0.18 against 0.28); offsides random rather than positional.
+- **Map text:** some of it reads stiffly once filled in ("this one broke one"); `phase_of_play`'s analyst text talks about the app rather than football.
+- **More concepts:** possession, tackles, passing and pressing were costed at about 2 days. `switch_of_play` has a detector but no concept in the map.
+
 ## T1 — Groundwork (2026-10-08)
 **Plan said:** a public function `line_breaking.lines_broken(snapshot, team_id, start, end)`, used by the detector; CLI tests pass with `FORCE_COLOR` set.
 **We did:**
@@ -312,3 +334,17 @@ The three levels never swapped order within a match. The middle 80% of each leve
 **Affects:**
 - **The demo viewer (seed 7) still asks 21 questions** and both concepts still end at 96–97%, but its two live questions became deferred ones. Every match changed, and live questions are rare (about 6%). T13 refreshes the README's demo output.
 - **The same T13 refresh as for fouls:** the sample match, the threat grid in `expected-threat.md`, and the README's output.
+
+## T13 — Wrap-up (2026-10-08)
+**Plan said:** a README "Try the learning loop" section with an honest-limits line; the summary at the top of this file; merge `--no-ff`.
+**We did:** as planned. The README also gained:
+- an "Honest limits" section with five points, not one;
+- Milestones 2a, 2b and 2c in its status table.
+
+The fouls and offsides notes had left three things to refresh, and these were refreshed too:
+- **The sample match** (`backend/examples/match-0007`) was regenerated with the same command. Seed 7 is now a 1-0 away win with 1,420 events, and all six moments are still planted and detected.
+- **The threat grid in `docs/milestone-1/expected-threat.md`** was refitted on about 284,000 actions (was 331,000). It keeps its shape, and its peak is now about 13%.
+- **The README's example output** now shows the new moment 3 and a demo-viewer excerpt.
+
+**Why:** fouls and offsides changed every simulated match.
+**Affects:** nothing.

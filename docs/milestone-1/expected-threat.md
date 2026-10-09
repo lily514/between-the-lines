@@ -17,32 +17,32 @@ The pitch is split into 16 cells along its length and 12 across, so each cell is
 - how often a player there **shoots**, and how often those shots score;
 - how often a player there **moves the ball** instead (passes, crosses, dribbles), and which cell the successful moves end in.
 
-A cell's threat is then: (chance of shooting × chance a shot scores) + (chance of moving × the average threat of where successful moves end). Each cell's value depends on the others, so it is solved by repeating the update until the numbers stop changing. Our grid settles after about 24 rounds.
+A cell's threat is then: (chance of shooting × chance a shot scores) + (chance of moving × the average threat of where successful moves end). Each cell's value depends on the others, so it is solved by repeating the update until the numbers stop changing. Our grid settles after about 23 rounds.
 
 Every action is first turned so that its team attacks left to right (towards x = 105), using `to_spadl_frame(match, left_to_right=True)`. Without that, the away team's attacks would count towards the wrong goal.
 
 ## Our grid
 
-`btl fit-xt` simulates 200 matches (by default) and fits the grid on all their actions, about 331,000. The matches use the season's fixtures in order, with match seeds drawn from `--seed`, so the same command always gives the same grid. It takes about 10 seconds, mostly simulating.
+`btl fit-xt` simulates 200 matches (by default) and fits the grid on all their actions, about 284,000. The matches use the season's fixtures in order, with match seeds drawn from `--seed`, so the same command always gives the same grid. It takes about 10 seconds, mostly simulating.
 
-Values in percent, attacking left to right, rows from the top touchline (y = 68) down:
+Values in percent, attacking left to right, rows from the top touchline (y = 68) down. Refitted on 2026-10-08, after Milestone 2a added fouls, free kicks and offsides to the simulator:
 
 ```
- 0.2  0.2  0.2  0.2  0.3  0.3  0.4  0.4  0.5  0.6  0.9  1.1  1.3  1.2  1.4  1.3
- 0.2  0.2  0.2  0.2  0.3  0.3  0.3  0.4  0.5  0.6  0.8  1.1  1.1  1.3  1.2  1.3
- 0.2  0.2  0.2  0.2  0.3  0.3  0.4  0.4  0.5  0.7  0.8  1.0  1.2  1.3  1.7  1.5
- 0.2  0.2  0.2  0.2  0.3  0.3  0.4  0.4  0.5  0.7  0.8  1.0  1.3  1.7  2.2  2.8
- 0.2  0.2  0.2  0.2  0.3  0.3  0.4  0.5  0.6  0.7  0.9  1.1  1.6  2.5  3.7  4.6
- 0.2  0.2  0.2  0.2  0.3  0.3  0.4  0.5  0.5  0.7  0.9  1.3  2.0  3.1  6.9 11.7
- 0.2  0.2  0.2  0.2  0.3  0.3  0.4  0.5  0.6  0.7  1.0  1.2  1.8  3.2  6.9 12.1
- 0.2  0.2  0.2  0.3  0.3  0.3  0.4  0.5  0.5  0.7  0.9  1.1  1.7  2.5  4.1  3.8
- 0.2  0.2  0.2  0.3  0.3  0.3  0.4  0.5  0.6  0.7  0.9  1.0  1.6  2.0  2.6  2.9
- 0.2  0.2  0.2  0.2  0.3  0.3  0.4  0.5  0.6  0.7  0.8  1.1  1.2  1.6  1.8  2.0
- 0.2  0.2  0.2  0.3  0.3  0.3  0.4  0.5  0.5  0.7  0.9  1.1  1.3  1.4  1.5  1.7
- 0.2  0.2  0.2  0.2  0.3  0.3  0.4  0.4  0.5  0.7  0.9  1.1  1.1  1.4  1.6  1.5
+ 0.2  0.2  0.2  0.3  0.3  0.3  0.4  0.5  0.6  0.7  0.9  1.3  1.3  1.5  1.3  1.5
+ 0.2  0.2  0.2  0.3  0.3  0.4  0.4  0.5  0.6  0.7  1.0  1.2  1.2  1.5  1.5  1.5
+ 0.2  0.2  0.2  0.3  0.3  0.4  0.4  0.5  0.6  0.8  0.9  1.1  1.4  1.7  2.0  1.4
+ 0.2  0.2  0.2  0.3  0.3  0.4  0.4  0.5  0.6  0.8  1.0  1.2  1.6  2.5  2.8  2.7
+ 0.2  0.2  0.2  0.3  0.3  0.3  0.4  0.5  0.6  0.8  1.0  1.3  1.9  3.3  5.3  5.1
+ 0.2  0.2  0.2  0.3  0.3  0.4  0.4  0.5  0.6  0.8  1.1  1.5  2.2  4.0  6.9 13.0
+ 0.2  0.2  0.2  0.3  0.3  0.3  0.4  0.5  0.7  0.8  1.1  1.4  2.1  4.4  8.5 12.1
+ 0.2  0.2  0.2  0.3  0.3  0.4  0.4  0.5  0.6  0.8  1.0  1.3  1.9  2.9  4.5  6.5
+ 0.2  0.2  0.3  0.3  0.3  0.3  0.4  0.5  0.6  0.8  1.0  1.2  1.7  2.4  3.5  2.7
+ 0.2  0.2  0.2  0.3  0.3  0.4  0.4  0.5  0.6  0.7  1.0  1.2  1.5  1.8  2.5  1.7
+ 0.2  0.2  0.3  0.3  0.3  0.4  0.4  0.5  0.6  0.8  0.9  1.3  1.4  1.5  1.5  1.6
+ 0.2  0.2  0.2  0.3  0.3  0.4  0.4  0.5  0.6  0.7  0.9  1.2  1.5  1.4  1.6  1.4
 ```
 
-The shape is what published grids from real matches look like: almost flat and near zero in a team's own half, rising through midfield, and peaking in the cells right in front of goal (about 12%). That's a sanity check on the simulator as much as on the fit.
+The shape is what published grids from real matches look like: almost flat and near zero in a team's own half, rising through midfield, and peaking in the cells right in front of goal (about 13%). That's a sanity check on the simulator as much as on the fit.
 
 The model is saved as JSON at `backend/data/models/expected-threat.json` (gitignored). The file holds the grid and what it was fitted on: number of matches, seed, league seed, and number of actions. socceraction's own `save_model` writes only the bare grid, so the file format is ours (see `btl/io.py`). It is not committed, because it would quietly go stale whenever the simulator changes.
 

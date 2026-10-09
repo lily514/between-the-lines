@@ -41,6 +41,7 @@ class MatchStats:
     goal_kicks: int
     corners: int
     fouls: int
+    offsides: int
     yellow_cards: int
     free_kicks: int
     penalties: int
@@ -69,6 +70,7 @@ def match_stats(match: Match) -> MatchStats:
         goal_kicks=counts[ActionType.GOALKICK],
         corners=sum(counts[corner] for corner in CORNERS),
         fouls=counts[ActionType.FOUL],
+        offsides=sum(event.result is Result.OFFSIDE for event in match.events),
         yellow_cards=sum(
             event.action_type is ActionType.FOUL and event.result is Result.YELLOW_CARD
             for event in match.events

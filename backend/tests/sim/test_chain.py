@@ -92,7 +92,7 @@ def test_a_chain_succeeds_until_its_last_action_and_stays_on_the_pitch(seed: int
         # A failed cross or a missed shot can go out for the team's own corner, and a foul by
         # the other team doesn't end the possession.
         assert step.result is Result.SUCCESS or after.action_type in CORNERS or step.by_defence
-    assert last.result is Result.FAIL or last.action_type in SHOTS
+    assert last.result in (Result.FAIL, Result.OFFSIDE) or last.action_type in SHOTS
     for step in result.steps:
         assert on_pitch(step.start)
         assert on_pitch(step.end)
@@ -109,7 +109,10 @@ def test_a_ball_that_goes_out_restarts_in_the_right_place(seed: int) -> None:
     went_out = last.action_type not in SHOTS and (
         last.end.y in (0, PITCH_WIDTH) or last.end.x in (0, PITCH_LENGTH)
     )
-    if not went_out:
+    if last.result is Result.OFFSIDE:
+        assert start.restart in (Restart.FREE_KICK_SHORT, Restart.FREE_KICK_LONG)
+        assert start.ball == mirror(last.end)
+    elif not went_out:
         assert start.restart in (None, Restart.GOAL_KICK, Restart.KICKOFF)
     elif last.end.x == PITCH_LENGTH:
         assert start.restart is Restart.GOAL_KICK
@@ -290,3 +293,32 @@ def test_a_share_of_fouls_are_booked() -> None:
     params = replace(ALWAYS_FOULED, yellow_card_share=1.0)
 
     assert fouled_at(Point(50, 30), params).steps[1].result is Result.YELLOW_CARD
+
+
+ALWAYS_OFFSIDE = replace(DEFAULT_PARAMS, offside_share=1.0, foul_share=PerThird(0.0, 0.0, 0.0))
+
+
+def test_an_offside_pass_gives_the_other_team_a_free_kick_where_it_was_headed() -> None:
+    flagged = [
+        chain(Start(Point(60, 30), slot=6, won_with=ActionType.TACKLE), seed, ALWAYS_OFFSIDE)
+        for seed in range(30)
+    ]
+    offside = [c for c in flagged if c.steps[-1].result is Result.OFFSIDE]
+
+    assert offside
+    for each in offside:
+        last = each.steps[-1]
+        assert last.action_type is ActionType.PASS
+        assert last.end.x >= PITCH_LENGTH * 2 / 3 and last.end.x - last.start.x >= 5
+        assert each.next_start.restart in (Restart.FREE_KICK_SHORT, Restart.FREE_KICK_LONG)
+        assert each.next_start.ball == mirror(last.end)
+        assert each.next_start.delay >= DEFAULT_PARAMS.free_kick_short_delay[0]
+
+
+def test_only_passes_forward_into_the_attacking_third_are_flagged() -> None:
+    for seed in range(30):
+        start = Start(Point(20, 30), slot=6, won_with=ActionType.TACKLE)
+        for step in chain(start, seed, ALWAYS_OFFSIDE).steps:
+            if step.result is Result.OFFSIDE:
+                assert step.end.x >= PITCH_LENGTH * 2 / 3
+                assert step.phase is not Phase.SET_PIECE

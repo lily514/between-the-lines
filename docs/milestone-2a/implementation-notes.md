@@ -290,3 +290,25 @@ The three levels never swapped order within a match. The middle 80% of each leve
 - **Planting can now fail.** With more stoppages, a designed moment occasionally finds no room before the whistle (seed 34 in 100). The learning loop now uses `play_designed_match`, which plants as many moments as fit. `btl simulate --plant` still insists on all of them. **The counter-press level test is relaxed** to: level 3 hardest in every match, and level 1 below level 2 on average and in 90% of matches. Neighbouring levels overlap a little, and the new random draws exposed it.
 - **The learning loop:** over 40 seeds, 2–8 questions per match (median 6.5 for an improving viewer, 5 for one who doesn't improve); 54–69% at dead balls, 6–7% live. The demo viewer asks 21 questions, 2 of them live, and both concepts end at 97%.
 - **Every simulated match is different again.** T13 must regenerate the sample match, refit the threat grid in `expected-threat.md`, and refresh the README's output.
+
+## Offsides in the simulator (2026-10-08)
+**Plan said:** nothing. The real matches have 3.9 offsides a match. SPADL records each as a pass with result `offside`, followed by the other team's free kick (median 26 s later, 83% of waits 15 s or more). 82% of them are passes into the attacking third.
+**We did:**
+- **Which passes can be flagged.** An open-play pass going at least 5 m forward into the attacking third is flagged offside 2.7% of the time (`offside_share`). The possession ends, and the other team takes a short or long free kick where the pass was headed, with the same waits as other free kicks.
+- **Decided by chance, not by positions.** The simulator's events never depend on where players stand: turning snapshots off must give the same events. So the flag is not a check of the receiver against the last defender, and a flagged pass's picture can show the receiver onside. Nothing in 2a asks about offside. The map's `rules` concept would need a position-based rule.
+- **Goals.** Offsides cut short attacks, and the goal model's intercept moved from −2.2 to −1.9 to keep goals in their band.
+- **New band:** offsides 0–9 a match.
+
+| Per match | Real | Before offsides | After |
+|---|---|---|---|
+| Offsides | 3.9 | 0 | 3.8 |
+| Free kicks | 26.6 | 19.2 | 23.3 |
+| Dead balls / of 15 s or more | 103 / 70 | 83 / 53 | 86 / 56 |
+| Goals / shots | 2.7 / 25 | 2.1 / 23 | 2.2 / 22 |
+| Penalties | 0.28 | 0.5 | 0.18 |
+| Share of playing time in transition | 49% | 56% | 56% |
+
+**Why:** they are the stoppage the earlier fouls note left out, and long enough to ask a question in.
+**Affects:**
+- **The demo viewer (seed 7) still asks 21 questions** and both concepts still end at 96–97%, but its two live questions became deferred ones. Every match changed, and live questions are rare (about 6%). T13 refreshes the README's demo output.
+- **The same T13 refresh as for fouls:** the sample match, the threat grid in `expected-threat.md`, and the README's output.

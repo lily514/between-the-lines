@@ -43,6 +43,7 @@ MEASURES: dict[str, Callable[[MatchStats], float]] = {
     "goal kicks": lambda stats: stats.goal_kicks,
     "share of actions on a touchline": lambda stats: stats.on_touchline / stats.actions,
     "fouls": lambda stats: stats.fouls,
+    "offsides": lambda stats: stats.offsides,
     "free kicks": lambda stats: stats.free_kicks,
     "yellow cards": lambda stats: stats.yellow_cards,
 }
@@ -65,6 +66,8 @@ MEASURES: dict[str, Callable[[MatchStats], float]] = {
         # Real: 26 fouls, 26.6 free kicks (penalties included; 3.5 of them follow an offside,
         # which isn't simulated), 3.3 bookings.
         ("fouls", 15, 35),
+        # Real: 3.9.
+        ("offsides", 0, 9),
         ("free kicks", 12, 32),
         ("yellow cards", 0, 7),
     ],

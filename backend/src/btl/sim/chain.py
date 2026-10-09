@@ -357,6 +357,8 @@ def _pass(
     end = reflect_into_pitch(target, EDGE_MARGIN)
     length = distance(ball, end)
     params = play.params
+    if _flagged_offside(action, ball, end, phase, play):
+        return _offside(slot, action, bodypart, ball, end, phase, play)
     success = params.pass_success.of(zone_of(end).third) * math.exp(
         -max(0.0, length - params.long_pass_from) / params.long_pass_falloff
     )
@@ -369,6 +371,45 @@ def _pass(
     return _Outcome(
         Step(slot, action, Result.SUCCESS, bodypart, ball, end, duration, phase),
         _nearest(play.attack.formation, end, in_possession=True, exclude=slot),
+    )
+
+
+def _flagged_offside(
+    action: ActionType, ball: Point, end: Point, phase: Phase, play: _Play
+) -> bool:
+    """Whether the referee flags a pass offside.
+
+    Only a pass in open play, going clearly forward into the attacking third, can be. The
+    simulator's events never depend on where players stand, so the flag is a chance, not a
+    check of the receiver against the last defender.
+    """
+    params = play.params
+    forward_into_attack = (
+        action is ActionType.PASS
+        and phase is not Phase.SET_PIECE
+        and zone_of(end).third is Third.ATTACKING
+        and end.x - ball.x >= params.offside_forward
+    )
+    return forward_into_attack and play.rng.random() < params.offside_share
+
+
+def _offside(
+    slot: int,
+    action: ActionType,
+    bodypart: BodyPart,
+    ball: Point,
+    end: Point,
+    phase: Phase,
+    play: _Play,
+) -> _Outcome:
+    """An offside pass: the other team takes a free kick where it was headed."""
+    flight = distance(ball, end) / play.params.pass_speed
+    kind, spot, delay = _free_kick(mirror(end), play)
+    taker = _taker(play.defence.formation, spot)
+    return _Outcome(
+        Step(slot, action, Result.OFFSIDE, bodypart, ball, end, flight, phase),
+        slot,
+        handover=Start(spot, taker, restart=kind, delay=delay),
     )
 
 

@@ -81,7 +81,7 @@ class SimParams:
 
     # Shots: chance of scoring is a logistic function of the goal's visible angle (radians) and
     # the distance to goal. Of the shots that don't score, ``save_share`` are saved.
-    goal_intercept: float = -2.2
+    goal_intercept: float = -1.9
     goal_per_radian: float = 1.5
     goal_per_metre: float = -0.1
     save_share: float = 0.45
@@ -104,6 +104,11 @@ class SimParams:
     free_kick_long_share: float = 0.5
     free_kick_short_length_mean: float = 16.0
     free_kick_long_length_mean: float = 45.0
+    # Offside: the chance an open-play pass going at least ``offside_forward`` metres forward
+    # into the attacking third is flagged. The other team then has a free kick where it was
+    # headed. Real: 3.9 a match, 82% of them passes into the attacking third.
+    offside_share: float = 0.027
+    offside_forward: float = 5.0
     penalty_conversion: float = 0.76
     # Of the penalties that aren't scored, the share the keeper saves.
     penalty_save_share: float = 0.7

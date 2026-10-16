@@ -238,3 +238,30 @@ def pass_to(
         events=tuple(events),
         positions=Positions(slots=tuple(slots), xy=xy),
     )
+
+
+def fouled(
+    where: Spot,
+    *,
+    passes_first: int = 1,
+    result: Result = Result.FAIL,
+    then: ActionType = ActionType.FREEKICK_SHORT,
+) -> Match:
+    """Home wins the ball, passes, and is fouled by away at ``where``; then home's ``then``.
+
+    Stored coordinates, home attacking towards x = 105. Each action takes 4 seconds, so one
+    pass leaves home in a transition and five have it settled. ``then`` is a free kick, a
+    penalty (taken from the spot) or, for advantage, any other action.
+    """
+    events = [
+        make_event(0, AWAY, AWAY_MIDFIELDER, (60, 34), (40, 34), result=Result.FAIL),
+        make_event(1, HOME, HOME_MIDFIELDER, (40, 34), (40, 34), ActionType.INTERCEPTION),
+    ]
+    events += [
+        make_event(2 + k, HOME, HOME_MIDFIELDER, (40, 34), where) for k in range(passes_first)
+    ]
+    at = len(events)
+    events.append(make_event(at, AWAY, AWAY_MIDFIELDER, where, where, ActionType.FOUL, result))
+    spot = (94.0, 34.0) if then is ActionType.SHOT_PENALTY else where
+    events.append(make_event(at + 1, HOME, HOME_MIDFIELDER, spot, (spot[0] + 5, spot[1]), then))
+    return Match(game_id=GAME, home_team_id=HOME, away_team_id=AWAY, events=tuple(events))

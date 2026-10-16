@@ -5,6 +5,7 @@ from collections.abc import Sequence
 from btl.concepts.base import ConceptTag, Detector, MatchContext
 from btl.concepts.counter_attack import CounterAttack
 from btl.concepts.counter_press import CounterPress
+from btl.concepts.foul import FoulCommitted
 from btl.concepts.line_breaking import LineBreakingPass
 from btl.concepts.offside import OffsidePass
 from btl.concepts.restart import BallOutOfPlay
@@ -17,6 +18,7 @@ ALL_DETECTORS: tuple[Detector, ...] = (
     CounterAttack(),
     BallOutOfPlay(),
     OffsidePass(),
+    FoulCommitted(),
 )
 
 

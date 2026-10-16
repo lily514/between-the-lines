@@ -620,11 +620,14 @@ def _fouled(slot: int, ball: Point, phase: Phase, play: _Play) -> _Outcome:
 
     Play usually stops for a free kick to the fouled team where the foul happened: a penalty in
     the box, sometimes a shot at goal within range, otherwise played long or short. After a
-    share of fouls the referee lets play go on (advantage). A share are booked.
+    share of fouls the referee lets play go on (advantage). A share are booked: many more when
+    the foul stops a promising attack, one of the Laws' reasons for a caution.
     """
     rng, params = play.rng, play.params
     fouler = _nearest(play.defence.formation, mirror(ball), in_possession=False)
-    result = Result.YELLOW_CARD if rng.random() < params.yellow_card_share else Result.FAIL
+    promising = phase is Phase.TRANSITION and zone_of(ball).third is not Third.DEFENSIVE
+    booking_share = params.booking_share_promising if promising else params.booking_share_other
+    result = Result.YELLOW_CARD if rng.random() < booking_share else Result.FAIL
 
     def foul(duration: float) -> Step:
         return Step(

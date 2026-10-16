@@ -168,7 +168,7 @@ concepts:
     tier: 0
     prerequisites: []
     objective: "Say what a foul gives (a free kick or a penalty, and to whom), why a player is booked, and when the referee lets play go on."
-    detector: null
+    detector: foul
     data_requirements: [events]
     question_types: [identify, predict]
     example_prompt: "Foul by {fouler}. What happens now?"

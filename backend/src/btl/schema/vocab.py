@@ -91,6 +91,7 @@ class ConceptId(StrEnum):
     COUNTER_ATTACK = "counter_attack"
     RESTART = "restart"
     OFFSIDE = "offside"
+    FOUL = "foul"
 
     @property
     def label(self) -> str:

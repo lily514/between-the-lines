@@ -66,3 +66,10 @@ Side effects, all towards real football: transition share 59.5% → 57.6% (real 
 **We did:** as planned (`OffsidePass`), measured from the offside line (the furthest of the second-last opponent, the ball and halfway), so "behind the ball" and "in their own half" fall out of the same margin. Two additions to the evidence: "line (m)", for the reveal's offside line in T7, and the receiver's "player id". Over 200 matches it calls offside on every flagged pass and on no completed one.
 **Why:** a tag's evidence holds numbers only, and the question needs to know who the receiver is. The player id is stored as a float, which is exact for ids this size. `OffsidePass.receiver` and `offside_line` are public, so T7's questions can work out the other attackers' positions the same way.
 **Affects:** T7 reads "player id" back as a `PlayerId`.
+
+## T6 — Fouls and cards (2026-10-16)
+
+**Plan said:** split the booking share into a high one for fouls that stop a promising attack and a low one for the rest, keeping 3.3 bookings a match with at least 3 in 4 explained; a `concepts/foul.py` detector.
+**We did:** as planned. `booking_share_promising` = 0.4 and `booking_share_other` = 0.05 give 3.3 bookings a match over the 50 calibration matches. The detector (`FoulCommitted`) judges "promising" with `phase.py`, which counts about 9.6 such fouls a match against the simulator's own 6.3. Its transitions run a little longer, and it includes every foul the simulator counts. So about 80% of bookings are explained, and a test checks at least 75% over 40 matches. The rng draws are unchanged, so only which fouls are booked changes; the sample match's events are regenerated.
+**Why:** as planned.
+**Affects:** nothing.

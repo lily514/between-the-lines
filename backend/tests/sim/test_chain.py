@@ -320,10 +320,15 @@ def test_with_advantage_play_goes_on_after_the_foul() -> None:
         assert steps[i + 1].action_type not in (*FREE_KICKS, *SHOTS[1:])
 
 
-def test_a_share_of_fouls_are_booked() -> None:
-    params = replace(ALWAYS_FOULED, yellow_card_share=1.0)
+def test_a_foul_that_stops_a_promising_attack_is_booked_by_its_own_share() -> None:
+    only_promising = replace(ALWAYS_FOULED, booking_share_promising=1.0, booking_share_other=0.0)
+    only_others = replace(ALWAYS_FOULED, booking_share_promising=0.0, booking_share_other=1.0)
 
-    assert fouled_at(Point(50, 30), params).steps[1].result is Result.YELLOW_CARD
+    # Just after winning the ball is a transition; x = 50 is the middle third, x = 20 their own.
+    assert fouled_at(Point(50, 30), only_promising).steps[1].result is Result.YELLOW_CARD
+    assert fouled_at(Point(50, 30), only_others).steps[1].result is Result.FAIL
+    assert fouled_at(Point(20, 30), only_promising).steps[1].result is Result.FAIL
+    assert fouled_at(Point(20, 30), only_others).steps[1].result is Result.YELLOW_CARD
 
 
 ALWAYS_OFFSIDE = replace(DEFAULT_PARAMS, offside_share=1.0, foul_share=PerThird(0.0, 0.0, 0.0))

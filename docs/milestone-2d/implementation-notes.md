@@ -2,6 +2,26 @@
 
 Where implementation diverged from [plan.md](plan.md), or something surprising was learned. One note per occurrence, added in the same commit as the change.
 
+## Summary (2026-10-16)
+
+Milestone 2d is done, apart from Lily's hand check in the browser. A newcomer now starts on three tier-0 concepts: restarts, offside, and fouls and cards. Restarts and fouls are asked in the stoppage they cause, before the restart is taken. Offside is predicted before the pass in settled play, and reviewed later otherwise. The basics take at most three questions a match, so line-breaking passes and counter-presses still come up from match 1.
+
+**Biggest changes from the plan**
+- **Blocks stay unrecorded (T2).** Real event data drops blocks, so about a fifth of throw-ins and nearly half of corners follow the restarting team's own action. Recording a defender's touch, as planned, would have made the simulator less like real data. Instead it now blocks balls out the same way, and the detector works out the last touch from the Laws.
+- **When a moment may be asked has three cases, not two (T7):** in play, at the stoppage, and only afterwards (advantage).
+- **A question's form depends on the moment (T7):** at the same stoppage, a booking is explained while another foul is predicted.
+- **Fouls near the box are graded higher (T7).** A tier-0 concept's prior is already level 2, and plain fouls were too easy to be asked at all.
+- **Every live question used to mean settled play;** a live question in a dead ball now has its own wording in the terminal and on the page (T7, T8).
+
+**Cut:** nothing from the cut list. A separate foul-spot mark was dropped, because the ball is already drawn there.
+
+**Carries over:**
+- Lily's hand check of the page (T8).
+- Two open points:
+  - tier-0 viewers start on level 2, because the prior equals the level-2 floor; lowering the tier-0 prior to 0.35 would start them on level 1;
+  - the misconception after a wrong answer is still picked by the pack's id, not by the mistake.
+- For 2b: the Verifier's `grounded` check needs entries for the seven new kinds of question, and the 2b draft plan is updated before 2b starts.
+
 ## T1 — Questions per concept (2026-10-16)
 
 **Plan said:** one table per concept in `questions.py`, saying its form, how to build its options, and its quality rule.

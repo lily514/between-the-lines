@@ -15,3 +15,22 @@ Where implementation diverged from [plan.md](plan.md), or something surprising w
 **Affects:** T7 adds each new concept to all three tables (two, where it has no quality rule).
 
 The "no behaviour change" check was run by hand rather than as a test, since it compares before and after. The demo viewer's terminal output for seeds 7, 11 and 23 is identical, and so is every evidence pack (as JSON, including `pack_id`) and every attempt for seeds 7, 11, 23, 41 and 99.
+
+## T2 — Who touched it last (2026-10-16)
+
+**Plan said:** record the defender's touch before a corner off a deflection (a `CLEARANCE` by the defending team), add `tackle_out_share`, and test over 200 seeds that every throw-in and corner goes to the team that didn't make the action before it.
+**We did:** the opposite on recording. Blocks stay unrecorded, as in real event data, and there are more of them. New `deflected_out_share` (0.05): a pass or dribble the opponent gets to is sometimes blocked out over the nearest line instead, so the team that lost it gets the throw-in, the corner or the goal kick. `tackle_out_share` isn't needed. The test checks that a blocked ball goes out over the nearest line for the same team, and three new calibration bands count the restarts taken by the team that made the action before them (`MatchStats.kept`).
+**Why:** the same 40 real matches as Milestone 1's bands, converted with socceraction, show that the plan's rule fails on real data. socceraction drops StatsBomb's `Block` events, so a deflection is usually missing:
+
+| Restart taken by the team that made the action before it | Real | Sim before | Sim now |
+|---|---|---|---|
+| Throw-ins (of all throw-ins) | 8.2 (of 45) | 0 (of 34) | 7.6 (of 41) |
+| Corners (of all corners) | 4.9 (of 11) | 5.5 (of 8.6) | 5.6 (of 9.0) |
+| Goal kicks (of all goal kicks) | 0.8 (of 17) | 0 (of 17) | 0.6 (of 17) |
+
+Sim figures are means over the 50 calibration matches.
+
+The most common raw event in between is a `Block` by the other team: about 4.8 a match before those throw-ins, and 4.7 before those corners. The sim's corners already matched real data. Recording a defender touch would have made the sim less like real matches, and a detector that relied on it wouldn't work on them.
+
+Side effects, all towards real football: transition share 59.5% → 57.6% (real 47%), and dead balls 85 → 93 a match (real 103), 56 → 58 of them 15 s or more (real 70). The sample match, the xT grid in [expected-threat.md](../milestone-1/expected-threat.md) and the README's outputs are regenerated.
+**Affects:** T4. The restart detector can't read the last touch from the events. By the Laws, the restart goes against the team that touched the ball last, so when the restarting team made the last recorded action, the detector concludes that the ball came off an opponent, and the question says so. Where the ball went out comes from the restart's own position: a blocked action's end point is where it was blocked, inside the pitch.

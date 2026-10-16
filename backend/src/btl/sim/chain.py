@@ -439,10 +439,16 @@ def _lose(
     phase: Phase,
     play: _Play,
 ) -> _Outcome:
-    """A pass or dribble that the nearest opponent gets to, somewhere in its second half."""
+    """A pass or dribble that the nearest opponent gets to, somewhere in its second half.
+
+    Sometimes the opponent only blocks it, out of play: see `_blocked_out`.
+    """
     fraction = play.rng.uniform(0.4, 1.0)
     lost_at = Point(ball.x + fraction * (end.x - ball.x), ball.y + fraction * (end.y - ball.y))
     duration = distance(ball, lost_at) / speed + _between(play.rng, play.params.reaction_time)
+    if play.rng.random() < play.params.deflected_out_share:
+        failed = Step(slot, action, Result.FAIL, bodypart, ball, lost_at, duration, phase)
+        return _blocked_out(failed, lost_at, play)
     winner = _nearest(play.defence.formation, mirror(lost_at), in_possession=False)
     won_with = ActionType.TACKLE if action is ActionType.DRIBBLE else ActionType.INTERCEPTION
     return _Outcome(
@@ -450,6 +456,36 @@ def _lose(
         slot,
         handover=Start(mirror(lost_at), winner, won_with),
     )
+
+
+def _blocked_out(failed: Step, at: Point, play: _Play) -> _Outcome:
+    """An opponent blocks the ball out over the nearest line, so the team that had it restarts.
+
+    The block isn't an event of its own, as in real event data. Over a touchline it's a
+    throw-in level with the block; over the opponent's goal line, a corner; over the team's
+    own goal line, a goal kick.
+    """
+    params = play.params
+    lines = {
+        "right touchline": at.y,
+        "left touchline": PITCH_WIDTH - at.y,
+        "their goal line": PITCH_LENGTH - at.x,
+        "own goal line": at.x,
+    }
+    nearest = min(lines, key=lambda line: lines[line])
+    if nearest == "their goal line":
+        restart = _corner(play.attack, at.y, params.corner_delay)
+    elif nearest == "own goal line":
+        restart = _goal_kick(play.attack, play)
+    else:
+        spot = Point(at.x, 0.0 if nearest == "right touchline" else PITCH_WIDTH)
+        restart = Start(
+            spot,
+            _taker(play.attack.formation, spot),
+            restart=Restart.THROW_IN,
+            delay=params.throw_in_delay,
+        )
+    return _Outcome(_wait(failed, restart.delay), failed.slot, set_piece=restart)
 
 
 def _out_of_play(

@@ -23,26 +23,26 @@ Every action is first turned so that its team attacks left to right (towards x =
 
 ## Our grid
 
-`btl fit-xt` simulates 200 matches (by default) and fits the grid on all their actions, about 284,000. The matches use the season's fixtures in order, with match seeds drawn from `--seed`, so the same command always gives the same grid. It takes about 10 seconds, mostly simulating.
+`btl fit-xt` simulates 200 matches (by default) and fits the grid on all their actions, about 276,000. The matches use the season's fixtures in order, with match seeds drawn from `--seed`, so the same command always gives the same grid. It takes about 10 seconds, mostly simulating.
 
-Values in percent, attacking left to right, rows from the top touchline (y = 68) down. Refitted on 2026-10-08, after Milestone 2a added fouls, free kicks and offsides to the simulator:
+Values in percent, attacking left to right, rows from the top touchline (y = 68) down. Refitted on 2026-10-16, after Milestone 2d let opponents block the ball out of play:
 
 ```
- 0.2  0.2  0.2  0.3  0.3  0.3  0.4  0.5  0.6  0.7  0.9  1.3  1.3  1.5  1.3  1.5
- 0.2  0.2  0.2  0.3  0.3  0.4  0.4  0.5  0.6  0.7  1.0  1.2  1.2  1.5  1.5  1.5
- 0.2  0.2  0.2  0.3  0.3  0.4  0.4  0.5  0.6  0.8  0.9  1.1  1.4  1.7  2.0  1.4
- 0.2  0.2  0.2  0.3  0.3  0.4  0.4  0.5  0.6  0.8  1.0  1.2  1.6  2.5  2.8  2.7
- 0.2  0.2  0.2  0.3  0.3  0.3  0.4  0.5  0.6  0.8  1.0  1.3  1.9  3.3  5.3  5.1
- 0.2  0.2  0.2  0.3  0.3  0.4  0.4  0.5  0.6  0.8  1.1  1.5  2.2  4.0  6.9 13.0
- 0.2  0.2  0.2  0.3  0.3  0.3  0.4  0.5  0.7  0.8  1.1  1.4  2.1  4.4  8.5 12.1
- 0.2  0.2  0.2  0.3  0.3  0.4  0.4  0.5  0.6  0.8  1.0  1.3  1.9  2.9  4.5  6.5
- 0.2  0.2  0.3  0.3  0.3  0.3  0.4  0.5  0.6  0.8  1.0  1.2  1.7  2.4  3.5  2.7
- 0.2  0.2  0.2  0.3  0.3  0.4  0.4  0.5  0.6  0.7  1.0  1.2  1.5  1.8  2.5  1.7
- 0.2  0.2  0.3  0.3  0.3  0.4  0.4  0.5  0.6  0.8  0.9  1.3  1.4  1.5  1.5  1.6
- 0.2  0.2  0.2  0.3  0.3  0.4  0.4  0.5  0.6  0.7  0.9  1.2  1.5  1.4  1.6  1.4
+ 0.2  0.2  0.2  0.2  0.3  0.3  0.4  0.5  0.6  0.7  0.9  1.2  1.3  1.5  1.6  1.5
+ 0.2  0.2  0.2  0.3  0.3  0.3  0.4  0.5  0.6  0.7  0.9  1.2  1.4  1.5  1.7  1.3
+ 0.2  0.2  0.2  0.3  0.3  0.3  0.4  0.5  0.6  0.7  0.9  1.1  1.4  1.6  1.7  1.7
+ 0.2  0.2  0.2  0.3  0.3  0.3  0.4  0.5  0.6  0.8  1.0  1.2  1.5  2.0  2.4  2.8
+ 0.2  0.2  0.2  0.3  0.3  0.3  0.4  0.5  0.6  0.8  1.0  1.4  1.8  2.9  4.9  4.3
+ 0.2  0.2  0.2  0.3  0.3  0.3  0.4  0.5  0.5  0.8  1.0  1.3  2.2  3.8  8.3 13.2
+ 0.2  0.2  0.2  0.3  0.3  0.3  0.4  0.5  0.6  0.8  1.0  1.3  1.9  3.1  7.0 14.7
+ 0.2  0.2  0.2  0.3  0.3  0.3  0.4  0.5  0.6  0.8  0.9  1.2  1.7  3.3  5.8  5.6
+ 0.2  0.2  0.2  0.3  0.3  0.3  0.4  0.5  0.6  0.7  0.9  1.1  1.4  1.8  2.5  2.9
+ 0.2  0.2  0.2  0.3  0.3  0.3  0.4  0.5  0.6  0.7  0.9  1.2  1.3  1.4  2.1  1.9
+ 0.2  0.2  0.2  0.3  0.3  0.3  0.4  0.5  0.6  0.7  1.0  1.3  1.3  1.5  1.8  1.5
+ 0.2  0.2  0.2  0.2  0.3  0.3  0.4  0.5  0.6  0.7  0.9  1.1  1.2  1.4  1.4  1.5
 ```
 
-The shape is what published grids from real matches look like: almost flat and near zero in a team's own half, rising through midfield, and peaking in the cells right in front of goal (about 13%). That's a sanity check on the simulator as much as on the fit.
+The shape is what published grids from real matches look like: almost flat and near zero in a team's own half, rising through midfield, and peaking in the cells right in front of goal (about 13 to 15%). That's a sanity check on the simulator as much as on the fit.
 
 The model is saved as JSON at `backend/data/models/expected-threat.json` (gitignored). The file holds the grid and what it was fitted on: number of matches, seed, league seed, and number of actions. socceraction's own `save_model` writes only the bare grid, so the file format is ours (see `btl/io.py`). It is not committed, because it would quietly go stale whenever the simulator changes.
 

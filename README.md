@@ -45,15 +45,15 @@ uv run btl demo-viewer
   Line-breaking passes  ███░░░░░░░░░░░░░░░░░   15%
   Counter-pressing      ███░░░░░░░░░░░░░░░░░   15%
 
-Dead ball (corner), 03:38 · about play at 03:02
+Dead ball (free kick), 04:16 · about play at 03:25
   (the pitch at the moment)
-Play has stopped for a corner. Back at 03:02: Ripon Wardens lost the ball to Ludlow
-Ferrymen. What did they do next?
+Play has stopped for a free kick. Back at 03:25: Ludlow Ferrymen lost the ball to Ripon
+Wardens. What did they do next?
   A  Stopped the attack with a foul
   B  Dropped back into their shape
   C  Hunted the ball straight back and won it
 The demo viewer picks C.
-Right read. After losing the ball, Ripon Wardens hunted it straight back instead of
+Right read. After losing the ball, Ludlow Ferrymen hunted it straight back instead of
 retreating. Winning it back quickly catches the opponent before they can spread out.
 The answer was Hunted the ball straight back and won it.
 Takeaway: Recognize a counter-press: winning the ball straight back after losing it,
@@ -123,26 +123,26 @@ uv run btl moments examples/match-0007
 ```
 
 ```
-──────────────── Moment 3 · line breaking pass · level 2 · 34:15 ────────────────
+──────────────── Moment 3 · line breaking pass · level 2 · 34:27 ────────────────
   (the three events leading up to it)
-Play pauses after #549; the pitch at #550, attacking left to right. The answer is #550.
+Play pauses after #525; the pitch at #526, attacking left to right. The answer is #526.
 +-----------------------------------------------------+
 |                          :                          |
 |                          :                          |
 |                          :                          |
-|       o          o       :                          |
 |                          :                          |
-|                          x                          |
-|                          :      x                   |
-|        o         ox      :                          |
-|  G                       x ··*  x             K     |
-|                         ····                        |
-|       o               @··:      x                   |
-|                   x      x                          |
-|                          : o                        |
-|                          x      x                   |
-|       o         o        :                          |
+|     o         o          :                          |
 |                          :                          |
+|                         o:  x                       |
+|     o         o      x   :                          |
+|               x          :                          |
+|  G                       :  x                K      |
+|                      x ··*                          |
+|     o               ···· :  x                       |
+|               x  @···    :                          |
+|                      x   :                          |
+|     o         o          :  x                       |
+|                      x   :                          |
 |                          :                          |
 +-----------------------------------------------------+
 @ on the ball · o teammates · G their keeper · x opponents · K opponents' keeper · * pass target
@@ -166,7 +166,7 @@ uv run btl inspect examples/match-0007 --concept counter_press
 
 ```sh
 uv run btl fit-xt
-uv run btl inspect examples/match-0007 --start 540 --count 15
+uv run btl inspect examples/match-0007 --start 515 --count 15
 ```
 
 **5. Your own matches.** The same seed always gives the same match. `--plant` asks for teachable moments by concept and level, and they happen easiest first. Matches are saved under `data/matches/`, which git ignores, and `btl matches` lists them.

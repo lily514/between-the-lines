@@ -84,12 +84,13 @@ def child(node: object, step: str | int) -> object:
 def test_the_shipped_map_loads_and_keeps_its_rules() -> None:
     concept_map = load_concept_map()
 
-    assert len(concept_map.concepts) == 18
+    assert len(concept_map.concepts) == 20
     assert set(concept_map.tiers) == {0, 1, 2, 3}
     assert {c.detector for c in concept_map.concepts if c.detector} == {
         ConceptId.LINE_BREAKING_PASS,
         ConceptId.COUNTER_PRESS,
         ConceptId.COUNTER_ATTACK,
+        ConceptId.RESTART,
     }
 
 

@@ -122,28 +122,65 @@ concepts:
       - "Every shot on target was a real chance to score."
     evidence_fields: [team, shots, shots_on_target, opp_shots]
 
-  # Candidate for splitting later: this concept bundles several rules. If BKT shows
-  # viewers mastering some rules but not others, split it into offside, set_pieces,
-  # and fouls_and_cards.
-  - id: rules
-    name: Key rules
+  # The Laws of the game, split three ways so a viewer can master one rule before another.
+  - id: restarts
+    name: Restarts
     strand: game_flow
     tier: 0
     prerequisites: []
-    objective: "Explain why play stopped: offside, fouls and cards, and set pieces (corners, free kicks, throw-ins, penalties)."
+    objective: "Say which restart comes next, and for which team, when the ball goes out of play."
+    detector: restart
+    data_requirements: [events]
+    question_types: [predict]
+    example_prompt: "The ball has gone out. What happens now?"
+    explanations:
+      beginner: "When the ball goes out, the team that didn't touch it last gets it back. Over a touchline that's a throw-in; over a goal line it's a corner or a goal kick."
+      intermediate: "{last_touch_team} touched it last before it crossed the {out_line}, so {restart_team} restart with a {restart_type}."
+      analyst: "{last_touch_team} touched it last before it crossed the {out_line}, so it's a {restart_type} to {restart_team}. Event data often misses a block, so the last recorded action isn't always the last touch."
+    misconceptions:
+      - "The team that kicked it out gets the throw-in."
+      - "If the attacking team kicks it over the goal line, they get a corner."
+    evidence_fields: [restart_type, restart_team, last_touch_team, out_line]
+
+  - id: offside
+    name: Offside
+    strand: game_flow
+    tier: 0
+    prerequisites: []
+    objective: "Tell whether an attacker is offside when the ball is played to them."
     detector: null
     data_requirements: [events, snapshot]
     question_types: [identify, predict]
-    example_prompt: "Play has stopped. Why?"
+    example_prompt: "{receiver} is about to get the pass. Will the flag go up?"
     explanations:
-      beginner: "Play stops for fouls, when the ball goes out, or for offside. The restart (a corner, throw-in, or free kick) depends on why it stopped."
-      intermediate: "That was {stoppage_type}. {rule_note}"
-      analyst: "{stoppage_type} at {minute}. Set pieces like this account for {set_piece_goal_share}% of goals in this league, so restarts are worth watching."
+      beginner: "An attacker is offside if, when the pass is played, they are in the other team's half and nearer the goal than both the ball and the second-last defender. Level counts as onside."
+      intermediate: "When the pass was played, {receiver} was {margin_m} {beyond_or_behind} the second-last defender, so they were {offside_call}."
+      analyst: "Offside is judged the moment the pass is played, not when the ball arrives. At that moment {receiver} was {margin_m} {beyond_or_behind} the second-last defender: {offside_call}."
     misconceptions:
       - "Being in an offside position is always an offence."
       - "Offside is judged when the player receives the ball, not when the pass is played."
       - "You can be offside from a throw-in."
-    evidence_fields: [stoppage_type, rule_note, minute, set_piece_goal_share]
+    evidence_fields: [receiver, margin_m, beyond_or_behind, offside_call]
+
+  - id: fouls_and_cards
+    name: Fouls and cards
+    strand: game_flow
+    tier: 0
+    prerequisites: []
+    objective: "Say what a foul gives (a free kick or a penalty, and to whom), why a player is booked, and when the referee lets play go on."
+    detector: null
+    data_requirements: [events]
+    question_types: [identify, predict]
+    example_prompt: "Foul by {fouler}. What happens now?"
+    explanations:
+      beginner: "After a foul, the team that was fouled gets a free kick where it happened. If the foul is inside the fouling team's own penalty area, it's a penalty."
+      intermediate: "{fouler} fouled a {fouled_team} player {box_position}, so {fouled_team} get a {restart_type}."
+      analyst: "Where the contact happens decides the restart, not where the player lands: this foul was {box_position}, so {fouled_team} get a {restart_type}. Stopping a promising attack with a foul is also a booking."
+    misconceptions:
+      - "Every foul is a booking."
+      - "A foul is a penalty if the player lands inside the box."
+      - "The referee should always stop play for a foul."
+    evidence_fields: [fouler, fouled_team, restart_type, box_position, booked, booking_reason, advantage]
 
   # ---------------------------------------------------------------- Tier 1
 
@@ -209,7 +246,7 @@ concepts:
     name: Transitions and counterattacks
     strand: game_flow
     tier: 1
-    prerequisites: [rules, tackles]
+    prerequisites: [restarts, tackles]
     objective: "Recognize the moment after a turnover, when both teams are briefly out of shape, and spot a counterattack."
     detector: counter_attack
     data_requirements: [events]

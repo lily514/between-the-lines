@@ -173,3 +173,23 @@ def won_and_carried(
     if team == AWAY:
         events = tuple(_mirror_event(event) for event in events)
     return Match(game_id=GAME, home_team_id=HOME, away_team_id=AWAY, events=events)
+
+
+def out_and_restart(
+    out: tuple[TeamId, ActionType, Result],
+    restart: tuple[TeamId, ActionType, Spot],
+    period: int = 1,
+) -> Match:
+    """A two-event match: an action that ends with the ball out of play, then the restart.
+
+    Stored coordinates. The first action runs from midfield towards the restart's spot.
+    """
+    team, action, result = out
+    by, kind, spot = restart
+    first_player = HOME_MIDFIELDER if team == HOME else AWAY_MIDFIELDER
+    second_player = HOME_MIDFIELDER if by == HOME else AWAY_MIDFIELDER
+    events = (
+        make_event(0, team, first_player, (52, 34), spot, action, result),
+        make_event(1, by, second_player, spot, (spot[0], 34), kind, period_id=period),
+    )
+    return Match(game_id=GAME, home_team_id=HOME, away_team_id=AWAY, events=events)

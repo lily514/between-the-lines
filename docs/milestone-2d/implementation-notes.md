@@ -43,3 +43,19 @@ Side effects, all towards real football: transition share 59.5% → 57.6% (real 
 **Affects:**
 - T5: the offside detector takes a flagged pass's receiver to be the attacker in an offside position nearest the pass's end (for a completed pass, the next action's player).
 - A band test changed. `test_natural_settled_line_breaks_are_plentiful_at_levels_two_and_three` asked for at least 8 settled level-2 line-breaks in every one of 40 matches; the lowest is now 7. Its comment's figures were already stale before 2d (level 2: median 17, lowest 10 at the commit before T2, not median 22, lowest 14). T2 lowered them to median 15, lowest 8, and T3 moved only the lowest match. The floor is now 5 and the comment gives today's figures: level 2 median 15 (lowest 7), level 3 median 33 (lowest 22).
+
+## T4 — Restart detector (2026-10-16)
+
+**Plan said:** `concepts/restart.py` with difficulty 0.1 / 0.3 / 0.5 / 0.75, plus 0.15 within 5 m of a corner flag; the concept map split with the evidence fields listed in the plan.
+**We did:**
+- The detector class is `BallOutOfPlay` (ConceptId `restart`), since `Restart` is already the simulator's name for kinds of restart.
+- As T2's note set out, it decides "off an opponent" from the restart: when the team taking it made the last recorded action.
+- A corner after the defending team's own recorded action (a clearance behind) had no difficulty in the plan; it gets 0.4, between a plain goal kick and a throw-in off an opponent.
+- The near-corner-flag extra applies to throw-ins only. For a corner or a goal kick, event data says where the restart is taken, not where along the goal line the ball crossed.
+- Evidence fields, changed so the explanations read as sentences:
+  - `restarts`: `out_side` dropped; whose goal line it was is clear from the restart.
+  - `offside`: `offside` becomes `offside_call` ("offside" or "onside"); `beyond_or_behind` added; `in_own_half` dropped (the explanation's rule covers it).
+  - `fouls_and_cards`: `metres_from_box` becomes `box_position` ("inside the penalty area", "3 m outside it").
+- `offside` and `fouls_and_cards` are in the map with `detector: null` until T5 and T6. None of the three is askable until T7, so the learning loop is unchanged.
+**Why:** see each point.
+**Affects:** T7 fills the renamed fields.

@@ -10,7 +10,7 @@ A detector's rule says what a concept *is*; a quality rule here says which occur
 good enough to *teach* with. Both are written in football terms.
 """
 
-from collections.abc import Collection
+from collections.abc import Callable, Collection, Mapping
 from dataclasses import dataclass
 
 from btl.concepts.base import ConceptTag, Detector, MatchContext
@@ -87,7 +87,8 @@ def find_candidates(
     detectors = _detectors(concept_map, active)
     candidates: list[Candidate] = []
     for tag in detect_all(ctx, detectors):
-        if not _worth_teaching(tag, ctx):
+        worth_teaching = WORTH_TEACHING.get(tag.concept)
+        if worth_teaching is not None and not worth_teaching(tag, ctx):
             continue
         concept = concept_map.concept_for_detector(tag.concept)
         if concept is None or tag.difficulty is None:
@@ -111,9 +112,13 @@ def _detectors(concept_map: ConceptMap, active: Collection[ConceptKey]) -> tuple
     return tuple(detector for detector in ALL_DETECTORS if detector.concept in wanted)
 
 
-def _worth_teaching(tag: ConceptTag, ctx: MatchContext) -> bool:
-    if tag.concept is ConceptId.LINE_BREAKING_PASS:
-        event = ctx.events[tag.action_id]
-        threat = ctx.threat[tag.action_id] if ctx.threat else None
-        return event.end_x - event.start_x >= MIN_FORWARD and threat is not None and threat > 0
-    return True
+def _clearly_forward_and_threatening(tag: ConceptTag, ctx: MatchContext) -> bool:
+    event = ctx.events[tag.action_id]
+    threat = ctx.threat[tag.action_id] if ctx.threat else None
+    return event.end_x - event.start_x >= MIN_FORWARD and threat is not None and threat > 0
+
+
+# The quality rule for each concept that has one; every other tag is worth teaching.
+WORTH_TEACHING: Mapping[ConceptId, Callable[[ConceptTag, MatchContext], bool]] = {
+    ConceptId.LINE_BREAKING_PASS: _clearly_forward_and_threatening,
+}

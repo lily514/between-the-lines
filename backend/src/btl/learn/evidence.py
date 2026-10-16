@@ -17,7 +17,7 @@ fact and the right answer left out. After the viewer answers, the whole pack is 
 import hashlib
 import json
 import math
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import asdict, dataclass, replace
 
 from btl.concepts.base import MatchContext
@@ -203,13 +203,8 @@ def build_pack(
         "score": _text(f"{score[home]}\N{EN DASH}{score[away]}"),
         "minute": _text(clock(event.period_id, event.time_seconds)),
     }
-    if tag.concept is ConceptId.LINE_BREAKING_PASS:
-        # The passer is known before the pass; who wins the ball back is part of the answer.
-        context["player"] = _text(names.player(event.player_id))
-        outcome = _line_breaking_outcome(question, ctx, threat, names)
-    else:
-        outcome = _counter_press_outcome(question, ctx)
-        outcome["player"] = _text(names.player(event.player_id))
+    known, outcome = FACTS[tag.concept](question, ctx, threat, names)
+    context.update(known)
     concept = concept_map.concept(question.candidate.concept)
     pack = EvidencePack(
         pack_id="",
@@ -281,9 +276,9 @@ class _Names:
         return f"#{player.shirt_number} {player.full_name}"
 
 
-def _line_breaking_outcome(
+def _line_breaking_facts(
     question: Question, ctx: MatchContext, threat: ThreatModel, names: _Names
-) -> dict[str, Fact]:
+) -> tuple[dict[str, Fact], dict[str, Fact]]:
     tag = question.candidate.tag
     event = ctx.events[tag.action_id]
     before = threat.value_at(event.start_x, event.start_y)
@@ -302,10 +297,13 @@ def _line_breaking_outcome(
     }
     if receiver is not None:
         outcome["receiver"] = _text(names.player(receiver))
-    return outcome
+    # The passer is known before the pass.
+    return {"player": _text(names.player(event.player_id))}, outcome
 
 
-def _counter_press_outcome(question: Question, ctx: MatchContext) -> dict[str, Fact]:
+def _counter_press_facts(
+    question: Question, ctx: MatchContext, threat: ThreatModel, names: _Names
+) -> tuple[dict[str, Fact], dict[str, Fact]]:
     tag = question.candidate.tag
     event = ctx.events[tag.action_id]
     snapshot = ctx.snapshot(event.action_id)
@@ -320,11 +318,14 @@ def _counter_press_outcome(question: Question, ctx: MatchContext) -> dict[str, F
         if snapshot is not None
         else 0
     )
-    return {
+    outcome = {
         "seconds_to_regain": _seconds(tag.evidence["seconds to win back"]),
         "metres_from_goal": _metres(tag.evidence["metres from goal"]),
         "pressers": _count(pressers),
+        # Who wins the ball back is part of the answer.
+        "player": _text(names.player(event.player_id)),
     }
+    return {}, outcome
 
 
 def _pack_option(option: Option, names: _Names) -> PackOption:
@@ -438,3 +439,16 @@ def _percent_points(change: float) -> Fact:
 def _significant(value: float) -> str:
     """Two significant figures, since threat values span 0.1% to 30%: "0.29", "4.1", "12"."""
     return f"{value:.0f}" if value >= 10 else f"{value:.2g}"
+
+
+# Each concept's facts, as (context, outcome): what is known before answering, and what answers.
+FACTS: Mapping[
+    ConceptId,
+    Callable[
+        [Question, MatchContext, ThreatModel, _Names],
+        tuple[dict[str, Fact], dict[str, Fact]],
+    ],
+] = {
+    ConceptId.LINE_BREAKING_PASS: _line_breaking_facts,
+    ConceptId.COUNTER_PRESS: _counter_press_facts,
+}

@@ -11,6 +11,7 @@ from btl.learn.candidates import Candidate
 from btl.learn.concept_map import load_concept_map
 from btl.learn.evidence import (
     COUNT_WORDS,
+    FACTS,
     Delivered,
     EvidencePack,
     build_pack,
@@ -18,7 +19,7 @@ from btl.learn.evidence import (
     to_json,
 )
 from btl.learn.knowledge import Delivery
-from btl.learn.questions import Asks, Form, active_concepts, build_question
+from btl.learn.questions import ASKABLE, Asks, Form, active_concepts, build_question
 from btl.schema.frames import seen_by
 from btl.schema.vocab import ConceptId
 from tests.fixtures.learning import designed_with_candidates, threat_model
@@ -81,6 +82,10 @@ def keys_in(value: object) -> set[str]:
 def first_line_break(seed: int = 0) -> Candidate:
     _, _, candidates = designed_with_candidates(seed)
     return next(c for c in candidates if c.tag.concept is ConceptId.LINE_BREAKING_PASS)
+
+
+def test_every_concept_with_questions_has_facts() -> None:
+    assert set(FACTS) == ASKABLE
 
 
 def test_the_same_question_always_gives_the_same_pack_and_id() -> None:

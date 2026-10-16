@@ -17,7 +17,7 @@ Every number comes from a detector or the threat model, never from text.
 """
 
 import math
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from enum import StrEnum
 
@@ -107,7 +107,20 @@ class Question:
         return next(option.key for option in self.options if option.correct)
 
 
-ASKABLE = frozenset({ConceptId.LINE_BREAKING_PASS, ConceptId.COUNTER_PRESS})
+_Unkeyed = tuple[str, bool, PlayerId | None, tuple[float, float] | None, Mapping[str, float | str]]
+_Built = tuple[Asks, list[_Unkeyed]] | None
+
+
+@dataclass(frozen=True, slots=True)
+class ConceptQuestions:
+    """How one concept is asked.
+
+    ``form`` gives the form for a level and delivery. ``build`` gives what the question asks
+    and its options, unshuffled with exactly one correct, or None if no fair set exists.
+    """
+
+    form: Callable[[int, Delivery], Form]
+    build: Callable[[Candidate, int, Form, MatchContext, ThreatModel, Generator], _Built]
 
 
 def active_concepts(concept_map: ConceptMap) -> tuple[ConceptKey, ...]:
@@ -116,9 +129,8 @@ def active_concepts(concept_map: ConceptMap) -> tuple[ConceptKey, ...]:
 
 
 def question_form(concept: ConceptId, level: int, delivery: Delivery) -> Form:
-    """Predict only for a line-breaking pass asked live at level 2 or 3; otherwise identify."""
-    live_pass = concept is ConceptId.LINE_BREAKING_PASS and delivery is Delivery.LIVE
-    return Form.PREDICT if live_pass and level >= 2 else Form.IDENTIFY
+    """The form a concept's question takes at a level and delivery."""
+    return QUESTIONS[concept].form(level, delivery)
 
 
 def build_question(
@@ -137,15 +149,11 @@ def build_question(
         the real one.
     """
     concept = candidate.tag.concept
-    if concept not in ASKABLE:
+    if concept not in QUESTIONS:
         raise ValueError(f"no questions exist for {concept}")
-    form = question_form(concept, level, delivery)
-    if form is Form.PREDICT:
-        built = _where_to_pass(candidate, level, ctx, threat)
-    elif concept is ConceptId.LINE_BREAKING_PASS:
-        built = _line_breaking_identify(candidate, level, rng)
-    else:
-        built = _counter_press_identify(candidate, level, rng)
+    asking = QUESTIONS[concept]
+    form = asking.form(level, delivery)
+    built = asking.build(candidate, level, form, ctx, threat, rng)
     if built is None:
         return None
     asks, unkeyed = built
@@ -157,12 +165,42 @@ def build_question(
     return Question(candidate, form, asks, level, delivery, candidate.tag.action_id, options)
 
 
-_Unkeyed = tuple[str, bool, PlayerId | None, tuple[float, float] | None, Mapping[str, float | str]]
+def _line_breaking_form(level: int, delivery: Delivery) -> Form:
+    return Form.PREDICT if delivery is Delivery.LIVE and level >= 2 else Form.IDENTIFY
+
+
+def _line_breaking(
+    candidate: Candidate,
+    level: int,
+    form: Form,
+    ctx: MatchContext,
+    threat: ThreatModel,
+    rng: Generator,
+) -> _Built:
+    if form is Form.PREDICT:
+        return _where_to_pass(candidate, level, ctx, threat)
+    return _line_breaking_identify(candidate, level, rng)
+
+
+def _after_the_play(level: int, delivery: Delivery) -> Form:
+    # A counter-press happens during a transition, so it is only ever asked after the play.
+    return Form.IDENTIFY
+
+
+def _counter_press(
+    candidate: Candidate,
+    level: int,
+    form: Form,
+    ctx: MatchContext,
+    threat: ThreatModel,
+    rng: Generator,
+) -> _Built:
+    return _counter_press_identify(candidate, level, rng)
 
 
 def _where_to_pass(
     candidate: Candidate, level: int, ctx: MatchContext, threat: ThreatModel
-) -> tuple[Asks, list[_Unkeyed]] | None:
+) -> _Built:
     event = ctx.events[candidate.tag.action_id]
     snapshot = ctx.snapshot(event.action_id)
     if snapshot is None:
@@ -288,3 +326,10 @@ def _range_label(low: float | None, high: float | None, unit: str) -> str:
     if high is None:
         return f"{low:g} {unit} or more"
     return f"{low:g} to {high:g} {unit}"
+
+
+QUESTIONS: Mapping[ConceptId, ConceptQuestions] = {
+    ConceptId.LINE_BREAKING_PASS: ConceptQuestions(_line_breaking_form, _line_breaking),
+    ConceptId.COUNTER_PRESS: ConceptQuestions(_after_the_play, _counter_press),
+}
+ASKABLE = frozenset(QUESTIONS)

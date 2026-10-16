@@ -148,7 +148,7 @@ concepts:
     tier: 0
     prerequisites: []
     objective: "Tell whether an attacker is offside when the ball is played to them."
-    detector: null
+    detector: offside
     data_requirements: [events, snapshot]
     question_types: [identify, predict]
     example_prompt: "{receiver} is about to get the pass. Will the flag go up?"

@@ -193,3 +193,48 @@ def out_and_restart(
         make_event(1, by, second_player, spot, (spot[0], 34), kind, period_id=period),
     )
     return Match(game_id=GAME, home_team_id=HOME, away_team_id=AWAY, events=events)
+
+
+ATTACKER_ID = PlayerId(13)
+# Their keeper on the line and a back four at x = 80, in the home team's direction.
+OFFSIDE_DEFENCE: tuple[Spot, ...] = ((104, 34), (80, 15), (80, 28), (80, 40), (80, 53))
+
+
+def pass_to(
+    receiver: Spot,
+    *,
+    start: Spot = (70, 34),
+    end: Spot = (90, 30),
+    result: Result = Result.SUCCESS,
+    action: ActionType = ActionType.PASS,
+    other_attacker: Spot | None = None,
+    defence: tuple[Spot, ...] = OFFSIDE_DEFENCE,
+) -> Match:
+    """A home pass, with the passer, a receiver and the defence (their keeper first) tracked.
+
+    Stored coordinates, home attacking towards x = 105. A completed pass is followed by the
+    receiver's action from ``end``. ``other_attacker`` adds a second, tracked teammate.
+    """
+    first = make_event(0, HOME, HOME_MIDFIELDER, start, end, action, result)
+    events = [first]
+    if result is Result.SUCCESS:
+        events.append(make_event(1, HOME, HOME_WINGER, end, (end[0] + 5, end[1])))
+    slots = [
+        PlayerSlot(HOME_MIDFIELDER, HOME, is_goalkeeper=False),
+        PlayerSlot(HOME_WINGER, HOME, is_goalkeeper=False),
+        PlayerSlot(KEEPER_ID, AWAY, is_goalkeeper=True),
+        *(PlayerSlot(PlayerId(DEFENDER_IDS + i), AWAY, False) for i in range(4)),
+    ]
+    spots = [start, receiver, *defence]
+    if other_attacker is not None:
+        slots.append(PlayerSlot(ATTACKER_ID, HOME, is_goalkeeper=False))
+        spots.append(other_attacker)
+    xy = np.full((len(events), len(slots), 2), np.nan)
+    xy[0] = spots
+    return Match(
+        game_id=GAME,
+        home_team_id=HOME,
+        away_team_id=AWAY,
+        events=tuple(events),
+        positions=Positions(slots=tuple(slots), xy=xy),
+    )

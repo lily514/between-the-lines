@@ -59,3 +59,10 @@ Side effects, all towards real football: transition share 59.5% → 57.6% (real 
 - `offside` and `fouls_and_cards` are in the map with `detector: null` until T5 and T6. None of the three is askable until T7, so the learning loop is unchanged.
 **Why:** see each point.
 **Affects:** T7 fills the renamed fields.
+
+## T5 — Offside detector (2026-10-16)
+
+**Plan said:** tag forward passes into the opponent's half whose receiver is within 5 m of the second-last defender; difficulty from the margin; agree with `Result.OFFSIDE` over 200 seeds.
+**We did:** as planned (`OffsidePass`), measured from the offside line (the furthest of the second-last opponent, the ball and halfway), so "behind the ball" and "in their own half" fall out of the same margin. Two additions to the evidence: "line (m)", for the reveal's offside line in T7, and the receiver's "player id". Over 200 matches it calls offside on every flagged pass and on no completed one.
+**Why:** a tag's evidence holds numbers only, and the question needs to know who the receiver is. The player id is stored as a float, which is exact for ids this size. `OffsidePass.receiver` and `offside_line` are public, so T7's questions can work out the other attackers' positions the same way.
+**Affects:** T7 reads "player id" back as a `PlayerId`.

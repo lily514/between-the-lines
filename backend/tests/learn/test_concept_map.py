@@ -91,6 +91,7 @@ def test_the_shipped_map_loads_and_keeps_its_rules() -> None:
         ConceptId.COUNTER_PRESS,
         ConceptId.COUNTER_ATTACK,
         ConceptId.RESTART,
+        ConceptId.OFFSIDE,
     }
 
 

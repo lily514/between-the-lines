@@ -274,6 +274,17 @@
           "picture": {
             "$ref": "#/components/schemas/PictureOut"
           },
+          "reveal_line": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reveal Line"
+          },
           "reveal_path": {
             "items": {
               "maxItems": 2,
@@ -332,6 +343,7 @@
           "options",
           "picture",
           "reveal_path",
+          "reveal_line",
           "concepts",
           "thresholds"
         ],
@@ -590,7 +602,7 @@
         "type": "object"
       },
       "PictureOut": {
-        "description": "The players and the ball at the moment, and the play's path when the form shows it.",
+        "description": "The players and the ball at the moment, and the play's path when the form shows it.\n\n``mark`` is a spot the question is about, such as where the ball went out for a throw-in.",
         "properties": {
           "action_id": {
             "title": "Action Id",
@@ -609,6 +621,27 @@
             ],
             "title": "Ball",
             "type": "array"
+          },
+          "mark": {
+            "anyOf": [
+              {
+                "maxItems": 2,
+                "minItems": 2,
+                "prefixItems": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ],
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mark"
           },
           "markers": {
             "items": {
@@ -639,7 +672,8 @@
           "action_id",
           "markers",
           "ball",
-          "path"
+          "path",
+          "mark"
         ],
         "title": "PictureOut",
         "type": "object"

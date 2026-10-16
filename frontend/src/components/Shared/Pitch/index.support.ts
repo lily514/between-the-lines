@@ -80,16 +80,29 @@ export const cropTo = (points: readonly Point[]): ViewBox => {
 /** The player on the ball, if the picture has one. */
 export const carrierOf = (picture: Picture): Marker | undefined => picture.markers.find(m => m.role === 'on the ball')
 
-/** The screen points a moment's view must show: the ball, the carrier, each option and the path. */
-export const momentPoints = (picture: Picture, options: readonly PitchOption[], path: readonly Point[]): Point[] => {
+/**
+ * The screen points a moment's view must show: the ball, the carrier, each option, the path, the picture's mark and,
+ * if given, the offside line.
+ */
+export const momentPoints = (
+	picture: Picture,
+	options: readonly PitchOption[],
+	path: readonly Point[],
+	line: number | null = null
+): Point[] => {
 	const carrier = carrierOf(picture)
 	return [
 		picture.ball,
 		...(carrier === undefined ? [] : [[carrier.x, carrier.y] as const]),
 		...options.map(o => o.at),
-		...path
+		...path,
+		...(picture.mark === null ? [] : [picture.mark]),
+		...(line === null ? [] : [[line, PITCH_WIDTH / 2] as const])
 	].map(toScreen)
 }
+
+/** The offside line across the pitch, in screen metres: picture x becomes a height on screen. */
+export const lineAcross = (x: number) => ({ x1: 0, y1: PITCH_LENGTH - x, x2: PITCH_WIDTH, y2: PITCH_LENGTH - x })
 
 /** Whether a marker takes part in the moment: on the ball, at an option's target, or on the path. */
 export const isInvolved = (marker: Marker, options: readonly PitchOption[], path: readonly Point[]): boolean => {

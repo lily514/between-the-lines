@@ -29,7 +29,15 @@ OUTCOME_NAMES = {
     "metres_from_goal",
     "pressers",
 }
-HIDDEN = {"correct", "correct_key", "outcome", "reveal_path", "chosen", "explanation"}
+HIDDEN = {
+    "correct",
+    "correct_key",
+    "outcome",
+    "reveal_path",
+    "reveal_line",
+    "chosen",
+    "explanation",
+}
 ASKED_LATER = Delivered(Delivery.DEFERRED, 1, 2000.0, PhaseOfPlay.DEAD_BALL, "goal kick")
 
 

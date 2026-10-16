@@ -49,6 +49,7 @@ const Feedback = ({ feedback, question, onContinue }: FeedbackProps) => {
 					picture={feedback.picture}
 					options={pitchOptions(question)}
 					path={feedback.reveal_path}
+					line={feedback.reveal_line}
 					reveal
 					crop="moment"
 					label={`The real play from ${question.occurred.clock}`}

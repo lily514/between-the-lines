@@ -98,3 +98,14 @@ Over ten demo sessions, a match asks 6.8 questions on average (4 to 8). About 2.
 - Two open points for Lily:
   - A tier-0 viewer starts on level 2, because the prior equals the level-2 floor, so level-1 basics questions come only after a wrong answer. Lowering the tier-0 prior to 0.35 would start them on level 1.
   - The misconception shown after a wrong answer is picked from the concept's list by the pack's id, as before. So a penalty mix-up can be answered with the advantage misconception.
+
+## T8 — In the browser (2026-10-16)
+
+**Plan said:** the out point, foul spot and offside line on the pitch; the phase pill; API types regenerated; Lily plays two matches by hand.
+**We did:**
+- `PictureOut.mark` and `FeedbackOut.reveal_line` reach the page. The pitch draws the mark as a ring and the offside line dashed across the pitch, fading in with the reveal. The crop keeps both in view. There's no foul-spot mark: the ball is already drawn there (see T7).
+- The match step also needed a third case: a live question in a dead ball. It now says "Play has stopped at …", shows a "Dead ball" pill with no restart, and explains "Play has just stopped, so there is time to call what happens next." Before, every live question claimed settled possession.
+- The captured payloads in `src/test-fixtures/` gained `mark` and `reveal_line` (both `null`), as every real payload now has them.
+- Lily's hand check is still to do.
+**Why:** see each point.
+**Affects:** nothing.

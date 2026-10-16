@@ -105,6 +105,7 @@ def feedback_payload(
         ],
         picture=_picture(pack.picture),
         reveal_path=list(pack.reveal_path),
+        reveal_line=pack.reveal_line,
         concepts=movements(before, told.mastery),
         thresholds=thresholds_payload(thresholds),
     )
@@ -154,4 +155,5 @@ def _picture(picture: Picture) -> PictureOut:
         ],
         ball=picture.ball,
         path=list(picture.path),
+        mark=picture.mark,
     )

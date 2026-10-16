@@ -9,6 +9,7 @@ import {
 	cropTo,
 	describePitch,
 	isInvolved,
+	lineAcross,
 	momentPoints,
 	pathData,
 	startsAtBall,
@@ -27,6 +28,8 @@ export interface PitchProps {
 	path?: readonly Point[]
 	/** Draw the path as a reveal: traced over 600 ms, or faded in when motion is reduced. */
 	reveal?: boolean
+	/** The offside line's x in picture coordinates, drawn dashed across the pitch. */
+	line?: number | null
 	/** `moment` crops top and bottom to the ball, options and path; `full` shows the whole pitch. */
 	crop?: 'full' | 'moment'
 	/** The start of what a screen reader hears, such as "Freeze-frame at 58:13". */
@@ -34,9 +37,10 @@ export interface PitchProps {
 }
 
 /** The pitch as an SVG in metres, portrait, with the team on the ball attacking up. */
-const Pitch = ({ picture, options = [], path = [], reveal = false, crop = 'full', label }: PitchProps) => {
+const Pitch = ({ picture, options = [], path = [], reveal = false, line = null, crop = 'full', label }: PitchProps) => {
 	const arrowId = useId()
-	const view = crop === 'moment' ? cropTo(momentPoints(picture, options, path)) : FULL_VIEW
+	const view = crop === 'moment' ? cropTo(momentPoints(picture, options, path, line)) : FULL_VIEW
+	const mark = picture.mark === null ? null : toScreen(picture.mark)
 	const ball = ballOnScreen(picture)
 	const carrier = carrierOf(picture)
 	// Lines start at the ball as drawn, beside the carrier, so they never cross the shirt number.
@@ -82,6 +86,16 @@ const Pitch = ({ picture, options = [], path = [], reveal = false, crop = 'full'
 					<circle key={y} className="pitch__spot" cx={x} cy={y} r={0.3} />
 				))}
 			</g>
+			{line !== null && (
+				<line
+					className={`pitch__offside-line${reveal ? ' pitch__offside-line--reveal' : ''}`}
+					data-testid="pitch-offside-line"
+					{...lineAcross(line)}
+				/>
+			)}
+			{mark !== null && (
+				<circle className="pitch__mark" data-testid="pitch-mark" cx={mark[0]} cy={mark[1]} r={1.6} />
+			)}
 			{options.length > 0 && (
 				<g className="pitch__options" data-testid="pitch-options">
 					{options.map(option => (

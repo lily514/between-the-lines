@@ -274,7 +274,8 @@
 			[90.3, 29.5],
 			[92.2, 34.5],
 			[92.2, 34.5]
-		]
+		],
+		"mark": null
 	},
 	"reveal_path": [
 		[105.0, 0.0],
@@ -298,5 +299,6 @@
 	"thresholds": {
 		"unlock": 0.8,
 		"mastery": 0.95
-	}
+	},
+	"reveal_line": null
 }

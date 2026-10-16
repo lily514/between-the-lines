@@ -105,3 +105,20 @@ test('the path and the option lines start at the drawn ball, not on the player',
 		expect(from?.[0]).toBeCloseTo(at[0] ?? NaN, 1)
 	}
 })
+
+test('a throw-in question marks where the ball went out', () => {
+	const picture = { ...identify.picture, mark: [40, 0] as [number, number] }
+	render(<Pitch picture={picture} label="Freeze-frame" />)
+	const mark = screen.getByTestId('pitch-mark')
+	expect(mark.getAttribute('cx')).toBe('68')
+	expect(mark.getAttribute('cy')).toBe('65')
+	expect(screen.queryByTestId('pitch-offside-line')).toBeNull()
+})
+
+test('an offside reveal draws the line across the pitch', () => {
+	render(<Pitch picture={predictFeedback.picture} line={80} reveal label="The reveal" />)
+	const line = screen.getByTestId('pitch-offside-line')
+	expect(line.getAttribute('y1')).toBe('25')
+	expect(line.getAttribute('y2')).toBe('25')
+	expect(line.getAttribute('x2')).toBe('68')
+})

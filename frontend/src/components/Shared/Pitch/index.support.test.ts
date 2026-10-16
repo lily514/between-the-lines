@@ -131,3 +131,10 @@ test('the ball sits beside the player on it, clear of the shirt number', () => {
 	// The disc has radius 2.2; with its centre outside it, the ball only touches the disc's edge.
 	expect(Math.hypot(bx - cx, by - cy)).toBeGreaterThan(2.2)
 })
+
+test('a moment’s view also shows the picture’s mark and the offside line', () => {
+	const picture = { ...predict.picture, mark: [5, 0] as [number, number] }
+	const view = cropTo(momentPoints(picture, [], [], 100))
+	expect(inside(toScreen([5, 0]), view)).toBe(true)
+	expect(inside(toScreen([100, 34]), view)).toBe(true)
+})

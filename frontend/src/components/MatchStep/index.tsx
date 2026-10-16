@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef } from 'react'
 import type { Question } from '../../api/client.ts'
 import './index.css'
-import { movedOn, stepHeading, whyNow } from './index.support.ts'
+import { movedOn, stepHeading, stepPhase, whyNow } from './index.support.ts'
 import PhasePill from '../Shared/PhasePill.tsx'
 
 export interface MatchStepProps {
@@ -45,7 +45,7 @@ const MatchStep = ({ home, away, matchNumber, from, to, occurred, score, onArriv
 				</span>
 			</header>
 			<p className="match-step__moved">{movedOn(from, to)}</p>
-			<PhasePill phase={live ? 'settled' : to.phase} detail={live ? null : to.restart} />
+			<PhasePill phase={stepPhase(to)} detail={live ? null : to.restart} />
 			<h2 id={headingId} ref={heading} tabIndex={-1} className="match-step__heading screen-heading">
 				{stepHeading(to)}
 			</h2>

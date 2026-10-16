@@ -27,6 +27,17 @@ ASKING: Mapping[Asks, str] = {
     Asks.WHAT_THEY_DID: "{team} lost the ball to {opponent}. What did they do next?",
     Asks.SECONDS_TO_REGAIN: "{team} lost the ball to {opponent} and won it back. "
     "How long did that take?",
+    Asks.WHAT_RESTART: "The ball has gone over the {out_line}, last touched by {last_touch_team}. "
+    "What happens now?",
+    Asks.FLAG_OR_NOT: "{player} is about to pass to {attacker}. Will the flag go up?",
+    Asks.WHO_IS_OFFSIDE: "Which of these attackers is in an offside position as {player} "
+    "plays the pass?",
+    Asks.WAS_IT_OFFSIDE: "{player} passed to {attacker}. Was {attacker} offside when the pass "
+    "was played?",
+    Asks.AFTER_THE_FOUL: "{fouler} has fouled a {fouled_team} player. What happens now?",
+    Asks.WHY_BOOKED: "{fouler} has been booked for fouling a {fouled_team} player. Why?",
+    Asks.WHY_PLAY_ON: "{fouler} fouled a {fouled_team} player, but the referee let play go on. "
+    "Why?",
 }
 # How a question asked after the play opens, by where play is when it is asked.
 LOOKING_BACK: Mapping[str, str] = {

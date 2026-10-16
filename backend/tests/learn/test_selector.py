@@ -7,7 +7,7 @@ import pytest
 from btl.concepts.base import ConceptTag
 from btl.concepts.phase import PhaseOfPlay, PhaseTimeline, Segment, phase_timeline
 from btl.learn.bkt import BktModel
-from btl.learn.candidates import Candidate
+from btl.learn.candidates import AskedWhen, Candidate
 from btl.learn.concept_map import ConceptKey, Thresholds, load_concept_map
 from btl.learn.knowledge import Delivery
 from btl.learn.questions import active_concepts
@@ -16,6 +16,8 @@ from btl.learn.selector import (
     IN_PLAY_CAP,
     MINIMUM_PER_MATCH,
     SPACING,
+    TIER0_CAP,
+    TIER0_MATCH_CAP,
     Prompt,
     level_for,
     run_match,
@@ -23,12 +25,25 @@ from btl.learn.selector import (
 from btl.schema.event import Event
 from btl.schema.ids import ActionId, GameId
 from btl.schema.vocab import ActionType, ConceptId
-from tests.fixtures.learning import COUNTER_PRESS, LINE_BREAKING, designed_with_candidates
+from tests.fixtures.learning import (
+    COUNTER_PRESS,
+    FOULS,
+    LINE_BREAKING,
+    OFFSIDE,
+    RESTARTS,
+    designed_with_candidates,
+)
 from tests.fixtures.matches import HOME, HOME_MIDFIELDER, make_event
 
 SETTLED, TRANSITION = PhaseOfPlay.SETTLED, PhaseOfPlay.TRANSITION
 THRESHOLDS = Thresholds(unlock=0.8, mastery=0.95)
-DETECTORS = {LINE_BREAKING: ConceptId.LINE_BREAKING_PASS, COUNTER_PRESS: ConceptId.COUNTER_PRESS}
+DETECTORS = {
+    LINE_BREAKING: ConceptId.LINE_BREAKING_PASS,
+    COUNTER_PRESS: ConceptId.COUNTER_PRESS,
+    RESTARTS: ConceptId.RESTART,
+    OFFSIDE: ConceptId.OFFSIDE,
+    FOULS: ConceptId.FOUL,
+}
 MINUTE = 60.0
 
 
@@ -39,8 +54,15 @@ class Scenario:
     candidates: list[Candidate] = field(default_factory=list[Candidate])
     segments: list[Segment] = field(default_factory=list[Segment])
     events: list[Event] = field(default_factory=list[Event])
+    # The basics start mastered, so only the two concepts under test are on the frontier.
     mastery: dict[ConceptKey, float] = field(
-        default_factory=lambda: {LINE_BREAKING: 0.15, COUNTER_PRESS: 0.15}
+        default_factory=lambda: {
+            LINE_BREAKING: 0.15,
+            COUNTER_PRESS: 0.15,
+            RESTARTS: 0.99,
+            OFFSIDE: 0.99,
+            FOULS: 0.99,
+        }
     )
     asked: list[Prompt] = field(default_factory=list[Prompt])
 
@@ -51,24 +73,31 @@ class Scenario:
         phase: PhaseOfPlay = SETTLED,
         concept: ConceptKey = LINE_BREAKING,
         period: int = 1,
+        asked_when: AskedWhen = AskedWhen.IN_PLAY,
     ) -> Candidate:
         action = ActionId(len(self.events))
         self.events.append(make_event(action, HOME, HOME_MIDFIELDER, (50, 34), (60, 34)))
         tag = ConceptTag(DETECTORS[concept], GameId(1), action, (action, action), difficulty, {})
-        candidate = Candidate(concept, tag, difficulty, phase, period, minute * MINUTE)
+        candidate = Candidate(concept, tag, difficulty, phase, period, minute * MINUTE, asked_when)
         self.candidates.append(candidate)
         return candidate
 
     def dead_ball(
-        self, minute: float, seconds: float = 25.0, restart: ActionType = ActionType.GOALKICK
+        self,
+        minute: float,
+        seconds: float = 25.0,
+        restart: ActionType = ActionType.GOALKICK,
+        after: ActionId | None = None,
     ) -> None:
+        """A dead ball, stopped after ``after`` (by default, an action of its own)."""
         action = ActionId(len(self.events))
         self.events.append(
             make_event(action, HOME, HOME_MIDFIELDER, (5, 34), (40, 34), action_type=restart)
         )
         start = minute * MINUTE
+        stopped = action if after is None else after
         self.segments.append(
-            Segment(PhaseOfPlay.DEAD_BALL, 1, start, start + seconds, action, action)
+            Segment(PhaseOfPlay.DEAD_BALL, 1, start, start + seconds, stopped, action)
         )
 
     def breaks(self) -> None:
@@ -229,7 +258,8 @@ def test_the_breaks_make_sure_of_two_questions_ignoring_difficulty() -> None:
 
 
 def test_with_everything_mastered_review_is_occasional_and_hard() -> None:
-    scene = Scenario(mastery={LINE_BREAKING: 0.97, COUNTER_PRESS: 0.97})
+    scene = Scenario()
+    scene.mastery |= {LINE_BREAKING: 0.97, COUNTER_PRESS: 0.97}
     for minute in (10, 25, 40):
         scene.moment(minute, difficulty=0.8)
 
@@ -274,8 +304,15 @@ def test_in_simulated_matches_no_question_is_ever_asked_during_a_transition(seed
 
     assert len(prompts) >= MINIMUM_PER_MATCH
     assert all(p.delivered.phase is not TRANSITION for p in prompts)
+    # Live means in settled play, or in the dead ball straight after a restart or a foul.
     assert all(
-        p.candidate.phase is SETTLED for p in prompts if p.delivered.delivery is Delivery.LIVE
+        p.candidate.phase is SETTLED
+        or (
+            p.delivered.phase is PhaseOfPlay.DEAD_BALL
+            and p.candidate.asked_when is AskedWhen.AT_THE_STOPPAGE
+        )
+        for p in prompts
+        if p.delivered.delivery is Delivery.LIVE
     )
     in_play = [p for p in prompts if p.delivered.phase in (SETTLED, PhaseOfPlay.DEAD_BALL)]
     assert len(in_play) <= IN_PLAY_CAP
@@ -283,3 +320,75 @@ def test_in_simulated_matches_no_question_is_ever_asked_during_a_transition(seed
     assert all(later - earlier >= SPACING for earlier, later in pairwise(times))
     for kind in (PhaseOfPlay.HALF_TIME, PhaseOfPlay.FULL_TIME):
         assert sum(p.delivered.phase is kind for p in prompts) <= BREAK_CAP
+
+
+def beginner_on_the_basics() -> Scenario:
+    scene = Scenario()
+    scene.mastery |= {RESTARTS: 0.15, OFFSIDE: 0.15, FOULS: 0.15}
+    scene.mastery |= {LINE_BREAKING: 0.99, COUNTER_PRESS: 0.99}
+    return scene
+
+
+def test_a_restart_is_asked_live_at_its_own_stoppage_however_short() -> None:
+    scene = beginner_on_the_basics()
+    scene.moment(10, 0.1, TRANSITION, RESTARTS, asked_when=AskedWhen.AT_THE_STOPPAGE)
+
+    (prompt,) = scene.run()
+
+    assert prompt.delivered.delivery is Delivery.LIVE
+    assert prompt.delivered.phase is PhaseOfPlay.DEAD_BALL
+    assert prompt.delivered.restart is None
+    assert minutes([prompt]) == [10]
+
+
+def test_a_restart_that_cannot_be_asked_then_is_never_asked() -> None:
+    scene = beginner_on_the_basics()
+    scene.moment(10, 0.1, SETTLED, OFFSIDE)
+    scene.moment(12, 0.1, SETTLED, RESTARTS, asked_when=AskedWhen.AT_THE_STOPPAGE)
+    scene.breaks()
+
+    prompts = scene.run()
+
+    assert [p.candidate.concept for p in prompts] == [OFFSIDE]
+
+
+def test_play_that_went_on_after_a_foul_is_only_reviewed_later() -> None:
+    scene = beginner_on_the_basics()
+    scene.moment(10, 0.1, SETTLED, FOULS, asked_when=AskedWhen.AFTERWARDS)
+    scene.dead_ball(20)
+
+    (prompt,) = scene.run()
+
+    assert prompt.delivered.delivery is Delivery.DEFERRED
+    assert minutes([prompt]) == [20]
+
+
+def test_each_basic_concept_is_capped_and_so_are_all_of_them_together() -> None:
+    scene = beginner_on_the_basics()
+    stoppage = AskedWhen.AT_THE_STOPPAGE
+    for minute in (5, 14, 23, 32):
+        scene.moment(minute, 0.1, SETTLED, RESTARTS, asked_when=stoppage)
+    scene.moment(50, 0.1, SETTLED, OFFSIDE, period=2)
+    scene.moment(60, 0.1, SETTLED, FOULS, period=2, asked_when=stoppage)
+
+    prompts = scene.run()
+
+    concepts = [p.candidate.concept for p in prompts]
+    assert concepts.count(RESTARTS) == TIER0_CAP
+    assert len(concepts) == TIER0_MATCH_CAP
+    assert FOULS not in concepts
+
+
+def test_a_review_at_the_stoppage_its_moment_caused_names_no_restart() -> None:
+    scene = Scenario()
+    caused = scene.moment(10, 0.2, TRANSITION)
+    scene.dead_ball(10.2, restart=ActionType.FREEKICK_SHORT, after=caused.tag.action_id)
+    other = Scenario()
+    other.moment(10, 0.2, TRANSITION)
+    other.dead_ball(20, restart=ActionType.FREEKICK_SHORT)
+
+    (named_not,) = scene.run()
+    (named,) = other.run()
+
+    assert named_not.delivered.restart is None
+    assert named.delivered.restart == "free kick"

@@ -151,16 +151,16 @@ concepts:
     detector: offside
     data_requirements: [events, snapshot]
     question_types: [identify, predict]
-    example_prompt: "{receiver} is about to get the pass. Will the flag go up?"
+    example_prompt: "{attacker} is about to get the pass. Will the flag go up?"
     explanations:
       beginner: "An attacker is offside if, when the pass is played, they are in the other team's half and nearer the goal than both the ball and the second-last defender. Level counts as onside."
-      intermediate: "When the pass was played, {receiver} was {margin_m} {beyond_or_behind} the second-last defender, so they were {offside_call}."
-      analyst: "Offside is judged the moment the pass is played, not when the ball arrives. At that moment {receiver} was {margin_m} {beyond_or_behind} the second-last defender: {offside_call}."
+      intermediate: "When the pass was played, {attacker} was {margin_m} m {beyond_or_behind}, so they were {offside_call}."
+      analyst: "Offside is judged the moment the pass is played, not when the ball arrives. At that moment {attacker} was {margin_m} m {beyond_or_behind}: {offside_call}."
     misconceptions:
       - "Being in an offside position is always an offence."
       - "Offside is judged when the player receives the ball, not when the pass is played."
       - "You can be offside from a throw-in."
-    evidence_fields: [receiver, margin_m, beyond_or_behind, offside_call]
+    evidence_fields: [attacker, margin_m, beyond_or_behind, offside_call]
 
   - id: fouls_and_cards
     name: Fouls and cards
@@ -173,14 +173,14 @@ concepts:
     question_types: [identify, predict]
     example_prompt: "Foul by {fouler}. What happens now?"
     explanations:
-      beginner: "After a foul, the team that was fouled gets a free kick where it happened. If the foul is inside the fouling team's own penalty area, it's a penalty."
-      intermediate: "{fouler} fouled a {fouled_team} player {box_position}, so {fouled_team} get a {restart_type}."
-      analyst: "Where the contact happens decides the restart, not where the player lands: this foul was {box_position}, so {fouled_team} get a {restart_type}. Stopping a promising attack with a foul is also a booking."
+      beginner: "After a foul, the team that was fouled gets a free kick where it happened, or a penalty if it was inside the fouling team's own penalty area. If the fouled team still has the ball and a chance, the referee can let play go on instead: that's advantage."
+      intermediate: "{fouler} fouled a {fouled_team} player {box_position}. {foul_outcome}"
+      analyst: "Where the contact happens decides the restart, not where the player lands: this foul was {box_position}. {foul_outcome} {booking_note}"
     misconceptions:
       - "Every foul is a booking."
       - "A foul is a penalty if the player lands inside the box."
       - "The referee should always stop play for a foul."
-    evidence_fields: [fouler, fouled_team, restart_type, box_position, booked, booking_reason, advantage]
+    evidence_fields: [fouler, fouled_team, restart_type, box_position, foul_outcome, booking_note]
 
   # ---------------------------------------------------------------- Tier 1
 

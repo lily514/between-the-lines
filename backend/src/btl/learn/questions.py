@@ -1,12 +1,17 @@
 """Questions: what to ask about a candidate moment, and its three answer options.
 
-The form depends on the concept, the viewer's level and when the question is asked:
+The form depends on the concept, the moment, the viewer's level and when the question is asked:
 
 - A line-breaking pass asked live at level 2 or 3 is a **predict** question: play stops before
   the pass, and the options are passes to three teammates.
+- A restart, and a foul that stops play, is predicted at the stoppage: what happens now? A
+  booking for stopping a promising attack is instead identified there, at level 2 or 3.
+- An offside call asked live is predicted before the pass: will the flag go up, or, at level
+  2, which attacker is in an offside position.
 - Everything else is an **identify** question about play the viewer has just seen: a
-  line-breaking pass asked at level 1 or after a delay, and every counter-press, since a
-  counter-press happens during a transition and is never asked live.
+  line-breaking pass asked at level 1 or after a delay, every counter-press, since a
+  counter-press happens during a transition and is never asked live, an offside call asked
+  later, and why the referee played advantage.
 
 Questions get harder as the level rises. Predict questions offer closer alternatives.
 Identify questions ask for finer detail: how many lines a pass broke, then how wide its gap
@@ -25,12 +30,13 @@ from numpy.random import Generator
 
 from btl.concepts.base import MatchContext
 from btl.concepts.line_breaking import LineBreakingPass
-from btl.learn.candidates import Candidate
+from btl.concepts.offside import HALFWAY, offside_line
+from btl.learn.candidates import AskedWhen, Candidate
 from btl.learn.concept_map import ConceptKey, ConceptMap
 from btl.learn.knowledge import Delivery
 from btl.schema.ids import ActionId, PlayerId
 from btl.schema.snapshot import PlayerPosition
-from btl.schema.vocab import ConceptId
+from btl.schema.vocab import ActionType, ConceptId
 from btl.value.xt import ThreatModel
 
 OPTION_KEYS = ("A", "B", "C")
@@ -48,6 +54,26 @@ WHAT_THEY_DID = (
     "Stopped the attack with a foul",
 )
 LINE_COUNTS = ("None", "One", "Two", "Three")
+# Option labels may use the pack's context facts as slots: {team} is the team of the moment's
+# key action, {opponent} the other one, {attacker} the player an offside call is about.
+OFFSIDE_YES = "Yes: {attacker} is past the second-last defender"
+OFFSIDE_NO = {
+    "the second-last defender": "No: {attacker} is level with or behind the second-last defender",
+    "the ball": "No: {attacker} is behind the ball",
+    "halfway": "No: {attacker} is in their own half",
+}
+# Always a wrong reason: the misconception about when offside is judged.
+OFFSIDE_WHEN_IT_ARRIVES = "No: offside only counts where {attacker} is when the ball arrives"
+BOOKING_REASONS = (
+    "For stopping a promising attack",
+    "Every foul gets a booking",
+    "To make up for not giving a penalty",
+)
+ADVANTAGE_REASONS = (
+    "{opponent} kept the ball, so stopping play would have helped {team}",
+    "The referee didn't see the foul",
+    "A foul in the middle of the pitch isn't punished",
+)
 
 
 class Form(StrEnum):
@@ -65,6 +91,13 @@ class Asks(StrEnum):
     GAP_WIDTH = "gap width"
     WHAT_THEY_DID = "what they did"
     SECONDS_TO_REGAIN = "seconds to win back"
+    WHAT_RESTART = "what restart"
+    FLAG_OR_NOT = "flag or not"
+    WHO_IS_OFFSIDE = "who is offside"
+    WAS_IT_OFFSIDE = "was it offside"
+    AFTER_THE_FOUL = "after the foul"
+    WHY_BOOKED = "why booked"
+    WHY_PLAY_ON = "why play on"
 
 
 @dataclass(frozen=True, slots=True)
@@ -72,7 +105,8 @@ class Option:
     """One answer the viewer can pick.
 
     ``label`` is written by code. A pass option's label holds a ``{target}`` slot for the
-    receiver's name, which the evidence pack fills in. ``facts`` are measured, never written:
+    receiver's name, which the evidence pack fills in, as it does the context facts a label
+    names, such as ``{team}``. ``facts`` are measured, never written:
     for a pass, what it would break and add if it were played. ``end`` is where a pass option's
     receiver stands, seen with the passing team attacking left to right.
     """
@@ -115,11 +149,12 @@ _Built = tuple[Asks, list[_Unkeyed]] | None
 class ConceptQuestions:
     """How one concept is asked.
 
-    ``form`` gives the form for a level and delivery. ``build`` gives what the question asks
-    and its options, unshuffled with exactly one correct, or None if no fair set exists.
+    ``form`` gives the form for a moment at a level and delivery. ``build`` gives what the
+    question asks and its options, unshuffled with exactly one correct, or None if no fair set
+    exists.
     """
 
-    form: Callable[[int, Delivery], Form]
+    form: Callable[[Candidate, int, Delivery], Form]
     build: Callable[[Candidate, int, Form, MatchContext, ThreatModel, Generator], _Built]
 
 
@@ -128,9 +163,9 @@ def active_concepts(concept_map: ConceptMap) -> tuple[ConceptKey, ...]:
     return tuple(c.key for c in concept_map.concepts if c.detector in ASKABLE)
 
 
-def question_form(concept: ConceptId, level: int, delivery: Delivery) -> Form:
-    """The form a concept's question takes at a level and delivery."""
-    return QUESTIONS[concept].form(level, delivery)
+def question_form(candidate: Candidate, level: int, delivery: Delivery) -> Form:
+    """The form a question about a moment takes at a level and delivery."""
+    return QUESTIONS[candidate.tag.concept].form(candidate, level, delivery)
 
 
 def build_question(
@@ -146,13 +181,14 @@ def build_question(
     Returns:
         The question, or None if no fair set of options exists: for a predict question, fewer
         than two teammates offer a pass that breaks fewer lines and adds no more threat than
-        the real one.
+        the real one; for which attacker is offside, not exactly one is; and advantage below
+        level 3.
     """
     concept = candidate.tag.concept
     if concept not in QUESTIONS:
         raise ValueError(f"no questions exist for {concept}")
     asking = QUESTIONS[concept]
-    form = asking.form(level, delivery)
+    form = asking.form(candidate, level, delivery)
     built = asking.build(candidate, level, form, ctx, threat, rng)
     if built is None:
         return None
@@ -165,7 +201,7 @@ def build_question(
     return Question(candidate, form, asks, level, delivery, candidate.tag.action_id, options)
 
 
-def _line_breaking_form(level: int, delivery: Delivery) -> Form:
+def _line_breaking_form(candidate: Candidate, level: int, delivery: Delivery) -> Form:
     return Form.PREDICT if delivery is Delivery.LIVE and level >= 2 else Form.IDENTIFY
 
 
@@ -182,7 +218,7 @@ def _line_breaking(
     return _line_breaking_identify(candidate, level, rng)
 
 
-def _after_the_play(level: int, delivery: Delivery) -> Form:
+def _after_the_play(candidate: Candidate, level: int, delivery: Delivery) -> Form:
     # A counter-press happens during a transition, so it is only ever asked after the play.
     return Form.IDENTIFY
 
@@ -196,6 +232,129 @@ def _counter_press(
     rng: Generator,
 ) -> _Built:
     return _counter_press_identify(candidate, level, rng)
+
+
+def _what_happens_now(candidate: Candidate, level: int, delivery: Delivery) -> Form:
+    return Form.PREDICT
+
+
+def _restart(
+    candidate: Candidate,
+    level: int,
+    form: Form,
+    ctx: MatchContext,
+    threat: ThreatModel,
+    rng: Generator,
+) -> _Built:
+    """The right restart, the other team's restart on that line, and one from the other line.
+
+    How hard it is comes from the moment, not from the options: the levels take different
+    moments, such as a ball off a defender at level 3.
+    """
+    first, last = candidate.tag.span
+    restart = ctx.events[last]
+    ours = "{team}" if restart.team_id == ctx.events[first].team_id else "{opponent}"
+    theirs = "{opponent}" if ours == "{team}" else "{team}"
+    if restart.action_type is ActionType.THROW_IN:
+        labels = (f"Throw-in to {ours}", f"Throw-in to {theirs}", f"Corner to {ours}")
+    elif restart.action_type is ActionType.GOALKICK:
+        labels = (f"Goal kick to {ours}", f"Corner to {theirs}", f"Throw-in to {ours}")
+    else:
+        labels = (f"Corner to {ours}", f"Goal kick to {theirs}", f"Throw-in to {ours}")
+    return Asks.WHAT_RESTART, _labelled(labels, 0)
+
+
+def _offside_form(candidate: Candidate, level: int, delivery: Delivery) -> Form:
+    return Form.PREDICT if delivery is Delivery.LIVE else Form.IDENTIFY
+
+
+def _offside(
+    candidate: Candidate,
+    level: int,
+    form: Form,
+    ctx: MatchContext,
+    threat: ThreatModel,
+    rng: Generator,
+) -> _Built:
+    if level == 2:
+        return _who_is_offside(candidate, ctx)
+    asks = Asks.FLAG_OR_NOT if form is Form.PREDICT else Asks.WAS_IT_OFFSIDE
+    if candidate.tag.evidence["offside"]:
+        labels = (OFFSIDE_YES, OFFSIDE_NO["the second-last defender"], OFFSIDE_WHEN_IT_ARRIVES)
+    else:
+        reason = OFFSIDE_NO[offside_reference(candidate, ctx)]
+        labels = (reason, OFFSIDE_YES, OFFSIDE_WHEN_IT_ARRIVES)
+    return asks, _labelled(labels, 0)
+
+
+def offside_reference(candidate: Candidate, ctx: MatchContext) -> str:
+    """What made the offside line at an offside moment: the furthest forward of three.
+
+    Returns:
+        "the second-last defender", "the ball" or "halfway".
+    """
+    event = ctx.events[candidate.tag.action_id]
+    line = candidate.tag.evidence["line (m)"]
+    if line == round(HALFWAY, 1):
+        return "halfway"
+    return "the ball" if line == round(event.start_x, 1) else "the second-last defender"
+
+
+def _who_is_offside(candidate: Candidate, ctx: MatchContext) -> _Built:
+    """Three attackers as the pass is played, exactly one in an offside position.
+
+    The other two are the onside attackers nearest the line, so the call is close.
+    """
+    event = ctx.events[candidate.tag.action_id]
+    snapshot = ctx.snapshot(event.action_id)
+    line = None if snapshot is None else offside_line(snapshot, event)
+    if snapshot is None or line is None:
+        return None
+    attackers = [
+        p
+        for p in snapshot.positions
+        if p.team_id == event.team_id and not p.is_actor and not p.is_goalkeeper
+    ]
+    offside = [p for p in attackers if p.x > line]
+    onside = sorted((p for p in attackers if p.x <= line), key=lambda p: line - p.x)
+    if len(offside) != 1 or len(onside) < 2:
+        return None
+    options: list[_Unkeyed] = [
+        ("{target}", player is offside[0], player.player_id, (player.x, player.y), {})
+        for player in (offside[0], *onside[:2])
+    ]
+    return Asks.WHO_IS_OFFSIDE, options
+
+
+def _foul_form(candidate: Candidate, level: int, delivery: Delivery) -> Form:
+    if candidate.asked_when is AskedWhen.AFTERWARDS:
+        return Form.IDENTIFY
+    return Form.IDENTIFY if level >= 2 and _explained_booking(candidate) else Form.PREDICT
+
+
+def _explained_booking(candidate: Candidate) -> bool:
+    evidence = candidate.tag.evidence
+    return bool(evidence["booked"] and evidence["promising attack"])
+
+
+def _foul(
+    candidate: Candidate,
+    level: int,
+    form: Form,
+    ctx: MatchContext,
+    threat: ThreatModel,
+    rng: Generator,
+) -> _Built:
+    if candidate.tag.evidence["advantage"]:
+        return None if level < 3 else (Asks.WHY_PLAY_ON, _labelled(ADVANTAGE_REASONS, 0))
+    if form is Form.IDENTIFY:
+        return Asks.WHY_BOOKED, _labelled(BOOKING_REASONS, 0)
+    # {team} fouled, so {opponent} restart.
+    if candidate.tag.evidence["penalty"]:
+        labels = ("Penalty to {opponent}", "Free kick to {opponent}", "Free kick to {team}")
+    else:
+        labels = ("Free kick to {opponent}", "Penalty to {opponent}", "Free kick to {team}")
+    return Asks.AFTER_THE_FOUL, _labelled(labels, 0)
 
 
 def _where_to_pass(
@@ -331,5 +490,8 @@ def _range_label(low: float | None, high: float | None, unit: str) -> str:
 QUESTIONS: Mapping[ConceptId, ConceptQuestions] = {
     ConceptId.LINE_BREAKING_PASS: ConceptQuestions(_line_breaking_form, _line_breaking),
     ConceptId.COUNTER_PRESS: ConceptQuestions(_after_the_play, _counter_press),
+    ConceptId.RESTART: ConceptQuestions(_what_happens_now, _restart),
+    ConceptId.OFFSIDE: ConceptQuestions(_offside_form, _offside),
+    ConceptId.FOUL: ConceptQuestions(_foul_form, _foul),
 }
 ASKABLE = frozenset(QUESTIONS)

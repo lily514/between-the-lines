@@ -1,4 +1,5 @@
 from collections import Counter
+from dataclasses import replace
 
 import numpy as np
 import pytest
@@ -163,12 +164,15 @@ def test_the_true_narrow_range_is_not_always_in_the_same_place() -> None:
 
 
 def test_counter_presses_are_never_predicted() -> None:
+    _, line_break = pass_picture()
+    press = replace(line_break, tag=replace(line_break.tag, concept=ConceptId.COUNTER_PRESS))
+
     for level in (1, 2, 3):
         for delivery in Delivery:
-            assert question_form(ConceptId.COUNTER_PRESS, level, delivery) is Form.IDENTIFY
-    assert question_form(ConceptId.LINE_BREAKING_PASS, 1, LIVE) is Form.IDENTIFY
-    assert question_form(ConceptId.LINE_BREAKING_PASS, 2, LIVE) is Form.PREDICT
-    assert question_form(ConceptId.LINE_BREAKING_PASS, 3, DEFERRED) is Form.IDENTIFY
+            assert question_form(press, level, delivery) is Form.IDENTIFY
+    assert question_form(line_break, 1, LIVE) is Form.IDENTIFY
+    assert question_form(line_break, 2, LIVE) is Form.PREDICT
+    assert question_form(line_break, 3, DEFERRED) is Form.IDENTIFY
 
 
 def test_options_are_shuffled_but_the_same_seed_gives_the_same_order() -> None:
@@ -180,7 +184,13 @@ def test_options_are_shuffled_but_the_same_seed_gives_the_same_order() -> None:
 
 
 def test_the_active_concepts_are_those_with_questions() -> None:
-    assert active_concepts(load_concept_map()) == ("line_breaking_pass", "counter_press")
+    assert active_concepts(load_concept_map()) == (
+        "restarts",
+        "offside",
+        "fouls_and_cards",
+        "line_breaking_pass",
+        "counter_press",
+    )
 
 
 @pytest.mark.parametrize("seed", range(40))

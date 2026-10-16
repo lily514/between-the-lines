@@ -35,6 +35,14 @@ OUTCOME_NAMES = {
     "seconds_to_regain",
     "metres_from_goal",
     "pressers",
+    "restart_type",
+    "restart_team",
+    "margin_m",
+    "beyond_or_behind",
+    "offside_call",
+    "box_position",
+    "foul_outcome",
+    "booking_note",
 }
 ASKED_LATER = Delivered(Delivery.DEFERRED, 1, 2000.0, PhaseOfPlay.DEAD_BALL, "goal kick")
 
@@ -46,11 +54,20 @@ def league() -> League:
 def pack_for(
     candidate: Candidate, level: int, delivery: Delivery, seed: int = 0, rng_seed: int = 0
 ) -> EvidencePack:
+    pack = maybe_pack(candidate, level, delivery, seed, rng_seed)
+    assert pack is not None
+    return pack
+
+
+def maybe_pack(
+    candidate: Candidate, level: int, delivery: Delivery, seed: int = 0, rng_seed: int = 0
+) -> EvidencePack | None:
     _, ctx, _ = designed_with_candidates(seed)
     question = build_question(
         candidate, level, delivery, ctx, threat_model(), np.random.default_rng(rng_seed)
     )
-    assert question is not None
+    if question is None:
+        return None
     delivered = Delivered(delivery, candidate.period_id, candidate.time_seconds, candidate.phase)
     if delivery is Delivery.DEFERRED:
         delivered = ASKED_LATER
@@ -58,14 +75,19 @@ def pack_for(
 
 
 def sample_packs(seed: int) -> list[EvidencePack]:
-    """Every form: a few candidates of each concept, at each level, live and deferred."""
+    """Every form: a few candidates of each concept, at each level, live and deferred.
+
+    Questions that can't be built at a level, such as advantage below level 3, are left out.
+    """
     _, _, candidates = designed_with_candidates(seed)
     packs: list[EvidencePack] = []
-    for concept in (ConceptId.LINE_BREAKING_PASS, ConceptId.COUNTER_PRESS):
+    for concept in sorted(ASKABLE):
         for candidate in [c for c in candidates if c.tag.concept is concept][:3]:
             for level in (1, 2, 3):
                 for delivery in Delivery:
-                    packs.append(pack_for(candidate, level, delivery, seed))
+                    pack = maybe_pack(candidate, level, delivery, seed)
+                    if pack is not None:
+                        packs.append(pack)
     return packs
 
 
@@ -106,7 +128,7 @@ def test_a_question_view_never_holds_the_answer_or_an_outcome(seed: int) -> None
         names = keys_in(view)
 
         assert not names & OUTCOME_NAMES, pack.asks
-        assert not names & {"correct", "correct_key", "outcome", "reveal_path"}
+        assert not names & {"correct", "correct_key", "outcome", "reveal_path", "reveal_line"}
         assert all("{" not in option["label"] for option in view["options"])
 
 
@@ -131,6 +153,8 @@ def test_every_display_agrees_with_its_value(seed: int) -> None:
                 assert fact.display == fact.value
             elif name in {"lines_broken", "pressers"}:
                 assert fact.display == COUNT_WORDS[int(fact.value)]
+            elif name == "box_position":
+                assert (fact.value > 0) == ("outside" in fact.display)
             elif name in {"xt_before", "xt_after", "threat_added"}:
                 shown = float(fact.display.rstrip("%"))
                 assert shown == pytest.approx(fact.value * 100, rel=0.05, abs=0.005), name

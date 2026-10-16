@@ -12,6 +12,7 @@ good enough to *teach* with. Both are written in football terms.
 
 from collections.abc import Callable, Collection, Mapping
 from dataclasses import dataclass
+from enum import StrEnum
 
 from btl.concepts.base import ConceptTag, Detector, MatchContext
 from btl.concepts.phase import PhaseOfPlay, PhaseTimeline
@@ -48,12 +49,23 @@ def play_designed_match(home: Club, away: Club, seed: int) -> Match:
     return simulate_match(home, away, seed, director=Planter(MATCH_DESIGN))
 
 
+class AskedWhen(StrEnum):
+    """When a moment may be asked about."""
+
+    # Live if play is settled; otherwise reviewed at a later stoppage or break.
+    IN_PLAY = "in play"
+    # Live in the dead ball straight after it, or never: a restart or a foul that stops play.
+    AT_THE_STOPPAGE = "at the stoppage"
+    # Only ever reviewed later: play went on, as after advantage.
+    AFTERWARDS = "afterwards"
+
+
 @dataclass(frozen=True, slots=True)
 class Candidate:
     """A moment the learning loop could ask about.
 
-    ``phase`` is the phase of play at the tag's key action, which decides when the question
-    can be asked.
+    ``phase`` is the phase of play at the tag's key action. With ``asked_when``, it decides
+    when the question can be asked.
     """
 
     concept: ConceptKey
@@ -62,6 +74,7 @@ class Candidate:
     phase: PhaseOfPlay
     period_id: int
     time_seconds: float
+    asked_when: AskedWhen = AskedWhen.IN_PLAY
 
 
 def find_candidates(
@@ -94,6 +107,7 @@ def find_candidates(
         if concept is None or tag.difficulty is None:
             raise ValueError(f"{tag.concept} is active but its detector gives no difficulty")
         event = ctx.events[tag.action_id]
+        asked_when = ASKED_WHEN.get(tag.concept)
         candidates.append(
             Candidate(
                 concept=concept.key,
@@ -102,6 +116,7 @@ def find_candidates(
                 phase=timeline.phase_of(tag.action_id),
                 period_id=event.period_id,
                 time_seconds=event.time_seconds,
+                asked_when=AskedWhen.IN_PLAY if asked_when is None else asked_when(tag),
             )
         )
     return tuple(candidates)
@@ -121,4 +136,15 @@ def _clearly_forward_and_threatening(tag: ConceptTag, ctx: MatchContext) -> bool
 # The quality rule for each concept that has one; every other tag is worth teaching.
 WORTH_TEACHING: Mapping[ConceptId, Callable[[ConceptTag, MatchContext], bool]] = {
     ConceptId.LINE_BREAKING_PASS: _clearly_forward_and_threatening,
+}
+
+
+def _after_a_foul(tag: ConceptTag) -> AskedWhen:
+    return AskedWhen.AFTERWARDS if tag.evidence["advantage"] else AskedWhen.AT_THE_STOPPAGE
+
+
+# When each concept's moments may be asked, for those not asked in play.
+ASKED_WHEN: Mapping[ConceptId, Callable[[ConceptTag], AskedWhen]] = {
+    ConceptId.RESTART: lambda tag: AskedWhen.AT_THE_STOPPAGE,
+    ConceptId.FOUL: _after_a_foul,
 }

@@ -15,9 +15,12 @@ FREE_KICKS = frozenset(
 # The fouled team's middle third starts this far from its own goal line.
 PROMISING_FROM = PITCH_LENGTH / 3
 # A foul this close to the penalty area's line, either side, is a hard call; ON_THE_LINE harder.
+# Within AROUND_THE_BOX, free kick or penalty is a real question, but not a close one.
 NEAR_BOX = 5.0
 ON_THE_LINE = 1.0
+AROUND_THE_BOX = 20.0
 PLAIN = 0.1
+IN_OR_AROUND_THE_BOX = 0.35
 EXPLAINED_BOOKING = 0.45
 ADVANTAGE = 0.6
 NEAR_THE_BOX = 0.6
@@ -43,6 +46,7 @@ class FoulCommitted:
     fouled team's next action. Evidence: "penalty", "advantage", "booked" and "promising
     attack" (1 or 0), and "metres from the box": from the penalty area's line, negative
     inside it. Difficulty is the highest that applies: ``PLAIN`` for any foul,
+    ``IN_OR_AROUND_THE_BOX`` inside the box or within ``AROUND_THE_BOX`` metres of it,
     ``EXPLAINED_BOOKING`` for a booking for stopping a promising attack, ``ADVANTAGE``,
     ``NEAR_THE_BOX`` within ``NEAR_BOX`` metres of the box's line and ``ON_THE_BOX_LINE``
     within ``ON_THE_LINE``.
@@ -103,6 +107,8 @@ def metres_from_box(x: float, y: float) -> float:
 
 def _difficulty(from_box: float, explained_booking: bool, advantage: bool) -> float:
     levels = [PLAIN]
+    if from_box <= AROUND_THE_BOX:
+        levels.append(IN_OR_AROUND_THE_BOX)
     if explained_booking:
         levels.append(EXPLAINED_BOOKING)
     if advantage:

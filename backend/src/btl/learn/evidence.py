@@ -17,25 +17,34 @@ fact and the right answer left out. After the viewer answers, the whole pack is 
 import hashlib
 import json
 import math
+import re
 from collections.abc import Callable, Mapping
 from dataclasses import asdict, dataclass, replace
 
 from btl.concepts.base import MatchContext
 from btl.concepts.phase import PhaseOfPlay
 from btl.league.league import League
+from btl.learn.candidates import AskedWhen
 from btl.learn.concept_map import ConceptKey, ConceptMap
 from btl.learn.knowledge import Delivery
-from btl.learn.questions import Asks, Form, Option, Question
+from btl.learn.questions import Asks, Form, Option, Question, offside_reference
 from btl.schema import PITCH_LENGTH, PITCH_WIDTH
 from btl.schema.ids import ActionId, PlayerId, TeamId
 from btl.schema.scoreboard import clock, goals
-from btl.schema.vocab import ConceptId
+from btl.schema.vocab import ActionType, ConceptId
 from btl.value.xt import ThreatModel
 
-PACK_VERSION = 2
+PACK_VERSION = 3
 # Pressing players count if they stand this close to the ball when it is won back.
 PRESSING_DISTANCE = 10.0
 COUNT_WORDS = ("no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine")
+RESTART_TYPES = {
+    ActionType.THROW_IN: "throw-in",
+    ActionType.GOALKICK: "goal kick",
+    ActionType.CORNER_CROSSED: "corner",
+    ActionType.CORNER_SHORT: "corner",
+}
+LABEL_SLOT = re.compile(r"\{([a-z_]+)\}")
 
 
 @dataclass(frozen=True, slots=True)
@@ -79,12 +88,16 @@ class Marker:
 
 @dataclass(frozen=True, slots=True)
 class Picture:
-    """What the viewer sees: the players, the ball, and the play's path when it is shown."""
+    """What the viewer sees: the players, the ball, and the play's path when it is shown.
+
+    ``mark`` is a spot the question is about, such as where the ball went out for a throw-in.
+    """
 
     action_id: ActionId
     markers: tuple[Marker, ...]
     ball: tuple[float, float]
     path: tuple[tuple[float, float], ...]
+    mark: tuple[float, float] | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -116,8 +129,9 @@ class Timing:
 class EvidencePack:
     """Everything about one question. Built once; ``pack_id`` is a hash of the rest.
 
-    ``reveal_path`` is the play's real path, for every form, shown after answering. The
-    question view leaves it out; a predict question's picture has no path at all.
+    ``reveal_path`` is the play's real path, for every form, shown after answering, and
+    ``reveal_line`` the offside line's x for an offside question. The question view leaves both
+    out; a predict question's picture shows at most the action that set it up.
     """
 
     pack_id: str
@@ -133,6 +147,7 @@ class EvidencePack:
     correct_key: str
     picture: Picture
     reveal_path: tuple[tuple[float, float], ...]
+    reveal_line: float | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -205,6 +220,7 @@ def build_pack(
     }
     known, outcome = FACTS[tag.concept](question, ctx, threat, names)
     context.update(known)
+    shown = SHOWN.get(tag.concept, _span_if_identify)(question)
     concept = concept_map.concept(question.candidate.concept)
     pack = EvidencePack(
         pack_id="",
@@ -231,10 +247,11 @@ def build_pack(
         ),
         context=context,
         outcome=outcome,
-        options=tuple(_pack_option(option, names) for option in question.options),
+        options=tuple(_pack_option(option, names, context) for option in question.options),
         correct_key=question.correct_key,
-        picture=_picture(question, ctx, league),
-        reveal_path=_play_path(question, ctx),
+        picture=_picture(question, ctx, league, shown),
+        reveal_path=_play_path(tag.span, question.picture, ctx),
+        reveal_line=tag.evidence["line (m)"] if tag.concept is ConceptId.OFFSIDE else None,
     )
     return _with_id(pack)
 
@@ -328,12 +345,106 @@ def _counter_press_facts(
     return {}, outcome
 
 
-def _pack_option(option: Option, names: _Names) -> PackOption:
+def _restart_facts(
+    question: Question, ctx: MatchContext, threat: ThreatModel, names: _Names
+) -> tuple[dict[str, Fact], dict[str, Fact]]:
+    first, last = question.candidate.tag.span
+    out, restart = ctx.events[first], ctx.events[last]
+    home, away = ctx.match.home_team_id, ctx.match.away_team_id
+    restarting = restart.team_id
+    other = away if restarting == home else home
+    kind = RESTART_TYPES[restart.action_type]
+    if kind == "throw-in":
+        line = "touchline"
+    else:
+        # A corner is taken at the other team's goal line, a goal kick at the team's own.
+        defending = other if kind == "corner" else restarting
+        line = f"goal line {names.club(defending)} defend"
+    context = {
+        "player": _text(names.player(out.player_id)),
+        # By the Laws the restart goes against the last touch, recorded or not.
+        "last_touch_team": _text(names.club(other)),
+        "out_line": _text(line),
+    }
+    outcome = {"restart_type": _text(kind), "restart_team": _text(names.club(restarting))}
+    return context, outcome
+
+
+def _offside_facts(
+    question: Question, ctx: MatchContext, threat: ThreatModel, names: _Names
+) -> tuple[dict[str, Fact], dict[str, Fact]]:
+    tag = question.candidate.tag
+    event = ctx.events[tag.action_id]
+    line = tag.evidence["line (m)"]
+    context = {"player": _text(names.player(event.player_id))}
+    outcome: dict[str, Fact] = {}
+    if question.asks is Asks.WHO_IS_OFFSIDE:
+        # About the attacker in the offside position, who is the answer, so only afterwards.
+        answer = next(o for o in question.options if o.correct)
+        assert answer.target is not None and answer.end is not None
+        receiver, margin = answer.target, answer.end[0] - line
+        outcome["attacker"] = _text(names.player(receiver))
+    else:
+        receiver = PlayerId(int(tag.evidence["player id"]))
+        margin = tag.evidence["margin (m)"] * (1 if tag.evidence["offside"] else -1)
+        context["attacker"] = _text(names.player(receiver))
+    reference = offside_reference(question.candidate, ctx)
+    if reference == "halfway":
+        reference = "the halfway line"
+    side = "level with" if margin == 0 else ("beyond" if margin > 0 else "behind")
+    outcome |= {
+        "margin_m": _metres(abs(margin)),
+        "beyond_or_behind": _text(f"{side} {reference}"),
+        "offside_call": _text("offside" if margin > 0 else "onside"),
+    }
+    return context, outcome
+
+
+def _foul_facts(
+    question: Question, ctx: MatchContext, threat: ThreatModel, names: _Names
+) -> tuple[dict[str, Fact], dict[str, Fact]]:
+    tag = question.candidate.tag
+    foul = ctx.events[tag.action_id]
+    home, away = ctx.match.home_team_id, ctx.match.away_team_id
+    fouler = names.player(foul.player_id)
+    fouled = names.club(away if foul.team_id == home else home)
+    evidence = tag.evidence
+    if evidence["advantage"]:
+        restart = "advantage"
+        result = f"The referee let play go on, because {fouled} kept the ball."
+    else:
+        restart = "penalty" if evidence["penalty"] else "free kick"
+        result = f"{fouled} get a {restart}."
+    if evidence["booked"] and evidence["promising attack"]:
+        booking = "The booking was for stopping a promising attack."
+    elif evidence["booked"]:
+        booking = f"{fouler} was booked."
+    else:
+        booking = "There was no booking."
+    outcome = {
+        "restart_type": _text(restart),
+        "box_position": _box_position(evidence["metres from the box"]),
+        "foul_outcome": _text(result),
+        "booking_note": _text(booking),
+    }
+    return {"fouler": _text(fouler), "fouled_team": _text(fouled)}, outcome
+
+
+def _box_position(metres: float) -> Fact:
+    if metres < 0:
+        return Fact(metres, "inside the penalty area")
+    if metres == 0:
+        return Fact(metres, "on the penalty area's line")
+    return Fact(metres, f"{_measured(metres).display} m outside the penalty area")
+
+
+def _pack_option(option: Option, names: _Names, context: Mapping[str, Fact]) -> PackOption:
     label = option.label
     neutral: dict[str, Fact] = {}
     if option.target is not None:
         label = label.replace("{target}", names.player(option.target))
         neutral["target"] = _text(names.player(option.target))
+    label = LABEL_SLOT.sub(lambda slot: context[slot.group(1)].display, label)
     outcome: dict[str, Fact] = {}
     for name, value in option.facts.items():
         if name == "distance_m":
@@ -350,7 +461,12 @@ def _pack_option(option: Option, names: _Names) -> PackOption:
     return PackOption(option.key, label, option.correct, neutral, outcome, target_at)
 
 
-def _picture(question: Question, ctx: MatchContext, league: League) -> Picture:
+def _picture(
+    question: Question,
+    ctx: MatchContext,
+    league: League,
+    shown: tuple[ActionId, ActionId] | None,
+) -> Picture:
     event = ctx.events[question.picture]
     snapshot = ctx.snapshot(question.picture)
     markers: list[Marker] = []
@@ -372,29 +488,64 @@ def _picture(question: Question, ctx: MatchContext, league: League) -> Picture:
         action_id=question.picture,
         markers=tuple(markers),
         ball=(round(event.start_x, 1), round(event.start_y, 1)),
-        path=_play_path(question, ctx) if question.form is Form.IDENTIFY else (),
+        path=() if shown is None else _play_path(shown, question.picture, ctx),
+        mark=_out_point(question, ctx),
     )
 
 
-def _play_path(question: Question, ctx: MatchContext) -> tuple[tuple[float, float], ...]:
+def _span_if_identify(question: Question) -> tuple[ActionId, ActionId] | None:
+    return question.candidate.tag.span if question.form is Form.IDENTIFY else None
+
+
+def _action_out(question: Question) -> tuple[ActionId, ActionId] | None:
+    # The action that sent the ball out, but not the restart, which is the answer.
+    first = question.candidate.tag.span[0]
+    return (first, first)
+
+
+def _foul_shown(question: Question) -> tuple[ActionId, ActionId] | None:
+    # After advantage, the play that went on; at a stoppage, just the foul's spot.
+    after = question.candidate.asked_when is AskedWhen.AFTERWARDS
+    return question.candidate.tag.span if after else None
+
+
+def _out_point(question: Question, ctx: MatchContext) -> tuple[float, float] | None:
+    """Where the ball went out for a throw-in, in the picture's direction.
+
+    For a corner or a goal kick, event data says only where it is taken, not where along the
+    goal line the ball crossed.
+    """
+    if question.candidate.tag.concept is not ConceptId.RESTART:
+        return None
+    restart = ctx.events[question.candidate.tag.span[1]]
+    if restart.action_type is not ActionType.THROW_IN:
+        return None
+    team = ctx.events[question.picture].team_id
+    return _turned(restart.start_x, restart.start_y, restart.team_id, team)
+
+
+def _play_path(
+    span: tuple[ActionId, ActionId], picture: ActionId, ctx: MatchContext
+) -> tuple[tuple[float, float], ...]:
     """The play's path in the picture's direction: its team attacking towards x = 105.
 
     The context gives each action in its own team's direction, so a play that changes hands
     (a counter-press) has the other team's actions turned round to match.
     """
-    first, last = question.candidate.tag.span
-    team = ctx.events[question.picture].team_id
+    first, last = span
+    team = ctx.events[picture].team_id
     played = [ctx.events[a] for a in range(first, last + 1)]
-
-    def point(x: float, y: float, team_id: TeamId) -> tuple[float, float]:
-        if team_id != team:
-            x, y = PITCH_LENGTH - x, PITCH_WIDTH - y
-        return (round(x, 1), round(y, 1))
-
     return (
-        *(point(e.start_x, e.start_y, e.team_id) for e in played),
-        point(played[-1].end_x, played[-1].end_y, played[-1].team_id),
+        *(_turned(e.start_x, e.start_y, e.team_id, team) for e in played),
+        _turned(played[-1].end_x, played[-1].end_y, played[-1].team_id, team),
     )
+
+
+def _turned(x: float, y: float, team_id: TeamId, towards: TeamId) -> tuple[float, float]:
+    """A point in ``team_id``'s direction, seen in ``towards``'s, rounded for the pack."""
+    if team_id != towards:
+        x, y = PITCH_LENGTH - x, PITCH_WIDTH - y
+    return (round(x, 1), round(y, 1))
 
 
 def _zone(x: float) -> str:
@@ -451,4 +602,13 @@ FACTS: Mapping[
 ] = {
     ConceptId.LINE_BREAKING_PASS: _line_breaking_facts,
     ConceptId.COUNTER_PRESS: _counter_press_facts,
+    ConceptId.RESTART: _restart_facts,
+    ConceptId.OFFSIDE: _offside_facts,
+    ConceptId.FOUL: _foul_facts,
+}
+# The stretch of play a question shows before the viewer answers, for each concept that
+# doesn't follow the rule: the whole play for an identify question, none for a predict one.
+SHOWN: Mapping[ConceptId, Callable[[Question], tuple[ActionId, ActionId] | None]] = {
+    ConceptId.RESTART: _action_out,
+    ConceptId.FOUL: _foul_shown,
 }

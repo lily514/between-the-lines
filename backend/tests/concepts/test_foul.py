@@ -5,6 +5,7 @@ from btl.concepts.base import ConceptTag, match_context
 from btl.concepts.foul import (
     ADVANTAGE,
     EXPLAINED_BOOKING,
+    IN_OR_AROUND_THE_BOX,
     NEAR_THE_BOX,
     ON_THE_BOX_LINE,
     PLAIN,
@@ -44,7 +45,14 @@ def test_a_foul_inside_the_box_is_a_penalty() -> None:
 
 
 @pytest.mark.parametrize(
-    ("x", "difficulty"), [(88.5, ON_THE_BOX_LINE), (87.0, NEAR_THE_BOX), (80.0, PLAIN)]
+    ("x", "difficulty"),
+    [
+        (88.5, ON_THE_BOX_LINE),
+        (87.0, NEAR_THE_BOX),
+        (80.0, IN_OR_AROUND_THE_BOX),
+        (98.0, IN_OR_AROUND_THE_BOX),
+        (60.0, PLAIN),
+    ],
 )
 def test_a_foul_near_the_box_line_is_a_hard_call(x: float, difficulty: float) -> None:
     (tag,) = detect(fouled((x, 34)))
@@ -69,7 +77,7 @@ def test_a_booking_for_stopping_a_promising_attack_is_explained() -> None:
 
 def test_a_booking_in_settled_play_or_deep_in_their_own_half_is_not_explained() -> None:
     (settled,) = detect(fouled(MIDFIELD, passes_first=5, result=Result.YELLOW_CARD))
-    (deep,) = detect(fouled((20, 34), result=Result.YELLOW_CARD))
+    (deep,) = detect(fouled((30, 34), result=Result.YELLOW_CARD))
 
     assert settled.evidence["promising attack"] == 0.0
     assert deep.evidence["promising attack"] == 0.0

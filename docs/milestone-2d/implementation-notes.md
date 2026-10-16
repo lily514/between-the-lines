@@ -73,3 +73,28 @@ Side effects, all towards real football: transition share 59.5% → 57.6% (real 
 **We did:** as planned. `booking_share_promising` = 0.4 and `booking_share_other` = 0.05 give 3.3 bookings a match over the 50 calibration matches. The detector (`FoulCommitted`) judges "promising" with `phase.py`, which counts about 9.6 such fouls a match against the simulator's own 6.3. Its transitions run a little longer, and it includes every foul the simulator counts. So about 80% of bookings are explained, and a test checks at least 75% over 40 matches. The rng draws are unchanged, so only which fouls are booked changes; the sample match's events are regenerated.
 **Why:** as planned.
 **Affects:** nothing.
+
+## T7 — Questions, selector, pack (2026-10-16)
+
+**Plan said:** the question table for the three concepts; `Candidate.asked_at_stoppage`; `TIER0_CAP` and `TIER0_MATCH_CAP`; `reveal_line`; the restart withheld from the view; template wording.
+**We did:** all of it, with these changes:
+- **`Candidate.asked_when`, not a flag.** There are three cases, not two: in play (live if settled, otherwise reviewed later), at the stoppage (live in the dead ball straight after, or never) and afterwards (only reviewed). The third is advantage: play went on, so there's no stoppage to ask at, and asking live would show the answer as it happens.
+- **A question's form depends on the moment.** `ConceptQuestions.form` (and `question_form`) now take the candidate: at the same stoppage, a booking for stopping a promising attack is identified at level 2 and 3, while every other foul is predicted.
+- **Restart options are fixed per kind of restart:** the right one, the other team's restart on the same line, and one from the other line. The levels differ by moment (level 3 gets the balls off an opponent), as the detector's difficulty already does.
+- **Offside options are three statements:** the true one, its opposite, and the misconception "offside only counts where the attacker is when the ball arrives", which is never true. When the attacker is onside, the true statement gives the actual reason: level or behind the second-last defender, behind the ball, or in their own half. Level 2's "which attacker" is asked live and in reviews.
+- **Fouls near the box are graded higher.** A tier-0 concept's prior (0.40) is already level 2, whose band starts at 0.3, so plain fouls at 0.1 were never asked. A foul inside the box or within 20 m of it is now 0.35 (`IN_OR_AROUND_THE_BOX` in `foul.py`): that's where free kick or penalty is a real question.
+- **Fact names.** Offside's fact is `attacker`, not `receiver`, because `receiver` is already an answer fact for line-breaking passes. For "which attacker", it is an answer fact here too. The fouls text uses `foul_outcome` and `booking_note` (whole sentences, so the same text works for a penalty, a free kick and advantage) in place of `booked`, `booking_reason` and `advantage`.
+- **A review never names a restart its moment led to.** An offside review asked at the offside free kick would otherwise open "Play has stopped for a free kick". The selector drops the restart's name whenever the dead ball's first action is in the moment's span.
+- **No separate foul-spot mark.** The ball is already drawn where the foul was. `Picture.mark` is used for a throw-in's out point only; for a corner or goal kick, where the ball crossed isn't known.
+- **Tests changed:**
+  - the demo-viewer test checks that every concept *asked about* rises, not every active one;
+  - the no-transition test allows live questions in the dead ball after a restart or foul;
+  - the selector scenarios start the basics mastered, so they still test the two concepts they were written for.
+
+Over ten demo sessions, a match asks 6.8 questions on average (4 to 8). About 2.4 are basics in match 1 and 2.1 in match 3.
+**Why:** see each point.
+**Affects:**
+- T8: `Picture.mark` and `EvidencePack.reveal_line` need to reach the API and the pitch.
+- Two open points for Lily:
+  - A tier-0 viewer starts on level 2, because the prior equals the level-2 floor, so level-1 basics questions come only after a wrong answer. Lowering the tier-0 prior to 0.35 would start them on level 1.
+  - The misconception shown after a wrong answer is picked from the concept's list by the pack's id, as before. So a penalty mix-up can be answered with the advantage misconception.

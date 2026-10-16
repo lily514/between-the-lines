@@ -69,7 +69,9 @@ def test_the_demo_viewer_learns_over_three_matches() -> None:
     attempts = stored.state.attempts
     assert [s.match_number for s in viewer.starts] == [1, 2, 3]
     first, last = viewer.starts[0].mastery, viewer.seen[-1].mastery
-    assert all(last[name] > first[name] for name in first)
+    asked = {t.pack.concept.name for t in viewer.seen}
+    assert asked
+    assert all(last[name] > first[name] for name in asked)
     # Nothing is ever asked during a transition.
     assert all(t.pack.timing.delivered_phase is not PhaseOfPlay.TRANSITION for t in viewer.seen)
     # Questions get harder across matches...
@@ -159,3 +161,35 @@ def test_a_prepared_match_can_be_reused_without_changing_what_is_asked() -> None
     assert plain_state is not None and reused_state is not None
     assert plain_state.state.attempts == reused_state.state.attempts
     assert calls == [(3, 1), (3, 1)] and len(cache) == 1
+
+
+@pytest.mark.parametrize("seed", [7, 11])
+def test_the_basics_reach_the_viewer_without_giving_the_answer_away(seed: int) -> None:
+    store = MemoryLearnerStore()
+    start_session(store, "basics", seed=seed)
+    viewer = DemoViewer()
+
+    for _ in range(MATCHES_PER_SESSION):
+        watch_match(course(), store, "basics", viewer, lambda: NOW)
+
+    asked_about = {asked.pack.concept.key for asked in viewer.asked}
+    assert "restarts" in asked_about
+    for asked in viewer.asked:
+        pack, view = asked.pack, asked.view
+        if pack.concept.key == "restarts":
+            assert pack.timing.delivery == "live"
+            assert pack.timing.delivered_phase is PhaseOfPlay.DEAD_BALL
+            assert view.timing.restart is None
+            # Only the action that sent the ball out, not the restart.
+            assert len(view.picture.path) == 2
+            assert len(pack.reveal_path) == 3
+        if pack.concept.key == "offside":
+            assert pack.reveal_line is not None
+        assert "{" not in asked.text
+    stored = store.get("basics")
+    assert stored is not None
+    # The basics are capped, so the other concepts come up early too.
+    assert any(
+        a.concept in ("line_breaking_pass", "counter_press") and a.match_number <= 2
+        for a in stored.state.attempts
+    )

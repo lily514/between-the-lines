@@ -100,6 +100,8 @@ class Step:
     ``duration`` is the time until the next action starts. ``by_defence`` marks an action by the
     team without the ball, such as a foul: ``slot`` is then in the defending team's formation,
     while positions stay in the attacking team's direction like every other step.
+    ``receiver`` is the teammate's slot a completed pass reaches, or the one a pass flagged
+    offside was meant for.
     """
 
     slot: int
@@ -111,6 +113,7 @@ class Step:
     duration: float
     phase: Phase
     by_defence: bool = False
+    receiver: int | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -368,9 +371,10 @@ def _pass(
             return _out_of_play(slot, action, bodypart, ball, run_on, phase, play)
         return _lose(slot, action, bodypart, ball, end, params.pass_speed, phase, play)
     duration = length / params.pass_speed + _between(play.rng, params.control_time)
+    receiver = _nearest(play.attack.formation, end, in_possession=True, exclude=slot)
     return _Outcome(
-        Step(slot, action, Result.SUCCESS, bodypart, ball, end, duration, phase),
-        _nearest(play.attack.formation, end, in_possession=True, exclude=slot),
+        Step(slot, action, Result.SUCCESS, bodypart, ball, end, duration, phase, receiver=receiver),
+        receiver,
     )
 
 
@@ -406,8 +410,9 @@ def _offside(
     flight = distance(ball, end) / play.params.pass_speed
     kind, spot, delay = _free_kick(mirror(end), play)
     taker = _taker(play.defence.formation, spot)
+    meant_for = _nearest(play.attack.formation, end, in_possession=True, exclude=slot)
     return _Outcome(
-        Step(slot, action, Result.OFFSIDE, bodypart, ball, end, flight, phase),
+        Step(slot, action, Result.OFFSIDE, bodypart, ball, end, flight, phase, receiver=meant_for),
         slot,
         handover=Start(spot, taker, restart=kind, delay=delay),
     )

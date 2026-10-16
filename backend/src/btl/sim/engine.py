@@ -16,12 +16,13 @@ from btl.schema.ids import ActionId, GameId
 from btl.schema.match import Match
 from btl.schema.moment import PlantedMoment
 from btl.schema.snapshot import PlayerSlot, Positions
+from btl.schema.vocab import ActionType, Result
 from btl.sim.chain import Chain, Side, Step, kickoff, play_chain, play_on
 from btl.sim.lineup import Lineup, pick_lineup
 from btl.sim.params import DEFAULT_PARAMS, SimParams
 from btl.sim.pitch import Point, mirror
 from btl.sim.script import Director, PlayOn, Shape
-from btl.sim.shape import FOUR_FOUR_TWO, Formation, place_teams
+from btl.sim.shape import FOUR_FOUR_TWO, Formation, place_receiver, place_teams
 
 HOME, AWAY = 0, 1
 
@@ -225,6 +226,9 @@ def _snapshot(
     """All 22 stored positions, home slots first, with the actor exactly on the ball."""
     ball = step.start if holder == team else mirror(step.start)
     on_ball, off_ball = place_teams(sides[holder].formation, sides[1 - holder].formation, ball, rng)
+    if step.action_type is ActionType.PASS and step.receiver is not None and holder == team:
+        flagged = step.result is Result.OFFSIDE
+        on_ball = place_receiver(on_ball, off_ball, ball, step.end, step.receiver, flagged, rng)
     xy = _stored_positions(sides, holder, on_ball, off_ball)
     actor = _stored(step.start, team)
     actor_team = 1 - team if step.by_defence else team

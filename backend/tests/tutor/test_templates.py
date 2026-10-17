@@ -115,7 +115,21 @@ def test_a_question_asked_later_says_when_it_happened() -> None:
 
 
 def test_question_wording_never_names_an_outcome() -> None:
-    outcome_names = {"lines_broken", "gap_m", "threat_added", "seconds_to_regain", "receiver"}
+    outcome_names = {
+        "lines_broken",
+        "gap_m",
+        "threat_added",
+        "seconds_to_regain",
+        "receiver",
+        "restart_type",
+        "restart_team",
+        "margin_m",
+        "beyond_or_behind",
+        "offside_call",
+        "box_position",
+        "foul_outcome",
+        "booking_note",
+    }
 
     for wording in ASKING.values():
         assert not slot_names(wording) & outcome_names

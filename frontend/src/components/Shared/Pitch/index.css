@@ -85,6 +85,24 @@
 	text-anchor: middle;
 }
 
+/* Where the ball went out, for a throw-in. */
+.pitch__mark {
+	fill: none;
+	stroke: var(--on-pitch);
+	stroke-width: 0.5;
+}
+
+/* The offside line in the reveal, level with the second-last defender, the ball or halfway. */
+.pitch__offside-line {
+	stroke: var(--on-pitch);
+	stroke-width: 0.45;
+	stroke-dasharray: 1.6 1.2;
+}
+
+.pitch__offside-line--reveal {
+	animation: pitch-fade var(--t-path) var(--ease-out);
+}
+
 .pitch__path {
 	fill: none;
 	stroke: var(--on-pitch);

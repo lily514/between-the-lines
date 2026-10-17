@@ -2,17 +2,18 @@
 
 ## Git workflow
 - GitHub remote, no PRs. One branch per milestone, named after the milestone (M1 "The Data Engine": `feature/data-engine`;
-  M2a "The loop in the terminal": `feature/learning-loop`; M2c "The web page": `feature/web-page`).
-  2c is built before 2b, because Azure isn't set up yet.
+  M2a "The loop in the terminal": `feature/learning-loop`; M2c "The web page": `feature/web-page`;
+  M2d "The basics": `feature/the-basics`). 2c and then 2d are built before 2b, because Azure isn't set up yet.
 - Each plan task is one commit on the milestone branch, made after Lily reviews the diff.
 - When a milestone is done, merge it into main with `git merge --no-ff`, so each milestone shows up as one merge in the graph.
 - Claude commits locally only; Lily pushes when ready. CI runs on every push, to any branch.
 
 ## What this is
 Adaptive football-learning tool on synthetic match data. Milestone 1 built the data engine; Milestone 2
-is split into 2a (the learning engine, played in the terminal), 2b (the Foundry Tutor and Verifier) and
-2c (the web page).
+is split into 2a (the learning engine, played in the terminal), 2b (the Foundry Tutor and Verifier),
+2c (the web page) and 2d (the basics).
 Milestone 2c puts the learning loop in a browser: a React page over a small FastAPI layer.
+Milestone 2d adds the basics: restarts, offside, and fouls and cards.
 
 ## Learning design rules
 - The match never depends on the viewer. Adaptation lives in which moments we ask about, when, and
@@ -20,6 +21,8 @@ Milestone 2c puts the learning loop in a browser: a React page over a small Fast
   unchanged on real data.
 - Never prompt during a transition. Delivery is decided by phase of play, computed from match events
   only (`concepts/phase.py`). Deferred questions are review questions, never predict.
+  A question about a restart or a foul is asked at its own stoppage or not at all; these are the
+  only live questions asked in a dead ball.
 - The curriculum is `btl/learn/concept_map.yaml`; only `learn/concept_map.py` reads it.
 - The learner model sits behind the `KnowledgeModel` protocol. The attempt log is the source of truth;
   a model's state is derived from it. Only the session chooses which model to use.

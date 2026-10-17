@@ -3,6 +3,7 @@
 import math
 from collections import Counter
 from dataclasses import dataclass
+from itertools import pairwise
 
 from btl.schema.match import Match
 from btl.schema.vocab import ActionType, Result
@@ -18,6 +19,7 @@ FREE_KICKS = frozenset(
         ActionType.SHOT_PENALTY,
     }
 )
+RESTARTS = frozenset({ActionType.THROW_IN, ActionType.GOALKICK, *CORNERS})
 # How close to a touchline an action has to start to count as on it.
 TOUCHLINE_STRIP = 2.0
 
@@ -30,7 +32,9 @@ class MatchStats:
     kicks, corners and free kicks are counted separately. ``free_kicks`` includes penalties.
     ``throw_in_lengths`` are in metres, from where each successful throw was taken to the
     teammate who got it. ``on_touchline`` counts actions that start within ``TOUCHLINE_STRIP``
-    metres of either touchline, throw-ins included.
+    metres of either touchline, throw-ins included. ``kept`` counts each kind of restart
+    taken by the team that made the action just before it: an opponent's touch that isn't
+    recorded, such as a block, sent the ball out.
     """
 
     passes: int
@@ -48,6 +52,7 @@ class MatchStats:
     throw_in_lengths: tuple[float, ...]
     actions: int
     on_touchline: int
+    kept: Counter[ActionType]
 
     @property
     def pass_completion(self) -> float:
@@ -86,5 +91,12 @@ def match_stats(match: Match) -> MatchStats:
         on_touchline=sum(
             min(event.start_y, PITCH_WIDTH - event.start_y) <= TOUCHLINE_STRIP
             for event in match.events
+        ),
+        kept=Counter(
+            event.action_type
+            for before, event in pairwise(match.events)
+            if event.action_type in RESTARTS
+            and before.period_id == event.period_id
+            and before.team_id == event.team_id
         ),
     )

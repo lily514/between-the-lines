@@ -14,7 +14,10 @@ from btl.value.xt import ThreatModel, fit_on_simulated_matches, rate_match
 
 LINE_BREAKING = ConceptKey("line_breaking_pass")
 COUNTER_PRESS = ConceptKey("counter_press")
-ACTIVE = (LINE_BREAKING, COUNTER_PRESS)
+RESTARTS = ConceptKey("restarts")
+OFFSIDE = ConceptKey("offside")
+FOULS = ConceptKey("fouls_and_cards")
+ACTIVE = (RESTARTS, OFFSIDE, FOULS, LINE_BREAKING, COUNTER_PRESS)
 
 
 @cache

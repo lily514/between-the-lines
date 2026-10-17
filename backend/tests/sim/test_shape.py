@@ -13,6 +13,8 @@ from btl.sim.shape import (
     FOUR_THREE_THREE,
     Formation,
     Slot,
+    offside_line,
+    place_receiver,
     place_teams,
     team_shape,
 )
@@ -118,3 +120,53 @@ def test_same_seed_gives_the_same_jitter_and_no_rng_gives_none() -> None:
     assert first == second
     assert first != exact
     assert exact[0] == team_shape(FOUR_THREE_THREE, ball, in_possession=True)
+
+
+KEEPER_AND_BACK_LINE = (Point(103, 34), Point(80, 20), Point(78, 40), Point(85, 50))
+
+
+def test_the_offside_line_is_the_second_last_defender_unless_the_ball_or_halfway_is_further() -> (
+    None
+):
+    assert offside_line(KEEPER_AND_BACK_LINE, Point(60, 34)) == 85
+    assert offside_line(KEEPER_AND_BACK_LINE, Point(90, 34)) == 90
+    deep = (Point(103, 34), Point(40, 34))
+    assert offside_line(deep, Point(30, 34)) == PITCH_LENGTH / 2
+
+
+@given(st.integers(min_value=0, max_value=2**32 - 1))
+def test_a_flagged_receiver_stands_past_the_line_in_line_with_the_pass(seed: int) -> None:
+    attackers = (Point(10, 34), Point(70, 30), Point(75, 20))
+    end = Point(95, 25)
+
+    placed = place_receiver(
+        attackers, KEEPER_AND_BACK_LINE, Point(70, 30), end, 2, True, np.random.default_rng(seed)
+    )
+
+    assert 85 < placed[2].x <= 85 + 4
+    assert placed[2].y == end.y
+    assert placed[:2] == attackers[:2]
+
+
+@given(st.integers(min_value=0, max_value=2**32 - 1))
+def test_an_unflagged_receiver_past_the_line_is_pulled_back_level_or_behind(seed: int) -> None:
+    attackers = (Point(10, 34), Point(70, 30), Point(92, 20))
+    rng = np.random.default_rng(seed)
+
+    placed = place_receiver(
+        attackers, KEEPER_AND_BACK_LINE, Point(70, 30), Point(95, 25), 2, False, rng
+    )
+
+    assert 85 - 2 <= placed[2].x <= 85
+    assert placed[2].y == 20
+
+
+def test_an_onside_receiver_who_isnt_flagged_stays_put() -> None:
+    attackers = (Point(10, 34), Point(70, 30), Point(80, 20))
+    rng = np.random.default_rng(0)
+
+    placed = place_receiver(
+        attackers, KEEPER_AND_BACK_LINE, Point(70, 30), Point(95, 25), 2, False, rng
+    )
+
+    assert placed == attackers

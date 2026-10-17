@@ -354,7 +354,8 @@
 			}
 		],
 		"ball": [89.2, 23.9],
-		"path": []
+		"path": [],
+		"mark": null
 	},
 	"reveal_path": [
 		[89.2, 23.9],
@@ -375,5 +376,6 @@
 	"thresholds": {
 		"unlock": 0.8,
 		"mastery": 0.95
-	}
+	},
+	"reveal_line": null
 }

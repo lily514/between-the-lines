@@ -206,6 +206,8 @@ export interface components {
             /** Pack Id */
             pack_id: string;
             picture: components["schemas"]["PictureOut"];
+            /** Reveal Line */
+            reveal_line: number | null;
             /** Reveal Path */
             reveal_path: [
                 number,
@@ -335,6 +337,8 @@ export interface components {
         /**
          * PictureOut
          * @description The players and the ball at the moment, and the play's path when the form shows it.
+         *
+         *     ``mark`` is a spot the question is about, such as where the ball went out for a throw-in.
          */
         PictureOut: {
             /** Action Id */
@@ -344,6 +348,11 @@ export interface components {
                 number,
                 number
             ];
+            /** Mark */
+            mark: [
+                number,
+                number
+            ] | null;
             /** Markers */
             markers: components["schemas"]["MarkerOut"][];
             /** Path */

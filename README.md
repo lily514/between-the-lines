@@ -2,7 +2,7 @@
 
 An adaptive learning tool that helps football fans understand the game better over time.
 
-While you watch a match, it asks you about "teachable moments": in settled play it can pause and ask you to predict what should happen next, such as *"where should #8 pass?"*, and moments that happen in the rush after a turnover are saved for the next stoppage, as a question about what you just saw. Each answer gets feedback pitched at your level. A learner model tracks which football concepts you understand, and the questions adapt as you improve.
+While you watch a match, it asks you about "teachable moments". They start with the basics, such as *"the ball's gone out: whose throw-in is it?"* or *"will the flag go up?"*. In settled play it can pause and ask you to predict what should happen next, such as *"where should #8 pass?"*, and moments that happen in the rush after a turnover are saved for the next stoppage, as a question about what you just saw. Each answer gets feedback pitched at your level. A learner model tracks which football concepts you understand, and the questions adapt as you improve.
 
 All match data is synthetic: a fictional league, fictional clubs, and fictional players.
 
@@ -16,8 +16,9 @@ Built for the "Inside the Game" hackathon.
 | 2a. The learning loop | Concept map, learner model (Bayesian Knowledge Tracing), phase-of-play gating, live moment selector, adaptive questions, evidence pack, templated feedback, learner storage; played in the terminal | Done |
 | 2b. The AI Tutor | Question and feedback wording from a model in Azure AI Foundry, checked against the evidence by plain code | Planned |
 | 2c. The web page | The same loop in a browser: a React page over a small FastAPI layer, for phone and desktop, in light and dark | Done |
+| 2d. The basics | Restarts, offside, and fouls and cards as newcomer concepts, asked at the stoppage they cause; a simulator whose blocks, offside pictures and bookings agree with the Laws | Done |
 
-Work in progress lives on milestone branches and is merged to `main` when each milestone is complete. 2c was built before 2b, while Azure wasn't set up yet.
+Work in progress lives on milestone branches and is merged to `main` when each milestone is complete. 2c and then 2d were built before 2b, while Azure wasn't set up yet.
 
 ## Quickstart
 
@@ -42,26 +43,27 @@ uv run btl demo-viewer
 
 ```
 ───────────────────── Match 1: Ripon Wardens v Ludlow Ferrymen ─────────────────────
+  Restarts              ███████░░░░░░░░░░░░░   35%
+  Offside               ███████░░░░░░░░░░░░░   35%
+  Fouls and cards       ███████░░░░░░░░░░░░░   35%
   Line-breaking passes  ███░░░░░░░░░░░░░░░░░   15%
   Counter-pressing      ███░░░░░░░░░░░░░░░░░   15%
 
-Dead ball (corner), 03:38 · about play at 03:02
-  (the pitch at the moment)
-Play has stopped for a corner. Back at 03:02: Ripon Wardens lost the ball to Ludlow
-Ferrymen. What did they do next?
-  A  Stopped the attack with a foul
-  B  Dropped back into their shape
-  C  Hunted the ball straight back and won it
+00:08 · live, as play stops
+  (the pitch at the moment, with the ball's path out of play)
+The ball has gone over the touchline, last touched by Ripon Wardens. What happens now?
+  A  Corner to Ludlow Ferrymen
+  B  Throw-in to Ripon Wardens
+  C  Throw-in to Ludlow Ferrymen
 The demo viewer picks C.
-Right read. After losing the ball, Ripon Wardens hunted it straight back instead of
-retreating. Winning it back quickly catches the opponent before they can spread out.
-The answer was Hunted the ball straight back and won it.
-Takeaway: Recognize a counter-press: winning the ball straight back after losing it,
-before the opponent can organize.
-Right. A guess is right 1 time in 3, and someone who understands counter-pressing
-still slips 10% of the time, so we're now 42% sure you understand it, up from 15%.
-  Line-breaking passes  ███░░░░░░░░░░░░░░░░░   15%
-  Counter-pressing      ████████░░░░░░░░░░░░   42%
+Right read. When the ball goes out, the team that didn't touch it last gets it back.
+Over a touchline that's a throw-in; over a goal line it's a corner or a goal kick. The
+answer was Throw-in to Ludlow Ferrymen.
+Takeaway: Say which restart comes next, and for which team, when the ball goes out of
+play.
+Right. A guess is right 1 time in 3, and someone who understands restarts still slips
+10% of the time, so we're now 67% sure you understand it, up from 35%.
+  Restarts              █████████████░░░░░░░   67%
 ```
 
 **Play it yourself.** `btl learn` plays your next match; type A, B or C to answer. Each run is one match of three, your answers are saved as you go (in `data/learners/`, which git ignores), and Ctrl+C is safe: the next run carries on where you stopped. `--reset` starts again.
@@ -72,7 +74,8 @@ uv run btl learn --viewer yourname
 
 **How it adapts.**
 - **The match is the same for everyone.** Questions come only from what the concept detectors find in it, so the loop would work unchanged on a real match.
-- **When it asks.** A moment in settled play can be asked live. One that happens during a transition, the seconds after the ball changes hands, waits for the next stoppage long enough for a question (a free kick, a goal kick, a corner) or for half-time or full time, and becomes a question about what you saw.
+- **When it asks.** A moment in settled play can be asked live. One that happens during a transition, the seconds after the ball changes hands, waits for the next stoppage long enough for a question (a free kick, a goal kick, a corner) or for half-time or full time, and becomes a question about what you saw. A restart or a foul is asked in the stoppage it causes, before the restart is taken: what happens now?
+- **The basics first, but not only.** Restarts, offside, and fouls and cards are newcomer concepts. A match asks about them at most three times, so the other concepts still come up from the first match.
 - **What and how hard.** Your mastery of each concept, estimated by Bayesian Knowledge Tracing, picks which concepts to ask about and how hard: from "how many lines did that pass break?" to "where should #8 pass?" with close alternatives. Every number you see comes from the match's evidence, never from a writer's guess, and every change in your bars comes with a sentence saying why.
 
 [docs/concept-map.md](docs/concept-map.md) describes the curriculum, and [docs/milestone-2a/learner-model.md](docs/milestone-2a/learner-model.md) the learner model.
@@ -97,20 +100,21 @@ Type a name to start. Your answers are saved in the same records as `btl learn`,
 </p>
 <img src="docs/milestone-2c/screenshots/review-question-desktop.png" alt="A review question at a free kick on a desktop, in the side panel beside the viewer's own match" width="720">
 
-- **Questions in settled play** are asked straight away ("Your read"). Moments from a transition wait for the next stoppage or the break, which the page says when it asks.
+- **Questions in settled play** are asked straight away ("Your read"), and so are restarts and fouls, in the stoppage they cause. Moments from a transition wait for the next stoppage or the break, which the page says when it asks. A throw-in question marks where the ball went out, and an offside reveal draws the offside line.
 - **Lock in, then the reveal.** The real pass is drawn on the pitch, then the verdict and the explanation appear. Every number on the page comes from the match's evidence. The browser computes nothing itself, and it is never sent the answer before you lock in.
 - **Keyboard:** 1, 2 and 3 (or the arrow keys) pick an answer and Enter locks it in. Light or dark follows your system setting, and reduced motion is respected.
 - **For development,** run `uv run btl serve` in `backend/` and `npm run dev` in `frontend/`; the page reloads as you edit, and `/api` is passed to the server.
 
 ## Honest limits
 
-- **Synthetic matches.** The simulator is calibrated against 40 real matches (see the implementation notes), but it isn't real football. It plays at a slower tempo, so more of its play counts as transition (56% of playing time against 49% in real matches), and it has about 80% of the real stoppages long enough for a question. Offsides are flagged at random rather than from where players stand.
+- **Synthetic matches.** The simulator is calibrated against 40 real matches (see the implementation notes), but it isn't real football. It plays at a slower tempo, so more of its play counts as transition (54% of playing time against 49% in real matches), and it has about 80% of the real stoppages long enough for a question. Offside flags and bookings are drawn by chance, as they always were, and the players' positions are then drawn to agree with them: a flagged receiver stands past the offside line, and most bookings stop a promising attack.
+- **Event data doesn't record a block.** About one throw-in in five and nearly half of corners follow the restarting team's own action in real event data, and the simulator does the same. The app works out the last touch from the Laws: the restart always goes against it.
 - **Expected Threat is learned from the simulator,** so it can only rediscover the simulator's own rules.
 - **On a live broadcast you couldn't pause before a play.** Predict questions would have to become quick answer-in-five-seconds prompts while play continues; questions held for a stoppage would work as they are.
 - **The feedback is templated** for now; Milestone 2b words it with a model, checked against the same evidence.
 - **The web page steps from question to question;** it doesn't play the match. Each question says when it is asked and why, and the page is built so a played-back match can replace the step later.
 - **No accounts.** The web page knows you only by the name you type, which is fine for a demo on your own machine and nothing more.
-- **The learner model's numbers are set by hand,** per tier of the curriculum, not fitted to real learners' answers, and two concepts are askable so far.
+- **The learner model's numbers are set by hand,** per tier of the curriculum, not fitted to real learners' answers, and five concepts are askable so far.
 
 ## Walkthrough: the data engine
 
@@ -123,26 +127,26 @@ uv run btl moments examples/match-0007
 ```
 
 ```
-──────────────── Moment 3 · line breaking pass · level 2 · 34:15 ────────────────
+──────────────── Moment 3 · line breaking pass · level 2 · 34:27 ────────────────
   (the three events leading up to it)
-Play pauses after #549; the pitch at #550, attacking left to right. The answer is #550.
+Play pauses after #525; the pitch at #526, attacking left to right. The answer is #526.
 +-----------------------------------------------------+
 |                          :                          |
 |                          :                          |
 |                          :                          |
-|       o          o       :                          |
 |                          :                          |
-|                          x                          |
-|                          :      x                   |
-|        o         ox      :                          |
-|  G                       x ··*  x             K     |
-|                         ····                        |
-|       o               @··:      x                   |
-|                   x      x                          |
-|                          : o                        |
-|                          x      x                   |
-|       o         o        :                          |
+|     o         o          :                          |
 |                          :                          |
+|                         o:  x                       |
+|     o         o      x   :                          |
+|               x          :                          |
+|  G                       :  x                K      |
+|                      x ··*                          |
+|     o               ···· :  x                       |
+|               x  @···    :                          |
+|                      x   :                          |
+|     o         o          :  x                       |
+|                      x   :                          |
 |                          :                          |
 +-----------------------------------------------------+
 @ on the ball · o teammates · G their keeper · x opponents · K opponents' keeper · * pass target
@@ -166,7 +170,7 @@ uv run btl inspect examples/match-0007 --concept counter_press
 
 ```sh
 uv run btl fit-xt
-uv run btl inspect examples/match-0007 --start 540 --count 15
+uv run btl inspect examples/match-0007 --start 515 --count 15
 ```
 
 **5. Your own matches.** The same seed always gives the same match. `--plant` asks for teachable moments by concept and level, and they happen easiest first. Matches are saved under `data/matches/`, which git ignores, and `btl matches` lists them.

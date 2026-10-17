@@ -100,6 +100,8 @@ class Step:
     ``duration`` is the time until the next action starts. ``by_defence`` marks an action by the
     team without the ball, such as a foul: ``slot`` is then in the defending team's formation,
     while positions stay in the attacking team's direction like every other step.
+    ``receiver`` is the teammate's slot a completed pass reaches, or the one a pass flagged
+    offside was meant for.
     """
 
     slot: int
@@ -111,6 +113,7 @@ class Step:
     duration: float
     phase: Phase
     by_defence: bool = False
+    receiver: int | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -368,9 +371,10 @@ def _pass(
             return _out_of_play(slot, action, bodypart, ball, run_on, phase, play)
         return _lose(slot, action, bodypart, ball, end, params.pass_speed, phase, play)
     duration = length / params.pass_speed + _between(play.rng, params.control_time)
+    receiver = _nearest(play.attack.formation, end, in_possession=True, exclude=slot)
     return _Outcome(
-        Step(slot, action, Result.SUCCESS, bodypart, ball, end, duration, phase),
-        _nearest(play.attack.formation, end, in_possession=True, exclude=slot),
+        Step(slot, action, Result.SUCCESS, bodypart, ball, end, duration, phase, receiver=receiver),
+        receiver,
     )
 
 
@@ -406,8 +410,9 @@ def _offside(
     flight = distance(ball, end) / play.params.pass_speed
     kind, spot, delay = _free_kick(mirror(end), play)
     taker = _taker(play.defence.formation, spot)
+    meant_for = _nearest(play.attack.formation, end, in_possession=True, exclude=slot)
     return _Outcome(
-        Step(slot, action, Result.OFFSIDE, bodypart, ball, end, flight, phase),
+        Step(slot, action, Result.OFFSIDE, bodypart, ball, end, flight, phase, receiver=meant_for),
         slot,
         handover=Start(spot, taker, restart=kind, delay=delay),
     )
@@ -439,10 +444,16 @@ def _lose(
     phase: Phase,
     play: _Play,
 ) -> _Outcome:
-    """A pass or dribble that the nearest opponent gets to, somewhere in its second half."""
+    """A pass or dribble that the nearest opponent gets to, somewhere in its second half.
+
+    Sometimes the opponent only blocks it, out of play: see `_blocked_out`.
+    """
     fraction = play.rng.uniform(0.4, 1.0)
     lost_at = Point(ball.x + fraction * (end.x - ball.x), ball.y + fraction * (end.y - ball.y))
     duration = distance(ball, lost_at) / speed + _between(play.rng, play.params.reaction_time)
+    if play.rng.random() < play.params.deflected_out_share:
+        failed = Step(slot, action, Result.FAIL, bodypart, ball, lost_at, duration, phase)
+        return _blocked_out(failed, lost_at, play)
     winner = _nearest(play.defence.formation, mirror(lost_at), in_possession=False)
     won_with = ActionType.TACKLE if action is ActionType.DRIBBLE else ActionType.INTERCEPTION
     return _Outcome(
@@ -450,6 +461,36 @@ def _lose(
         slot,
         handover=Start(mirror(lost_at), winner, won_with),
     )
+
+
+def _blocked_out(failed: Step, at: Point, play: _Play) -> _Outcome:
+    """An opponent blocks the ball out over the nearest line, so the team that had it restarts.
+
+    The block isn't an event of its own, as in real event data. Over a touchline it's a
+    throw-in level with the block; over the opponent's goal line, a corner; over the team's
+    own goal line, a goal kick.
+    """
+    params = play.params
+    lines = {
+        "right touchline": at.y,
+        "left touchline": PITCH_WIDTH - at.y,
+        "their goal line": PITCH_LENGTH - at.x,
+        "own goal line": at.x,
+    }
+    nearest = min(lines, key=lambda line: lines[line])
+    if nearest == "their goal line":
+        restart = _corner(play.attack, at.y, params.corner_delay)
+    elif nearest == "own goal line":
+        restart = _goal_kick(play.attack, play)
+    else:
+        spot = Point(at.x, 0.0 if nearest == "right touchline" else PITCH_WIDTH)
+        restart = Start(
+            spot,
+            _taker(play.attack.formation, spot),
+            restart=Restart.THROW_IN,
+            delay=params.throw_in_delay,
+        )
+    return _Outcome(_wait(failed, restart.delay), failed.slot, set_piece=restart)
 
 
 def _out_of_play(
@@ -579,11 +620,14 @@ def _fouled(slot: int, ball: Point, phase: Phase, play: _Play) -> _Outcome:
 
     Play usually stops for a free kick to the fouled team where the foul happened: a penalty in
     the box, sometimes a shot at goal within range, otherwise played long or short. After a
-    share of fouls the referee lets play go on (advantage). A share are booked.
+    share of fouls the referee lets play go on (advantage). A share are booked: many more when
+    the foul stops a promising attack, one of the Laws' reasons for a caution.
     """
     rng, params = play.rng, play.params
     fouler = _nearest(play.defence.formation, mirror(ball), in_possession=False)
-    result = Result.YELLOW_CARD if rng.random() < params.yellow_card_share else Result.FAIL
+    promising = phase is Phase.TRANSITION and zone_of(ball).third is not Third.DEFENSIVE
+    booking_share = params.booking_share_promising if promising else params.booking_share_other
+    result = Result.YELLOW_CARD if rng.random() < booking_share else Result.FAIL
 
     def foul(duration: float) -> Step:
         return Step(

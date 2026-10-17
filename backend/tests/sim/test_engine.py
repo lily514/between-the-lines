@@ -1,4 +1,5 @@
 import time
+from collections.abc import Iterable
 from functools import cache
 from itertools import pairwise
 
@@ -9,9 +10,10 @@ import btl.sim
 from btl.league.league import League, generate_league
 from btl.plant.planter import simulate_with_moments
 from btl.plant.spec import parse_plant
-from btl.schema.frames import to_spadl_frame
+from btl.schema.frames import to_left_to_right, to_spadl_frame
 from btl.schema.match import Match
 from btl.schema.possession import split_possessions
+from btl.schema.snapshot import PlayerPosition
 from btl.schema.vocab import ActionType, BodyPart, ConceptId, Phase, Result
 from btl.sim.chain import CENTRE_SPOT, SIX_YARD_DEPTH, Side, Start, Step
 from btl.sim.engine import simulate_match
@@ -254,3 +256,46 @@ def test_a_foul_is_by_the_team_without_the_ball_and_on_the_ball(seed: int) -> No
         assert snapshot is not None
         (fouler,) = [p for p in snapshot.positions if p.is_actor]
         assert (fouler.team_id, fouler.x, fouler.y) == (foul.team_id, foul.start_x, foul.start_y)
+
+
+def in_offside_position(
+    player: PlayerPosition, opponents: list[PlayerPosition], ball_x: float
+) -> bool:
+    # The Laws' test, written here independently of the simulator and the detectors.
+    second_last = sorted((p.x for p in opponents), reverse=True)[1]
+    return player.x > PITCH_LENGTH / 2 and player.x > ball_x and player.x > second_last
+
+
+def check_pictures_agree_with_the_flag(matches: Iterable[Match]) -> None:
+    flagged = 0
+    for each in matches:
+        played = to_left_to_right(each)
+        for event, after in pairwise(played.events):
+            if event.action_type is not ActionType.PASS or event.phase is Phase.SET_PIECE:
+                continue
+            snapshot = played.snapshot(event.action_id)
+            assert snapshot is not None
+            ours = [p for p in snapshot.positions if p.team_id == event.team_id]
+            theirs = [p for p in snapshot.positions if p.team_id != event.team_id]
+            if event.result is Result.OFFSIDE:
+                flagged += 1
+                mates = [p for p in ours if not p.is_actor and not p.is_goalkeeper]
+                assert any(in_offside_position(p, theirs, event.start_x) for p in mates)
+            elif event.result is Result.SUCCESS and after.team_id == event.team_id:
+                receiver = next(p for p in ours if p.player_id == after.player_id)
+                assert not in_offside_position(receiver, theirs, event.start_x)
+    assert flagged > 0
+
+
+def test_the_picture_at_a_pass_agrees_with_the_offside_flag() -> None:
+    home, away = league().clubs[:2]
+    many = (simulate_match(home, away, seed) for seed in range(10, 30))
+
+    check_pictures_agree_with_the_flag([*(match(seed) for seed in PLANTED_SEEDS), *many])
+
+
+@pytest.mark.slow
+def test_the_picture_agrees_with_the_offside_flag_over_many_matches() -> None:
+    home, away = league().clubs[:2]
+
+    check_pictures_agree_with_the_flag(simulate_match(home, away, seed) for seed in range(200))

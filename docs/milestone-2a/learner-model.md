@@ -14,7 +14,7 @@ Bayesian Knowledge Tracing (BKT) treats each concept as a hidden yes-or-no: does
 
 | Parameter | Meaning | Where it comes from |
 |---|---|---|
-| prior | Mastery before any question | The concept map, by tier: 0.40 for tier 0 down to 0.05 for tier 3 |
+| prior | Mastery before any question | The concept map, by tier: 0.35 for tier 0 down to 0.05 for tier 3 |
 | learn | Chance the feedback teaches it | The concept map, by tier |
 | slip | Chance someone who knows it still answers wrongly | The concept map: 0.10 everywhere |
 | guess | Chance a pure guess is right | The question: 1 / number of options, so 1/3 with three options |

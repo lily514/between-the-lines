@@ -14,6 +14,7 @@ import numpy as np
 import pytest
 
 from btl.league.league import generate_league, season_fixtures
+from btl.schema.vocab import ActionType
 from btl.sim.engine import simulate_match
 from btl.sim.stats import MatchStats, match_stats
 
@@ -46,6 +47,11 @@ MEASURES: dict[str, Callable[[MatchStats], float]] = {
     "offsides": lambda stats: stats.offsides,
     "free kicks": lambda stats: stats.free_kicks,
     "yellow cards": lambda stats: stats.yellow_cards,
+    "throw-ins kept": lambda stats: stats.kept[ActionType.THROW_IN],
+    "corners kept": lambda stats: (
+        stats.kept[ActionType.CORNER_CROSSED] + stats.kept[ActionType.CORNER_SHORT]
+    ),
+    "goal kicks kept": lambda stats: stats.kept[ActionType.GOALKICK],
 }
 
 
@@ -70,6 +76,12 @@ MEASURES: dict[str, Callable[[MatchStats], float]] = {
         ("offsides", 0, 9),
         ("free kicks", 12, 32),
         ("yellow cards", 0, 7),
+        # Restarts taken by the team that made the action before them, after a touch by the
+        # other team that event data doesn't record (mostly blocks). Real: 8.2 throw-ins,
+        # 4.9 corners and 0.8 goal kicks.
+        ("throw-ins kept", 3, 14),
+        ("corners kept", 1, 11),
+        ("goal kicks kept", 0, 3),
     ],
 )
 def test_matches_fall_in_the_band(name: str, low: float, high: float) -> None:

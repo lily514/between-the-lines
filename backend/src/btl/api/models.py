@@ -31,12 +31,16 @@ class MarkerOut(BaseModel):
 
 
 class PictureOut(BaseModel):
-    """The players and the ball at the moment, and the play's path when the form shows it."""
+    """The players and the ball at the moment, and the play's path when the form shows it.
+
+    ``mark`` is a spot the question is about, such as where the ball went out for a throw-in.
+    """
 
     action_id: int
     markers: list[MarkerOut]
     ball: Point
     path: list[Point]
+    mark: Point | None
 
 
 class MomentTime(BaseModel):
@@ -167,6 +171,8 @@ class FeedbackOut(BaseModel):
     options: list[FeedbackOption]
     picture: PictureOut
     reveal_path: list[Point]
+    # The offside line's x for an offside question, with the passing team attacking left to right.
+    reveal_line: float | None
     concepts: list[Movement]
     thresholds: ThresholdsOut
 

@@ -7,7 +7,7 @@ type Occurred = Question['occurred']
  * clock only. */
 export const stepHeading = (to: Delivered): string => {
 	if (to.delivery === 'live') {
-		return `Settled possession at ${to.clock}`
+		return to.phase === 'dead ball' ? `Play has stopped at ${to.clock}` : `Settled possession at ${to.clock}`
 	}
 	switch (to.phase) {
 		case 'half-time':
@@ -31,8 +31,23 @@ export const movedOn = (from: string | null, to: Delivered): string => {
 		: `The match moves on from ${from} to ${to.clock}.`
 }
 
-/** Why the question is asked now: a live read in settled play, or a look back at play saved for this stoppage. */
-export const whyNow = (to: Delivered, occurred: Occurred): string =>
-	to.delivery === 'live'
-		? 'Play has settled, so there is time for a quick read before the next pass.'
-		: `A question about the play at ${occurred.clock}, saved until play stopped.`
+/** The phase pill's phase: a live question is in settled play, or in the dead ball it asks about. */
+export const stepPhase = (to: Delivered): string => {
+	if (to.delivery !== 'live') {
+		return to.phase
+	}
+	return to.phase === 'dead ball' ? 'dead ball' : 'settled'
+}
+
+/**
+ * Why the question is asked now: a live read in settled play or as play stops, or a look back at play saved for this
+ * stoppage.
+ */
+export const whyNow = (to: Delivered, occurred: Occurred): string => {
+	if (to.delivery === 'live') {
+		return to.phase === 'dead ball'
+			? 'Play has just stopped, so there is time to call what happens next.'
+			: 'Play has settled, so there is time for a quick read before the next pass.'
+	}
+	return `A question about the play at ${occurred.clock}, saved until play stopped.`
+}

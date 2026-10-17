@@ -34,6 +34,15 @@ test('a live question’s step is in settled possession', () => {
 	expect(screen.getByRole('button', { name: 'Make your read' })).toBeInTheDocument()
 })
 
+test('a live question as play stops says so, with the dead ball and no restart named', () => {
+	const asPlayStops = { ...predictQuestion.delivered, phase: 'dead ball', restart: null }
+	stepTo({ ...predictQuestion, delivered: asPlayStops })
+	expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Play has stopped at 32:45')
+	expect(screen.getByText('Dead ball')).toBeInTheDocument()
+	expect(screen.getByText('Play has just stopped, so there is time to call what happens next.')).toBeInTheDocument()
+	expect(screen.getByRole('button', { name: 'Make your read' })).toBeInTheDocument()
+})
+
 test('focus moves to the step’s heading, and the button arrives at the question', async () => {
 	const onArrive = vi.fn()
 	stepTo(identifyQuestion, null, onArrive)

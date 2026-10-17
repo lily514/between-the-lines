@@ -86,7 +86,7 @@ def test_a_concept_without_answers_sits_at_its_tiers_prior() -> None:
     model = bkt()
     empty = model.initial_state([])
 
-    assert model.mastery(empty, ConceptKey("possession")) == 0.4
+    assert model.mastery(empty, ConceptKey("possession")) == 0.35
     assert model.mastery(empty, LINE_BREAKING) == 0.15
 
 

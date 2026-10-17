@@ -89,6 +89,9 @@ class ConceptId(StrEnum):
     LINE_BREAKING_PASS = "line_breaking_pass"
     COUNTER_PRESS = "counter_press"
     COUNTER_ATTACK = "counter_attack"
+    RESTART = "restart"
+    OFFSIDE = "offside"
+    FOUL = "foul"
 
     @property
     def label(self) -> str:

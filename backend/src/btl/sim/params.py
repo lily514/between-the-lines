@@ -63,6 +63,13 @@ class SimParams:
     # Of the crosses that fail, the share a defender deflects out for a corner.
     cross_out_for_corner: float = 0.15
 
+    # Of the passes and dribbles an opponent gets to, the share it blocks out of play instead,
+    # over the nearest line, so the team that lost it gets the throw-in (or corner, or goal
+    # kick). Real event data doesn't record a block, so as there, the restart follows the
+    # team's own failed action. Real: 8.2 throw-ins, 0.8 goal kicks and 4.9 corners a match go
+    # to the team that made the action before them, most after a dropped block.
+    deflected_out_share: float = 0.05
+
     # A failed pass carries on past its target by a random distance in this range. If that takes
     # it off the pitch, it goes out of play instead of to an opponent.
     run_on: tuple[float, float] = (0.0, 25.0)
@@ -94,8 +101,11 @@ class SimParams:
     foul_share: PerThird = PerThird(0.022, 0.022, 0.022)
     # Defenders rarely risk a foul in their own box. Real: 0.28 penalties a match.
     foul_share_in_box: float = 0.005
+    # Bookings: the share of fouls booked when the foul stops a promising attack (the fouled
+    # team in a transition, in the middle or attacking third), and of every other foul.
     # Real: 3.3 bookings in 26 fouls, and play goes on (advantage) after about 1 in 8.
-    yellow_card_share: float = 0.13
+    booking_share_promising: float = 0.4
+    booking_share_other: float = 0.05
     advantage_share: float = 0.12
     # Free kicks outside the box. Within ``shot_range`` and in the centre lane, this share are
     # shot at goal; of the rest, ``free_kick_long_share`` are played long. Real: 12.7 long and

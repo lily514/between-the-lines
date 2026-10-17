@@ -1,4 +1,5 @@
 from dataclasses import replace
+from itertools import pairwise
 
 import numpy as np
 import pytest
@@ -33,6 +34,7 @@ def chain(start: Start, seed: int = 0, params: SimParams = DEFAULT_PARAMS) -> Ch
 
 
 CORNERS = (ActionType.CORNER_CROSSED, ActionType.CORNER_SHORT)
+OWN_RESTARTS = (ActionType.THROW_IN, ActionType.GOALKICK, *CORNERS)
 SHOTS = (ActionType.SHOT, ActionType.SHOT_FREEKICK, ActionType.SHOT_PENALTY)
 FREE_KICKS = (ActionType.FREEKICK_SHORT, ActionType.FREEKICK_CROSSED)
 # Every open-play action is fouled, and play always stops for the free kick.
@@ -89,9 +91,9 @@ def test_a_chain_succeeds_until_its_last_action_and_stays_on_the_pitch(seed: int
 
     *before_last, last = result.steps
     for step, after in zip(before_last, result.steps[1:], strict=True):
-        # A failed cross or a missed shot can go out for the team's own corner, and a foul by
+        # A failed action can go out off an opponent for the team's own restart, and a foul by
         # the other team doesn't end the possession.
-        assert step.result is Result.SUCCESS or after.action_type in CORNERS or step.by_defence
+        assert step.result is Result.SUCCESS or after.action_type in OWN_RESTARTS or step.by_defence
     assert last.result in (Result.FAIL, Result.OFFSIDE) or last.action_type in SHOTS
     for step in result.steps:
         assert on_pitch(step.start)
@@ -173,6 +175,35 @@ def test_a_deflected_cross_gives_the_same_team_a_corner() -> None:
     assert steps[1].result is Result.FAIL
     assert steps[2].action_type in CORNERS
     assert steps[2].start == Point(PITCH_LENGTH, 0)
+
+
+@settings(max_examples=100)
+@given(st.integers(min_value=0, max_value=2**32 - 1))
+def test_a_blocked_pass_or_dribble_goes_out_over_the_nearest_line_for_the_same_team(
+    seed: int,
+) -> None:
+    always_blocked = SimParams(deflected_out_share=1.0)
+
+    steps = chain(kickoff(HOME), seed, always_blocked).steps
+
+    for step, after in pairwise(steps):
+        lost = step.action_type in (ActionType.PASS, ActionType.DRIBBLE)
+        if not lost or step.result is not Result.FAIL:
+            continue
+        at = step.end
+        nearest = min(at.y, PITCH_WIDTH - at.y, PITCH_LENGTH - at.x, at.x)
+        if after.action_type is ActionType.THROW_IN:
+            assert nearest == min(at.y, PITCH_WIDTH - at.y)
+            assert after.start == Point(at.x, 0.0 if at.y < PITCH_WIDTH / 2 else PITCH_WIDTH)
+            assert step.duration > always_blocked.throw_in_delay
+        elif after.action_type in CORNERS:
+            assert nearest == PITCH_LENGTH - at.x
+            assert is_corner_flag(after.start)
+        else:
+            assert after.action_type is ActionType.GOALKICK
+            assert nearest == at.x
+            assert after.start.x == SIX_YARD_DEPTH
+        assert after.phase is Phase.SET_PIECE
 
 
 def test_a_goal_is_followed_by_the_other_teams_kickoff() -> None:
@@ -289,10 +320,15 @@ def test_with_advantage_play_goes_on_after_the_foul() -> None:
         assert steps[i + 1].action_type not in (*FREE_KICKS, *SHOTS[1:])
 
 
-def test_a_share_of_fouls_are_booked() -> None:
-    params = replace(ALWAYS_FOULED, yellow_card_share=1.0)
+def test_a_foul_that_stops_a_promising_attack_is_booked_by_its_own_share() -> None:
+    only_promising = replace(ALWAYS_FOULED, booking_share_promising=1.0, booking_share_other=0.0)
+    only_others = replace(ALWAYS_FOULED, booking_share_promising=0.0, booking_share_other=1.0)
 
-    assert fouled_at(Point(50, 30), params).steps[1].result is Result.YELLOW_CARD
+    # Just after winning the ball is a transition; x = 50 is the middle third, x = 20 their own.
+    assert fouled_at(Point(50, 30), only_promising).steps[1].result is Result.YELLOW_CARD
+    assert fouled_at(Point(50, 30), only_others).steps[1].result is Result.FAIL
+    assert fouled_at(Point(20, 30), only_promising).steps[1].result is Result.FAIL
+    assert fouled_at(Point(20, 30), only_others).steps[1].result is Result.YELLOW_CARD
 
 
 ALWAYS_OFFSIDE = replace(DEFAULT_PARAMS, offside_share=1.0, foul_share=PerThird(0.0, 0.0, 0.0))

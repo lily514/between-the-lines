@@ -9,7 +9,6 @@ from rich.text import Text
 from btl.cli.render import pitch_picture
 from btl.learn.evidence import EvidencePack
 from btl.learn.grader import Answer, ChoiceAnswer
-from btl.learn.questions import Form
 from btl.learn.session import Asked, MatchStart, Told
 from btl.schema.frames import to_left_to_right
 
@@ -66,7 +65,7 @@ def show_question(console: Console, asked: Asked) -> None:
         pitch_picture(
             to_left_to_right(asked.match),
             picture.action_id,
-            show_path=pack.form is Form.IDENTIFY,
+            show_path=bool(picture.path),
             marks=marks,
         )
     )
@@ -90,6 +89,8 @@ def show_feedback(console: Console, told: Told) -> None:
 def why_now(pack: EvidencePack) -> str:
     """When the question is asked and why, e.g. "Dead ball (goal kick), 36:10 · about 31:02"."""
     timing = pack.timing
+    if timing.delivery == "live" and timing.delivered_phase == "dead ball":
+        return f"{timing.occurred_at} · live, as play stops"
     if timing.delivery == "live":
         return f"{timing.occurred_at} · live, in settled play"
     where = timing.delivered_phase.value.capitalize()

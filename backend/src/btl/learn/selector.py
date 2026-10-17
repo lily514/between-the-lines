@@ -8,26 +8,32 @@ the very next decision:
 - **Which level:** from mastery (below 0.4 → level 1, below 0.7 → level 2, otherwise 3). A
   moment fits a level when its difficulty is in that level's band; the bands overlap.
 - **When:** never during a transition. A moment in settled play is asked live. One in a
-  transition is queued and asked, as a review, at the next dead ball long enough for a
-  question, or at half-time or full time.
+  transition, or after which play went on (advantage), is queued and asked, as a review, at
+  the next dead ball long enough for a question, or at half-time or full time. A restart, or
+  a foul that stops play, is asked live in the dead ball straight after it, however short, or
+  not at all. A review never names a restart the moment itself led to.
 - **How often:** at least ``SPACING`` match seconds between questions, at most
   ``IN_PLAY_CAP`` questions while the match is on, and ``BREAK_CAP`` more at each break.
   The breaks also guarantee at least ``MINIMUM_PER_MATCH`` questions: if there are fewer, a
-  break asks about the best moment already passed, whatever its difficulty.
+  break asks about the best moment already passed, whatever its difficulty. Tier-0 concepts
+  come round every few minutes, so each is asked at most ``TIER0_CAP`` times a match, and
+  all of them ``TIER0_MATCH_CAP`` times, leaving room for the others.
 
 When every active concept is mastered, it asks the occasional level-3 review question.
 """
 
+from collections import Counter
 from collections.abc import Callable, Collection, Iterator, Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import Enum
 
 from btl.concepts.phase import PhaseOfPlay, PhaseTimeline, Segment
-from btl.learn.candidates import Candidate
+from btl.learn.candidates import AskedWhen, Candidate
 from btl.learn.concept_map import ConceptKey, ConceptMap, Thresholds
 from btl.learn.evidence import Delivered
 from btl.learn.knowledge import Delivery
 from btl.schema.event import Event
+from btl.schema.ids import ActionId
 from btl.schema.scoreboard import PERIOD_MINUTES
 from btl.schema.vocab import ActionType
 
@@ -40,6 +46,8 @@ MINIMUM_PER_MATCH = 2
 QUEUE_LIMIT = 2
 # With everything mastered, review stays occasional.
 REVIEW_CAP = 1
+TIER0_CAP = 2
+TIER0_MATCH_CAP = 3
 RESTART_NAMES: Mapping[ActionType, str] = {
     ActionType.THROW_IN: "throw-in",
     ActionType.GOALKICK: "goal kick",
@@ -117,12 +125,15 @@ def run_match(
     passed: list[Candidate] = []
     used: set[tuple[str, int]] = set()
     asked: list[Prompt] = []
+    basics: Counter[ConceptKey] = Counter()
 
     def deliver(prompt: Prompt, *, in_play: bool) -> bool:
         if not ask(prompt):
             return False
         used.add(_identity(prompt.candidate))
         asked.append(prompt)
+        if concept_map.concept(prompt.candidate.concept).tier == 0:
+            basics[prompt.candidate.concept] += 1
         walk.asked += 1
         walk.in_play += in_play
         walk.last_asked = _match_seconds(prompt.delivered.period_id, prompt.delivered.time_seconds)
@@ -134,8 +145,14 @@ def run_match(
     def reviewing() -> bool:
         return not frontier()
 
+    def capped(concept: ConceptKey) -> bool:
+        if concept_map.concept(concept).tier != 0:
+            return False
+        return basics[concept] >= TIER0_CAP or basics.total() >= TIER0_MATCH_CAP
+
     def wanted(concept: ConceptKey) -> bool:
-        return concept in frontier() or (reviewing() and concept in active)
+        in_reach = concept in frontier() or (reviewing() and concept in active)
+        return in_reach and not capped(concept)
 
     def level_now(concept: ConceptKey) -> int:
         return 3 if reviewing() else level_for(mastery(concept))
@@ -150,11 +167,18 @@ def run_match(
     for kind, period_id, seconds, item in _walk_order(candidates, timeline):
         if kind is _Kind.CANDIDATE:
             assert isinstance(item, Candidate)
-            passed.append(item)
+            at_the_stoppage = item.asked_when is AskedWhen.AT_THE_STOPPAGE
+            if not at_the_stoppage:
+                passed.append(item)
             level = level_now(item.concept)
             if not (wanted(item.concept) and fits_level(item, level)):
                 continue
-            if item.phase is PhaseOfPlay.SETTLED:
+            if at_the_stoppage:
+                if room_in_play() and spaced(period_id, seconds):
+                    now = Delivered(Delivery.LIVE, period_id, seconds, PhaseOfPlay.DEAD_BALL)
+                    deliver(Prompt(item, level, now), in_play=True)
+                continue
+            if item.phase is PhaseOfPlay.SETTLED and item.asked_when is AskedWhen.IN_PLAY:
                 if room_in_play() and spaced(period_id, seconds):
                     live = Delivered(Delivery.LIVE, period_id, seconds, PhaseOfPlay.SETTLED)
                     deliver(Prompt(item, level, live), in_play=True)
@@ -168,7 +192,9 @@ def run_match(
                 continue
             restart = RESTART_NAMES.get(events[item.last].action_type)
             when = Delivered(Delivery.DEFERRED, period_id, seconds, PhaseOfPlay.DEAD_BALL, restart)
-            _deliver_queued(queue, when, wanted, level_now, deliver, limit=1, in_play=True)
+            _deliver_queued(
+                queue, when, wanted, level_now, deliver, limit=1, in_play=True, stopped=item.first
+            )
             continue
 
         when = Delivered(Delivery.DEFERRED, period_id, seconds, item.phase)
@@ -194,14 +220,22 @@ def _deliver_queued(
     *,
     limit: int,
     in_play: bool,
+    stopped: ActionId | None = None,
 ) -> int:
-    """Ask about the oldest queued moments still worth asking, re-levelled to mastery now."""
+    """Ask about the oldest queued moments still worth asking, re-levelled to mastery now.
+
+    ``stopped`` is the action after which play stopped, at a dead ball. A moment that includes
+    it led to the restart, such as an offside free kick, so naming the restart would hint.
+    """
     delivered = 0
     while queue and delivered < limit:
         candidate = queue.pop(0)
         if not wanted(candidate.concept):
             continue
-        prompt = Prompt(candidate, level_now(candidate.concept), when)
+        first, last = candidate.tag.span
+        led_to_it = stopped is not None and first <= stopped <= last
+        asked_when = replace(when, restart=None) if led_to_it else when
+        prompt = Prompt(candidate, level_now(candidate.concept), asked_when)
         if deliver(prompt, in_play=in_play):
             delivered += 1
     return delivered

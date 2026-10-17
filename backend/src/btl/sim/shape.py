@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from numpy.random import Generator
 
 from btl.league.league import Role
-from btl.sim.pitch import PITCH_WIDTH, Point, clamp_to_pitch, mirror
+from btl.sim.pitch import PITCH_LENGTH, PITCH_WIDTH, Point, clamp_to_pitch, mirror
 
 
 @dataclass(frozen=True, slots=True)
@@ -174,3 +174,46 @@ def place_teams(
         attackers = _jitter(attackers, rng, jitter)
         defenders = _jitter(defenders, rng, jitter)
     return attackers, defenders
+
+
+# How far beyond the offside line a receiver flagged offside stands, and how far behind it an
+# unflagged receiver who would be offside is pulled back to.
+OFFSIDE_MARGIN = (0.5, 4.0)
+ONSIDE_MARGIN = (0.0, 2.0)
+
+
+def offside_line(defenders: tuple[Point, ...], ball: Point) -> float:
+    """The x past which an attacker is in an offside position, attacking towards x = 105.
+
+    By the Laws, an attacker is in an offside position when in the opponents' half and nearer
+    their goal line than both the ball and the second-last opponent. Level is onside.
+    """
+    second_last = sorted((point.x for point in defenders), reverse=True)[1]
+    return max(second_last, ball.x, PITCH_LENGTH / 2)
+
+
+def place_receiver(
+    attackers: tuple[Point, ...],
+    defenders: tuple[Point, ...],
+    ball: Point,
+    end: Point,
+    receiver: int,
+    flagged: bool,
+    rng: Generator,
+) -> tuple[Point, ...]:
+    """Move a pass's receiver so the picture agrees with the referee's flag.
+
+    The events never depend on where players stand, so positions are drawn to explain them:
+    a receiver flagged offside stands just past the offside line, in line with where the pass
+    is going, and an unflagged one who would be past the line is pulled back level or behind.
+    Nobody else moves.
+    """
+    line = offside_line(defenders, ball)
+    at = attackers[receiver]
+    if flagged:
+        moved = Point(line + rng.uniform(*OFFSIDE_MARGIN), end.y)
+    elif at.x > line:
+        moved = Point(line - rng.uniform(*ONSIDE_MARGIN), at.y)
+    else:
+        return attackers
+    return (*attackers[:receiver], moved, *attackers[receiver + 1 :])

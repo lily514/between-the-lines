@@ -13,13 +13,13 @@ Milestone 2d is done, apart from Lily's hand check in the browser. A newcomer no
 - **Fouls near the box are graded higher (T7).** A tier-0 concept's prior is already level 2, and plain fouls were too easy to be asked at all.
 - **Every live question used to mean settled play;** a live question in a dead ball now has its own wording in the terminal and on the page (T7, T8).
 
+- **The tier-0 prior is 0.35, down from 0.40,** so the basics start on level 1 (see the last note).
+
 **Cut:** nothing from the cut list. A separate foul-spot mark was dropped, because the ball is already drawn there.
 
 **Carries over:**
 - Lily's hand check of the page (T8).
-- Two open points:
-  - tier-0 viewers start on level 2, because the prior equals the level-2 floor; lowering the tier-0 prior to 0.35 would start them on level 1;
-  - the misconception after a wrong answer is still picked by the pack's id, not by the mistake.
+- One open point: the misconception after a wrong answer is still picked by the pack's id, not by the mistake.
 - For 2b: the Verifier's `grounded` check needs entries for the seven new kinds of question, and the 2b draft plan is updated before 2b starts.
 
 ## T1 — Questions per concept (2026-10-16)
@@ -129,3 +129,10 @@ Over ten demo sessions, a match asks 6.8 questions on average (4 to 8). About 2.
 - Lily's hand check is still to do.
 **Why:** see each point.
 **Affects:** nothing.
+
+## Tier-0 prior (2026-10-16)
+
+**Plan said:** nothing; the tier-0 prior was 0.40 from Milestone 2a.
+**We did:** lowered it to 0.35, Lily's choice after T7's open point.
+**Why:** 0.40 is exactly level 2's floor, so a newcomer's first basics questions were level 2 (goal kicks, corners, balls off an opponent), and level 1 came only after a wrong answer. At 0.35 a newcomer starts on plain throw-ins and fouls far from the box. Over ten demo sessions, match 1 now asks 3.0 basics questions (the cap) against 2.4 before, and 6.6 questions in all (5 to 8). Line-breaking passes and counter-presses still come up in every match 1.
+**Affects:** nothing. The README's demo excerpt and [learner-model.md](../milestone-2a/learner-model.md) show the new prior.

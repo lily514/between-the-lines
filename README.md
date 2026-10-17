@@ -43,28 +43,27 @@ uv run btl demo-viewer
 
 ```
 ───────────────────── Match 1: Ripon Wardens v Ludlow Ferrymen ─────────────────────
-  Restarts              ████████░░░░░░░░░░░░   40%
-  Offside               ████████░░░░░░░░░░░░   40%
-  Fouls and cards       ████████░░░░░░░░░░░░   40%
+  Restarts              ███████░░░░░░░░░░░░░   35%
+  Offside               ███████░░░░░░░░░░░░░   35%
+  Fouls and cards       ███████░░░░░░░░░░░░░   35%
   Line-breaking passes  ███░░░░░░░░░░░░░░░░░   15%
   Counter-pressing      ███░░░░░░░░░░░░░░░░░   15%
 
-01:25 · live, as play stops
+00:08 · live, as play stops
   (the pitch at the moment, with the ball's path out of play)
-The ball has gone over the goal line Ripon Wardens defend, last touched by Ludlow
-Ferrymen. What happens now?
-  A  Throw-in to Ripon Wardens
-  B  Corner to Ludlow Ferrymen
-  C  Goal kick to Ripon Wardens
+The ball has gone over the touchline, last touched by Ripon Wardens. What happens now?
+  A  Corner to Ludlow Ferrymen
+  B  Throw-in to Ripon Wardens
+  C  Throw-in to Ludlow Ferrymen
 The demo viewer picks C.
-Right read. Ludlow Ferrymen touched it last before it crossed the goal line Ripon
-Wardens defend, so Ripon Wardens restart with a goal kick. The answer was Goal kick to
-Ripon Wardens.
+Right read. When the ball goes out, the team that didn't touch it last gets it back.
+Over a touchline that's a throw-in; over a goal line it's a corner or a goal kick. The
+answer was Throw-in to Ludlow Ferrymen.
 Takeaway: Say which restart comes next, and for which team, when the ball goes out of
 play.
 Right. A guess is right 1 time in 3, and someone who understands restarts still slips
-10% of the time, so we're now 71% sure you understand it, up from 40%.
-  Restarts              ██████████████░░░░░░   71%
+10% of the time, so we're now 67% sure you understand it, up from 35%.
+  Restarts              █████████████░░░░░░░   67%
 ```
 
 **Play it yourself.** `btl learn` plays your next match; type A, B or C to answer. Each run is one match of three, your answers are saved as you go (in `data/learners/`, which git ignores), and Ctrl+C is safe: the next run carries on where you stopped. `--reset` starts again.

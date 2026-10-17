@@ -38,7 +38,7 @@ learner_models:
     # learner_models.bkt.
     # Priors fall with tier: many newcomers already know what a goal is; few know PPDA.
     tier_defaults:
-      0: {prior: 0.40, learn: 0.20, slip: 0.10}
+      0: {prior: 0.35, learn: 0.20, slip: 0.10}
       1: {prior: 0.25, learn: 0.15, slip: 0.10}
       2: {prior: 0.15, learn: 0.15, slip: 0.10}
       3: {prior: 0.05, learn: 0.10, slip: 0.10}

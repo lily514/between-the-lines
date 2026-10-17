@@ -28,3 +28,17 @@ Where implementation diverged from [plan.md](plan.md), or something surprising w
 **Learned:** the back four wears 2 (right back), 3, 4 and 5 (left back), because shirt numbers follow the squad order from the right touchline. Traditionally the left back wears 3. Changing it would move players between slots and so change every match, so it stays.
 **Why:** the plan left these details open, and `league` can't import `sim`.
 **Affects:** T3 (adds the numbers to `team_sheet`), T4 (the API calls `sheet_stage` and `team_sheet` with the cached `PreparedMatch`).
+
+## T3 — Numbers from watched matches (2026-10-17)
+**Plan said:** `learn/player_stats.py`; stage 3. Tests on a hand-built mini match for passes, line-breaking passes and threat added by player; the current match never contributes.
+**We did:** as planned, with these choices:
+- **`watched_numbers`** takes each finished match's context and its starters, and returns each starter's numbers plus how many watched matches each club played (for the page's "From the N matches of theirs you have watched").
+  - **Passes** are ordinary passes and crosses. Set pieces don't count, or every player would collect some just for standing nearest when the ball went out.
+  - **A starter who never touched the ball has real zeros.** A player in no watched match has no entry at all, and the sheet shows "first time you've seen them".
+- **`viewer_sheet(course, state, prepare)`** works out the stage and, from stage 3, the numbers; `finished_numbers` asks `prepare` for matches 1 to N − 1 only. The leak test checks exactly that: the numbers never ask for the current match.
+  - Below stage 3, no earlier match is prepared at all.
+- **The terminal shows stage 3 too:** four columns (matches, passes completed/tried, line-breaking, threat added), "first time you've seen them" for unseen players, and a line for a club not yet watched.
+
+**Learned:** the detector finds many line-breaking passes: about 17–19 a match for a simulated centre midfielder. The simulator's flat lines make short passes between level midfielders count, as the `MIN_FORWARD` note in `candidates.py` already says. Questions use only the clearer ones; the sheet counts all of them, as the plan says.
+**Why:** the plan left these details open.
+**Affects:** T4 (the team-sheet route calls `viewer_sheet` with the API's cached `prepare`). If the counts look too high in Lily's T6 check, the sheet could count only passes that go `MIN_FORWARD` metres forward, the same rule questions use.

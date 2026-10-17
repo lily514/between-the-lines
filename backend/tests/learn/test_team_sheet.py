@@ -3,12 +3,23 @@ import pytest
 
 from btl.league.league import Role, generate_league
 from btl.learn.candidates import designed_lineups, play_designed_match
-from btl.learn.team_sheet import SheetTeam, TeamSheet, sheet_stage, team_sheet
+from btl.learn.learner import LearnerState
+from btl.learn.player_stats import WatchedNumbers, watched_numbers
+from btl.learn.session import Course, PreparedMatch, prepare_match
+from btl.learn.team_sheet import (
+    SheetTeam,
+    TeamSheet,
+    finished_numbers,
+    sheet_stage,
+    team_sheet,
+    viewer_sheet,
+)
 from btl.schema.frames import seen_by
 from btl.schema.ids import ActionId, TeamId
 from btl.schema.match import Match
 from btl.sim.lineup import Lineup
-from tests.fixtures.learning import designed
+from btl.tutor.templates import TemplateTutor
+from tests.fixtures.learning import context, designed, threat_model
 
 LEAGUE = generate_league(np.random.default_rng(0))
 HOME, AWAY = LEAGUE.clubs[:2]
@@ -95,3 +106,68 @@ def test_stage_two_shows_formations_and_kickoff_spots_seen_by_the_first_team() -
 def test_an_unknown_stage_is_refused() -> None:
     with pytest.raises(ValueError, match="stage must be one of"):
         sheet(designed(0), 4)
+
+
+def numbers_for(match: Match) -> WatchedNumbers:
+    starters = [p.player_id for lineup in designed_lineups(HOME, AWAY) for p in lineup.players]
+    seen = starters[:11] + starters[11:12]  # The home eleven and the away keeper.
+    return watched_numbers([(context(match), seen)])
+
+
+def test_stage_three_shows_numbers_only_for_players_the_viewer_has_seen() -> None:
+    match = designed(0)
+    numbers = numbers_for(designed(1))
+
+    staged = team_sheet(match, designed_lineups(HOME, AWAY), 2, 3, None, numbers)
+
+    home, away = staged.teams
+    assert all(player.numbers is not None for player in home.players)
+    assert away.players[0].numbers is not None and away.players[0].numbers.matches == 1
+    assert all(player.numbers is None for player in away.players[1:])
+    assert home.matches_watched == away.matches_watched == 1
+
+
+def test_numbers_are_hidden_before_stage_three() -> None:
+    match = designed(0)
+
+    staged = team_sheet(match, designed_lineups(HOME, AWAY), 2, 2, None, numbers_for(designed(1)))
+
+    assert all(team.matches_watched is None for team in staged.teams)
+    assert all(player.numbers is None for team in staged.teams for player in team.players)
+
+
+def test_a_club_the_viewer_has_not_watched_has_no_numbers() -> None:
+    staged = team_sheet(designed(0), designed_lineups(HOME, AWAY), 1, 3, None)
+
+    assert [team.matches_watched for team in staged.teams] == [0, 0]
+    assert all(player.numbers is None for team in staged.teams for player in team.players)
+
+
+def test_the_numbers_come_only_from_finished_matches_never_the_current_one() -> None:
+    shared = Course(threat_model(), TemplateTutor())
+    asked_for: list[int] = []
+
+    def prepare(seed: int, number: int, club: TeamId | None) -> PreparedMatch:
+        asked_for.append(number)
+        return prepare_match(shared, seed, number, club)
+
+    state = LearnerState("lily", seed=3, match_number=3, club=HOME.team_id)
+    counted = finished_numbers(state, prepare)
+
+    assert asked_for == [1, 2]
+    assert counted.team_matches[HOME.team_id] == 2
+    assert set(counted.team_matches.values()) <= {1, 2}
+
+
+def test_a_viewer_on_their_first_match_or_below_stage_three_gets_no_numbers() -> None:
+    shared = Course(threat_model(), TemplateTutor())
+    asked_for: list[int] = []
+
+    def prepare(seed: int, number: int, club: TeamId | None) -> PreparedMatch:
+        asked_for.append(number)
+        return prepare_match(shared, seed, number, club)
+
+    beginner = viewer_sheet(shared, LearnerState("lily", seed=3, match_number=2), prepare)
+
+    assert beginner.stage == 1 and asked_for == [2]
+    assert all(team.matches_watched is None for team in beginner.teams)

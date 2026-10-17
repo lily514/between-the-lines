@@ -10,6 +10,7 @@ from rich.text import Text
 from btl.cli.render import pitch_picture
 from btl.learn.evidence import EvidencePack
 from btl.learn.grader import Answer, ChoiceAnswer
+from btl.learn.player_stats import PlayerStats
 from btl.learn.session import Asked, MatchStart, Told
 from btl.learn.team_sheet import SHAPE_STAGE, SheetTeam, TeamSheet
 from btl.schema.frames import to_left_to_right
@@ -69,25 +70,43 @@ def show_team_sheet(console: Console, sheet: TeamSheet) -> None:
     for team in sheet.teams:
         console.print()
         console.print(team_table(team, abbreviated=sheet.stage >= SHAPE_STAGE))
+        if team.matches_watched == 0:
+            console.print(f"You haven't watched {team.name} yet, so there are no numbers.")
 
 
 def team_table(team: SheetTeam, *, abbreviated: bool) -> Table:
-    """One side's starters: shirt number, name and position."""
+    """One side's starters: shirt number, name and position, then any watched numbers."""
     title = [team.name, "home" if team.home else "away"]
     if team.yours:
         title.append("your team")
     if team.formation is not None:
         title.append(team.formation)
-    table = Table(title=" · ".join(title), title_justify="left", box=None, show_header=False)
+    counted = bool(team.matches_watched)
+    table = Table(title=" · ".join(title), title_justify="left", box=None, show_header=counted)
     table.add_column(justify="right")
     table.add_column()
     if abbreviated:
         table.add_column()
     table.add_column()
+    if counted:
+        for heading in ("Matches", "Passes", "Line-breaking", "Threat added"):
+            table.add_column(heading, justify="right")
     for player in team.players:
         short = [player.position.short] if abbreviated else []
-        table.add_row(str(player.shirt_number), player.name, *short, player.position.name)
+        numbers = _numbers_cells(player.numbers) if counted else []
+        table.add_row(str(player.shirt_number), player.name, *short, player.position.name, *numbers)
     return table
+
+
+def _numbers_cells(numbers: PlayerStats | None) -> list[str]:
+    if numbers is None:
+        return ["first time you've seen them", "", "", ""]
+    return [
+        str(numbers.matches),
+        f"{numbers.passes_completed}/{numbers.passes_tried}",
+        str(numbers.line_breaking_passes),
+        f"{numbers.threat_added:+.2f}",
+    ]
 
 
 def show_question(console: Console, asked: Asked) -> None:

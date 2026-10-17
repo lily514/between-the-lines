@@ -61,7 +61,7 @@ from btl.learn.session import (
     start_session,
     watch_match,
 )
-from btl.learn.team_sheet import sheet_stage, team_sheet
+from btl.learn.team_sheet import viewer_sheet
 from btl.plant.planter import simulate_with_moments
 from btl.plant.spec import parse_plant
 from btl.replay import DEFAULT_FPS, answer_frames, frame_at, lead_up_frames, question_action
@@ -509,15 +509,18 @@ def learn(
         console.print(progress_bars(course.bars(stored.state)))
         return
     state = stored.state
-    prepared = prepare_match(course, state.seed, state.match_number, state.club)
-    stage = sheet_stage(course.bars(state).values())
-    sheet = team_sheet(prepared.match, prepared.lineups, state.match_number, stage, state.club)
+    current = state.match_number
+    prepared = prepare_match(course, state.seed, current, state.club)
+
+    def prepare(seed: int, match_number: int, club: TeamId | None) -> PreparedMatch:
+        if match_number == current:
+            return prepared
+        return prepare_match(course, seed, match_number, club)
+
+    sheet = viewer_sheet(course, state, prepare)
     terminal = TerminalViewer(console, lambda prompt: typer.prompt(prompt), sheet)
 
-    def already_prepared(seed: int, match_number: int, club: TeamId | None) -> PreparedMatch:
-        return prepared
-
-    state = watch_match(course, store, viewer, terminal, _now, already_prepared)
+    state = watch_match(course, store, viewer, terminal, _now, prepare)
     if state.finished:
         console.print("That was your last match. `--reset` starts again.")
     else:

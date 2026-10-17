@@ -54,17 +54,20 @@ from btl.learn.session import (
     ClubLockedError,
     Course,
     DemoViewer,
+    PreparedMatch,
     choose_club,
+    prepare_match,
     seed_for_viewer,
     start_session,
     watch_match,
 )
+from btl.learn.team_sheet import sheet_stage, team_sheet
 from btl.plant.planter import simulate_with_moments
 from btl.plant.spec import parse_plant
 from btl.replay import DEFAULT_FPS, answer_frames, frame_at, lead_up_frames, question_action
 from btl.schema.event import Event
 from btl.schema.frames import seen_by
-from btl.schema.ids import ActionId
+from btl.schema.ids import ActionId, TeamId
 from btl.schema.match import Match
 from btl.schema.moment import PlantedMoment
 from btl.schema.vocab import ConceptId
@@ -505,8 +508,16 @@ def learn(
         console.print(f"{viewer} has watched all three matches. `--reset` starts again.")
         console.print(progress_bars(course.bars(stored.state)))
         return
-    terminal = TerminalViewer(console, lambda prompt: typer.prompt(prompt))
-    state = watch_match(course, store, viewer, terminal, _now)
+    state = stored.state
+    prepared = prepare_match(course, state.seed, state.match_number, state.club)
+    stage = sheet_stage(course.bars(state).values())
+    sheet = team_sheet(prepared.match, prepared.lineups, state.match_number, stage, state.club)
+    terminal = TerminalViewer(console, lambda prompt: typer.prompt(prompt), sheet)
+
+    def already_prepared(seed: int, match_number: int, club: TeamId | None) -> PreparedMatch:
+        return prepared
+
+    state = watch_match(course, store, viewer, terminal, _now, already_prepared)
     if state.finished:
         console.print("That was your last match. `--reset` starts again.")
     else:

@@ -22,7 +22,12 @@ from btl.concepts.base import MatchContext, match_context
 from btl.concepts.phase import PhaseTimeline, phase_timeline
 from btl.league.league import Club, League, generate_league, season_fixtures
 from btl.learn.bkt import BktModel, BktState
-from btl.learn.candidates import Candidate, find_candidates, play_designed_match
+from btl.learn.candidates import (
+    Candidate,
+    designed_lineups,
+    find_candidates,
+    play_designed_match,
+)
 from btl.learn.concept_map import ConceptKey, ConceptMap, load_concept_map
 from btl.learn.evidence import EvidencePack, QuestionView, build_pack, question_view
 from btl.learn.grader import Answer, ChoiceAnswer, ChoiceGrader, Grade
@@ -31,6 +36,7 @@ from btl.learn.questions import active_concepts, build_question
 from btl.learn.selector import Prompt, run_match
 from btl.schema.ids import TeamId
 from btl.schema.match import Match
+from btl.sim.lineup import Lineup
 from btl.store.base import LearnerStore, Stored
 from btl.tutor.base import Tutor
 from btl.tutor.slots import feedback_values, fill, question_values
@@ -156,6 +162,7 @@ class PreparedMatch:
     ctx: MatchContext
     timeline: PhaseTimeline
     candidates: tuple[Candidate, ...]
+    lineups: tuple[Lineup, Lineup]
 
 
 def prepare_match(
@@ -174,7 +181,8 @@ def prepare_match(
     ctx = match_context(match, rate_match(course.threat, match))
     timeline = phase_timeline(match)
     candidates = find_candidates(ctx, timeline, course.concept_map, course.active)
-    return PreparedMatch(home, away, match_seed, match, ctx, timeline, candidates)
+    lineups = designed_lineups(home, away)
+    return PreparedMatch(home, away, match_seed, match, ctx, timeline, candidates, lineups)
 
 
 def seed_for_viewer(viewer_id: str) -> int:

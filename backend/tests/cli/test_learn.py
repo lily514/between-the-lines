@@ -110,3 +110,11 @@ def test_learn_refuses_an_unknown_club_or_a_change_after_answering(tmp_path: Pat
 
     assert unknown.exit_code != 0 and "no club called 'nowhere'" in unknown.output
     assert changed.exit_code != 0 and "team can't change" in changed.output
+
+
+def test_learn_shows_both_elevens_before_the_match(tmp_path: Path) -> None:
+    output = learn(tmp_path, "--club", "LUD")
+
+    sheet = output.split("Match 1:")[1].split("+---")[0]
+    assert "Ludlow Ferrymen · " in sheet and "your team" in sheet
+    assert sheet.count("Goalkeeper") == 2 and "Left back" in sheet

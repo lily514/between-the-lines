@@ -15,3 +15,16 @@ Where implementation diverged from [plan.md](plan.md), or something surprising w
 
 **Why:** the plan left these details open.
 **Affects:** T4 (`PUT /api/viewers/{id}/club` maps `ClubLockedError` to 409; `POST /api/viewers` with a club calls `start_session` then `choose_club`).
+
+## T2 — Positions and team sheets (2026-10-17)
+**Plan said:** `league/positions.py`; `learn/team_sheet.py` with stages 1 and 2, built from the same `pick_lineup` call the engine makes; the stage from mastery. Tests: every slot has a name; the sheet's players are exactly those in the match, over 40 seeds; stage 2's spots equal the kick-off snapshot.
+**We did:** as planned, with these changes:
+- **Position names live in `sim/position_names.py`,** not `league/`. They are named from formation slots, which belong to `sim/shape.py`, and `league` sits below `sim`. A slot is wide if it is at either end of a line of four (defence, midfield) or three (attack); right and left are the team's own.
+- **The formation is now named once:** `MATCH_FORMATION` (4-4-2) in `learn/candidates.py`. `play_designed_match` passes it to the simulator instead of relying on the default, and `designed_lineups` builds both elevens from it. `PreparedMatch` carries the line-ups. Nothing changes: `btl demo-viewer` output is still byte-identical, and a test checks the line-ups against the players each match tracks, in order, for several pairs of clubs.
+- **`team_sheet(match, lineups, match_number, stage, club)`** takes the match and line-ups, not the course and record; the caller works out the stage with `sheet_stage`. Stage 3 shows the same as stage 2 until T3 adds the numbers.
+- **Each line is listed left to right as the team faces** (left back first), as the handoff asks. Kick-off spots come from the first action's snapshot, seen with the sheet's first team attacking towards x = 105, so the page can draw your team attacking up.
+- **The terminal shows positions without their descriptions.** Twenty-two descriptions would bury the start of the match; the web page shows them.
+
+**Learned:** the back four wears 2 (right back), 3, 4 and 5 (left back), because shirt numbers follow the squad order from the right touchline. Traditionally the left back wears 3. Changing it would move players between slots and so change every match, so it stays.
+**Why:** the plan left these details open, and `league` can't import `sim`.
+**Affects:** T3 (adds the numbers to `team_sheet`), T4 (the API calls `sheet_stage` and `team_sheet` with the cached `PreparedMatch`).

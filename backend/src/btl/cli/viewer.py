@@ -4,12 +4,14 @@ from collections.abc import Callable, Mapping
 
 from rich.console import Console
 from rich.rule import Rule
+from rich.table import Table
 from rich.text import Text
 
 from btl.cli.render import pitch_picture
 from btl.learn.evidence import EvidencePack
 from btl.learn.grader import Answer, ChoiceAnswer
 from btl.learn.session import Asked, MatchStart, Told
+from btl.learn.team_sheet import SHAPE_STAGE, SheetTeam, TeamSheet
 from btl.schema.frames import to_left_to_right
 
 BAR_WIDTH = 20
@@ -18,14 +20,22 @@ BAR_WIDTH = 20
 class TerminalViewer:
     """A `btl.learn.session.Viewer` that asks and answers in the terminal."""
 
-    def __init__(self, console: Console, read: Callable[[str], str]) -> None:
-        """Print to ``console`` and read answers with ``read`` (given the prompt)."""
+    def __init__(
+        self, console: Console, read: Callable[[str], str], sheet: TeamSheet | None = None
+    ) -> None:
+        """Print to ``console`` and read answers with ``read`` (given the prompt).
+
+        ``sheet``, if given, is shown when the match begins.
+        """
         self._console = console
         self._read = read
+        self._sheet = sheet
 
     def begin(self, start: MatchStart) -> None:
-        """Announce the match and where the viewer stands."""
+        """Announce the match, who is playing, and where the viewer stands."""
         show_match_start(self._console, start)
+        if self._sheet is not None:
+            show_team_sheet(self._console, self._sheet)
 
     def ask(self, asked: Asked) -> Answer:
         """Show the question and read A, B or C."""
@@ -52,6 +62,32 @@ def show_match_start(console: Console, start: MatchStart) -> None:
     """The match about to be watched, and the bars before it."""
     console.print(Rule(Text(f"Match {start.match_number}: {start.home} v {start.away}")))
     console.print(progress_bars(start.mastery))
+
+
+def show_team_sheet(console: Console, sheet: TeamSheet) -> None:
+    """Both elevens, the viewer's team first; from stage 2 with formations and abbreviations."""
+    for team in sheet.teams:
+        console.print()
+        console.print(team_table(team, abbreviated=sheet.stage >= SHAPE_STAGE))
+
+
+def team_table(team: SheetTeam, *, abbreviated: bool) -> Table:
+    """One side's starters: shirt number, name and position."""
+    title = [team.name, "home" if team.home else "away"]
+    if team.yours:
+        title.append("your team")
+    if team.formation is not None:
+        title.append(team.formation)
+    table = Table(title=" · ".join(title), title_justify="left", box=None, show_header=False)
+    table.add_column(justify="right")
+    table.add_column()
+    if abbreviated:
+        table.add_column()
+    table.add_column()
+    for player in team.players:
+        short = [player.position.short] if abbreviated else []
+        table.add_row(str(player.shirt_number), player.name, *short, player.position.name)
+    return table
 
 
 def show_question(console: Console, asked: Asked) -> None:

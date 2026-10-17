@@ -38,6 +38,7 @@ HIDDEN = {
     "chosen",
     "explanation",
 }
+HOME, AWAY = generate_league(np.random.default_rng(0)).clubs[:2]
 ASKED_LATER = Delivered(Delivery.DEFERRED, 1, 2000.0, PhaseOfPlay.DEAD_BALL, "goal kick")
 
 
@@ -89,7 +90,7 @@ def test_a_question_payload_never_holds_the_answer_or_an_outcome(seed: int) -> N
                     asked = asked_for(candidate, level, delivery, seed)
                     if asked is None:
                         continue
-                    payload = question_payload(asked, 1, "Home", "Away")
+                    payload = question_payload(asked, 1, HOME, AWAY, None)
                     text = payload.model_dump_json()
                     names = keys_in(json.loads(text))
 
@@ -106,7 +107,7 @@ def test_a_question_payload_says_when_the_moment_happened_and_when_it_is_asked()
     asked = asked_for(candidate, 1, Delivery.DEFERRED, 0)
     assert asked is not None
 
-    payload = question_payload(asked, 2, "Home", "Away")
+    payload = question_payload(asked, 2, HOME, AWAY, AWAY.team_id)
 
     assert payload.occurred.period == candidate.period_id
     assert payload.occurred.seconds == candidate.time_seconds
@@ -115,4 +116,9 @@ def test_a_question_payload_says_when_the_moment_happened_and_when_it_is_asked()
     assert (payload.delivered.period, payload.delivered.seconds) == (1, 2000.0)
     assert payload.delivered.clock == "33:20"
     assert (payload.delivered.phase, payload.delivered.restart) == ("dead ball", "goal kick")
-    assert (payload.match_number, payload.home, payload.away) == (2, "Home", "Away")
+    assert (payload.match_number, payload.home, payload.away) == (2, HOME.name, AWAY.name)
+    assert (payload.home_code, payload.away_code, payload.your_team) == (
+        HOME.short_name,
+        AWAY.short_name,
+        "away",
+    )

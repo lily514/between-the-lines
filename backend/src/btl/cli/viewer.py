@@ -8,11 +8,11 @@ from rich.table import Table
 from rich.text import Text
 
 from btl.cli.render import pitch_picture
-from btl.learn.evidence import EvidencePack
+from btl.learn.evidence import EvidencePack, percent_points
 from btl.learn.grader import Answer, ChoiceAnswer
 from btl.learn.player_stats import PlayerStats
 from btl.learn.session import Asked, MatchStart, Told
-from btl.learn.team_sheet import SHAPE_STAGE, SheetTeam, TeamSheet
+from btl.learn.team_sheet import NEXT_STAGE, SHAPE_STAGE, SheetTeam, TeamSheet
 from btl.schema.frames import to_left_to_right
 
 BAR_WIDTH = 20
@@ -72,6 +72,9 @@ def show_team_sheet(console: Console, sheet: TeamSheet) -> None:
         console.print(team_table(team, abbreviated=sheet.stage >= SHAPE_STAGE))
         if team.matches_watched == 0:
             console.print(f"You haven't watched {team.name} yet, so there are no numbers.")
+    if sheet.stage in NEXT_STAGE:
+        console.print()
+        console.print(NEXT_STAGE[sheet.stage], style="dim")
 
 
 def team_table(team: SheetTeam, *, abbreviated: bool) -> Table:
@@ -105,7 +108,7 @@ def _numbers_cells(numbers: PlayerStats | None) -> list[str]:
         str(numbers.matches),
         f"{numbers.passes_completed}/{numbers.passes_tried}",
         str(numbers.line_breaking_passes),
-        f"{numbers.threat_added:+.2f}",
+        percent_points(numbers.threat_added).display,
     ]
 
 

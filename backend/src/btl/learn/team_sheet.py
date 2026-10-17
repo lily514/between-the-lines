@@ -29,6 +29,11 @@ STAGES = (1, 2, 3)
 SHAPE_STAGE = 2
 NUMBERS_STAGE = 3
 ROLE_ORDER = (Role.GOALKEEPER, Role.DEFENDER, Role.MIDFIELDER, Role.FORWARD)
+# What opens the next stage, shown under the sheet so the viewer knows it will grow.
+NEXT_STAGE: dict[int, str] = {
+    1: "Get to level 2 in any concept to see the formation.",
+    2: "Get to level 3 in any concept to see players' numbers from matches you've watched.",
+}
 
 
 @dataclass(frozen=True, slots=True)

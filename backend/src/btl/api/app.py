@@ -7,8 +7,13 @@ is cached; a request then only replays the selector.
 
 Routes:
 
+- ``GET /api/clubs``: the league's clubs (`ClubOut`).
 - ``POST /api/viewers``: start watching, or carry on (`StartIn` → `StatusOut`).
 - ``GET /api/viewers/{viewer_id}``: where a viewer stands (`StatusOut`).
+- ``PUT /api/viewers/{viewer_id}/club``: choose the team to support, until the viewer has
+  started watching (`ClubIn` → `StatusOut`).
+- ``GET /api/viewers/{viewer_id}/team-sheet``: who's playing in the viewer's next match
+  (`TeamSheetOut`).
 - ``POST /api/viewers/{viewer_id}/next``: the pending question, or the full-time summary when
   the match has no more, which also moves the viewer on to their next match (`NextOut`).
 - ``POST /api/viewers/{viewer_id}/answers``: answer the pending question (`AnswerIn` →
@@ -25,19 +30,25 @@ from fastapi.responses import FileResponse
 
 from btl.api.models import (
     AnswerIn,
+    ClubIn,
+    ClubOut,
     FeedbackOut,
     Fixture,
     FullTimeOut,
     NextOut,
     StartIn,
     StatusOut,
+    TeamSheetOut,
 )
 from btl.api.payloads import (
     bars,
+    club_payload,
     feedback_payload,
     movements,
     question_payload,
+    team_sheet_payload,
     thresholds_payload,
+    your_team,
 )
 from btl.api.viewer import (
     AnswerOnlyStore,
@@ -49,13 +60,16 @@ from btl.api.viewer import (
 )
 from btl.learn.learner import MATCHES_PER_SESSION, LearnerState
 from btl.learn.session import (
+    ClubLockedError,
     Course,
     PreparedMatch,
+    choose_club,
     prepare_match,
     seed_for_viewer,
     start_session,
     watch_match,
 )
+from btl.learn.team_sheet import viewer_sheet
 from btl.schema.ids import TeamId
 from btl.schema.scoreboard import goals
 from btl.store.base import LearnerStore, StaleWriteError, Stored, check_viewer_id
@@ -104,19 +118,44 @@ def create_app(
 
     def status(found: Stored) -> StatusOut:
         state = found.state
+        league = course().league
         fixture = None
         if not state.finished:
             home, away, _ = course().fixture(state.seed, state.match_number, state.club)
-            fixture = Fixture(home=home.name, away=away.name)
+            fixture = Fixture(
+                home=home.name,
+                away=away.name,
+                home_code=home.short_name,
+                away_code=away.short_name,
+                your_team=your_team(state.club, home, away),
+            )
         return StatusOut(
             viewer_id=state.viewer_id,
             match_number=state.match_number,
             matches=MATCHES_PER_SESSION,
             finished=state.finished,
             fixture=fixture,
+            club=None if state.club is None else club_payload(league.club(state.club)),
+            can_choose_club=state.can_choose_club,
+            suggested_club=league.clubs[state.seed % len(league.clubs)].team_id,
             concepts=bars(course().bars(state)),
             thresholds=thresholds_payload(course().model.thresholds),
         )
+
+    def chosen(viewer_id: str, club: int) -> Stored:
+        try:
+            return choose_club(course(), store, viewer_id, TeamId(club))
+        except ClubLockedError:
+            raise HTTPException(409, "the team can't change once you've started watching") from None
+        except ValueError as error:
+            raise HTTPException(422, str(error)) from None
+        except StaleWriteError:
+            raise HTTPException(409, "the record changed; try again") from None
+
+    @app.get("/api/clubs")
+    def clubs() -> list[ClubOut]:
+        """The league's clubs, in team id order."""
+        return [club_payload(club) for club in course().league.clubs]
 
     @app.post("/api/viewers")
     def start(body: StartIn) -> StatusOut:
@@ -124,7 +163,24 @@ def create_app(
         _check(body.viewer_id)
         seed = seed_for_viewer(body.viewer_id) if body.seed is None else body.seed
         with lock:
-            return status(start_session(store, body.viewer_id, seed))
+            found = start_session(store, body.viewer_id, seed)
+            if body.club is not None:
+                found = chosen(body.viewer_id, body.club)
+            return status(found)
+
+    @app.put("/api/viewers/{viewer_id}/club")
+    def put_club(viewer_id: str, body: ClubIn) -> StatusOut:
+        """Choose the team to support, before answering anything."""
+        with lock:
+            stored(viewer_id)
+            return status(chosen(viewer_id, body.club))
+
+    @app.get("/api/viewers/{viewer_id}/team-sheet")
+    def get_team_sheet(viewer_id: str) -> TeamSheetOut:
+        """Who's playing in the viewer's next match, as much as their stage shows."""
+        with lock:
+            state = _watching(stored(viewer_id))
+            return team_sheet_payload(viewer_sheet(course(), state, prepare))
 
     @app.get("/api/viewers/{viewer_id}")
     def get_status(viewer_id: str) -> StatusOut:
@@ -141,16 +197,22 @@ def create_app(
             try:
                 after = watch_match(course(), store, viewer_id, viewer, now, prepare)
             except QuestionPendingError as pending:
-                start = viewer.start
-                assert start is not None
-                return question_payload(pending.asked, state.match_number, start.home, start.away)
+                match = prepare(state.seed, state.match_number, state.club)
+                return question_payload(
+                    pending.asked, state.match_number, match.home, match.away, state.club
+                )
             except StaleWriteError:
                 raise HTTPException(409, "the record changed; try again") from None
             return _full_time(
-                viewer, prepare(state.seed, state.match_number, state.club), after.finished
+                viewer,
+                prepare(state.seed, state.match_number, state.club),
+                state.club,
+                after.finished,
             )
 
-    def _full_time(viewer: WebViewer, match: PreparedMatch, finished: bool) -> FullTimeOut:
+    def _full_time(
+        viewer: WebViewer, match: PreparedMatch, club: TeamId | None, finished: bool
+    ) -> FullTimeOut:
         start, ended = viewer.start, viewer.ended
         assert start is not None and ended is not None
         mastery, asked = ended
@@ -159,6 +221,9 @@ def create_app(
             match_number=start.match_number,
             home=start.home,
             away=start.away,
+            home_code=match.home.short_name,
+            away_code=match.away.short_name,
+            your_team=your_team(club, match.home, match.away),
             home_goals=scored[match.match.home_team_id],
             away_goals=scored[match.match.away_team_id],
             questions=asked,

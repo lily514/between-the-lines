@@ -42,3 +42,20 @@ Where implementation diverged from [plan.md](plan.md), or something surprising w
 **Learned:** the detector finds many line-breaking passes: about 17–19 a match for a simulated centre midfielder. The simulator's flat lines make short passes between level midfielders count, as the `MIN_FORWARD` note in `candidates.py` already says. Questions use only the clearer ones; the sheet counts all of them, as the plan says.
 **Why:** the plan left these details open.
 **Affects:** T4 (the team-sheet route calls `viewer_sheet` with the API's cached `prepare`). If the counts look too high in Lily's T6 check, the sheet could count only passes that go `MIN_FORWARD` metres forward, the same rule questions use.
+
+## T4 — API (2026-10-17)
+**Plan said:** `GET /api/clubs`; `POST /api/viewers` takes an optional `club`; `PUT /api/viewers/{id}/club` (409 after the first answer); `GET /api/viewers/{id}/team-sheet`; `your_team` on the status, question and full-time payloads; the cache key; the leak check through the API; API types regenerated.
+**We did:** as planned, with these additions and choices:
+- **Every new field is added beside the old ones,** so the page keeps working unchanged until T5 and T6 use them:
+  - the status, question and full-time payloads carry each club's three-letter code (`home_code`, `away_code`), the key for the handoff's crests and colours;
+  - the status also carries `club`, `can_choose_club` and `suggested_club`.
+- **"Pick one for me":** `suggested_club` is the viewer's seed modulo the number of clubs, so a name always suggests the same club. Pressing it again moves the page on to the next club in the list.
+- **Starting with a club** sets it while the viewer can still choose. Asking again for the club they already have is fine at any time; a different club after the first answer is a 409, as with `PUT`.
+- **The team sheet route** returns 409 for a viewer who has watched every match. Kick-off spots are rounded to 0.1 m.
+  - `next_stage` carries the wording that says what opens more ("Get to level 2 in any concept to see the formation."), written once in `team_sheet.NEXT_STAGE`. The terminal shows it too.
+- **Threat added uses the questions' format,** percentage points such as "+4.1%". The formatter, `percent_points`, is now public in `evidence.py`, and the terminal's stage 3 column uses it too.
+- **`question_payload` takes the two clubs** and the viewer's club rather than two names.
+- **The leak check through the API** plays the demo viewer to match 3, which reaches stage 3. Each club's `matches_watched` matches matches 1 and 2 exactly, and the players' numbers don't change after answering a question in match 3.
+
+**Why:** the plan left these details open; the codes are for the crests the design handoff added.
+**Affects:** T5 and T6 read the new fields. The page's hand-built test payloads gained the new fields.

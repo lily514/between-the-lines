@@ -26,8 +26,13 @@ def test_openapi_writes_the_schema_the_page_s_types_are_made_from(tmp_path: Path
         "/api/viewers/{viewer_id}",
         "/api/viewers/{viewer_id}/next",
         "/api/viewers/{viewer_id}/answers",
+        "/api/clubs",
+        "/api/viewers/{viewer_id}/club",
+        "/api/viewers/{viewer_id}/team-sheet",
     }
-    assert {"QuestionOut", "FullTimeOut", "FeedbackOut"} <= set(schema["components"]["schemas"])
+    assert {"QuestionOut", "FullTimeOut", "FeedbackOut", "TeamSheetOut"} <= set(
+        schema["components"]["schemas"]
+    )
 
 
 def test_the_page_s_committed_schema_matches_the_api() -> None:

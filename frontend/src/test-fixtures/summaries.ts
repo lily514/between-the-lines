@@ -7,7 +7,10 @@ export const startStatus: Status = {
 	match_number: 1,
 	matches: 3,
 	finished: false,
-	fixture: { home: 'Ripon Wardens', away: 'Ludlow Ferrymen' },
+	fixture: { home: 'Ripon Wardens', away: 'Ludlow Ferrymen', home_code: 'RIP', away_code: 'LUD', your_team: null },
+	club: null,
+	can_choose_club: true,
+	suggested_club: 8,
 	concepts: [
 		{ name: 'Line-breaking passes', value: 0.15 },
 		{ name: 'Counter-pressing', value: 0.17 }
@@ -22,6 +25,9 @@ export const fullTime: FullTime = {
 	match_number: 1,
 	home: 'Ripon Wardens',
 	away: 'Ludlow Ferrymen',
+	home_code: 'RIP',
+	away_code: 'LUD',
+	your_team: null,
 	home_goals: 2,
 	away_goals: 1,
 	questions: 1,

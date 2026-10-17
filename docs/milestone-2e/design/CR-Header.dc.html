@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Between the Lines — Team-sheet header with crests</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#9CC8F0}a:hover{color:#C2DDF6}
+button{font:inherit;color:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="width: 390px; min-height: 760px; box-sizing: border-box; background: {{t.bg}}; color: {{t.text}}; font-family: 'DM Sans', system-ui, sans-serif; padding: 0 16px 24px; display: flex; flex-direction: column; gap: 16px">
+  <header style="height: 56px; margin: 0 -8px 0 -12px; display: flex; align-items: center; gap: 4px">
+    <button aria-label="Back" style="width: 44px; height: 44px; border: 0; background: transparent; display: flex; align-items: center; justify-content: center; border-radius: 10px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{t.text}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg></button>
+    <div style="font-size: 14px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: {{t.muted}}">Before kick-off</div>
+  </header>
+
+  <h1 style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-size: 40px; line-height: 1; font-weight: 700">Who's playing</h1>
+
+  <section aria-label="Hexham Anchors at home to Whitby Kestrels" style="padding: 16px; background: {{t.surface}}; border: 1px solid {{t.border}}; border-radius: 16px">
+    <div style="display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px">
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center">
+        <img src="{{hex}}" width="64" height="64" alt="Hexham Anchors crest">
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 15px">HEX</span>
+        <span style="font-size: 12px; color: {{t.muted}}">Home · filled discs</span>
+      </div>
+      <span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 20px; font-weight: 700; color: {{t.muted}}">v</span>
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center">
+        <img src="{{whi}}" width="64" height="64" alt="Whitby Kestrels crest">
+        <span style="display: flex; align-items: center; gap: 6px"><span style="font-family: 'JetBrains Mono', monospace; font-size: 15px">WHI</span><span style="height: 20px; padding: 0 6px; background: {{t.text}}; color: {{t.bg}}; border-radius: 5px; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center">You</span></span>
+        <span style="font-size: 12px; color: {{t.muted}}">Away · rings</span>
+      </div>
+    </div>
+    <p style="margin: 12px 0 0; text-align: center; font-size: 14px; color: {{t.text2}}">Matchday 2 · Hexham Anchors v Whitby Kestrels</p>
+  </section>
+
+  <section aria-label="Whitby Kestrels, your team, away" style="padding: 14px; border: 2px solid {{t.text}}; background: {{t.raised}}; border-radius: 16px; display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: center; gap: 12px">
+      <img src="{{whi}}" width="48" height="48" alt="">
+      <div style="flex: 1">
+        <div style="display: flex; align-items: center; gap: 8px"><h2 style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-size: 24px; font-weight: 700; line-height: 1.05">Whitby Kestrels</h2><span style="height: 22px; padding: 0 8px; background: {{t.text}}; color: {{t.bg}}; border-radius: 6px; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center">You</span></div>
+        <div style="margin-top: 3px; font-size: 14px; color: {{t.muted}}"><span style="font-family: 'JetBrains Mono', monospace; color: {{t.text2}}">WHI</span> · Away · rings</div>
+      </div>
+      <div style="text-align: right"><div style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: {{t.muted}}">Formation</div><div style="font-family: 'JetBrains Mono', monospace; font-size: 20px">4-4-2</div></div>
+    </div>
+    <div aria-hidden="true" style="height: 4px; border-radius: 2px; background: {{whiColour}}"></div>
+    <div style="font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: {{t.muted}}">Goalkeeper</div>
+    <div style="display: grid; grid-template-columns: 34px 1fr; gap: 10px; align-items: center"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="12" fill="none" stroke="{{t.text}}" stroke-width="2.4"></circle><text x="15" y="19.5" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" font-weight="500" fill="{{t.text}}">1</text></svg><span style="font-size: 17px; font-weight: 600">Arlo Pemberton</span></div>
+  </section>
+
+  <section aria-label="Hexham Anchors, opponent, home" style="padding: 14px; border: 1px solid {{t.border}}; border-radius: 16px; display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: center; gap: 12px">
+      <img src="{{hex}}" width="48" height="48" alt="">
+      <div style="flex: 1">
+        <h2 style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-size: 24px; font-weight: 700; line-height: 1.05">Hexham Anchors</h2>
+        <div style="margin-top: 3px; font-size: 14px; color: {{t.muted}}"><span style="font-family: 'JetBrains Mono', monospace; color: {{t.text2}}">HEX</span> · Home · filled discs</div>
+      </div>
+      <div style="text-align: right"><div style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: {{t.muted}}">Formation</div><div style="font-family: 'JetBrains Mono', monospace; font-size: 20px">4-3-3</div></div>
+    </div>
+    <div aria-hidden="true" style="height: 4px; border-radius: 2px; background: {{hexColour}}"></div>
+    <div style="font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: {{t.muted}}">Goalkeeper</div>
+    <div style="display: grid; grid-template-columns: 34px 1fr; gap: 10px; align-items: center"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="13" fill="{{t.text}}"></circle><text x="15" y="19.5" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" font-weight="500" fill="{{t.bg}}">1</text></svg><span style="font-size: 17px; font-weight: 600">Ivo Brennan</span></div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":390,"height":760}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const tokens = {
+      dark: { bg: '#2B1018', surface: '#3B1A24', raised: '#4A2430', border: '#5E3140', text: '#F6EDE4', text2: '#E3D3CB', muted: '#C9B3AE' },
+      light: { bg: '#F5EDE0', surface: '#FFFDF9', raised: '#F1E6D8', border: '#E3D3C3', text: '#2B1018', text2: '#4A2E35', muted: '#6E5058' }
+    };
+    const light = this.props.theme === 'light';
+    return {
+      t: light ? tokens.light : tokens.dark,
+      hex: light ? '../crests/light/HEX.svg' : '../crests/dark/HEX.svg',
+      whi: light ? '../crests/light/WHI.svg' : '../crests/dark/WHI.svg',
+      hexColour: light ? '#22385E' : '#4873BD',
+      whiColour: light ? '#A8285F' : '#BD2D6B'
+    };
+  }
+}
+</script>
+</body>
+</html>

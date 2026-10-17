@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Between the Lines — Club colours per theme</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#9CC8F0}a:hover{color:#C2DDF6}
+</style>
+</helmet>
+<div style="width: 1280px; min-height: 1040px; box-sizing: border-box; background: #2B1018; color: #F6EDE4; font-family: 'DM Sans', system-ui, sans-serif; padding: 40px 48px">
+  <h1 style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-size: 40px; font-weight: 700">Club colours</h1>
+  <p style="margin: 6px 0 0; font-size: 16px; color: #C9B3AE">Crest colours are fixed; the theme outline gives every crest its 3:1 edge. When a club colour is used on its own (a dot, a bar), use that theme's adjusted value. Ratios are WCAG contrast against the theme background (#2B1018 dark, #F5EDE0 light).</p>
+
+  <table style="margin-top: 22px; width: 100%; border-collapse: collapse; font-size: 14px">
+    <thead>
+      <tr style="color: #C9B3AE; text-align: left">
+        <th style="padding: 8px 6px; font-weight: 600; border-bottom: 1px solid #5E3140">Club</th>
+        <th style="padding: 8px 6px; font-weight: 600; border-bottom: 1px solid #5E3140">Crest primary</th>
+        <th style="padding: 8px 6px; font-weight: 600; border-bottom: 1px solid #5E3140">Crest secondary</th>
+        <th style="padding: 8px 6px; font-weight: 600; border-bottom: 1px solid #5E3140">Emblem</th>
+        <th style="padding: 8px 6px; font-weight: 600; border-bottom: 1px solid #5E3140; background: #3B1A24">Dark · primary</th>
+        <th style="padding: 8px 6px; font-weight: 600; border-bottom: 1px solid #5E3140; background: #3B1A24">Dark · secondary</th>
+        <th style="padding: 8px 6px; font-weight: 600; border-bottom: 1px solid #E3D3C3; background: #F5EDE0; color: #6E5058">Light · primary</th>
+        <th style="padding: 8px 6px; font-weight: 600; border-bottom: 1px solid #E3D3C3; background: #F5EDE0; color: #6E5058">Light · secondary</th>
+      </tr>
+    </thead>
+    <tbody>
+      <sc-for list="{{clubs}}" as="c" hint-placeholder-count="10">
+        <tr>
+          <td style="padding: 9px 6px; border-bottom: 1px solid #4A2430"><span style="display: flex; align-items: center; gap: 10px"><img src="{{c.cd}}" width="28" height="28" alt=""><span><span style="display: block; font-weight: 600">{{c.name}}</span><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #C9B3AE">{{c.code}}</span></span></span></td>
+          <td style="padding: 9px 6px; border-bottom: 1px solid #4A2430; font-family: 'JetBrains Mono', monospace"><span style="display: inline-flex; align-items: center; gap: 8px"><span style="width: 22px; height: 22px; border-radius: 5px; background: {{c.cp}}; border: 1.5px solid #F6EDE4"></span>{{c.cp}}</span></td>
+          <td style="padding: 9px 6px; border-bottom: 1px solid #4A2430; font-family: 'JetBrains Mono', monospace"><span style="display: inline-flex; align-items: center; gap: 8px"><span style="width: 22px; height: 22px; border-radius: 5px; background: {{c.cs}}; border: 1.5px solid #F6EDE4"></span>{{c.cs}}</span></td>
+          <td style="padding: 9px 6px; border-bottom: 1px solid #4A2430; font-family: 'JetBrains Mono', monospace">{{c.ps}}:1</td>
+          <td style="padding: 9px 6px; border-bottom: 1px solid #4A2430; background: #2B1018; font-family: 'JetBrains Mono', monospace"><span style="display: inline-flex; align-items: center; gap: 8px"><span style="width: 22px; height: 22px; border-radius: 50%; background: {{c.dp}}"></span>{{c.dp}} <span style="color: #C9B3AE">{{c.dpc}}</span></span></td>
+          <td style="padding: 9px 6px; border-bottom: 1px solid #4A2430; background: #2B1018; font-family: 'JetBrains Mono', monospace"><span style="display: inline-flex; align-items: center; gap: 8px"><span style="width: 22px; height: 22px; border-radius: 50%; background: {{c.ds}}"></span>{{c.ds}} <span style="color: #C9B3AE">{{c.dsc}}</span></span></td>
+          <td style="padding: 9px 6px; border-bottom: 1px solid #E3D3C3; background: #F5EDE0; color: #2B1018; font-family: 'JetBrains Mono', monospace"><span style="display: inline-flex; align-items: center; gap: 8px"><span style="width: 22px; height: 22px; border-radius: 50%; background: {{c.lp}}"></span>{{c.lp}} <span style="color: #6E5058">{{c.lpc}}</span></span></td>
+          <td style="padding: 9px 6px; border-bottom: 1px solid #E3D3C3; background: #F5EDE0; color: #2B1018; font-family: 'JetBrains Mono', monospace"><span style="display: inline-flex; align-items: center; gap: 8px"><span style="width: 22px; height: 22px; border-radius: 50%; background: {{c.ls}}"></span>{{c.ls}} <span style="color: #6E5058">{{c.lsc}}</span></span></td>
+        </tr>
+      </sc-for>
+    </tbody>
+  </table>
+
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 24px">
+    <div style="padding: 14px 16px; background: #3B1A24; border-radius: 14px">
+      <div style="font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #C9B3AE">Colour-blind check</div>
+      <p style="margin: 6px 0 0; font-size: 14px; line-height: 1.5">Smallest gap between any two club primaries (CIELAB ΔE, simulated):</p>
+      <table style="margin-top: 6px; font-family: 'JetBrains Mono', monospace; font-size: 13px; border-collapse: collapse">
+        <tr style="color: #C9B3AE"><td style="padding: 2px 10px 2px 0"></td><td style="padding: 2px 10px">Crest</td><td style="padding: 2px 10px">Dark</td><td style="padding: 2px 10px">Light</td></tr>
+        <tr><td style="padding: 2px 10px 2px 0; color: #C9B3AE">Typical</td><td style="padding: 2px 10px">20.9</td><td style="padding: 2px 10px">25.9</td><td style="padding: 2px 10px">20.9</td></tr>
+        <tr><td style="padding: 2px 10px 2px 0; color: #C9B3AE">Deutan</td><td style="padding: 2px 10px">11.9</td><td style="padding: 2px 10px">11.0</td><td style="padding: 2px 10px">11.6</td></tr>
+        <tr><td style="padding: 2px 10px 2px 0; color: #C9B3AE">Protan</td><td style="padding: 2px 10px">13.4</td><td style="padding: 2px 10px">11.4</td><td style="padding: 2px 10px">13.4</td></tr>
+        <tr><td style="padding: 2px 10px 2px 0; color: #C9B3AE">Tritan</td><td style="padding: 2px 10px">10.5</td><td style="padding: 2px 10px">10.9</td><td style="padding: 2px 10px">10.5</td></tr>
+      </table>
+      <p style="margin: 6px 0 0; font-size: 13px; color: #C9B3AE">All ≥ 10. Emblem shape and name always accompany the colour.</p>
+    </div>
+    <div style="padding: 14px 16px; background: #3B1A24; border-radius: 14px">
+      <div style="font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #C9B3AE">Rules</div>
+      <ul style="margin: 6px 0 0; padding-left: 18px; font-size: 14px; line-height: 1.5">
+        <li>Crest: primary fill, secondary emblem, theme outline 2.5/64. Never recolour a crest per theme; swap the outline only.</li>
+        <li>Emblem vs primary ≥ 3.7:1 for every club.</li>
+        <li>Standalone marks use the theme values (all ≥ 3:1). Secondaries are supporting marks; never the only identifier.</li>
+      </ul>
+    </div>
+    <div style="padding: 14px 16px; background: #3B1A24; border-radius: 14px">
+      <div style="font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #C9B3AE">Avoided on purpose</div>
+      <ul style="margin: 6px 0 0; padding-left: 18px; font-size: 14px; line-height: 1.5">
+        <li>Claret + sky blue, black + white stripes, yellow + green, amber + black, yellow + navy, green + white, red + white.</li>
+        <li>Lions, cannons, liver birds, roses, stars above crests, lettering, crossed tools.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1040}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const clubs = [{"code": "RIP", "name": "Ripon Wardens", "motif": "Key", "cp": "#1F6F6B", "cs": "#EAC86E", "ps": 3.7, "dp": "#34BBB4", "dpc": 7.5, "ds": "#EAC86E", "dsc": 10.9, "lp": "#1F6F6B", "lpc": 5.1, "ls": "#A78018", "lsc": 3.1, "cd": "../crests/dark/RIP.svg", "cl": "../crests/light/RIP.svg"}, {"code": "HEX", "name": "Hexham Anchors", "motif": "Anchor", "cp": "#22385E", "cs": "#F29A84", "ps": 5.4, "dp": "#4873BD", "dpc": 3.8, "ds": "#F29A84", "dsc": 8.2, "lp": "#22385E", "lpc": 10.1, "ls": "#E95631", "lsc": 3.1, "cd": "../crests/dark/HEX.svg", "cl": "../crests/light/HEX.svg"}, {"code": "ALN", "name": "Alnwick Weavers", "motif": "Weaver’s shuttle", "cp": "#8E4A96", "cs": "#F3E6CB", "ps": 4.8, "dp": "#914C99", "dpc": 3.1, "ds": "#F3E6CB", "dsc": 14.3, "lp": "#8E4A96", "lpc": 5.1, "ls": "#AC8128", "lsc": 3.1, "cd": "../crests/dark/ALN.svg", "cl": "../crests/light/ALN.svg"}, {"code": "BAK", "name": "Bakewell Badgers", "motif": "Badger's head", "cp": "#2F343B", "cs": "#EADFC4", "ps": 9.5, "dp": "#6C7888", "dpc": 3.9, "ds": "#EADFC4", "dsc": 13.3, "lp": "#2F343B", "lpc": 10.8, "ls": "#9F8139", "lsc": 3.2, "cd": "../crests/dark/BAK.svg", "cl": "../crests/light/BAK.svg"}, {"code": "TRU", "name": "Truro Otters", "motif": "Otter", "cp": "#6B4226", "cs": "#93D6CF", "ps": 5.2, "dp": "#915933", "dpc": 3.1, "ds": "#93D6CF", "dsc": 10.7, "lp": "#6B4226", "lpc": 7.4, "ls": "#38938A", "lsc": 3.2, "cd": "../crests/dark/TRU.svg", "cl": "../crests/light/TRU.svg"}, {"code": "WEL", "name": "Wells Comets", "motif": "Comet", "cp": "#B9A8E6", "cs": "#231B3D", "ps": 7.6, "dp": "#B9A8E6", "dpc": 8.2, "ds": "#6F5AB6", "dsc": 3.2, "lp": "#9378D8", "lpc": 3.1, "ls": "#231B3D", "lsc": 13.9, "cd": "../crests/dark/WEL.svg", "cl": "../crests/light/WEL.svg"}, {"code": "PEN", "name": "Penrith Sentinels", "motif": "Watchtower", "cp": "#B4502A", "cs": "#F1E7D3", "ps": 4.2, "dp": "#CD5B30", "dpc": 4.3, "ds": "#F1E7D3", "dsc": 14.4, "lp": "#B4502A", "lpc": 4.4, "ls": "#A57F34", "lsc": 3.2, "cd": "../crests/dark/PEN.svg", "cl": "../crests/light/PEN.svg"}, {"code": "SHE", "name": "Sherborne Kingfishers", "motif": "Kingfisher, diving", "cp": "#1A8FBA", "cs": "#2A1A10", "ps": 4.5, "dp": "#1A8FBA", "dpc": 4.8, "ds": "#915A37", "dsc": 3.1, "lp": "#1A8FBA", "lpc": 3.2, "ls": "#2A1A10", "lsc": 14.4, "cd": "../crests/dark/SHE.svg", "cl": "../crests/light/SHE.svg"}, {"code": "LUD", "name": "Ludlow Ferrymen", "motif": "Chain ferry", "cp": "#D2A12E", "cs": "#3B1F2E", "ps": 6.2, "dp": "#D2A12E", "dpc": 7.5, "ds": "#995077", "dsc": 3.2, "lp": "#A98124", "lpc": 3.1, "ls": "#3B1F2E", "lsc": 12.7, "cd": "../crests/dark/LUD.svg", "cl": "../crests/light/LUD.svg"}, {"code": "WHI", "name": "Whitby Kestrels", "motif": "Hovering kestrel", "cp": "#A8285F", "cs": "#F7CEDA", "ps": 4.7, "dp": "#BD2D6B", "dpc": 3.2, "ds": "#F7CEDA", "dsc": 12.4, "lp": "#A8285F", "lpc": 5.8, "ls": "#E3537D", "lsc": 3.1, "cd": "../crests/dark/WHI.svg", "cl": "../crests/light/WHI.svg"}];
+    return { clubs };
+  }
+}
+</script>
+</body>
+</html>

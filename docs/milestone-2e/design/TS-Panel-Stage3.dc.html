@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Between the Lines — Who's playing, stage 3 (desktop panel)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#9CC8F0}a:hover{color:#C2DDF6}
+button{font:inherit;color:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="width: {{w}}px; min-height: {{h}}px; box-sizing: border-box; background: {{t.bg}}; color: {{t.text}}; font-family: 'DM Sans', system-ui, sans-serif; padding: 0 {{pad}}px 28px; display: flex; flex-direction: column; gap: 16px">
+
+  <header style="height: 56px; margin: 0 -8px 0 -12px; display: flex; align-items: center; gap: 4px">
+    <button aria-label="Back" style="width: 44px; height: 44px; border: 0; background: transparent; display: flex; align-items: center; justify-content: center; border-radius: 10px">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{t.text}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg>
+    </button>
+    <div style="font-size: 14px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: {{t.muted}}">Before kick-off</div>
+  </header>
+
+  <div>
+    <h1 style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-size: 40px; line-height: 1; font-weight: 700">Who's playing</h1>
+    <p style="margin: 8px 0 0; font-size: 17px; line-height: 1.4; color: {{t.text2}}">Matchday 2 · Hexham Anchors (home) v Westmere (away)</p>
+  </div>
+
+  <section aria-label="Key" style="padding: 12px 14px; border: 1px solid {{t.border}}; border-radius: 12px">
+    <h2 style="margin: 0 0 8px; font-size: 14px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: {{t.muted}}">Key</h2>
+    <ul style="list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 12px; font-size: 14px; color: {{t.text2}}">
+      <li style="display: flex; align-items: center; gap: 8px"><svg width="22" height="22" viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="13" fill="{{t.text}}"></circle><text x="15" y="19.5" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" font-weight="500" fill="{{t.bg}}">7</text></svg>Filled disc: home side</li>
+      <li style="display: flex; align-items: center; gap: 8px"><svg width="22" height="22" viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="12" fill="none" stroke="{{t.text}}" stroke-width="2.4"></circle><text x="15" y="19.5" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" font-weight="500" fill="{{t.text}}">7</text></svg>Ring: away side</li>
+      <li style="display: flex; align-items: center; gap: 8px"><span style="height: 22px; padding: 0 7px; border: 2px solid {{t.text}}; background: {{t.raised}}; border-radius: 6px; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center">You</span>Outline + "You": your team</li>
+      <li style="display: flex; align-items: center; gap: 8px"><span style="font-family: 'JetBrains Mono', monospace; font-size: 14px; width: 22px; text-align: center">#</span>Numbers are shirt numbers</li>
+    </ul>
+  </section>
+
+  <sc-if value="{{showPitch}}" hint-placeholder-val="{{ true }}">
+    <figure style="margin: 0">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px">
+        <h2 style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-size: 22px; font-weight: 700">Kick-off shape</h2>
+        <span style="font-size: 13px; color: {{t.muted}}">Your team attacks up</span>
+      </div>
+      <svg viewBox="-3 -3 74 111" width="100%" role="img" aria-label="Kick-off positions. Hexham Anchors, home, filled discs, in a 4-3-3 at the top. Westmere, away, your team, rings, in a 4-4-2 at the bottom, attacking up, inside a dashed outline labelled You." style="display: block; border-radius: 16px">
+        <rect x="-3" y="-3" width="74" height="111" fill="#1E3A30"></rect>
+        <g fill="none" stroke="#F6EDE4" stroke-opacity="0.22" stroke-width="0.4">
+          <rect x="0" y="0" width="68" height="105"></rect>
+          <line x1="0" y1="52.5" x2="68" y2="52.5"></line>
+          <circle cx="34" cy="52.5" r="9.15"></circle>
+          <rect x="13.84" y="0" width="40.32" height="16.5"></rect>
+          <rect x="24.84" y="0" width="18.32" height="5.5"></rect>
+          <rect x="13.84" y="88.5" width="40.32" height="16.5"></rect>
+          <rect x="24.84" y="99.5" width="18.32" height="5.5"></rect>
+        </g>
+        <rect x="1" y="53.6" width="66" height="50.4" rx="2.5" fill="#F6EDE4" fill-opacity="0.05" stroke="#F6EDE4" stroke-width="0.45" stroke-dasharray="1.6 1"></rect>
+        <rect x="47.5" y="55" width="18.5" height="4.6" rx="1" fill="#F6EDE4"></rect>
+        <text x="56.75" y="58.3" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="2.6" font-weight="700" fill="#2B1018">YOU · WES</text>
+        <g font-family="JetBrains Mono, monospace" font-weight="500" font-size="2.3" text-anchor="middle" fill="#2B1018">
+          <circle cx="34" cy="5" r="2.4" fill="#F6EDE4"></circle><text x="34" y="5.8">1</text>
+          <circle cx="12" cy="25" r="2.4" fill="#F6EDE4"></circle><text x="12" y="25.8">2</text>
+          <circle cx="27" cy="26" r="2.4" fill="#F6EDE4"></circle><text x="27" y="26.8">4</text>
+          <circle cx="41" cy="26" r="2.4" fill="#F6EDE4"></circle><text x="41" y="26.8">5</text>
+          <circle cx="56" cy="25" r="2.4" fill="#F6EDE4"></circle><text x="56" y="25.8">3</text>
+          <circle cx="34" cy="35" r="2.4" fill="#F6EDE4"></circle><text x="34" y="35.8">6</text>
+          <circle cx="22" cy="42" r="2.4" fill="#F6EDE4"></circle><text x="22" y="42.8">8</text>
+          <circle cx="46" cy="42" r="2.4" fill="#F6EDE4"></circle><text x="46" y="42.8">10</text>
+          <circle cx="10" cy="48" r="2.4" fill="#F6EDE4"></circle><text x="10" y="48.8">7</text>
+          <circle cx="34" cy="49.2" r="2.4" fill="#F6EDE4"></circle><text x="34" y="50">9</text>
+          <circle cx="58" cy="48" r="2.4" fill="#F6EDE4"></circle><text x="58" y="48.8">11</text>
+        </g>
+        <g fill="#1E3A30" stroke="#EFA27A" stroke-width="0.6">
+          <circle cx="34.9" cy="99" r="2.3"></circle>
+          <circle cx="13.5" cy="78" r="2.3"></circle><circle cx="23.7" cy="79" r="2.3"></circle><circle cx="42.6" cy="79" r="2.3"></circle><circle cx="57.4" cy="78" r="2.3"></circle>
+          <circle cx="9.9" cy="66" r="2.3"></circle><circle cx="29" cy="67" r="2.3"></circle><circle cx="42.3" cy="67" r="2.3"></circle><circle cx="54.9" cy="66" r="2.3"></circle>
+          <circle cx="17.2" cy="57" r="2.3"></circle><circle cx="49.3" cy="57.8" r="2.3"></circle>
+        </g>
+        <g font-family="JetBrains Mono, monospace" font-weight="500" font-size="2.3" text-anchor="middle" fill="#EFA27A">
+          <text x="34.9" y="99.8">1</text>
+          <text x="13.5" y="78.8">3</text><text x="23.7" y="79.8">4</text><text x="42.6" y="79.8">5</text><text x="57.4" y="78.8">2</text>
+          <text x="9.9" y="66.8">10</text><text x="29" y="67.8">11</text><text x="42.3" y="67.8">12</text><text x="54.9" y="66.8">13</text>
+          <text x="17.2" y="57.8">16</text><text x="49.3" y="58.6">17</text>
+        </g>
+        <circle cx="34" cy="52.5" r="0.95" fill="#FFFFFF" stroke="#2B1018" stroke-width="0.35"></circle>
+        <g font-family="DM Sans, sans-serif" font-size="2.3" font-weight="600" fill="#F6EDE4" fill-opacity="0.8">
+          <text x="1.5" y="2.6">HEXHAM ANCHORS · 4-3-3</text>
+          <text x="1.5" y="107">WESTMERE · 4-4-2</text>
+        </g>
+      </svg>
+    </figure>
+  </sc-if>
+
+  <sc-for list="{{teams}}" as="team" hint-placeholder-count="2">
+    <section aria-label="{{team.aria}}" style="padding: 16px 14px; border: {{team.border}}; background: {{team.bg}}; border-radius: 16px; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 10px">
+        <div>
+          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
+            <h2 style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-size: 26px; font-weight: 700; line-height: 1.05">{{team.name}}</h2>
+            <sc-if value="{{team.you}}" hint-placeholder-val="{{ true }}">
+              <span style="height: 24px; padding: 0 9px; background: {{t.text}}; color: {{t.bg}}; border-radius: 6px; font-size: 13px; font-weight: 700; display: inline-flex; align-items: center">You</span>
+            </sc-if>
+          </div>
+          <div style="margin-top: 4px; font-size: 14px; color: {{t.muted}}"><span style="font-family: 'JetBrains Mono', monospace; color: {{t.text2}}">{{team.code}}</span> · {{team.side}} · {{team.glyphWord}}</div>
+        </div>
+        <sc-if value="{{showFormation}}" hint-placeholder-val="{{ true }}">
+          <div style="text-align: right">
+            <div style="font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: {{t.muted}}">Formation</div>
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 500">{{team.formation}}</div>
+          </div>
+        </sc-if>
+      </div>
+
+      <sc-if value="{{showStats}}" hint-placeholder-val="{{ true }}">
+        <p style="margin: 0; font-size: 14px; line-height: 1.4; color: {{t.text2}}">{{team.statsNote}}</p>
+      </sc-if>
+
+      <sc-for list="{{team.groups}}" as="group" hint-placeholder-count="4">
+        <div>
+          <h3 style="margin: 0 0 6px; font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: {{t.muted}}">{{group.label}}</h3>
+          <ul style="list-style: none; margin: 0; padding: 0; border-top: 1px solid {{t.border}}">
+            <sc-for list="{{group.players}}" as="pl" hint-placeholder-count="4">
+              <li aria-label="{{pl.aria}}" style="padding: 10px 0; border-bottom: 1px solid {{t.border}}; display: grid; grid-template-columns: 34px 1fr; gap: 10px; align-items: start">
+                <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true" style="margin-top: 1px"><circle cx="15" cy="15" r="{{pl.gR}}" fill="{{pl.gFill}}" stroke="{{pl.gStroke}}" stroke-width="2.4"></circle><text x="15" y="19.5" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" font-weight="500" fill="{{pl.nFill}}">{{pl.no}}</text></svg>
+                <div>
+                  <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+                    <span style="font-size: 17px; font-weight: 600">{{pl.name}}</span>
+                    <sc-if value="{{showAbbr}}" hint-placeholder-val="{{ true }}">
+                      <span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; padding: 2px 6px; border: 1px solid {{t.borderStrong}}; border-radius: 6px; color: {{t.text2}}">{{pl.abbr}}</span>
+                    </sc-if>
+                  </div>
+                  <div style="font-size: 14px; font-weight: 600; color: {{t.text2}}; margin-top: 1px">{{pl.pos}}</div>
+                  <div style="font-size: 14px; line-height: 1.35; color: {{t.muted}}; margin-top: 1px">{{pl.desc}}</div>
+                  <sc-if value="{{pl.showSeen}}" hint-placeholder-val="{{ true }}">
+                    <dl style="margin: 8px 0 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 12px">
+                      <div><dt style="font-size: 12px; color: {{t.muted}}">Matches watched</dt><dd style="margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 15px">{{pl.apps}}</dd></div>
+                      <div><dt style="font-size: 12px; color: {{t.muted}}">Passes completed</dt><dd style="margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 15px">{{pl.passes}}</dd></div>
+                      <div><dt style="font-size: 12px; color: {{t.muted}}">Line-breaking passes</dt><dd style="margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 15px">{{pl.lbp}}</dd></div>
+                      <div><dt style="font-size: 12px; color: {{t.muted}}">Threat added</dt><dd style="margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 15px; color: {{t.know}}">{{pl.threat}}</dd></div>
+                    </dl>
+                  </sc-if>
+                  <sc-if value="{{pl.showUnseen}}" hint-placeholder-val="{{ false }}">
+                    <div style="margin-top: 8px; display: flex; align-items: center; gap: 6px; font-size: 13px; font-style: italic; color: {{t.muted}}">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="{{t.muted}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12z"></path><circle cx="12" cy="12" r="2.6"></circle></svg>First time you've seen them
+                    </div>
+                  </sc-if>
+                </div>
+              </li>
+            </sc-for>
+          </ul>
+        </div>
+      </sc-for>
+    </section>
+  </sc-for>
+
+  <sc-if value="{{showLevel2Note}}" hint-placeholder-val="{{ false }}">
+    <p style="margin: 0; padding: 12px 14px; border: 1px dashed {{t.borderStrong}}; border-radius: 12px; display: flex; align-items: center; gap: 10px; font-size: 15px; line-height: 1.4; color: {{t.text2}}">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{t.muted}}" stroke-width="2" aria-hidden="true" style="flex: none"><rect x="5" y="11" width="14" height="9" rx="1.5"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>
+      Get to level 2 in any concept to see the formation.
+    </p>
+  </sc-if>
+  <sc-if value="{{showLevel3Note}}" hint-placeholder-val="{{ false }}">
+    <p style="margin: 0; padding: 12px 14px; border: 1px dashed {{t.borderStrong}}; border-radius: 12px; display: flex; align-items: center; gap: 10px; font-size: 15px; line-height: 1.4; color: {{t.text2}}">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{t.muted}}" stroke-width="2" aria-hidden="true" style="flex: none"><rect x="5" y="11" width="14" height="9" rx="1.5"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>
+      Get to level 3 in any concept to see players' numbers from matches you've watched.
+    </p>
+  </sc-if>
+
+  <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 4px">
+    <button style="height: 54px; border: 0; background: {{t.act}}; color: {{t.onAct}}; border-radius: 14px; font-size: 18px; font-weight: 700">Kick off</button>
+    <button style="height: 44px; border: 0; background: transparent; font-size: 15px; font-weight: 600; color: {{t.text2}}; text-decoration: underline; text-underline-offset: 3px">Not your team? Change it</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"stage":{"editor":"enum","options":["1","2","3"],"default":"3"},"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"panel":{"editor":"boolean","default":true},"$preview":{"width":420,"height":3950}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const tokens = {
+      dark: { bg: '#2B1018', surface: '#3B1A24', raised: '#4A2430', border: '#5E3140', borderStrong: '#7A4A58', text: '#F6EDE4', text2: '#E3D3CB', muted: '#C9B3AE', act: '#9CC8F0', onAct: '#2B1018', know: '#F2CF6E' },
+      light: { bg: '#F5EDE0', surface: '#FFFDF9', raised: '#F1E6D8', border: '#E3D3C3', borderStrong: '#B89F94', text: '#2B1018', text2: '#4A2E35', muted: '#6E5058', act: '#8C2440', onAct: '#FFFFFF', know: '#2F5E8C' }
+    };
+    const t = this.props.theme === 'light' ? tokens.light : tokens.dark;
+    const stage = Number(this.props.stage ?? '3');
+    const panel = (this.props.panel ?? true) === true;
+    const POS = {
+      GK: ['Goalkeeper', 'Last line of defence, and starts many attacks.'],
+      LB: ['Left back', 'Defends the left side and overlaps down the wing.'],
+      RB: ['Right back', 'Defends the right side and overlaps down the wing.'],
+      CB: ['Centre back', 'Guards the middle in front of goal; wins tackles and headers.'],
+      DM: ['Defensive midfielder', 'Sits in front of the defence and breaks up attacks.'],
+      CM: ['Central midfielder', 'Links defence and attack and keeps the ball moving.'],
+      LM: ['Left midfielder', 'Covers the left flank, crossing and tracking back.'],
+      RM: ['Right midfielder', 'Covers the right flank, crossing and tracking back.'],
+      LW: ['Left winger', 'Stays wide on the left and runs at the full back.'],
+      RW: ['Right winger', 'Stays wide on the right and runs at the full back.'],
+      ST: ['Striker', 'Leads the line, finishes chances and holds the ball up.']
+    };
+    // seen: [apps, passes completed/tried, line-breaking passes, threat added]. From game 7 (Northbridge 2–1 Westmere); threat values are samples until xT is wired.
+    const westmere = [
+      ['Goalkeeper', [['1', 'Rafe Holloway', 'GK', ['1', '16/24', '3', '+0.01']]]],
+      ['Defenders', [['3', 'Kit Oduya', 'LB', ['1', '6/10', '0', '+0.02']], ['4', 'Mateo Arriaga', 'CB', ['1', '19/20', '1', '+0.03']], ['5', 'Henrik Vossberg', 'CB', ['1', '15/21', '3', '+0.02']], ['2', 'Ollie Prentice', 'RB', null]]],
+      ['Midfielders', [['10', 'Yusuf Ballard', 'LM', ['1', '43/59', '21', '+0.14']], ['11', 'Callum Pennick', 'CM', ['1', '85/104', '36', '+0.21']], ['12', 'Noel Ashcombe', 'CM', ['1', '56/77', '30', '+0.17']], ['13', 'Dmitri Petrak', 'RM', ['1', '36/45', '17', '+0.11']]]],
+      ['Forwards', [['16', 'Sol Amadi', 'ST', ['1', '43/54', '20', '+0.19']], ['17', 'Finn Castellano', 'ST', ['1', '27/34', '11', '+0.09']]]]
+    ];
+    const hexham = [
+      ['Goalkeeper', [['1', 'Ivo Brennan', 'GK', null]]],
+      ['Defenders', [['3', 'Teodor Kask', 'LB', null], ['4', 'Corin Abara', 'CB', null], ['5', 'Fraser Lowe', 'CB', null], ['2', 'Malik Sorensen', 'RB', null]]],
+      ['Midfielders', [['6', 'Benji Arkwright', 'DM', null], ['8', 'Ilias Moretto', 'CM', null], ['10', 'Rory Quist', 'CM', null]]],
+      ['Forwards', [['11', 'Ade Fairbanks', 'LW', null], ['9', 'Pavel Ostrowski', 'ST', null], ['7', 'Desmond Hartley', 'RW', null]]]
+    ];
+    const build = (groups, home) => groups.map(([label, players]) => ({
+      label,
+      players: players.map(([no, name, abbr, s]) => ({
+        no, name, abbr, pos: POS[abbr][0], desc: POS[abbr][1],
+        aria: 'Number ' + no + ', ' + name + ', ' + POS[abbr][0],
+        gR: home ? 13 : 12, gFill: home ? t.text : 'none', gStroke: home ? 'none' : t.text, nFill: home ? t.bg : t.text,
+        showSeen: stage === 3 && !!s, showUnseen: stage === 3 && !s,
+        apps: s ? s[0] : '', passes: s ? s[1] : '', lbp: s ? s[2] : '', threat: s ? s[3] : ''
+      }))
+    }));
+    const teams = [
+      { name: 'Westmere', code: 'WES', side: 'Away', glyphWord: 'rings', formation: '4-4-2', you: true,
+        aria: 'Westmere, your team, away', border: '2px solid ' + t.text, bg: t.raised,
+        statsNote: 'From the 1 match of theirs you have watched: Northbridge 2–1 Westmere.', groups: build(westmere, false) },
+      { name: 'Hexham Anchors', code: 'HEX', side: 'Home', glyphWord: 'filled discs', formation: '4-3-3', you: false,
+        aria: 'Hexham Anchors, opponent, home', border: '1px solid ' + t.border, bg: 'transparent',
+        statsNote: "You haven't watched Hexham Anchors yet, so there are no numbers for them.", groups: build(hexham, true) }
+    ];
+    return {
+      t, teams,
+      w: panel ? 420 : 390, pad: panel ? 20 : 16, h: ({1: 2800, 2: 3400, 3: 3950})[stage] || 3950,
+      showPitch: stage >= 2, showFormation: stage >= 2, showAbbr: stage >= 2, showStats: stage === 3,
+      showLevel2Note: stage === 1, showLevel3Note: stage === 2
+    };
+  }
+}
+</script>
+</body>
+</html>

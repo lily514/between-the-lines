@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Penrith Sentinels crest">
+<title>Penrith Sentinels</title>
+<circle cx="32" cy="32" r="29.5" fill="#B4502A" stroke="#F6EDE4" stroke-width="2.5"/>
+<path d="M32 7.5C35.2 10.6 36 13 34.6 15H29.4C28 13 28.8 10.6 32 7.5Z" fill="#F1E7D3"/>
+<path d="M20.5 16.5H26V20H29.5V16.5H34.5V20H38V16.5H43.5V26H20.5Z" fill="#F1E7D3"/>
+<path d="M23.5 26H40.5L43 52H21Z" fill="#F1E7D3"/>
+<rect x="30.2" y="30" width="3.6" height="8" rx="1.8" fill="#B4502A"/>
+<path d="M27.6 52V46.4A4.4 4.4 0 0 1 36.4 46.4V52Z" fill="#B4502A"/>
+</svg>

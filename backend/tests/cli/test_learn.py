@@ -89,3 +89,24 @@ def test_the_demo_viewer_watches_three_matches(tmp_path: Path) -> None:
         assert f"Match {number}:" in result.output
     assert "The demo viewer picks" in result.output
     assert "After three matches" in result.output
+
+
+def test_learn_with_a_club_watches_its_fixtures_and_keeps_it(tmp_path: Path) -> None:
+    first = learn(tmp_path, "--club", "hex")
+    second = learn(tmp_path)
+
+    saved = json.loads((tmp_path / "learners" / "lily.json").read_text())
+    assert "Your team: Hexham Anchors" in first and "Your team: Hexham Anchors" in second
+    assert "Hexham Anchors" in first.split("Match 1:")[1].splitlines()[0]
+    assert saved["club"] == 2
+
+
+def test_learn_refuses_an_unknown_club_or_a_change_after_answering(tmp_path: Path) -> None:
+    model = str(saved_model(tmp_path))
+    base = ["learn", "--viewer", "lily", "--learners", str(tmp_path / "learners")]
+    unknown = runner.invoke(app, [*base, "--model", model, "--club", "nowhere"], env=WIDE)
+    learn(tmp_path, "--club", "HEX")
+    changed = runner.invoke(app, [*base, "--model", model, "--club", "RIP"], env=WIDE)
+
+    assert unknown.exit_code != 0 and "no club called 'nowhere'" in unknown.output
+    assert changed.exit_code != 0 and "team can't change" in changed.output

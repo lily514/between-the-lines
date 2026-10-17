@@ -8,15 +8,18 @@ from btl.learn.grader import Answer, ChoiceAnswer
 from btl.learn.learner import MATCHES_PER_SESSION
 from btl.learn.session import (
     Asked,
+    ClubLockedError,
     Course,
     DemoViewer,
     MatchStart,
     PreparedMatch,
     Told,
+    choose_club,
     prepare_match,
     start_session,
     watch_match,
 )
+from btl.schema.ids import TeamId
 from btl.store.memory import MemoryLearnerStore
 from btl.tutor.templates import TemplateTutor
 from tests.fixtures.learning import threat_model
@@ -38,10 +41,11 @@ class AlwaysRight:
 
     stop_after: int | None = None
     told: list[Told] = field(default_factory=list[Told])
+    started: list[MatchStart] = field(default_factory=list[MatchStart])
     answered: int = 0
 
     def begin(self, start: MatchStart) -> None:
-        pass
+        self.started.append(start)
 
     def ask(self, asked: Asked) -> Answer:
         if self.stop_after is not None and self.answered == self.stop_after:
@@ -137,12 +141,67 @@ def test_each_viewer_gets_the_same_three_matches_for_a_seed() -> None:
     assert len({seed for _, _, seed in fixtures}) == 3
 
 
+def test_a_viewer_without_a_club_keeps_the_matches_from_before_clubs() -> None:
+    fixtures = [course().fixture(seed=7, match_number=n) for n in (1, 2, 3)]
+
+    assert [(home.short_name, away.short_name, seed) for home, away, seed in fixtures] == [
+        ("RIP", "LUD", 7001),
+        ("WHI", "SHE", 7002),
+        ("HEX", "PEN", 7003),
+    ]
+
+
+@pytest.mark.parametrize("seed", [0, 7, 3456])
+def test_a_viewer_with_a_club_watches_three_different_fixtures_of_that_club(seed: int) -> None:
+    shared = course()
+    for club in shared.league.clubs:
+        fixtures = [shared.fixture(seed, n, club.team_id) for n in (1, 2, 3)]
+
+        assert all(club in (home, away) for home, away, _ in fixtures)
+        assert len({(home.team_id, away.team_id) for home, away, _ in fixtures}) == 3
+
+
+def test_a_club_chosen_before_any_answer_sets_the_matches() -> None:
+    shared, store = course(), MemoryLearnerStore()
+    start_session(store, "lily", seed=3)
+    hexham = shared.league.find_club("HEX")
+
+    chosen = choose_club(shared, store, "lily", hexham.team_id)
+    viewer = AlwaysRight()
+    for _ in range(MATCHES_PER_SESSION):
+        watch_match(shared, store, "lily", viewer, lambda: NOW)
+
+    assert chosen.state.club == hexham.team_id
+    assert [hexham.name in (start.home, start.away) for start in viewer.started] == [True] * 3
+
+
+def test_the_club_cannot_change_once_the_viewer_has_answered() -> None:
+    shared, store = course(), MemoryLearnerStore()
+    start_session(store, "lily", seed=3)
+    with pytest.raises(StoppedError):
+        watch_match(shared, store, "lily", AlwaysRight(stop_after=1), lambda: NOW)
+
+    with pytest.raises(ClubLockedError):
+        choose_club(shared, store, "lily", TeamId(2))
+
+
+def test_an_unknown_club_or_viewer_is_refused() -> None:
+    shared, store = course(), MemoryLearnerStore()
+    start_session(store, "lily", seed=3)
+
+    with pytest.raises(ValueError, match="no club"):
+        choose_club(shared, store, "lily", TeamId(0))
+    with pytest.raises(ValueError, match="start a session first"):
+        choose_club(shared, store, "nobody", TeamId(2))
+
+
 def test_a_prepared_match_can_be_reused_without_changing_what_is_asked() -> None:
     shared = course()
     cache: dict[tuple[int, int], PreparedMatch] = {}
     calls: list[tuple[int, int]] = []
 
-    def cached(seed: int, number: int) -> PreparedMatch:
+    def cached(seed: int, number: int, club: TeamId | None) -> PreparedMatch:
+        assert club is None
         calls.append((seed, number))
         if (seed, number) not in cache:
             cache[seed, number] = prepare_match(shared, seed, number)

@@ -66,7 +66,7 @@ Right. A guess is right 1 time in 3, and someone who understands restarts still 
   Restarts              █████████████░░░░░░░   67%
 ```
 
-**Play it yourself.** `btl learn` plays your next match; type A, B or C to answer. Each run is one match of three, your answers are saved as you go (in `data/learners/`, which git ignores), and Ctrl+C is safe: the next run carries on where you stopped. `--reset` starts again.
+**Play it yourself.** `btl learn` plays your next match; type A, B or C to answer. Each run is one match of three, your answers are saved as you go (in `data/learners/`, which git ignores), and Ctrl+C is safe: the next run carries on where you stopped. `--reset` starts again. `--club HEX` (a club's name or three-letter code) makes your three matches that club's fixtures; it can change only until your first answer.
 
 ```sh
 uv run btl learn --viewer yourname

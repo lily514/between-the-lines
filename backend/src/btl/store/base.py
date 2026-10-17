@@ -9,9 +9,12 @@ from btl.learn.concept_map import ConceptKey
 from btl.learn.knowledge import Delivery
 from btl.learn.learner import LEARNER_VERSION, Attempt, LearnerState
 from btl.learn.questions import Asks, Form
+from btl.schema.ids import TeamId
 
 # Viewer ids become file names and document ids, so they are kept plain.
 VIEWER_ID = re.compile(r"[a-z0-9][a-z0-9_-]{0,63}")
+# Version 1 records have no club; they read as a viewer who hasn't chosen one.
+READABLE_VERSIONS = (1, LEARNER_VERSION)
 
 
 class LearnerExistsError(Exception):
@@ -78,28 +81,31 @@ def to_document(state: LearnerState) -> dict[str, object]:
         "viewer_id": state.viewer_id,
         "version": state.version,
         "seed": state.seed,
+        "club": state.club,
         "match_number": state.match_number,
         "attempts": [asdict(attempt) for attempt in state.attempts],
     }
 
 
 def from_document(document: Mapping[str, object]) -> LearnerState:
-    """Read a document written by `to_document`.
+    """Read a document written by `to_document`, now or before clubs (version 1, no club).
 
     Raises:
         ValueError: If it was written for another version of the record.
     """
-    if document["version"] != LEARNER_VERSION:
+    if document["version"] not in READABLE_VERSIONS:
         raise ValueError(
             f"learner {document['id']!r} has record version {document['version']}; "
-            f"this code reads {LEARNER_VERSION}"
+            f"this code reads versions {', '.join(map(str, READABLE_VERSIONS))}"
         )
     attempts = cast(list[dict[str, object]], document["attempts"])
+    club = document.get("club")
     return LearnerState(
         viewer_id=str(document["viewer_id"]),
         seed=cast(int, document["seed"]),
         match_number=cast(int, document["match_number"]),
         attempts=tuple(_attempt(a) for a in attempts),
+        club=None if club is None else TeamId(cast(int, club)),
     )
 
 

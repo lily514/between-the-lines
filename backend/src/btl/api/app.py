@@ -56,6 +56,7 @@ from btl.learn.session import (
     start_session,
     watch_match,
 )
+from btl.schema.ids import TeamId
 from btl.schema.scoreboard import goals
 from btl.store.base import LearnerStore, StaleWriteError, Stored, check_viewer_id
 
@@ -81,17 +82,17 @@ def create_app(
     # is enough for a demo server.
     lock = threading.Lock()
     loaded: list[Course] = []
-    prepared: dict[tuple[int, int], PreparedMatch] = {}
+    prepared: dict[tuple[int, int, TeamId | None], PreparedMatch] = {}
 
     def course() -> Course:
         if not loaded:
             loaded.append(load_course())
         return loaded[0]
 
-    def prepare(seed: int, match_number: int) -> PreparedMatch:
-        key = (seed, match_number)
+    def prepare(seed: int, match_number: int, club: TeamId | None) -> PreparedMatch:
+        key = (seed, match_number, club)
         if key not in prepared:
-            prepared[key] = prepare_match(course(), seed, match_number)
+            prepared[key] = prepare_match(course(), seed, match_number, club)
         return prepared[key]
 
     def stored(viewer_id: str) -> Stored:
@@ -105,7 +106,7 @@ def create_app(
         state = found.state
         fixture = None
         if not state.finished:
-            home, away, _ = course().fixture(state.seed, state.match_number)
+            home, away, _ = course().fixture(state.seed, state.match_number, state.club)
             fixture = Fixture(home=home.name, away=away.name)
         return StatusOut(
             viewer_id=state.viewer_id,
@@ -145,7 +146,9 @@ def create_app(
                 return question_payload(pending.asked, state.match_number, start.home, start.away)
             except StaleWriteError:
                 raise HTTPException(409, "the record changed; try again") from None
-            return _full_time(viewer, prepare(state.seed, state.match_number), after.finished)
+            return _full_time(
+                viewer, prepare(state.seed, state.match_number, state.club), after.finished
+            )
 
     def _full_time(viewer: WebViewer, match: PreparedMatch, finished: bool) -> FullTimeOut:
         start, ended = viewer.start, viewer.ended
@@ -176,7 +179,7 @@ def create_app(
             try:
                 watch_match(course(), guarded, viewer_id, viewer, now, prepare)
             except FeedbackGivenError as given:
-                _, _, match_seed = course().fixture(state.seed, state.match_number)
+                _, _, match_seed = course().fixture(state.seed, state.match_number, state.club)
                 return feedback_payload(
                     given.told,
                     before,

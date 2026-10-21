@@ -9,6 +9,7 @@ import pytest
 from btl.learn.knowledge import Delivery
 from btl.learn.learner import Attempt, LearnerState
 from btl.learn.questions import Asks, Form
+from btl.schema.ids import TeamId
 from btl.store.base import (
     LearnerExistsError,
     LearnerStore,
@@ -100,6 +101,28 @@ def test_the_document_is_shaped_like_a_cosmos_item_and_round_trips() -> None:
 
     assert document["id"] == document["viewer_id"] == "lily"
     assert from_document(json.loads(json.dumps(document))) == state
+
+
+def test_the_club_round_trips() -> None:
+    state = LearnerState("lily", seed=7, club=TeamId(4))
+
+    assert from_document(json.loads(json.dumps(to_document(state)))) == state
+
+
+def test_a_record_from_before_clubs_reads_as_no_club_and_is_saved_as_the_new_version(
+    store: LearnerStore,
+) -> None:
+    document = to_document(LearnerState("lily", seed=7).answered(ANSWER))
+    del document["club"]
+    document["version"] = 1
+
+    state = from_document(document)
+
+    assert state == LearnerState("lily", seed=7).answered(ANSWER)
+    assert state.club is None
+    store.create(state)
+    stored = store.get("lily")
+    assert stored is not None and to_document(stored.state)["version"] == 2
 
 
 def test_a_record_from_another_version_is_refused() -> None:

@@ -12,8 +12,9 @@ from typing import TypeVar
 from btl.learn.concept_map import ConceptKey
 from btl.learn.knowledge import Delivery, KnowledgeModel, Observation, replay
 from btl.learn.questions import Asks, Form
+from btl.schema.ids import TeamId
 
-LEARNER_VERSION = 1
+LEARNER_VERSION = 2
 MATCHES_PER_SESSION = 3
 
 StateT = TypeVar("StateT")
@@ -57,19 +58,27 @@ class Attempt:
 class LearnerState:
     """One viewer's record. ``match_number`` counts from 1; it is the match being watched.
 
-    ``seed`` fixes the viewer's three matches, so a session can always be rebuilt.
+    ``seed`` fixes the viewer's three matches, so a session can always be rebuilt. ``club`` is
+    the team the viewer supports; their matches are its fixtures. Without one, the seed alone
+    chooses the fixtures.
     """
 
     viewer_id: str
     seed: int
     match_number: int = 1
     attempts: tuple[Attempt, ...] = field(default=())
+    club: TeamId | None = None
     version: int = LEARNER_VERSION
 
     @property
     def finished(self) -> bool:
         """Whether every match in the session has been watched."""
         return self.match_number > MATCHES_PER_SESSION
+
+    @property
+    def can_choose_club(self) -> bool:
+        """Whether the club can still change: nothing answered and no match finished yet."""
+        return not self.attempts and self.match_number == 1
 
     def answered(self, attempt: Attempt) -> "LearnerState":
         """The record with one more answer."""

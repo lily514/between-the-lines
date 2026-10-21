@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState, type RefObject, type SyntheticEvent } from 'react'
 import type { Status } from '../../api/client.ts'
+import Crest from '../Shared/Crest.tsx'
 import ProgressBar from '../Shared/ProgressBar.tsx'
 import { percent } from '../Shared/ProgressBar.support.ts'
 import './index.css'
@@ -14,10 +15,12 @@ export interface WelcomeProps {
 	onStart: (name: string) => void
 	onWatch: () => void
 	onChangeName: () => void
+	/** Go back to the club picker; only offered while the viewer can still change their team. */
+	onChangeTeam: () => void
 }
 
 /** The start: a name, then where the viewer stands (which match is next, and each concept's bar). */
-const Welcome = ({ status, error, defaultName, onStart, onWatch, onChangeName }: WelcomeProps) => {
+const Welcome = ({ status, error, defaultName, onStart, onWatch, onChangeName, onChangeTeam }: WelcomeProps) => {
 	const heading = useRef<HTMLHeadingElement>(null)
 	const headingId = useId()
 
@@ -42,6 +45,19 @@ const Welcome = ({ status, error, defaultName, onStart, onWatch, onChangeName }:
 							? `All three matches watched, ${status.viewer_id}`
 							: `Welcome, ${status.viewer_id}`}
 					</h2>
+					{status.club !== null && (
+						<p className="welcome__team">
+							<Crest code={status.club.code} size={24} />
+							<span>
+								Your team: <strong>{status.club.name}</strong>
+							</span>
+							{status.can_choose_club && (
+								<button type="button" className="text-button" onClick={onChangeTeam}>
+									Change
+								</button>
+							)}
+						</p>
+					)}
 					{status.fixture !== null && (
 						<p className="welcome__next">
 							Match <span className="welcome__number">{status.match_number}</span> of{' '}

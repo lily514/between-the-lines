@@ -4,7 +4,8 @@ from typing import cast
 import numpy as np
 import pytest
 
-from btl.api.payloads import question_payload
+from btl.api.models import YourTeam
+from btl.api.payloads import question_payload, your_result
 from btl.concepts.phase import PhaseOfPlay
 from btl.league.league import generate_league
 from btl.learn.candidates import Candidate
@@ -38,6 +39,7 @@ HIDDEN = {
     "chosen",
     "explanation",
 }
+HOME, AWAY = generate_league(np.random.default_rng(0)).clubs[:2]
 ASKED_LATER = Delivered(Delivery.DEFERRED, 1, 2000.0, PhaseOfPlay.DEAD_BALL, "goal kick")
 
 
@@ -89,7 +91,7 @@ def test_a_question_payload_never_holds_the_answer_or_an_outcome(seed: int) -> N
                     asked = asked_for(candidate, level, delivery, seed)
                     if asked is None:
                         continue
-                    payload = question_payload(asked, 1, "Home", "Away")
+                    payload = question_payload(asked, 1, HOME, AWAY, None)
                     text = payload.model_dump_json()
                     names = keys_in(json.loads(text))
 
@@ -106,7 +108,7 @@ def test_a_question_payload_says_when_the_moment_happened_and_when_it_is_asked()
     asked = asked_for(candidate, 1, Delivery.DEFERRED, 0)
     assert asked is not None
 
-    payload = question_payload(asked, 2, "Home", "Away")
+    payload = question_payload(asked, 2, HOME, AWAY, AWAY.team_id)
 
     assert payload.occurred.period == candidate.period_id
     assert payload.occurred.seconds == candidate.time_seconds
@@ -115,4 +117,19 @@ def test_a_question_payload_says_when_the_moment_happened_and_when_it_is_asked()
     assert (payload.delivered.period, payload.delivered.seconds) == (1, 2000.0)
     assert payload.delivered.clock == "33:20"
     assert (payload.delivered.phase, payload.delivered.restart) == ("dead ball", "goal kick")
-    assert (payload.match_number, payload.home, payload.away) == (2, "Home", "Away")
+    assert (payload.match_number, payload.home, payload.away) == (2, HOME.name, AWAY.name)
+    assert (payload.home_code, payload.away_code, payload.your_team) == (
+        HOME.short_name,
+        AWAY.short_name,
+        "away",
+    )
+
+
+@pytest.mark.parametrize(
+    ("side", "home_goals", "away_goals", "result"),
+    [("home", 2, 1, "won"), ("away", 2, 1, "lost"), ("away", 0, 0, "drew"), (None, 3, 0, None)],
+)
+def test_the_result_is_said_from_the_viewer_s_side(
+    side: YourTeam, home_goals: int, away_goals: int, result: str | None
+) -> None:
+    assert your_result(side, home_goals, away_goals) == result

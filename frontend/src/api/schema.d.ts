@@ -4,6 +4,26 @@
  */
 
 export interface paths {
+    "/api/clubs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Clubs
+         * @description The league's clubs, in team id order.
+         */
+        get: operations["clubs_api_clubs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/viewers": {
         parameters: {
             query?: never;
@@ -64,6 +84,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/viewers/{viewer_id}/club": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Put Club
+         * @description Choose the team to support, before answering anything.
+         */
+        put: operations["put_club_api_viewers__viewer_id__club_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/viewers/{viewer_id}/next": {
         parameters: {
             query?: never;
@@ -78,6 +118,26 @@ export interface paths {
          * @description The question waiting to be answered, or full time if the match has no more.
          */
         post: operations["next_step_api_viewers__viewer_id__next_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/viewers/{viewer_id}/team-sheet": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Team Sheet
+         * @description Who's playing in the viewer's next match, as much as their stage shows.
+         */
+        get: operations["get_team_sheet_api_viewers__viewer_id__team_sheet_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -107,6 +167,26 @@ export interface components {
             name: string;
             /** Value */
             value: number;
+        };
+        /**
+         * ClubIn
+         * @description Choose the team to support, by team id.
+         */
+        ClubIn: {
+            /** Club */
+            club: number;
+        };
+        /**
+         * ClubOut
+         * @description A club. The page keys its crest and colours by ``code``.
+         */
+        ClubOut: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Team Id */
+            team_id: number;
         };
         /**
          * DeliveredTime
@@ -225,21 +305,31 @@ export interface components {
         };
         /**
          * Fixture
-         * @description The two clubs of a match.
+         * @description The two clubs of a match, by name and three-letter code.
          */
         Fixture: {
             /** Away */
             away: string;
+            /** Away Code */
+            away_code: string;
             /** Home */
             home: string;
+            /** Home Code */
+            home_code: string;
+            /** Your Team */
+            your_team: ("home" | "away") | null;
         };
         /**
          * FullTimeOut
          * @description The match just finished: the score, how many questions, and how each concept moved.
+         *
+         *     ``your_result`` is the result for the viewer's team, if it played.
          */
         FullTimeOut: {
             /** Away */
             away: string;
+            /** Away Code */
+            away_code: string;
             /** Away Goals */
             away_goals: number;
             /** Concepts */
@@ -248,6 +338,8 @@ export interface components {
             finished: boolean;
             /** Home */
             home: string;
+            /** Home Code */
+            home_code: string;
             /** Home Goals */
             home_goals: number;
             /**
@@ -262,6 +354,10 @@ export interface components {
             /** Questions */
             questions: number;
             thresholds: components["schemas"]["ThresholdsOut"];
+            /** Your Result */
+            your_result: ("won" | "drew" | "lost") | null;
+            /** Your Team */
+            your_team: ("home" | "away") | null;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -362,6 +458,33 @@ export interface components {
             ][];
         };
         /**
+         * PlayerNumbersOut
+         * @description A player's numbers from the watched matches they started.
+         */
+        PlayerNumbersOut: {
+            /** Line Breaking Passes */
+            line_breaking_passes: number;
+            /** Matches */
+            matches: number;
+            /** Passes Completed */
+            passes_completed: number;
+            /** Passes Tried */
+            passes_tried: number;
+            threat_added: components["schemas"]["FactOut"];
+        };
+        /**
+         * PositionOut
+         * @description A position: its abbreviation, its name and what the player there does.
+         */
+        PositionOut: {
+            /** Description */
+            description: string;
+            /** Name */
+            name: string;
+            /** Short */
+            short: string;
+        };
+        /**
          * QuestionOut
          * @description The next question, built from its question view only.
          */
@@ -370,6 +493,8 @@ export interface components {
             asks: string;
             /** Away */
             away: string;
+            /** Away Code */
+            away_code: string;
             /** Concept Name */
             concept_name: string;
             /** Context */
@@ -384,6 +509,8 @@ export interface components {
             form: "identify" | "predict";
             /** Home */
             home: string;
+            /** Home Code */
+            home_code: string;
             /**
              * @description discriminator enum property added by openapi-typescript
              * @enum {string}
@@ -401,12 +528,66 @@ export interface components {
             picture: components["schemas"]["PictureOut"];
             /** Text */
             text: string;
+            /** Your Team */
+            your_team: ("home" | "away") | null;
+        };
+        /**
+         * SheetPlayerOut
+         * @description A starter on the team sheet.
+         *
+         *     ``at_kickoff`` is where they stood at kick-off, with the sheet's first team attacking left
+         *     to right; null before stage 2. ``numbers`` is null before stage 3, or if the viewer hasn't
+         *     seen them play.
+         */
+        SheetPlayerOut: {
+            /** At Kickoff */
+            at_kickoff: [
+                number,
+                number
+            ] | null;
+            /** Name */
+            name: string;
+            numbers: components["schemas"]["PlayerNumbersOut"] | null;
+            position: components["schemas"]["PositionOut"];
+            /** Role */
+            role: string;
+            /** Shirt */
+            shirt: number;
+        };
+        /**
+         * SheetTeamOut
+         * @description One side: goalkeeper, defenders, midfielders, forwards, each line left to right.
+         *
+         *     ``formation`` is null before stage 2; ``matches_watched`` is null before stage 3.
+         */
+        SheetTeamOut: {
+            /** Code */
+            code: string;
+            /** Formation */
+            formation: string | null;
+            /** Home */
+            home: boolean;
+            /** Matches Watched */
+            matches_watched: number | null;
+            /** Name */
+            name: string;
+            /** Players */
+            players: components["schemas"]["SheetPlayerOut"][];
+            /** Team Id */
+            team_id: number;
+            /** Yours */
+            yours: boolean;
         };
         /**
          * StartIn
          * @description Start watching, or carry on. Without a seed, the viewer's name chooses their matches.
+         *
+         *     A ``club`` (team id) makes the viewer's matches that club's fixtures, if they haven't
+         *     started watching.
          */
         StartIn: {
+            /** Club */
+            club?: number | null;
             /** Seed */
             seed?: number | null;
             /** Viewer Id */
@@ -415,8 +596,14 @@ export interface components {
         /**
          * StatusOut
          * @description Where a viewer stands: which match is next, and their mastery of each concept.
+         *
+         *     ``club`` is the team they support. They can choose or change it while
+         *     ``can_choose_club``; ``suggested_club`` is the one "Pick one for me" starts from.
          */
         StatusOut: {
+            /** Can Choose Club */
+            can_choose_club: boolean;
+            club: components["schemas"]["ClubOut"] | null;
             /** Concepts */
             concepts: components["schemas"]["Bar"][];
             /** Finished */
@@ -426,9 +613,27 @@ export interface components {
             match_number: number;
             /** Matches */
             matches: number;
+            /** Suggested Club */
+            suggested_club: number;
             thresholds: components["schemas"]["ThresholdsOut"];
             /** Viewer Id */
             viewer_id: string;
+        };
+        /**
+         * TeamSheetOut
+         * @description Who's playing in the viewer's next match: their team first, or the home team.
+         *
+         *     ``next_stage`` says what opens more of the sheet; null at the last stage.
+         */
+        TeamSheetOut: {
+            /** Match Number */
+            match_number: number;
+            /** Next Stage */
+            next_stage: string | null;
+            /** Stage */
+            stage: number;
+            /** Teams */
+            teams: components["schemas"]["SheetTeamOut"][];
         };
         /**
          * ThresholdsOut
@@ -462,6 +667,26 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    clubs_api_clubs_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClubOut"][];
+                };
+            };
+        };
+    };
     start_api_viewers_post: {
         parameters: {
             query?: never;
@@ -561,6 +786,41 @@ export interface operations {
             };
         };
     };
+    put_club_api_viewers__viewer_id__club_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                viewer_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClubIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatusOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     next_step_api_viewers__viewer_id__next_post: {
         parameters: {
             query?: never;
@@ -579,6 +839,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["QuestionOut"] | components["schemas"]["FullTimeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_team_sheet_api_viewers__viewer_id__team_sheet_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                viewer_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TeamSheetOut"];
                 };
             };
             /** @description Validation Error */

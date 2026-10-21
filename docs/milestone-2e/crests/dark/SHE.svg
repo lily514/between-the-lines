@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Sherborne Kingfishers crest">
+<title>Sherborne Kingfishers</title>
+<circle cx="32" cy="32" r="29.5" fill="#1A8FBA" stroke="#F6EDE4" stroke-width="2.5"/>
+<g transform="translate(32 32) scale(0.93) translate(-32 -32)">
+<g transform="translate(31.5 31) scale(0.86) rotate(64)">
+<path d="M8 -3L27 0.4L8 3.2Z" fill="#2A1A10"/>
+<path d="M3.5 -7.2C8.2 -7.2 11 -4 11 0S8.2 7.2 3.5 7.2C-4 7.2 -11 5.4 -17 2.4L-23.5 3.6L-21.5 0L-23.5 -3.6L-17 -2.4C-11 -5.4 -4 -7.2 3.5 -7.2Z" fill="#2A1A10"/>
+<path d="M-1.5 -5.6C-8 -9.6 -16 -10.6 -24 -9.2C-18 -6.4 -12 -3.6 -6 -1.8Z" fill="#2A1A10"/>
+<circle cx="5.4" cy="-2.6" r="1.6" fill="#1A8FBA"/>
+</g>
+<path d="M26 54.5Q31 50.6 36 54.5M36 54.5Q40.5 51 45 54.2" fill="none" stroke="#2A1A10" stroke-width="3.2" stroke-linecap="round"/>
+</g>
+</svg>

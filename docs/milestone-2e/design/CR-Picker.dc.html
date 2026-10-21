@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Between the Lines — Pick your team, with crests</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&amp;family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#9CC8F0}a:hover{color:#C2DDF6}
+button{font:inherit;color:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="width: 390px; min-height: 1000px; box-sizing: border-box; background: {{t.bg}}; color: {{t.text}}; font-family: 'DM Sans', system-ui, sans-serif; padding: 0 16px 20px; display: flex; flex-direction: column">
+  <div style="padding-top: 20px; display: flex; align-items: center; justify-content: space-between">
+    <div role="progressbar" aria-valuemin="1" aria-valuemax="4" aria-valuenow="4" aria-label="Step 4 of 4" style="display: flex; gap: 6px">
+      <span style="width: 28px; height: 4px; border-radius: 2px; background: {{t.act}}"></span><span style="width: 28px; height: 4px; border-radius: 2px; background: {{t.act}}"></span><span style="width: 28px; height: 4px; border-radius: 2px; background: {{t.act}}"></span><span style="width: 28px; height: 4px; border-radius: 2px; background: {{t.act}}"></span>
+    </div>
+    <span style="font-size: 13px; color: {{t.muted}}">Last step</span>
+  </div>
+  <div style="padding-top: 24px">
+    <h1 style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-size: 40px; line-height: 1.02; font-weight: 700">Pick your team</h1>
+    <p style="margin: 10px 0 0; font-size: 17px; line-height: 1.4; color: {{t.text2}}">They'll be shown first before every match. You can change this any time.</p>
+  </div>
+  <div role="radiogroup" aria-label="Your team" style="margin-top: 20px; display: flex; flex-direction: column; gap: 8px">
+    <sc-for list="{{clubs}}" as="c" hint-placeholder-count="10">
+      <button role="radio" aria-checked="{{c.checked}}" onClick="{{c.pick}}" style="min-height: 58px; padding: 0 12px; border: {{c.border}}; background: {{c.bg}}; border-radius: 14px; display: flex; align-items: center; gap: 12px; text-align: left">
+        <img src="{{c.src}}" width="36" height="36" alt="">
+        <span style="flex: 1; display: flex; flex-direction: column"><span style="font-size: 17px; font-weight: {{c.weight}}">{{c.name}}</span><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: {{t.muted}}">{{c.code}}</span></span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{c.ring}}" stroke-width="2.2" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="{{c.dotR}}" fill="{{c.ring}}" stroke="none"></circle></svg>
+      </button>
+    </sc-for>
+  </div>
+  <div style="margin-top: auto; padding-top: 18px; display: flex; flex-direction: column; gap: 10px">
+    <button onClick="{{pickForMe}}" style="height: 52px; border: 1px solid {{t.border}}; background: transparent; border-radius: 14px; font-size: 16px; font-weight: 600">Pick one for me</button>
+    <button style="height: 54px; border: 0; background: {{t.act}}; color: {{t.onAct}}; border-radius: 14px; font-size: 17px; font-weight: 700">Continue with {{pickedName}}</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":390,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const tokens = {
+      dark: { bg: '#2B1018', surface: '#3B1A24', selected: '#55293A', border: '#5E3140', borderStrong: '#7A4A58', text: '#F6EDE4', text2: '#E3D3CB', muted: '#C9B3AE', act: '#9CC8F0', onAct: '#2B1018' },
+      light: { bg: '#F5EDE0', surface: '#FFFDF9', selected: '#EADBCB', border: '#E3D3C3', borderStrong: '#B89F94', text: '#2B1018', text2: '#4A2E35', muted: '#6E5058', act: '#8C2440', onAct: '#FFFFFF' }
+    };
+    const light = this.props.theme === 'light';
+    const t = light ? tokens.light : tokens.dark;
+    const all = [{"code": "RIP", "name": "Ripon Wardens", "motif": "Key", "cp": "#1F6F6B", "cs": "#EAC86E", "ps": 3.7, "dp": "#34BBB4", "dpc": 7.5, "ds": "#EAC86E", "dsc": 10.9, "lp": "#1F6F6B", "lpc": 5.1, "ls": "#A78018", "lsc": 3.1, "cd": "../crests/dark/RIP.svg", "cl": "../crests/light/RIP.svg"}, {"code": "HEX", "name": "Hexham Anchors", "motif": "Anchor", "cp": "#22385E", "cs": "#F29A84", "ps": 5.4, "dp": "#4873BD", "dpc": 3.8, "ds": "#F29A84", "dsc": 8.2, "lp": "#22385E", "lpc": 10.1, "ls": "#E95631", "lsc": 3.1, "cd": "../crests/dark/HEX.svg", "cl": "../crests/light/HEX.svg"}, {"code": "ALN", "name": "Alnwick Weavers", "motif": "Weaver’s shuttle", "cp": "#8E4A96", "cs": "#F3E6CB", "ps": 4.8, "dp": "#914C99", "dpc": 3.1, "ds": "#F3E6CB", "dsc": 14.3, "lp": "#8E4A96", "lpc": 5.1, "ls": "#AC8128", "lsc": 3.1, "cd": "../crests/dark/ALN.svg", "cl": "../crests/light/ALN.svg"}, {"code": "BAK", "name": "Bakewell Badgers", "motif": "Badger's head", "cp": "#2F343B", "cs": "#EADFC4", "ps": 9.5, "dp": "#6C7888", "dpc": 3.9, "ds": "#EADFC4", "dsc": 13.3, "lp": "#2F343B", "lpc": 10.8, "ls": "#9F8139", "lsc": 3.2, "cd": "../crests/dark/BAK.svg", "cl": "../crests/light/BAK.svg"}, {"code": "TRU", "name": "Truro Otters", "motif": "Otter", "cp": "#6B4226", "cs": "#93D6CF", "ps": 5.2, "dp": "#915933", "dpc": 3.1, "ds": "#93D6CF", "dsc": 10.7, "lp": "#6B4226", "lpc": 7.4, "ls": "#38938A", "lsc": 3.2, "cd": "../crests/dark/TRU.svg", "cl": "../crests/light/TRU.svg"}, {"code": "WEL", "name": "Wells Comets", "motif": "Comet", "cp": "#B9A8E6", "cs": "#231B3D", "ps": 7.6, "dp": "#B9A8E6", "dpc": 8.2, "ds": "#6F5AB6", "dsc": 3.2, "lp": "#9378D8", "lpc": 3.1, "ls": "#231B3D", "lsc": 13.9, "cd": "../crests/dark/WEL.svg", "cl": "../crests/light/WEL.svg"}, {"code": "PEN", "name": "Penrith Sentinels", "motif": "Watchtower", "cp": "#B4502A", "cs": "#F1E7D3", "ps": 4.2, "dp": "#CD5B30", "dpc": 4.3, "ds": "#F1E7D3", "dsc": 14.4, "lp": "#B4502A", "lpc": 4.4, "ls": "#A57F34", "lsc": 3.2, "cd": "../crests/dark/PEN.svg", "cl": "../crests/light/PEN.svg"}, {"code": "SHE", "name": "Sherborne Kingfishers", "motif": "Kingfisher, diving", "cp": "#1A8FBA", "cs": "#2A1A10", "ps": 4.5, "dp": "#1A8FBA", "dpc": 4.8, "ds": "#915A37", "dsc": 3.1, "lp": "#1A8FBA", "lpc": 3.2, "ls": "#2A1A10", "lsc": 14.4, "cd": "../crests/dark/SHE.svg", "cl": "../crests/light/SHE.svg"}, {"code": "LUD", "name": "Ludlow Ferrymen", "motif": "Chain ferry", "cp": "#D2A12E", "cs": "#3B1F2E", "ps": 6.2, "dp": "#D2A12E", "dpc": 7.5, "ds": "#995077", "dsc": 3.2, "lp": "#A98124", "lpc": 3.1, "ls": "#3B1F2E", "lsc": 12.7, "cd": "../crests/dark/LUD.svg", "cl": "../crests/light/LUD.svg"}, {"code": "WHI", "name": "Whitby Kestrels", "motif": "Hovering kestrel", "cp": "#A8285F", "cs": "#F7CEDA", "ps": 4.7, "dp": "#BD2D6B", "dpc": 3.2, "ds": "#F7CEDA", "dsc": 12.4, "lp": "#A8285F", "lpc": 5.8, "ls": "#E3537D", "lsc": 3.1, "cd": "../crests/dark/WHI.svg", "cl": "../crests/light/WHI.svg"}];
+    const list = all.slice().sort((a, b) => a.name.localeCompare(b.name));
+    const picked = (this.state && this.state.picked) || 'WHI';
+    const clubs = list.map((c) => {
+      const on = c.code === picked;
+      return { code: c.code, name: c.name, src: light ? c.cl : c.cd, checked: on ? 'true' : 'false',
+        border: on ? '2px solid ' + t.act : '1px solid ' + t.border, bg: on ? t.selected : t.surface,
+        weight: on ? 700 : 500, ring: on ? t.act : t.borderStrong, dotR: on ? 4 : 0,
+        pick: () => this.setState({ picked: c.code }) };
+    });
+    const pickedName = (list.find((c) => c.code === picked) || list[0]).name;
+    const pickForMe = () => { const o = list.filter((c) => c.code !== picked); this.setState({ picked: o[Math.floor(Math.random() * o.length)].code }); };
+    return { t, clubs, pickedName, pickForMe };
+  }
+}
+</script>
+</body>
+</html>

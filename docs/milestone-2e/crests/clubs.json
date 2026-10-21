@@ -1,0 +1,253 @@
+{
+  "version": 2,
+  "outline": {
+    "dark": "#F6EDE4",
+    "light": "#2B1018"
+  },
+  "contrastAgainst": {
+    "dark": "#2B1018",
+    "light": "#F5EDE0"
+  },
+  "clubs": [
+    {
+      "code": "RIP",
+      "name": "Ripon Wardens",
+      "emblem": "Key",
+      "crest": {
+        "primary": "#1F6F6B",
+        "secondary": "#EAC86E",
+        "emblemOnPrimary": 3.7
+      },
+      "dark": {
+        "primary": "#34BBB4",
+        "primaryContrast": 7.5,
+        "secondary": "#EAC86E",
+        "secondaryContrast": 10.9,
+        "file": "dark/RIP.svg"
+      },
+      "light": {
+        "primary": "#1F6F6B",
+        "primaryContrast": 5.1,
+        "secondary": "#A78018",
+        "secondaryContrast": 3.1,
+        "file": "light/RIP.svg"
+      }
+    },
+    {
+      "code": "HEX",
+      "name": "Hexham Anchors",
+      "emblem": "Anchor",
+      "crest": {
+        "primary": "#22385E",
+        "secondary": "#F29A84",
+        "emblemOnPrimary": 5.4
+      },
+      "dark": {
+        "primary": "#4873BD",
+        "primaryContrast": 3.8,
+        "secondary": "#F29A84",
+        "secondaryContrast": 8.2,
+        "file": "dark/HEX.svg"
+      },
+      "light": {
+        "primary": "#22385E",
+        "primaryContrast": 10.1,
+        "secondary": "#E95631",
+        "secondaryContrast": 3.1,
+        "file": "light/HEX.svg"
+      }
+    },
+    {
+      "code": "ALN",
+      "name": "Alnwick Weavers",
+      "emblem": "Weaver’s shuttle",
+      "crest": {
+        "primary": "#8E4A96",
+        "secondary": "#F3E6CB",
+        "emblemOnPrimary": 4.8
+      },
+      "dark": {
+        "primary": "#914C99",
+        "primaryContrast": 3.1,
+        "secondary": "#F3E6CB",
+        "secondaryContrast": 14.3,
+        "file": "dark/ALN.svg"
+      },
+      "light": {
+        "primary": "#8E4A96",
+        "primaryContrast": 5.1,
+        "secondary": "#AC8128",
+        "secondaryContrast": 3.1,
+        "file": "light/ALN.svg"
+      }
+    },
+    {
+      "code": "BAK",
+      "name": "Bakewell Badgers",
+      "emblem": "Badger's head",
+      "crest": {
+        "primary": "#2F343B",
+        "secondary": "#EADFC4",
+        "emblemOnPrimary": 9.5
+      },
+      "dark": {
+        "primary": "#6C7888",
+        "primaryContrast": 3.9,
+        "secondary": "#EADFC4",
+        "secondaryContrast": 13.3,
+        "file": "dark/BAK.svg"
+      },
+      "light": {
+        "primary": "#2F343B",
+        "primaryContrast": 10.8,
+        "secondary": "#9F8139",
+        "secondaryContrast": 3.2,
+        "file": "light/BAK.svg"
+      }
+    },
+    {
+      "code": "TRU",
+      "name": "Truro Otters",
+      "emblem": "Otter",
+      "crest": {
+        "primary": "#6B4226",
+        "secondary": "#93D6CF",
+        "emblemOnPrimary": 5.2
+      },
+      "dark": {
+        "primary": "#915933",
+        "primaryContrast": 3.1,
+        "secondary": "#93D6CF",
+        "secondaryContrast": 10.7,
+        "file": "dark/TRU.svg"
+      },
+      "light": {
+        "primary": "#6B4226",
+        "primaryContrast": 7.4,
+        "secondary": "#38938A",
+        "secondaryContrast": 3.2,
+        "file": "light/TRU.svg"
+      }
+    },
+    {
+      "code": "WEL",
+      "name": "Wells Comets",
+      "emblem": "Comet",
+      "crest": {
+        "primary": "#B9A8E6",
+        "secondary": "#231B3D",
+        "emblemOnPrimary": 7.6
+      },
+      "dark": {
+        "primary": "#B9A8E6",
+        "primaryContrast": 8.2,
+        "secondary": "#6F5AB6",
+        "secondaryContrast": 3.2,
+        "file": "dark/WEL.svg"
+      },
+      "light": {
+        "primary": "#9378D8",
+        "primaryContrast": 3.1,
+        "secondary": "#231B3D",
+        "secondaryContrast": 13.9,
+        "file": "light/WEL.svg"
+      }
+    },
+    {
+      "code": "PEN",
+      "name": "Penrith Sentinels",
+      "emblem": "Watchtower",
+      "crest": {
+        "primary": "#B4502A",
+        "secondary": "#F1E7D3",
+        "emblemOnPrimary": 4.2
+      },
+      "dark": {
+        "primary": "#CD5B30",
+        "primaryContrast": 4.3,
+        "secondary": "#F1E7D3",
+        "secondaryContrast": 14.4,
+        "file": "dark/PEN.svg"
+      },
+      "light": {
+        "primary": "#B4502A",
+        "primaryContrast": 4.4,
+        "secondary": "#A57F34",
+        "secondaryContrast": 3.2,
+        "file": "light/PEN.svg"
+      }
+    },
+    {
+      "code": "SHE",
+      "name": "Sherborne Kingfishers",
+      "emblem": "Kingfisher, diving",
+      "crest": {
+        "primary": "#1A8FBA",
+        "secondary": "#2A1A10",
+        "emblemOnPrimary": 4.5
+      },
+      "dark": {
+        "primary": "#1A8FBA",
+        "primaryContrast": 4.8,
+        "secondary": "#915A37",
+        "secondaryContrast": 3.1,
+        "file": "dark/SHE.svg"
+      },
+      "light": {
+        "primary": "#1A8FBA",
+        "primaryContrast": 3.2,
+        "secondary": "#2A1A10",
+        "secondaryContrast": 14.4,
+        "file": "light/SHE.svg"
+      }
+    },
+    {
+      "code": "LUD",
+      "name": "Ludlow Ferrymen",
+      "emblem": "Chain ferry",
+      "crest": {
+        "primary": "#D2A12E",
+        "secondary": "#3B1F2E",
+        "emblemOnPrimary": 6.2
+      },
+      "dark": {
+        "primary": "#D2A12E",
+        "primaryContrast": 7.5,
+        "secondary": "#995077",
+        "secondaryContrast": 3.2,
+        "file": "dark/LUD.svg"
+      },
+      "light": {
+        "primary": "#A98124",
+        "primaryContrast": 3.1,
+        "secondary": "#3B1F2E",
+        "secondaryContrast": 12.7,
+        "file": "light/LUD.svg"
+      }
+    },
+    {
+      "code": "WHI",
+      "name": "Whitby Kestrels",
+      "emblem": "Hovering kestrel",
+      "crest": {
+        "primary": "#A8285F",
+        "secondary": "#F7CEDA",
+        "emblemOnPrimary": 4.7
+      },
+      "dark": {
+        "primary": "#BD2D6B",
+        "primaryContrast": 3.2,
+        "secondary": "#F7CEDA",
+        "secondaryContrast": 12.4,
+        "file": "dark/WHI.svg"
+      },
+      "light": {
+        "primary": "#A8285F",
+        "primaryContrast": 5.8,
+        "secondary": "#E3537D",
+        "secondaryContrast": 3.1,
+        "file": "light/WHI.svg"
+      }
+    }
+  ]
+}

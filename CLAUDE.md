@@ -3,7 +3,8 @@
 ## Git workflow
 - GitHub remote, no PRs. One branch per milestone, named after the milestone (M1 "The Data Engine": `feature/data-engine`;
   M2a "The loop in the terminal": `feature/learning-loop`; M2c "The web page": `feature/web-page`;
-  M2d "The basics": `feature/the-basics`). 2c and then 2d are built before 2b, because Azure isn't set up yet.
+  M2d "The basics": `feature/the-basics`; M2e "Getting started": `feature/getting-started`). 2c, 2d and then 2e
+  are built before 2b, because Azure isn't set up yet.
 - Each plan task is one commit on the milestone branch, made after Lily reviews the diff.
 - When a milestone is done, merge it into main with `git merge --no-ff`, so each milestone shows up as one merge in the graph.
 - Claude commits locally only; Lily pushes when ready. CI runs on every push, to any branch.
@@ -11,9 +12,11 @@
 ## What this is
 Adaptive football-learning tool on synthetic match data. Milestone 1 built the data engine; Milestone 2
 is split into 2a (the learning engine, played in the terminal), 2b (the Foundry Tutor and Verifier),
-2c (the web page) and 2d (the basics).
+2c (the web page), 2d (the basics) and 2e (getting started).
 Milestone 2c puts the learning loop in a browser: a React page over a small FastAPI layer.
 Milestone 2d adds the basics: restarts, offside, and fouls and cards.
+Milestone 2e adds getting started: picking a team to support, and a team sheet before each match
+that grows with the viewer.
 
 ## Learning design rules
 - The match never depends on the viewer. Adaptation lives in which moments we ask about, when, and
@@ -23,6 +26,8 @@ Milestone 2d adds the basics: restarts, offside, and fouls and cards.
   only (`concepts/phase.py`). Deferred questions are review questions, never predict.
   A question about a restart or a foul is asked at its own stoppage or not at all; these are the
   only live questions asked in a dead ball.
+- The viewer's team chooses which matches they watch and how they are shown, never which moments
+  are asked about. The team sheet uses only matches the viewer has finished.
 - The curriculum is `btl/learn/concept_map.yaml`; only `learn/concept_map.py` reads it.
 - The learner model sits behind the `KnowledgeModel` protocol. The attempt log is the source of truth;
   a model's state is derived from it. Only the session chooses which model to use.
@@ -118,4 +123,5 @@ cli, api, plus `replay.py`. `api` holds the HTTP routes the page calls; the page
 - Components are grouped in folders, as in `../Web/orbit-web`: one folder per screen under `src/components/`
   (its main component is `index.tsx`, with `index.css`, `index.support.ts` and tests beside it), and pieces
   used by more than one screen go in `src/components/Shared/`. `App.tsx` sits at the top of `components/`.
-- Design reference: `docs/milestone-2c/design/`. It guides the look; the repo decides behaviour and data.
+- Design reference: `docs/milestone-2c/design/`, plus `docs/milestone-2e/design/` and `crests/` for the picker, team
+  sheet and crests. It guides the look; the repo decides behaviour and data.

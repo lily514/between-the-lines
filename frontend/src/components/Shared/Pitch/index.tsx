@@ -34,10 +34,24 @@ export interface PitchProps {
 	crop?: 'full' | 'moment'
 	/** The start of what a screen reader hears, such as "Freeze-frame at 58:13". */
 	label: string
+	/** Which side is the viewer's team: its players get a dashed ring. */
+	yours?: 'home' | 'away' | null
+	/** Draw the ball; a line-up has none. */
+	ball?: boolean
 }
 
 /** The pitch as an SVG in metres, portrait, with the team on the ball attacking up. */
-const Pitch = ({ picture, options = [], path = [], reveal = false, line = null, crop = 'full', label }: PitchProps) => {
+const Pitch = ({
+	picture,
+	options = [],
+	path = [],
+	reveal = false,
+	line = null,
+	crop = 'full',
+	label,
+	yours = null,
+	ball: withBall = true
+}: PitchProps) => {
 	const arrowId = useId()
 	const view = crop === 'moment' ? cropTo(momentPoints(picture, options, path, line)) : FULL_VIEW
 	const mark = picture.mark === null ? null : toScreen(picture.mark)
@@ -121,11 +135,15 @@ const Pitch = ({ picture, options = [], path = [], reveal = false, line = null, 
 					const [x, y] = toScreen([marker.x, marker.y])
 					const dim = focused && !isInvolved(marker, options, path)
 					const shape = marker.home ? 'home' : 'away'
+					const theirs = yours === shape
 					return (
 						<g
 							key={`${shape}-${String(marker.shirt)}`}
 							className={`pitch__player pitch__player--${shape}${dim ? ' pitch__player--dim' : ''}`}
 							data-testid={`player-${shape}`}>
+							{theirs && (
+								<circle className="pitch__yours" data-testid="pitch-yours" cx={x} cy={y} r={3.1} />
+							)}
 							{marker.home ? (
 								<>
 									<circle cx={x} cy={y} r={2.2} />
@@ -151,7 +169,7 @@ const Pitch = ({ picture, options = [], path = [], reveal = false, line = null, 
 					markerEnd={`url(#${arrowId})`}
 				/>
 			)}
-			<circle className="pitch__ball" cx={ball[0]} cy={ball[1]} r={0.95} />
+			{withBall && <circle className="pitch__ball" cx={ball[0]} cy={ball[1]} r={0.95} />}
 			{options.map(option => {
 				const [x, y] = tagPosition(from, toScreen(option.at), playerPoints)
 				return (

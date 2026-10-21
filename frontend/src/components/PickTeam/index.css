@@ -1,0 +1,109 @@
+/* Pick your team (TS-Pick, CR-Picker): the clubs as rows, each with its crest, name and code. */
+
+.pick-team {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+}
+
+.pick-team__heading {
+	font-size: var(--fs-display-l);
+	line-height: var(--lh-display-l);
+	font-weight: 600;
+}
+
+.pick-team__intro {
+	margin: 0;
+	font-size: var(--fs-body);
+	line-height: var(--lh-body);
+	color: var(--text-2);
+}
+
+.pick-team__clubs {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	margin-top: var(--s-2);
+}
+
+.pick-team__club {
+	display: flex;
+	align-items: center;
+	gap: var(--s-3);
+	min-height: 58px;
+	padding: 0 var(--s-3);
+	border: 1px solid var(--border);
+	border-radius: var(--r-btn);
+	background: var(--surface);
+	text-align: left;
+	cursor: pointer;
+	transition:
+		background var(--t-hover),
+		border-color var(--t-hover);
+}
+
+.pick-team__club:hover {
+	background: var(--surface-raised);
+	border-color: var(--border-strong);
+}
+
+/* Selected: a 2 px action border, the selected fill, a bold name and a filled radio, not colour alone. */
+.pick-team__club[aria-checked='true'] {
+	border: 2px solid var(--act);
+	padding: 0 calc(var(--s-3) - 1px);
+	background: var(--selected);
+}
+
+.pick-team__name {
+	flex: 1;
+	font-size: var(--fs-body);
+	font-weight: 500;
+}
+
+.pick-team__club[aria-checked='true'] .pick-team__name {
+	font-weight: 700;
+}
+
+.pick-team__code {
+	font-family: var(--font-data);
+	font-size: var(--fs-caption);
+	color: var(--text-muted);
+}
+
+.pick-team__radio {
+	width: 20px;
+	height: 20px;
+	border: 2px solid var(--border-strong);
+	border-radius: 50%;
+}
+
+.pick-team__club[aria-checked='true'] .pick-team__radio {
+	border-color: var(--act);
+	background: radial-gradient(circle, var(--act) 0 4px, transparent 5px);
+}
+
+.pick-team__actions {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	margin-top: var(--s-2);
+}
+
+.pick-team__for-me {
+	height: 52px;
+	border: 1px solid var(--border);
+	border-radius: var(--r-btn);
+	background: transparent;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.pick-team__for-me:hover {
+	background: var(--surface-raised);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.pick-team__club {
+		transition: none;
+	}
+}

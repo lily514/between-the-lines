@@ -21,6 +21,14 @@
 	color: var(--text-2);
 }
 
+.welcome__team {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	margin: 0;
+	font-size: var(--fs-body);
+}
+
 .welcome__number {
 	font-family: var(--font-data);
 }

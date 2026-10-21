@@ -6,9 +6,11 @@ answers. The feedback payload is the whole pack.
 """
 
 from collections.abc import Mapping
+from typing import Literal
 
 from btl.api.models import (
     Bar,
+    ClubOut,
     DeliveredTime,
     FactOut,
     FeedbackOption,
@@ -18,27 +20,41 @@ from btl.api.models import (
     Movement,
     OptionOut,
     PictureOut,
+    PlayerNumbersOut,
+    PositionOut,
     QuestionOut,
+    SheetPlayerOut,
+    SheetTeamOut,
+    TeamSheetOut,
     ThresholdsOut,
+    YourTeam,
 )
 from btl.concepts.phase import PhaseOfPlay
+from btl.league.league import Club
 from btl.learn.concept_map import Thresholds
-from btl.learn.evidence import Fact, Picture
+from btl.learn.evidence import Fact, Picture, percent_points
 from btl.learn.knowledge import Delivery
 from btl.learn.questions import Form
 from btl.learn.session import Asked, Told
+from btl.learn.team_sheet import NEXT_STAGE, SheetPlayer, SheetTeam, TeamSheet
+from btl.schema.ids import TeamId
 from btl.schema.scoreboard import clock
 
 
-def question_payload(asked: Asked, match_number: int, home: str, away: str) -> QuestionOut:
+def question_payload(
+    asked: Asked, match_number: int, home: Club, away: Club, club: TeamId | None
+) -> QuestionOut:
     """The question as the page shows it: its view, its wording and when it is asked."""
     view, prompt = asked.view, asked.prompt
     candidate, delivered = prompt.candidate, prompt.delivered
     return QuestionOut(
         pack_id=view.pack_id,
         match_number=match_number,
-        home=home,
-        away=away,
+        home=home.name,
+        away=away.name,
+        home_code=home.short_name,
+        away_code=away.short_name,
+        your_team=your_team(club, home, away),
         concept_name=view.concept_name,
         form="predict" if view.form is Form.PREDICT else "identify",
         asks=view.asks.value,
@@ -111,6 +127,78 @@ def feedback_payload(
     )
 
 
+def your_team(club: TeamId | None, home: Club, away: Club) -> YourTeam:
+    """Which side the viewer's team is in a match, if either."""
+    if club == home.team_id:
+        return "home"
+    if club == away.team_id:
+        return "away"
+    return None
+
+
+def your_result(
+    side: YourTeam, home_goals: int, away_goals: int
+) -> Literal["won", "drew", "lost"] | None:
+    """The result for the viewer's team, if it played."""
+    if side is None:
+        return None
+    ours, theirs = (home_goals, away_goals) if side == "home" else (away_goals, home_goals)
+    return "won" if ours > theirs else "drew" if ours == theirs else "lost"
+
+
+def club_payload(club: Club) -> ClubOut:
+    """A club by id, name and code."""
+    return ClubOut(team_id=club.team_id, name=club.name, code=club.short_name)
+
+
+def team_sheet_payload(sheet: TeamSheet) -> TeamSheetOut:
+    """The team sheet, with kick-off spots to the tenth of a metre."""
+    return TeamSheetOut(
+        match_number=sheet.match_number,
+        stage=sheet.stage,
+        next_stage=NEXT_STAGE.get(sheet.stage),
+        teams=[_sheet_team(team) for team in sheet.teams],
+    )
+
+
+def _sheet_team(team: SheetTeam) -> SheetTeamOut:
+    return SheetTeamOut(
+        team_id=team.team_id,
+        name=team.name,
+        code=team.short_name,
+        home=team.home,
+        yours=team.yours,
+        formation=team.formation,
+        matches_watched=team.matches_watched,
+        players=[_sheet_player(player) for player in team.players],
+    )
+
+
+def _sheet_player(player: SheetPlayer) -> SheetPlayerOut:
+    spot = player.at_kickoff
+    numbers = player.numbers
+    return SheetPlayerOut(
+        shirt=player.shirt_number,
+        name=player.name,
+        role=player.role.value,
+        position=PositionOut(
+            short=player.position.short,
+            name=player.position.name,
+            description=player.position.description,
+        ),
+        at_kickoff=None if spot is None else (round(spot[0], 1), round(spot[1], 1)),
+        numbers=None
+        if numbers is None
+        else PlayerNumbersOut(
+            matches=numbers.matches,
+            passes_completed=numbers.passes_completed,
+            passes_tried=numbers.passes_tried,
+            line_breaking_passes=numbers.line_breaking_passes,
+            threat_added=_fact(percent_points(numbers.threat_added)),
+        ),
+    )
+
+
 def movements(before: Mapping[str, float], after: Mapping[str, float]) -> list[Movement]:
     """Each concept's mastery before and after, in the order of ``after``."""
     return [Movement(name=name, before=before[name], after=value) for name, value in after.items()]
@@ -136,7 +224,11 @@ def _moment(period_id: int, time_seconds: float, phase: PhaseOfPlay) -> MomentTi
 
 
 def _facts(facts: Mapping[str, Fact]) -> dict[str, FactOut]:
-    return {name: FactOut(value=fact.value, display=fact.display) for name, fact in facts.items()}
+    return {name: _fact(fact) for name, fact in facts.items()}
+
+
+def _fact(fact: Fact) -> FactOut:
+    return FactOut(value=fact.value, display=fact.display)
 
 
 def _picture(picture: Picture) -> PictureOut:

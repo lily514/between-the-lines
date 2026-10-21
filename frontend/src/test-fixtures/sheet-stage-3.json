@@ -1,0 +1,392 @@
+{
+	"match_number": 3,
+	"stage": 3,
+	"next_stage": null,
+	"teams": [
+		{
+			"team_id": 2,
+			"name": "Hexham Anchors",
+			"code": "HEX",
+			"home": false,
+			"yours": true,
+			"formation": "4-4-2",
+			"matches_watched": 2,
+			"players": [
+				{
+					"shirt": 1,
+					"name": "José Valdera",
+					"role": "GK",
+					"position": {
+						"short": "GK",
+						"name": "Goalkeeper",
+						"description": "Stops shots, and is the only player allowed to handle the ball, inside their own box."
+					},
+					"at_kickoff": [8.3, 34.6],
+					"numbers": {
+						"matches": 2,
+						"passes_completed": 17,
+						"passes_tried": 30,
+						"line_breaking_passes": 3,
+						"threat_added": {
+							"value": 0.025861218345011327,
+							"display": "+2.6%"
+						}
+					}
+				},
+				{
+					"shirt": 5,
+					"name": "Serhii Nowaković",
+					"role": "DF",
+					"position": {
+						"short": "LB",
+						"name": "Left back",
+						"description": "Defends the left side, and joins attacks down it."
+					},
+					"at_kickoff": [33.2, 50.3],
+					"numbers": {
+						"matches": 2,
+						"passes_completed": 9,
+						"passes_tried": 12,
+						"line_breaking_passes": 0,
+						"threat_added": {
+							"value": 0.0026270421825961795,
+							"display": "+0.26%"
+						}
+					}
+				},
+				{
+					"shirt": 4,
+					"name": "Christian Rosner",
+					"role": "DF",
+					"position": {
+						"short": "CB",
+						"name": "Centre back",
+						"description": "Defends the middle in front of goal: wins headers, blocks shots."
+					},
+					"at_kickoff": [36.1, 38.9],
+					"numbers": {
+						"matches": 2,
+						"passes_completed": 20,
+						"passes_tried": 24,
+						"line_breaking_passes": 3,
+						"threat_added": {
+							"value": 0.014163752426130466,
+							"display": "+1.4%"
+						}
+					}
+				},
+				{
+					"shirt": 3,
+					"name": "Daniel Teirães",
+					"role": "DF",
+					"position": {
+						"short": "CB",
+						"name": "Centre back",
+						"description": "Defends the middle in front of goal: wins headers, blocks shots."
+					},
+					"at_kickoff": [34.4, 27.9],
+					"numbers": {
+						"matches": 2,
+						"passes_completed": 24,
+						"passes_tried": 28,
+						"line_breaking_passes": 2,
+						"threat_added": {
+							"value": 0.020633374085566293,
+							"display": "+2.1%"
+						}
+					}
+				},
+				{
+					"shirt": 2,
+					"name": "Stefan Jankčić",
+					"role": "DF",
+					"position": {
+						"short": "RB",
+						"name": "Right back",
+						"description": "Defends the right side, and joins attacks down it."
+					},
+					"at_kickoff": [34.5, 17.2],
+					"numbers": {
+						"matches": 2,
+						"passes_completed": 10,
+						"passes_tried": 12,
+						"line_breaking_passes": 1,
+						"threat_added": {
+							"value": 0.006128173014665621,
+							"display": "+0.61%"
+						}
+					}
+				},
+				{
+					"shirt": 16,
+					"name": "Wout Hafhuis",
+					"role": "MF",
+					"position": {
+						"short": "LM",
+						"name": "Left midfielder",
+						"description": "Covers the left side of midfield, and crosses from it."
+					},
+					"at_kickoff": [49.8, 46.9],
+					"numbers": {
+						"matches": 2,
+						"passes_completed": 65,
+						"passes_tried": 88,
+						"line_breaking_passes": 17,
+						"threat_added": {
+							"value": 0.27315421623451275,
+							"display": "+27%"
+						}
+					}
+				},
+				{
+					"shirt": 14,
+					"name": "Jamie Thornock",
+					"role": "MF",
+					"position": {
+						"short": "CM",
+						"name": "Centre midfielder",
+						"description": "Links defence and attack in the middle: passes, tackles, runs."
+					},
+					"at_kickoff": [50.0, 38.2],
+					"numbers": {
+						"matches": 2,
+						"passes_completed": 113,
+						"passes_tried": 150,
+						"line_breaking_passes": 40,
+						"threat_added": {
+							"value": 0.39940082821145284,
+							"display": "+40%"
+						}
+					}
+				},
+				{
+					"shirt": 10,
+					"name": "Alexis Marchet",
+					"role": "MF",
+					"position": {
+						"short": "CM",
+						"name": "Centre midfielder",
+						"description": "Links defence and attack in the middle: passes, tackles, runs."
+					},
+					"at_kickoff": [46.4, 29.1],
+					"numbers": {
+						"matches": 2,
+						"passes_completed": 106,
+						"passes_tried": 154,
+						"line_breaking_passes": 38,
+						"threat_added": {
+							"value": 0.34969897330287686,
+							"display": "+35%"
+						}
+					}
+				},
+				{
+					"shirt": 8,
+					"name": "Musa Ekekunle",
+					"role": "MF",
+					"position": {
+						"short": "RM",
+						"name": "Right midfielder",
+						"description": "Covers the right side of midfield, and crosses from it."
+					},
+					"at_kickoff": [49.0, 18.4],
+					"numbers": {
+						"matches": 2,
+						"passes_completed": 51,
+						"passes_tried": 72,
+						"line_breaking_passes": 15,
+						"threat_added": {
+							"value": 0.4393465705063182,
+							"display": "+44%"
+						}
+					}
+				},
+				{
+					"shirt": 9,
+					"name": "Niels Meiner",
+					"role": "FW",
+					"position": {
+						"short": "ST",
+						"name": "Striker",
+						"description": "Plays furthest forward, closest to goal: there to score."
+					},
+					"at_kickoff": [61.5, 44.3],
+					"numbers": {
+						"matches": 2,
+						"passes_completed": 74,
+						"passes_tried": 110,
+						"line_breaking_passes": 20,
+						"threat_added": {
+							"value": 0.38852271142631806,
+							"display": "+39%"
+						}
+					}
+				},
+				{
+					"shirt": 7,
+					"name": "Alexander Quillby",
+					"role": "FW",
+					"position": {
+						"short": "ST",
+						"name": "Striker",
+						"description": "Plays furthest forward, closest to goal: there to score."
+					},
+					"at_kickoff": [62.9, 23.5],
+					"numbers": {
+						"matches": 2,
+						"passes_completed": 69,
+						"passes_tried": 100,
+						"line_breaking_passes": 18,
+						"threat_added": {
+							"value": 0.2899735858711216,
+							"display": "+29%"
+						}
+					}
+				}
+			]
+		},
+		{
+			"team_id": 4,
+			"name": "Bakewell Badgers",
+			"code": "BAK",
+			"home": true,
+			"yours": false,
+			"formation": "4-4-2",
+			"matches_watched": 0,
+			"players": [
+				{
+					"shirt": 1,
+					"name": "Diogo Marteiro",
+					"role": "GK",
+					"position": {
+						"short": "GK",
+						"name": "Goalkeeper",
+						"description": "Stops shots, and is the only player allowed to handle the ball, inside their own box."
+					},
+					"at_kickoff": [97.8, 32.3],
+					"numbers": null
+				},
+				{
+					"shirt": 5,
+					"name": "Thomas Chauvin",
+					"role": "DF",
+					"position": {
+						"short": "LB",
+						"name": "Left back",
+						"description": "Defends the left side, and joins attacks down it."
+					},
+					"at_kickoff": [82.9, 9.8],
+					"numbers": null
+				},
+				{
+					"shirt": 4,
+					"name": "Philipp van Dorhuis",
+					"role": "DF",
+					"position": {
+						"short": "CB",
+						"name": "Centre back",
+						"description": "Defends the middle in front of goal: wins headers, blocks shots."
+					},
+					"at_kickoff": [82.4, 26.0],
+					"numbers": null
+				},
+				{
+					"shirt": 3,
+					"name": "Jorge Cedsende",
+					"role": "DF",
+					"position": {
+						"short": "CB",
+						"name": "Centre back",
+						"description": "Defends the middle in front of goal: wins headers, blocks shots."
+					},
+					"at_kickoff": [82.4, 40.0],
+					"numbers": null
+				},
+				{
+					"shirt": 2,
+					"name": "Carlos Cedvez",
+					"role": "DF",
+					"position": {
+						"short": "RB",
+						"name": "Right back",
+						"description": "Defends the right side, and joins attacks down it."
+					},
+					"at_kickoff": [85.7, 54.3],
+					"numbers": null
+				},
+				{
+					"shirt": 16,
+					"name": "Omar Elkadi",
+					"role": "MF",
+					"position": {
+						"short": "LM",
+						"name": "Left midfielder",
+						"description": "Covers the left side of midfield, and crosses from it."
+					},
+					"at_kickoff": [65.0, 14.5],
+					"numbers": null
+				},
+				{
+					"shirt": 14,
+					"name": "Jack Lindby",
+					"role": "MF",
+					"position": {
+						"short": "CM",
+						"name": "Centre midfielder",
+						"description": "Links defence and attack in the middle: passes, tackles, runs."
+					},
+					"at_kickoff": [61.7, 26.8],
+					"numbers": null
+				},
+				{
+					"shirt": 10,
+					"name": "Kwame Ekegbe",
+					"role": "MF",
+					"position": {
+						"short": "CM",
+						"name": "Centre midfielder",
+						"description": "Links defence and attack in the middle: passes, tackles, runs."
+					},
+					"at_kickoff": [52.5, 34.0],
+					"numbers": null
+				},
+				{
+					"shirt": 8,
+					"name": "Agustín Fermendi",
+					"role": "MF",
+					"position": {
+						"short": "RM",
+						"name": "Right midfielder",
+						"description": "Covers the right side of midfield, and crosses from it."
+					},
+					"at_kickoff": [59.9, 51.8],
+					"numbers": null
+				},
+				{
+					"shirt": 9,
+					"name": "Ousmane Ekekunle",
+					"role": "FW",
+					"position": {
+						"short": "ST",
+						"name": "Striker",
+						"description": "Plays furthest forward, closest to goal: there to score."
+					},
+					"at_kickoff": [47.8, 20.8],
+					"numbers": null
+				},
+				{
+					"shirt": 7,
+					"name": "Harry Yarby",
+					"role": "FW",
+					"position": {
+						"short": "ST",
+						"name": "Striker",
+						"description": "Plays furthest forward, closest to goal: there to score."
+					},
+					"at_kickoff": [39.2, 47.7],
+					"numbers": null
+				}
+			]
+		}
+	]
+}

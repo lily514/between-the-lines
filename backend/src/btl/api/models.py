@@ -10,6 +10,8 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, Field
 
 Point = tuple[float, float]
+# Which side of a match is the viewer's team, if either.
+YourTeam = Literal["home", "away"] | None
 
 
 class FactOut(BaseModel):
@@ -76,6 +78,9 @@ class QuestionOut(BaseModel):
     match_number: int
     home: str
     away: str
+    home_code: str
+    away_code: str
+    your_team: YourTeam
     concept_name: str
     form: Literal["identify", "predict"]
     asks: str
@@ -111,21 +116,39 @@ class ThresholdsOut(BaseModel):
 
 
 class Fixture(BaseModel):
-    """The two clubs of a match."""
+    """The two clubs of a match, by name and three-letter code."""
 
     home: str
     away: str
+    home_code: str
+    away_code: str
+    your_team: YourTeam
+
+
+class ClubOut(BaseModel):
+    """A club. The page keys its crest and colours by ``code``."""
+
+    team_id: int
+    name: str
+    code: str
 
 
 class FullTimeOut(BaseModel):
-    """The match just finished: the score, how many questions, and how each concept moved."""
+    """The match just finished: the score, how many questions, and how each concept moved.
+
+    ``your_result`` is the result for the viewer's team, if it played.
+    """
 
     kind: Literal["full_time"] = "full_time"
     match_number: int
     home: str
     away: str
+    home_code: str
+    away_code: str
+    your_team: YourTeam
     home_goals: int
     away_goals: int
+    your_result: Literal["won", "drew", "lost"] | None
     questions: int
     concepts: list[Movement]
     thresholds: ThresholdsOut
@@ -178,22 +201,102 @@ class FeedbackOut(BaseModel):
 
 
 class StatusOut(BaseModel):
-    """Where a viewer stands: which match is next, and their mastery of each concept."""
+    """Where a viewer stands: which match is next, and their mastery of each concept.
+
+    ``club`` is the team they support. They can choose or change it while
+    ``can_choose_club``; ``suggested_club`` is the one "Pick one for me" starts from.
+    """
 
     viewer_id: str
     match_number: int
     matches: int
     finished: bool
     fixture: Fixture | None
+    club: ClubOut | None
+    can_choose_club: bool
+    suggested_club: int
     concepts: list[Bar]
     thresholds: ThresholdsOut
 
 
 class StartIn(BaseModel):
-    """Start watching, or carry on. Without a seed, the viewer's name chooses their matches."""
+    """Start watching, or carry on. Without a seed, the viewer's name chooses their matches.
+
+    A ``club`` (team id) makes the viewer's matches that club's fixtures, if they haven't
+    started watching.
+    """
 
     viewer_id: str
     seed: int | None = None
+    club: int | None = None
+
+
+class ClubIn(BaseModel):
+    """Choose the team to support, by team id."""
+
+    club: int
+
+
+class PositionOut(BaseModel):
+    """A position: its abbreviation, its name and what the player there does."""
+
+    short: str
+    name: str
+    description: str
+
+
+class PlayerNumbersOut(BaseModel):
+    """A player's numbers from the watched matches they started."""
+
+    matches: int
+    passes_completed: int
+    passes_tried: int
+    line_breaking_passes: int
+    threat_added: FactOut
+
+
+class SheetPlayerOut(BaseModel):
+    """A starter on the team sheet.
+
+    ``at_kickoff`` is where they stood at kick-off, with the sheet's first team attacking left
+    to right; null before stage 2. ``numbers`` is null before stage 3, or if the viewer hasn't
+    seen them play.
+    """
+
+    shirt: int
+    name: str
+    role: str
+    position: PositionOut
+    at_kickoff: Point | None
+    numbers: PlayerNumbersOut | None
+
+
+class SheetTeamOut(BaseModel):
+    """One side: goalkeeper, defenders, midfielders, forwards, each line left to right.
+
+    ``formation`` is null before stage 2; ``matches_watched`` is null before stage 3.
+    """
+
+    team_id: int
+    name: str
+    code: str
+    home: bool
+    yours: bool
+    formation: str | None
+    matches_watched: int | None
+    players: list[SheetPlayerOut]
+
+
+class TeamSheetOut(BaseModel):
+    """Who's playing in the viewer's next match: their team first, or the home team.
+
+    ``next_stage`` says what opens more of the sheet; null at the last stage.
+    """
+
+    match_number: int
+    stage: int
+    next_stage: str | None
+    teams: list[SheetTeamOut]
 
 
 class AnswerIn(BaseModel):

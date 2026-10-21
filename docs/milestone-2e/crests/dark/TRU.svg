@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Truro Otters crest">
+<title>Truro Otters</title>
+<circle cx="32" cy="32" r="29.5" fill="#6B4226" stroke="#F6EDE4" stroke-width="2.5"/>
+<g transform="translate(32 32) scale(0.9) translate(-32 -32)">
+<path d="M8.8 37.6C13.5 39.6 19 39.4 23.6 36.4C27.6 33.8 31.6 32.4 36 32.6C38.4 32.7 39.8 31.6 40.6 29.4C41.8 25.4 45 22.6 49 22.6C53.6 22.6 56.4 25.4 56.4 28.4C56.4 30.4 55.2 31.6 53.2 32L48.6 32.8C46.6 37 42 40.6 36 41.6L19 42.6C14.2 42.6 10.6 40.8 8.8 37.6Z" fill="#93D6CF"/>
+<circle cx="44.2" cy="23.6" r="2" fill="#93D6CF"/>
+<circle cx="50.4" cy="26.6" r="1.4" fill="#6B4226"/><circle cx="55.2" cy="28" r="1.2" fill="#6B4226"/>
+<path d="M12 49Q17.5 45.6 23 49T34 49T45 49T52 48" fill="none" stroke="#93D6CF" stroke-width="3.6" stroke-linecap="round"/>
+</g>
+</svg>

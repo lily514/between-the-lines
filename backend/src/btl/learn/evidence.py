@@ -309,7 +309,7 @@ def _line_breaking_facts(
         "gap_m": _metres(tag.evidence["gap (m)"]),
         "xt_before": _percent(before),
         "xt_after": _percent(after),
-        "threat_added": _percent_points(after - before),
+        "threat_added": percent_points(after - before),
         "receiver_zone": _text(_zone(event.end_x)),
     }
     if receiver is not None:
@@ -456,7 +456,7 @@ def _pack_option(option: Option, names: _Names, context: Mapping[str, Fact]) -> 
         elif name == "gap_m" and float(value) > 0:
             outcome[name] = _metres(float(value))
         elif name == "threat_added":
-            outcome[name] = _percent_points(float(value))
+            outcome[name] = percent_points(float(value))
     target_at = None if option.end is None else (round(option.end[0], 1), round(option.end[1], 1))
     return PackOption(option.key, label, option.correct, neutral, outcome, target_at)
 
@@ -582,7 +582,8 @@ def _percent(probability: float) -> Fact:
     return Fact(probability, f"{_significant(probability * 100)}%")
 
 
-def _percent_points(change: float) -> Fact:
+def percent_points(change: float) -> Fact:
+    """A change in Expected Threat as percentage points, e.g. "+4.1%"."""
     sign = "-" if change < 0 else "+"
     return Fact(change, f"{sign}{_significant(abs(change) * 100)}%")
 

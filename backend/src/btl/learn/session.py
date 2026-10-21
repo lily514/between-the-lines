@@ -13,7 +13,7 @@ same place.
 
 import zlib
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Protocol
 
 import numpy as np
@@ -22,14 +22,21 @@ from btl.concepts.base import MatchContext, match_context
 from btl.concepts.phase import PhaseTimeline, phase_timeline
 from btl.league.league import Club, League, generate_league, season_fixtures
 from btl.learn.bkt import BktModel, BktState
-from btl.learn.candidates import Candidate, find_candidates, play_designed_match
+from btl.learn.candidates import (
+    Candidate,
+    designed_lineups,
+    find_candidates,
+    play_designed_match,
+)
 from btl.learn.concept_map import ConceptKey, ConceptMap, load_concept_map
 from btl.learn.evidence import EvidencePack, QuestionView, build_pack, question_view
 from btl.learn.grader import Answer, ChoiceAnswer, ChoiceGrader, Grade
 from btl.learn.learner import Attempt, LearnerState
 from btl.learn.questions import active_concepts, build_question
 from btl.learn.selector import Prompt, run_match
+from btl.schema.ids import TeamId
 from btl.schema.match import Match
+from btl.sim.lineup import Lineup
 from btl.store.base import LearnerStore, Stored
 from btl.tutor.base import Tutor
 from btl.tutor.slots import feedback_values, fill, question_values
@@ -126,9 +133,16 @@ class Course:
         replayed = state.model_state(model, self.active)
         return {name: model.mastery(replayed, key) for key, name in self.names().items()}
 
-    def fixture(self, seed: int, match_number: int) -> tuple[Club, Club, int]:
-        """The clubs and the match seed for one of a viewer's matches."""
+    def fixture(
+        self, seed: int, match_number: int, club: TeamId | None = None
+    ) -> tuple[Club, Club, int]:
+        """The clubs and the match seed for one of a viewer's matches.
+
+        With a club, the match is one of that club's fixtures; without one, any fixture.
+        """
         fixtures = season_fixtures(self.league)
+        if club is not None:
+            fixtures = tuple(pair for pair in fixtures if club in pair)
         home, away = fixtures[(seed * 7 + match_number) % len(fixtures)]
         return self.league.club(home), self.league.club(away), seed * 1000 + match_number
 
@@ -148,22 +162,27 @@ class PreparedMatch:
     ctx: MatchContext
     timeline: PhaseTimeline
     candidates: tuple[Candidate, ...]
+    lineups: tuple[Lineup, Lineup]
 
 
-def prepare_match(course: Course, seed: int, match_number: int) -> PreparedMatch:
+def prepare_match(
+    course: Course, seed: int, match_number: int, club: TeamId | None = None
+) -> PreparedMatch:
     """Simulate a viewer's match and find its phases of play and candidate moments.
 
     Args:
         course: What every viewer shares.
         seed: The viewer's session seed.
         match_number: Which of the viewer's matches.
+        club: The club the viewer supports, if they chose one.
     """
-    home, away, match_seed = course.fixture(seed, match_number)
+    home, away, match_seed = course.fixture(seed, match_number, club)
     match = play_designed_match(home, away, match_seed)
     ctx = match_context(match, rate_match(course.threat, match))
     timeline = phase_timeline(match)
     candidates = find_candidates(ctx, timeline, course.concept_map, course.active)
-    return PreparedMatch(home, away, match_seed, match, ctx, timeline, candidates)
+    lineups = designed_lineups(home, away)
+    return PreparedMatch(home, away, match_seed, match, ctx, timeline, candidates, lineups)
 
 
 def seed_for_viewer(viewer_id: str) -> int:
@@ -180,13 +199,37 @@ def start_session(store: LearnerStore, viewer_id: str, seed: int) -> Stored:
     return stored
 
 
+class ClubLockedError(Exception):
+    """The viewer has started watching, so the club whose fixtures they watch can't change."""
+
+
+def choose_club(course: Course, store: LearnerStore, viewer_id: str, club: TeamId) -> Stored:
+    """Make ``club`` the viewer's team, before they have answered anything.
+
+    Raises:
+        ValueError: If there is no such viewer or club.
+        ClubLockedError: If the viewer has answered a question or finished a match.
+    """
+    if club not in {each.team_id for each in course.league.clubs}:
+        raise ValueError(f"no club with id {club}")
+    stored = store.get(viewer_id)
+    if stored is None:
+        raise ValueError(f"no learner {viewer_id!r}; start a session first")
+    if stored.state.club == club:
+        return stored
+    if not stored.state.can_choose_club:
+        raise ClubLockedError(viewer_id)
+    state = replace(stored.state, club=club)
+    return Stored(state, store.put(state, stored.etag))
+
+
 def watch_match(
     course: Course,
     store: LearnerStore,
     viewer_id: str,
     viewer: Viewer,
     now: Callable[[], str],
-    prepare: Callable[[int, int], PreparedMatch] | None = None,
+    prepare: Callable[[int, int, TeamId | None], PreparedMatch] | None = None,
 ) -> LearnerState:
     """Watch the viewer's next match, asking questions as the selector decides.
 
@@ -198,8 +241,8 @@ def watch_match(
         viewer_id: Whose session it is.
         viewer: Who answers.
         now: The time of each answer, as ISO 8601.
-        prepare: Gives the prepared match for a session seed and match number; by default
-            `prepare_match`, every time. A server passes a cached one.
+        prepare: Gives the prepared match for a session seed, match number and club; by
+            default `prepare_match`, every time. A server passes a cached one.
 
     Returns:
         The record after the match.
@@ -215,9 +258,9 @@ def watch_match(
     state, etag = stored.state, stored.etag
     number = state.match_number
     if prepare is None:
-        prepared = prepare_match(course, state.seed, number)
+        prepared = prepare_match(course, state.seed, number, state.club)
     else:
-        prepared = prepare(state.seed, number)
+        prepared = prepare(state.seed, number, state.club)
     home, away, seed, match = prepared.home, prepared.away, prepared.seed, prepared.match
     ctx, timeline, candidates = prepared.ctx, prepared.timeline, prepared.candidates
     model = course.model

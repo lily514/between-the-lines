@@ -24,6 +24,8 @@ from btl.plant.spec import LEVELS, MomentSpec, PlantRequest
 from btl.schema.match import Match
 from btl.schema.vocab import ConceptId
 from btl.sim.engine import simulate_match
+from btl.sim.lineup import Lineup, pick_lineup
+from btl.sim.shape import FOUR_FOUR_TWO
 
 # Each concept that can be planted, at every level, in every match.
 MATCH_DESIGN = PlantRequest(
@@ -33,6 +35,8 @@ MATCH_DESIGN = PlantRequest(
         for level in LEVELS
     )
 )
+# Every club lines up the same way, so a team sheet can say how both sides play.
+MATCH_FORMATION = FOUR_FOUR_TWO
 # A line-breaking pass worth teaching goes clearly forward. The simulator's flat lines make
 # many 9-11 m passes between two level midfielders count as breaking a line, which is correct
 # but shows little. Planted ones go 14 m forward.
@@ -46,7 +50,19 @@ def play_designed_match(home: Club, away: Club, seed: int) -> Match:
     whistle is simply left out (about 1 match in 100): planting only stands in for a real
     match's good moments, and the learning loop takes whatever the detectors find.
     """
-    return simulate_match(home, away, seed, director=Planter(MATCH_DESIGN))
+    return simulate_match(
+        home,
+        away,
+        seed,
+        home_formation=MATCH_FORMATION,
+        away_formation=MATCH_FORMATION,
+        director=Planter(MATCH_DESIGN),
+    )
+
+
+def designed_lineups(home: Club, away: Club) -> tuple[Lineup, Lineup]:
+    """The home and away elevens that `play_designed_match` puts out."""
+    return pick_lineup(home, MATCH_FORMATION), pick_lineup(away, MATCH_FORMATION)
 
 
 class AskedWhen(StrEnum):

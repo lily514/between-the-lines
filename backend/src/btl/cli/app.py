@@ -51,24 +51,29 @@ from btl.learn.learner import MATCHES_PER_SESSION
 from btl.learn.session import (
     LEAGUE_SEED,
     Asked,
+    ClubLockedError,
     Course,
     DemoViewer,
+    PreparedMatch,
+    choose_club,
+    prepare_match,
     seed_for_viewer,
     start_session,
     watch_match,
 )
+from btl.learn.team_sheet import viewer_sheet
 from btl.plant.planter import simulate_with_moments
 from btl.plant.spec import parse_plant
 from btl.replay import DEFAULT_FPS, answer_frames, frame_at, lead_up_frames, question_action
 from btl.schema.event import Event
 from btl.schema.frames import seen_by
-from btl.schema.ids import ActionId
+from btl.schema.ids import ActionId, TeamId
 from btl.schema.match import Match
 from btl.schema.moment import PlantedMoment
 from btl.schema.vocab import ConceptId
 from btl.sim.engine import simulate_match
 from btl.sim.shape import FOUR_FOUR_TWO
-from btl.store.base import check_viewer_id
+from btl.store.base import Stored, check_viewer_id
 from btl.store.json_files import JsonLearnerStore
 from btl.store.memory import MemoryLearnerStore
 from btl.tutor.templates import TemplateTutor
@@ -476,6 +481,10 @@ def learn(
     learners: Annotated[Path, typer.Option(help="Folder for learner records.")] = DEFAULT_LEARNERS,
     model: ModelPath = DEFAULT_MODEL,
     reset: Annotated[bool, typer.Option(help="Forget this viewer and start again.")] = False,
+    club: Annotated[
+        str | None,
+        typer.Option(help='The team you support, e.g. "HEX"; your matches are its fixtures.'),
+    ] = None,
 ) -> None:
     """Watch your next match. Play pauses for questions; your answers shape the next ones.
 
@@ -491,16 +500,46 @@ def learn(
         (learners / f"{viewer}.json").unlink(missing_ok=True)
     stored = start_session(store, viewer, seed_for_viewer(viewer) if seed is None else seed)
     course = Course(_threat_model_or_fit(model), TemplateTutor())
+    if club is not None:
+        stored = _choose_club(course, store, viewer, club)
+    if stored.state.club is not None:
+        console.print(f"Your team: {course.league.club(stored.state.club).name}")
     if stored.state.finished:
         console.print(f"{viewer} has watched all three matches. `--reset` starts again.")
         console.print(progress_bars(course.bars(stored.state)))
         return
-    terminal = TerminalViewer(console, lambda prompt: typer.prompt(prompt))
-    state = watch_match(course, store, viewer, terminal, _now)
+    state = stored.state
+    current = state.match_number
+    prepared = prepare_match(course, state.seed, current, state.club)
+
+    def prepare(seed: int, match_number: int, club: TeamId | None) -> PreparedMatch:
+        if match_number == current:
+            return prepared
+        return prepare_match(course, seed, match_number, club)
+
+    sheet = viewer_sheet(course, state, prepare)
+    terminal = TerminalViewer(console, lambda prompt: typer.prompt(prompt), sheet)
+
+    state = watch_match(course, store, viewer, terminal, _now, prepare)
     if state.finished:
         console.print("That was your last match. `--reset` starts again.")
     else:
         console.print(f"Run `btl learn --viewer {viewer}` again for match {state.match_number}.")
+
+
+def _choose_club(course: Course, store: JsonLearnerStore, viewer: str, name: str) -> Stored:
+    try:
+        team_id = course.league.find_club(name).team_id
+    except KeyError:
+        codes = ", ".join(club.short_name for club in course.league.clubs)
+        raise typer.BadParameter(f"no club called {name!r}; try one of {codes}") from None
+    try:
+        return choose_club(course, store, viewer, team_id)
+    except ClubLockedError:
+        raise typer.BadParameter(
+            f"{viewer} has started watching, so their team can't change; `--reset` starts again",
+            param_hint="--club",
+        ) from None
 
 
 @app.command(name="demo-viewer")

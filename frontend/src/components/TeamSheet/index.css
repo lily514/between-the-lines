@@ -1,0 +1,116 @@
+/* Who's playing (TS-Stage1–3): the key, the kick-off shape from stage 2, then a card per side. */
+
+.team-sheet {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+}
+
+.team-sheet__eyebrow {
+	margin: 0;
+	font-size: var(--fs-label);
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--text-muted);
+}
+
+.team-sheet__heading {
+	font-size: var(--fs-display-l);
+	line-height: var(--lh-display-l);
+	font-weight: 600;
+}
+
+.team-sheet__fixture {
+	margin: 0;
+	color: var(--text-2);
+}
+
+.team-sheet__number {
+	font-family: var(--font-data);
+}
+
+.team-sheet__key {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: var(--s-2) var(--s-3);
+	margin: 0;
+	padding: var(--s-3);
+	border: 1px solid var(--border);
+	border-radius: var(--r-tile);
+	list-style: none;
+	font-size: var(--fs-body-s);
+	color: var(--text-2);
+}
+
+.team-sheet__key li {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+/* The key's glyphs draw like the pitch's markers, which look the same in both themes. */
+.team-sheet__glyph {
+	flex: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 26px;
+	height: 26px;
+	border-radius: var(--r-pill);
+	font-family: var(--font-display);
+	font-size: var(--fs-caption);
+	font-weight: 700;
+}
+
+.team-sheet__glyph--home {
+	background: var(--home);
+	color: var(--home-ink);
+	box-shadow: 0 0 0 2px var(--pitch);
+}
+
+.team-sheet__glyph--away {
+	background: var(--pitch);
+	color: var(--home);
+	border: 2px solid var(--away);
+}
+
+.team-sheet__glyph--yours {
+	padding: 0 var(--s-1);
+	border: 2px dashed var(--text);
+	color: var(--text);
+}
+
+.team-sheet__glyph--hash {
+	border: 1px solid var(--border-strong);
+	font-family: var(--font-data);
+}
+
+.team-sheet__pitch {
+	margin: 0;
+}
+
+.team-sheet__pitch-caption {
+	margin-bottom: var(--s-2);
+	font-size: var(--fs-label);
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--text-muted);
+}
+
+.team-sheet__teams {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-4);
+}
+
+.team-sheet__next {
+	margin: 0;
+	font-size: var(--fs-body-s);
+	color: var(--text-muted);
+}
+
+.team-sheet__change {
+	align-self: center;
+}

@@ -1,0 +1,293 @@
+{
+	"match_number": 1,
+	"stage": 1,
+	"next_stage": "Get to level 2 in any concept to see the formation.",
+	"teams": [
+		{
+			"team_id": 1,
+			"name": "Ripon Wardens",
+			"code": "RIP",
+			"home": true,
+			"yours": true,
+			"formation": null,
+			"matches_watched": null,
+			"players": [
+				{
+					"shirt": 1,
+					"name": "Alexander Pensett",
+					"role": "GK",
+					"position": {
+						"short": "GK",
+						"name": "Goalkeeper",
+						"description": "Stops shots, and is the only player allowed to handle the ball, inside their own box."
+					},
+					"at_kickoff": null,
+					"numbers": null
+				},
+				{
+					"shirt": 5,
+					"name": "Dennis Hafkamp",
+					"role": "DF",
+					"position": {
+						"short": "LB",
+						"name": "Left back",
+						"description": "Defends the left side, and joins attacks down it."
+					},
+					"at_kickoff": null,
+					"numbers": null
+				},
+				{
+					"shirt": 4,
+					"name": "Håkon Holmlie",
+					"role": "DF",
+					"position": {
+						"short": "CB",
+						"name": "Centre back",
+						"description": "Defends the middle in front of goal: wins headers, blocks shots."
+					},
+					"at_kickoff": null,
+					"numbers": null
+				},
+				{
+					"shirt": 3,
+					"name": "José Escorrieta",
+					"role": "DF",
+					"position": {
+						"short": "CB",
+						"name": "Centre back",
+						"description": "Defends the middle in front of goal: wins headers, blocks shots."
+					},
+					"at_kickoff": null,
+					"numbers": null
+				},
+				{
+					"shirt": 2,
+					"name": "Vitor Fonbeira",
+					"role": "DF",
+					"position": {
+						"short": "RB",
+						"name": "Right back",
+						"description": "Defends the right side, and joins attacks down it."
+					},
+					"at_kickoff": null,
+					"numbers": null
+				},
+				{
+					"shirt": 16,
+					"name": "Bohdan Miloković",
+					"role": "MF",
+					"position": {
+						"short": "LM",
+						"name": "Left midfielder",
+						"description": "Covers the left side of midfield, and crosses from it."
+					},
+					"at_kickoff": null,
+					"numbers": null
+				},
+				{
+					"shirt": 14,
+					"name": "Jordan Thornmere",
+					"role": "MF",
+					"position": {
+						"short": "CM",
+						"name": "Centre midfielder",
+						"description": "Links defence and attack in the middle: passes, tackles, runs."
+					},
+					"at_kickoff": null,
+					"numbers": null
+				},
+				{
+					"shirt": 10,
+					"name": "Rafael Vasgalhães",
+					"role": "MF",
+					"position": {
+						"short": "CM",
+						"name": "Centre midfielder",
+						"description": "Links defence and attack in the middle: passes, tackles, runs."
+					},
+					"at_kickoff": null,
+					"numbers": null
+				},
+				{
+					"shirt": 8,
+					"name": "James Lindholt",
+					"role": "MF",
+					"position": {
+						"short": "RM",
+						"name": "Right midfielder",
+						"description": "Covers the right side of midfield, and crosses from it."
+					},
+					"at_kickoff": null,
+					"numbers": null
+				},
+				{
+					"shirt": 9,
+					"name": "Adama Trafo",
+					"role": "FW",
+					"position": {
+						"short": "ST",
+						"name": "Striker",
+						"description": "Plays furthest forward, closest to goal: there to score."
+					},
+					"at_kickoff": null,
+					"numbers": null
+				},
+				{
+					"shirt": 7,
+					"name": "Agustín Valdera",
+					"role": "FW",
+					"position": {
+						"short": "ST",
+						"name": "Striker",
+						"description": "Plays furthest forward, closest to goal: there to score."
+					},
+					"at_kickoff": null,
+					"numbers": null
+				}
+			]
+		},
+		{
+			"team_id": 5,
+			"name": "Truro Otters",
+			"code": "TRU",
+			"home": false,
+			"yours": false,
+			"formation": null,
+			"matches_watched": null,
+			"players": [
+				{
+					"shirt": 1,
+					"name": "Khaled Mehiri",
+					"role": "GK",
+					"position": {
+						"short": "GK",
+						"name": "Goalkeeper",
+						"description": "Stops shots, and is the only player allowed to handle the ball, inside their own box."
+					},
+					"at_kickoff": null,
+					"numbers": null
+				},
+				{
+					"shirt": 5,
+					"name": "Louis Marard",
+					"role": "DF",
+					"position": {
+						"short": "LB",
+						"name": "Left back",
+						"description": "Defends the left side, and joins attacks down it."
+					},
+					"at_kickoff": null,
+					"numbers": null
+				},
+				{
+					"shirt": 4,
+					"name": "Nathan Calvock",
+					"role": "DF",
+					"position": {
+						"short": "CB",
+						"name": "Centre back",
+						"description": "Defends the middle in front of goal: wins headers, blocks shots."
+					},
+					"at_kickoff": null,
+					"numbers": null
+				},
+				{
+					"shirt": 3,
+					"name": "Rasmus Holmlie",
+					"role": "DF",
+					"position": {
+						"short": "CB",
+						"name": "Centre back",
+						"description": "Defends the middle in front of goal: wins headers, blocks shots."
+					},
+					"at_kickoff": null,
+					"numbers": null
+				},
+				{
+					"shirt": 2,
+					"name": "Arthur Teiteiro",
+					"role": "DF",
+					"position": {
+						"short": "RB",
+						"name": "Right back",
+						"description": "Defends the right side, and joins attacks down it."
+					},
+					"at_kickoff": null,
+					"numbers": null
+				},
+				{
+					"shirt": 16,
+					"name": "Dennis Meiter",
+					"role": "MF",
+					"position": {
+						"short": "LM",
+						"name": "Left midfielder",
+						"description": "Covers the left side of midfield, and crosses from it."
+					},
+					"at_kickoff": null,
+					"numbers": null
+				},
+				{
+					"shirt": 14,
+					"name": "Jake Stratsett",
+					"role": "MF",
+					"position": {
+						"short": "CM",
+						"name": "Centre midfielder",
+						"description": "Links defence and attack in the middle: passes, tackles, runs."
+					},
+					"at_kickoff": null,
+					"numbers": null
+				},
+				{
+					"shirt": 10,
+					"name": "Emeka Ekegbe",
+					"role": "MF",
+					"position": {
+						"short": "CM",
+						"name": "Centre midfielder",
+						"description": "Links defence and attack in the middle: passes, tackles, runs."
+					},
+					"at_kickoff": null,
+					"numbers": null
+				},
+				{
+					"shirt": 8,
+					"name": "Cian Penock",
+					"role": "MF",
+					"position": {
+						"short": "RM",
+						"name": "Right midfielder",
+						"description": "Covers the right side of midfield, and crosses from it."
+					},
+					"at_kickoff": null,
+					"numbers": null
+				},
+				{
+					"shirt": 9,
+					"name": "David Adenkwo",
+					"role": "FW",
+					"position": {
+						"short": "ST",
+						"name": "Striker",
+						"description": "Plays furthest forward, closest to goal: there to score."
+					},
+					"at_kickoff": null,
+					"numbers": null
+				},
+				{
+					"shirt": 7,
+					"name": "Rafael Barqueira",
+					"role": "FW",
+					"position": {
+						"short": "ST",
+						"name": "Striker",
+						"description": "Plays furthest forward, closest to goal: there to score."
+					},
+					"at_kickoff": null,
+					"numbers": null
+				}
+			]
+		}
+	]
+}

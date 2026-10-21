@@ -118,3 +118,13 @@ def test_each_style_has_distinct_first_names_and_producible_surnames() -> None:
     for style in NAME_STYLES:
         assert len(set(style.first_names)) == len(style.first_names), style.name
         assert len(possible_surnames(style)) >= 20, style.name
+
+
+def test_a_club_is_found_by_name_or_short_name_ignoring_case() -> None:
+    league = generate_league(np.random.default_rng(0))
+    club = league.clubs[3]
+
+    assert league.find_club(club.short_name.lower()) == club
+    assert league.find_club(f" {club.name.upper()} ") == club
+    with pytest.raises(KeyError):
+        league.find_club("nowhere")

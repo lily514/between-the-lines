@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Ludlow Ferrymen crest">
+<title>Ludlow Ferrymen</title>
+<circle cx="32" cy="32" r="29.5" fill="#D2A12E" stroke="#F6EDE4" stroke-width="2.5"/>
+<line x1="13" y1="18.5" x2="51" y2="18.5" stroke="#3B1F2E" stroke-width="3.6" stroke-linecap="round"/>
+<rect x="29.8" y="18" width="4.4" height="10" fill="#3B1F2E"/>
+<rect x="23" y="26.5" width="18" height="10" rx="1.8" fill="#3B1F2E"/>
+<path d="M13 36H51L45 45H19Z" fill="#3B1F2E"/>
+<path d="M17.5 50Q21.6 46.6 25.7 50T33.9 50T42.1 50T47 49.6" fill="none" stroke="#3B1F2E" stroke-width="3.6" stroke-linecap="round"/>
+</svg>

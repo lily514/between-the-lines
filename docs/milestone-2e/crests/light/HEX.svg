@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Hexham Anchors crest">
+<title>Hexham Anchors</title>
+<circle cx="32" cy="32" r="29.5" fill="#22385E" stroke="#2B1018" stroke-width="2.5"/>
+<circle cx="32" cy="14.5" r="4" fill="none" stroke="#F29A84" stroke-width="3.8"/>
+<rect x="29.4" y="18" width="5.2" height="31" rx="1.2" fill="#F29A84"/>
+<rect x="21" y="23" width="22" height="4.6" rx="2.3" fill="#F29A84"/>
+<path d="M16.5 36.5C17.5 47 24.5 51.5 32 51.5S46.5 47 47.5 36.5" fill="none" stroke="#F29A84" stroke-width="4.6" stroke-linecap="round"/>
+<path d="M10.5 40.5L16 31L21.5 39.5Z M53.5 40.5L48 31L42.5 39.5Z" fill="#F29A84" stroke="#F29A84" stroke-width="1.2" stroke-linejoin="round"/>
+</svg>

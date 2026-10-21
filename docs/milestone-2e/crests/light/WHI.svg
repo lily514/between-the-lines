@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Whitby Kestrels crest">
+<title>Whitby Kestrels</title>
+<circle cx="32" cy="32" r="29.5" fill="#A8285F" stroke="#2B1018" stroke-width="2.5"/>
+<g transform="translate(32 32) scale(0.95) translate(-32 -32)">
+<path d="M29.5 29C23 23 15.5 19.5 8.5 19.5C13.5 24.5 20 31 27.5 36Z" fill="#F7CEDA"/>
+<path d="M34.5 29C41 23 48.5 19.5 55.5 19.5C50.5 24.5 44 31 36.5 36Z" fill="#F7CEDA"/>
+<ellipse cx="32" cy="34" rx="5.2" ry="8.4" fill="#F7CEDA"/>
+<circle cx="33.2" cy="24.4" r="4.8" fill="#F7CEDA"/>
+<path d="M37 24.4Q40.6 25.4 39 29.4L36.4 27.6Z" fill="#F7CEDA"/>
+<circle cx="35" cy="23.4" r="1.2" fill="#A8285F"/>
+<path d="M29.2 40.5H34.8L41 53.5Q32 56.4 23 53.5Z" fill="#F7CEDA"/>
+</g>
+</svg>

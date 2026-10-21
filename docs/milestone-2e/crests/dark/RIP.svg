@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Ripon Wardens crest">
+<title>Ripon Wardens</title>
+<circle cx="32" cy="32" r="29.5" fill="#1F6F6B" stroke="#F6EDE4" stroke-width="2.5"/>
+<path fill-rule="evenodd" d="M32 9.5a9 9 0 1 1 0 18a9 9 0 1 1 0-18Zm0 5.2a3.8 3.8 0 1 0 0 7.6a3.8 3.8 0 1 0 0-7.6Z" fill="#EAC86E"/>
+<rect x="26.5" y="27" width="11" height="3.6" rx="1.5" fill="#EAC86E"/>
+<rect x="29.2" y="29" width="5.6" height="25" rx="1.6" fill="#EAC86E"/>
+<path d="M34 40.5H42.5V45H38.5V48.5H43.5V53.5H34Z" fill="#EAC86E"/>
+</svg>

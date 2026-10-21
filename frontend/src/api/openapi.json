@@ -39,6 +39,44 @@
         "title": "Bar",
         "type": "object"
       },
+      "ClubIn": {
+        "description": "Choose the team to support, by team id.",
+        "properties": {
+          "club": {
+            "title": "Club",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "club"
+        ],
+        "title": "ClubIn",
+        "type": "object"
+      },
+      "ClubOut": {
+        "description": "A club. The page keys its crest and colours by ``code``.",
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "team_id": {
+            "title": "Team Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "team_id",
+          "name",
+          "code"
+        ],
+        "title": "ClubOut",
+        "type": "object"
+      },
       "DeliveredTime": {
         "description": "When a question is asked: live, or deferred to a stoppage or break (``restart`` names it).",
         "properties": {
@@ -351,29 +389,59 @@
         "type": "object"
       },
       "Fixture": {
-        "description": "The two clubs of a match.",
+        "description": "The two clubs of a match, by name and three-letter code.",
         "properties": {
           "away": {
             "title": "Away",
             "type": "string"
           },
+          "away_code": {
+            "title": "Away Code",
+            "type": "string"
+          },
           "home": {
             "title": "Home",
             "type": "string"
+          },
+          "home_code": {
+            "title": "Home Code",
+            "type": "string"
+          },
+          "your_team": {
+            "anyOf": [
+              {
+                "enum": [
+                  "home",
+                  "away"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Your Team"
           }
         },
         "required": [
           "home",
-          "away"
+          "away",
+          "home_code",
+          "away_code",
+          "your_team"
         ],
         "title": "Fixture",
         "type": "object"
       },
       "FullTimeOut": {
-        "description": "The match just finished: the score, how many questions, and how each concept moved.",
+        "description": "The match just finished: the score, how many questions, and how each concept moved.\n\n``your_result`` is the result for the viewer's team, if it played.",
         "properties": {
           "away": {
             "title": "Away",
+            "type": "string"
+          },
+          "away_code": {
+            "title": "Away Code",
             "type": "string"
           },
           "away_goals": {
@@ -393,6 +461,10 @@
           },
           "home": {
             "title": "Home",
+            "type": "string"
+          },
+          "home_code": {
+            "title": "Home Code",
             "type": "string"
           },
           "home_goals": {
@@ -426,14 +498,49 @@
           },
           "thresholds": {
             "$ref": "#/components/schemas/ThresholdsOut"
+          },
+          "your_result": {
+            "anyOf": [
+              {
+                "enum": [
+                  "won",
+                  "drew",
+                  "lost"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Your Result"
+          },
+          "your_team": {
+            "anyOf": [
+              {
+                "enum": [
+                  "home",
+                  "away"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Your Team"
           }
         },
         "required": [
           "match_number",
           "home",
           "away",
+          "home_code",
+          "away_code",
+          "your_team",
           "home_goals",
           "away_goals",
+          "your_result",
           "questions",
           "concepts",
           "thresholds",
@@ -678,6 +785,63 @@
         "title": "PictureOut",
         "type": "object"
       },
+      "PlayerNumbersOut": {
+        "description": "A player's numbers from the watched matches they started.",
+        "properties": {
+          "line_breaking_passes": {
+            "title": "Line Breaking Passes",
+            "type": "integer"
+          },
+          "matches": {
+            "title": "Matches",
+            "type": "integer"
+          },
+          "passes_completed": {
+            "title": "Passes Completed",
+            "type": "integer"
+          },
+          "passes_tried": {
+            "title": "Passes Tried",
+            "type": "integer"
+          },
+          "threat_added": {
+            "$ref": "#/components/schemas/FactOut"
+          }
+        },
+        "required": [
+          "matches",
+          "passes_completed",
+          "passes_tried",
+          "line_breaking_passes",
+          "threat_added"
+        ],
+        "title": "PlayerNumbersOut",
+        "type": "object"
+      },
+      "PositionOut": {
+        "description": "A position: its abbreviation, its name and what the player there does.",
+        "properties": {
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "short": {
+            "title": "Short",
+            "type": "string"
+          }
+        },
+        "required": [
+          "short",
+          "name",
+          "description"
+        ],
+        "title": "PositionOut",
+        "type": "object"
+      },
       "QuestionOut": {
         "description": "The next question, built from its question view only.",
         "properties": {
@@ -687,6 +851,10 @@
           },
           "away": {
             "title": "Away",
+            "type": "string"
+          },
+          "away_code": {
+            "title": "Away Code",
             "type": "string"
           },
           "concept_name": {
@@ -713,6 +881,10 @@
           },
           "home": {
             "title": "Home",
+            "type": "string"
+          },
+          "home_code": {
+            "title": "Home Code",
             "type": "string"
           },
           "kind": {
@@ -749,6 +921,21 @@
           "text": {
             "title": "Text",
             "type": "string"
+          },
+          "your_team": {
+            "anyOf": [
+              {
+                "enum": [
+                  "home",
+                  "away"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Your Team"
           }
         },
         "required": [
@@ -756,6 +943,9 @@
           "match_number",
           "home",
           "away",
+          "home_code",
+          "away_code",
+          "your_team",
           "concept_name",
           "form",
           "asks",
@@ -770,9 +960,147 @@
         "title": "QuestionOut",
         "type": "object"
       },
-      "StartIn": {
-        "description": "Start watching, or carry on. Without a seed, the viewer's name chooses their matches.",
+      "SheetPlayerOut": {
+        "description": "A starter on the team sheet.\n\n``at_kickoff`` is where they stood at kick-off, with the sheet's first team attacking left\nto right; null before stage 2. ``numbers`` is null before stage 3, or if the viewer hasn't\nseen them play.",
         "properties": {
+          "at_kickoff": {
+            "anyOf": [
+              {
+                "maxItems": 2,
+                "minItems": 2,
+                "prefixItems": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ],
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "At Kickoff"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "numbers": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PlayerNumbersOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "position": {
+            "$ref": "#/components/schemas/PositionOut"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          },
+          "shirt": {
+            "title": "Shirt",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "shirt",
+          "name",
+          "role",
+          "position",
+          "at_kickoff",
+          "numbers"
+        ],
+        "title": "SheetPlayerOut",
+        "type": "object"
+      },
+      "SheetTeamOut": {
+        "description": "One side: goalkeeper, defenders, midfielders, forwards, each line left to right.\n\n``formation`` is null before stage 2; ``matches_watched`` is null before stage 3.",
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "formation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Formation"
+          },
+          "home": {
+            "title": "Home",
+            "type": "boolean"
+          },
+          "matches_watched": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Matches Watched"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "players": {
+            "items": {
+              "$ref": "#/components/schemas/SheetPlayerOut"
+            },
+            "title": "Players",
+            "type": "array"
+          },
+          "team_id": {
+            "title": "Team Id",
+            "type": "integer"
+          },
+          "yours": {
+            "title": "Yours",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "team_id",
+          "name",
+          "code",
+          "home",
+          "yours",
+          "formation",
+          "matches_watched",
+          "players"
+        ],
+        "title": "SheetTeamOut",
+        "type": "object"
+      },
+      "StartIn": {
+        "description": "Start watching, or carry on. Without a seed, the viewer's name chooses their matches.\n\nA ``club`` (team id) makes the viewer's matches that club's fixtures, if they haven't\nstarted watching.",
+        "properties": {
+          "club": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Club"
+          },
           "seed": {
             "anyOf": [
               {
@@ -796,8 +1124,22 @@
         "type": "object"
       },
       "StatusOut": {
-        "description": "Where a viewer stands: which match is next, and their mastery of each concept.",
+        "description": "Where a viewer stands: which match is next, and their mastery of each concept.\n\n``club`` is the team they support. They can choose or change it while\n``can_choose_club``; ``suggested_club`` is the one \"Pick one for me\" starts from.",
         "properties": {
+          "can_choose_club": {
+            "title": "Can Choose Club",
+            "type": "boolean"
+          },
+          "club": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ClubOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "concepts": {
             "items": {
               "$ref": "#/components/schemas/Bar"
@@ -827,6 +1169,10 @@
             "title": "Matches",
             "type": "integer"
           },
+          "suggested_club": {
+            "title": "Suggested Club",
+            "type": "integer"
+          },
           "thresholds": {
             "$ref": "#/components/schemas/ThresholdsOut"
           },
@@ -841,10 +1187,52 @@
           "matches",
           "finished",
           "fixture",
+          "club",
+          "can_choose_club",
+          "suggested_club",
           "concepts",
           "thresholds"
         ],
         "title": "StatusOut",
+        "type": "object"
+      },
+      "TeamSheetOut": {
+        "description": "Who's playing in the viewer's next match: their team first, or the home team.\n\n``next_stage`` says what opens more of the sheet; null at the last stage.",
+        "properties": {
+          "match_number": {
+            "title": "Match Number",
+            "type": "integer"
+          },
+          "next_stage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Stage"
+          },
+          "stage": {
+            "title": "Stage",
+            "type": "integer"
+          },
+          "teams": {
+            "items": {
+              "$ref": "#/components/schemas/SheetTeamOut"
+            },
+            "title": "Teams",
+            "type": "array"
+          }
+        },
+        "required": [
+          "match_number",
+          "stage",
+          "next_stage",
+          "teams"
+        ],
+        "title": "TeamSheetOut",
         "type": "object"
       },
       "ThresholdsOut": {
@@ -914,6 +1302,29 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/clubs": {
+      "get": {
+        "description": "The league's clubs, in team id order.",
+        "operationId": "clubs_api_clubs_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ClubOut"
+                  },
+                  "title": "Response Clubs Api Clubs Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Clubs"
+      }
+    },
     "/api/viewers": {
       "post": {
         "description": "Start watching, or carry on where the viewer stopped.",
@@ -1043,6 +1454,56 @@
         "summary": "Answer"
       }
     },
+    "/api/viewers/{viewer_id}/club": {
+      "put": {
+        "description": "Choose the team to support, before answering anything.",
+        "operationId": "put_club_api_viewers__viewer_id__club_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "viewer_id",
+            "required": true,
+            "schema": {
+              "title": "Viewer Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClubIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Club"
+      }
+    },
     "/api/viewers/{viewer_id}/next": {
       "post": {
         "description": "The question waiting to be answered, or full time if the match has no more.",
@@ -1096,6 +1557,46 @@
           }
         },
         "summary": "Next Step"
+      }
+    },
+    "/api/viewers/{viewer_id}/team-sheet": {
+      "get": {
+        "description": "Who's playing in the viewer's next match, as much as their stage shows.",
+        "operationId": "get_team_sheet_api_viewers__viewer_id__team_sheet_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "viewer_id",
+            "required": true,
+            "schema": {
+              "title": "Viewer Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeamSheetOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Team Sheet"
       }
     }
   }

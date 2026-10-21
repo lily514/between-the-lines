@@ -17,8 +17,9 @@ Built for the "Inside the Game" hackathon.
 | 2b. The AI Tutor | Question and feedback wording from a model in Azure AI Foundry, checked against the evidence by plain code | Planned |
 | 2c. The web page | The same loop in a browser: a React page over a small FastAPI layer, for phone and desktop, in light and dark | Done |
 | 2d. The basics | Restarts, offside, and fouls and cards as newcomer concepts, asked at the stoppage they cause; a simulator whose blocks, offside pictures and bookings agree with the Laws | Done |
+| 2e. Getting started | Pick a team to support, with club crests; a team sheet before each match that grows with you: names and positions in plain words, then the formation and kick-off shape, then players' numbers from matches you've watched | Done |
 
-Work in progress lives on milestone branches and is merged to `main` when each milestone is complete. 2c and then 2d were built before 2b, while Azure wasn't set up yet.
+Work in progress lives on milestone branches and is merged to `main` when each milestone is complete. 2c, 2d and then 2e were built before 2b, while Azure wasn't set up yet.
 
 ## Quickstart
 
@@ -66,7 +67,7 @@ Right. A guess is right 1 time in 3, and someone who understands restarts still 
   Restarts              █████████████░░░░░░░   67%
 ```
 
-**Play it yourself.** `btl learn` plays your next match; type A, B or C to answer. Each run is one match of three, your answers are saved as you go (in `data/learners/`, which git ignores), and Ctrl+C is safe: the next run carries on where you stopped. `--reset` starts again.
+**Play it yourself.** `btl learn` plays your next match; type A, B or C to answer. Each run is one match of three, your answers are saved as you go (in `data/learners/`, which git ignores), and Ctrl+C is safe: the next run carries on where you stopped. `--reset` starts again. `--club HEX` (a club's name or three-letter code) makes your three matches that club's fixtures; it can change only until your first answer.
 
 ```sh
 uv run btl learn --viewer yourname
@@ -92,7 +93,13 @@ cd ../backend
 uv run btl serve      # then open http://127.0.0.1:8000
 ```
 
-Type a name to start. Your answers are saved in the same records as `btl learn`, so you can start in the terminal and carry on in the browser. A reload carries on from the question you were on.
+Type a name, then pick a team to support, or let the page pick one for you. Your three matches are that club's fixtures. Before each match, "Who's playing" shows both elevens, your team first. Your answers are saved in the same records as `btl learn`, so you can start in the terminal and carry on in the browser. A reload carries on from the question you were on.
+
+<p>
+  <img src="docs/milestone-2e/screenshots/pick-team-phone.png" alt="Pick your team on a phone: ten fictional clubs, each with its crest, name and code, one of them picked" width="260">
+  <img src="docs/milestone-2e/screenshots/team-sheet-phone.png" alt="Who's playing on a phone: a key to the pitch, and the kick-off shape with the viewer's team in dashed rings, attacking up" width="260">
+  <img src="docs/milestone-2e/screenshots/team-sheet-numbers-phone.png" alt="The viewer's team on the team sheet: each player's position in words and their numbers from matches already watched" width="260">
+</p>
 
 <p>
   <img src="docs/milestone-2c/screenshots/live-question-phone.png" alt="A live question on a phone: the pitch frozen as a pass is played, and three answers to choose from" width="260">
@@ -100,6 +107,7 @@ Type a name to start. Your answers are saved in the same records as `btl learn`,
 </p>
 <img src="docs/milestone-2c/screenshots/review-question-desktop.png" alt="A review question at a free kick on a desktop, in the side panel beside the viewer's own match" width="720">
 
+- **The team sheet grows with you.** A beginner sees each player's shirt number, name and position in plain words ("Left back: defends the left side, and joins attacks down it"). Get to level 2 in any concept and it adds the formation and where everyone stood at kick-off; at level 3 it adds each player's passes, line-breaking passes and threat added, counted only from matches you have finished, so it never hints at what you'll be asked. Your team is marked on the pitch with a dashed ring and on every screen with "You", never by colour alone.
 - **Questions in settled play** are asked straight away ("Your read"), and so are restarts and fouls, in the stoppage they cause. Moments from a transition wait for the next stoppage or the break, which the page says when it asks. A throw-in question marks where the ball went out, and an offside reveal draws the offside line.
 - **Lock in, then the reveal.** The real pass is drawn on the pitch, then the verdict and the explanation appear. Every number on the page comes from the match's evidence. The browser computes nothing itself, and it is never sent the answer before you lock in.
 - **Keyboard:** 1, 2 and 3 (or the arrow keys) pick an answer and Enter locks it in. Light or dark follows your system setting, and reduced motion is respected.
@@ -114,6 +122,8 @@ Type a name to start. Your answers are saved in the same records as `btl learn`,
 - **The feedback is templated** for now; Milestone 2b words it with a model, checked against the same evidence.
 - **The web page steps from question to question;** it doesn't play the match. Each question says when it is asked and why, and the page is built so a played-back match can replace the step later.
 - **No accounts.** The web page knows you only by the name you type, which is fine for a demo on your own machine and nothing more.
+- **Every club plays 4-4-2,** so the team sheet's formation never changes. Giving clubs their own shape would change every match, and the simulator's realism checks with it.
+- **Line-breaking passes are counted generously on the team sheet.** The simulator's flat midfield lines let short passes between level players count, so a central midfielder makes about 17–19 a match. Questions only use the clearer ones.
 - **The learner model's numbers are set by hand,** per tier of the curriculum, not fitted to real learners' answers, and five concepts are askable so far.
 
 ## Walkthrough: the data engine
@@ -196,3 +206,4 @@ uv run btl simulate --seed 7 --plant line_breaking_pass:1,2,3 --plant counter_pr
 - [docs/milestone-1/plan.md](docs/milestone-1/plan.md): what Milestone 1 set out to build, and [implementation-notes.md](docs/milestone-1/implementation-notes.md): what changed along the way.
 - [docs/milestone-2a/plan.md](docs/milestone-2a/plan.md): what Milestone 2a set out to build, [implementation-notes.md](docs/milestone-2a/implementation-notes.md): what changed along the way, and [learner-model.md](docs/milestone-2a/learner-model.md): the learner model in plain words.
 - [docs/milestone-2c/plan.md](docs/milestone-2c/plan.md): what Milestone 2c set out to build, [implementation-notes.md](docs/milestone-2c/implementation-notes.md): what changed along the way, and [design/](docs/milestone-2c/design/): the design handoff the page follows.
+- [docs/milestone-2e/plan.md](docs/milestone-2e/plan.md): what Milestone 2e set out to build, [implementation-notes.md](docs/milestone-2e/implementation-notes.md): what changed along the way, and [design/](docs/milestone-2e/design/) and [crests/](docs/milestone-2e/crests/): the team sheet, picker and crest designs.

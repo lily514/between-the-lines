@@ -82,6 +82,18 @@ class League:
         club = self.club(TeamId(player_id // 100))
         return club.squad[player_id % 100 - 1]
 
+    def find_club(self, name: str) -> Club:
+        """The club with this name or short name, ignoring case ("HEX", "hexham anchors").
+
+        Raises:
+            KeyError: If no club has that name.
+        """
+        wanted = name.strip().casefold()
+        for club in self.clubs:
+            if wanted in (club.name.casefold(), club.short_name.casefold()):
+                return club
+        raise KeyError(name)
+
 
 def _short_name(town: str, taken: set[str]) -> str:
     """A three-letter code like "KEN", trying later letters if the obvious code is taken."""

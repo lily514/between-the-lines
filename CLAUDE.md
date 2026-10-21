@@ -123,4 +123,5 @@ cli, api, plus `replay.py`. `api` holds the HTTP routes the page calls; the page
 - Components are grouped in folders, as in `../Web/orbit-web`: one folder per screen under `src/components/`
   (its main component is `index.tsx`, with `index.css`, `index.support.ts` and tests beside it), and pieces
   used by more than one screen go in `src/components/Shared/`. `App.tsx` sits at the top of `components/`.
-- Design reference: `docs/milestone-2c/design/`. It guides the look; the repo decides behaviour and data.
+- Design reference: `docs/milestone-2c/design/`, plus `docs/milestone-2e/design/` and `crests/` for the picker, team
+  sheet and crests. It guides the look; the repo decides behaviour and data.

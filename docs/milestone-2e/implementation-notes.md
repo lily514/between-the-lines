@@ -2,6 +2,28 @@
 
 Where implementation diverged from [plan.md](plan.md), or something surprising was learned. One note per occurrence, added in the same commit as the change.
 
+## Summary (2026-10-21)
+
+Milestone 2e is done, and Lily has checked it in the browser. A new viewer types a name, picks a team to support (or lets the page pick), and their three matches are that club's fixtures. Before each match, "Who's playing" shows both elevens, their team first. A beginner sees names and positions in plain words, level 2 adds the formation and the kick-off shape, and level 3 adds each player's numbers from matches already finished. The viewer's team is marked "You" and ringed on the pitch, and full time says the result from their side. Viewers without a club keep exactly the matches they had: the demo viewer's output is byte-identical to 2d's.
+
+**Biggest changes from the plan**
+- **Crests and club colours came in,** from a second design handoff made during the milestone. The crests arrived in T5 (the picker) rather than T6. They are one SVG sprite whose outline follows the theme; the club colours are tokens (T5, T6).
+- **The club locks once match 1 is finished,** as well as after the first answer, so a match with no questions can't be watched and then swapped (T1).
+- **Position names live in `sim/`, not `league/`,** because they come from formation slots (T2). The formation is now named once, `MATCH_FORMATION`, instead of being the simulator's default.
+- **The full-time result comes from the API** (`your_result`), so the page still works out no football (T6).
+- **Threat added uses the questions' format** ("+4.1%") everywhere (T4).
+
+**Cut:** nothing from the cut list; the terminal got a team sheet at all three stages too.
+
+**Carries over**
+- **To 2b:** nothing in 2e changes the Tutor's work. The team sheet's words are fixed text, not worded by a model.
+- **Open points:**
+  - Line-breaking counts on the sheet are generous (17–19 a match for a central midfielder); counting only `MIN_FORWARD` passes is a one-line change if they look wrong.
+  - Every club plays 4-4-2.
+  - Stage 1 is long on a phone.
+  - The left back wears 5, not 3.
+  - The design handoff asks for each town name to be checked against real local clubs before launch; that check belongs in the private, gitignored list.
+
 ## T1 — Your club in the record (2026-10-16)
 **Plan said:** `LearnerState.club`, version 2 (loads version 1); `Course.fixture` uses the club's fixtures; `start_session` and a `choose_club` that refuses after the first answer; `btl learn --club`. Without a club, the demo viewer's attempt log over 3 matches is identical to before.
 **We did:** as planned, with these choices:

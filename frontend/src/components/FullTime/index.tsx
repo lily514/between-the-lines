@@ -4,6 +4,7 @@ import './index.css'
 import PhasePill from '../Shared/PhasePill.tsx'
 import ProgressBar from '../Shared/ProgressBar.tsx'
 import { percent } from '../Shared/ProgressBar.support.ts'
+import { resultLine } from './index.support.ts'
 
 export interface FullTimeProps {
 	summary: FullTimeData
@@ -29,6 +30,7 @@ const FullTime = ({ summary, onNext }: FullTimeProps) => {
 				{summary.home} <span className="full-time__goals">{summary.home_goals}</span>–
 				<span className="full-time__goals">{summary.away_goals}</span> {summary.away}
 			</h2>
+			{resultLine(summary) !== null && <p className="full-time__result">{resultLine(summary)}</p>}
 			<p className="full-time__questions">
 				<span className="full-time__number">{summary.questions}</span>{' '}
 				{summary.questions === 1 ? 'question' : 'questions'} this match.

@@ -47,9 +47,10 @@ export const fullTime: FullTime = {
 	away: 'Ludlow Ferrymen',
 	home_code: 'RIP',
 	away_code: 'LUD',
-	your_team: null,
+	your_team: 'home',
 	home_goals: 2,
 	away_goals: 1,
+	your_result: 'won',
 	questions: 1,
 	concepts: [
 		{ name: 'Line-breaking passes', before: 0.15, after: 0.42 },

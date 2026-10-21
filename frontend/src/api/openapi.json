@@ -434,7 +434,7 @@
         "type": "object"
       },
       "FullTimeOut": {
-        "description": "The match just finished: the score, how many questions, and how each concept moved.",
+        "description": "The match just finished: the score, how many questions, and how each concept moved.\n\n``your_result`` is the result for the viewer's team, if it played.",
         "properties": {
           "away": {
             "title": "Away",
@@ -499,6 +499,22 @@
           "thresholds": {
             "$ref": "#/components/schemas/ThresholdsOut"
           },
+          "your_result": {
+            "anyOf": [
+              {
+                "enum": [
+                  "won",
+                  "drew",
+                  "lost"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Your Result"
+          },
           "your_team": {
             "anyOf": [
               {
@@ -524,6 +540,7 @@
           "your_team",
           "home_goals",
           "away_goals",
+          "your_result",
           "questions",
           "concepts",
           "thresholds",

@@ -1,0 +1,183 @@
+/* One side on the team sheet. The viewer's team: a 2 px outline, the raised fill and a "You" tag, never colour alone. */
+
+.team-card {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+	padding: var(--s-4);
+	padding-top: calc(var(--s-4) + 4px);
+	border: 1px solid var(--border);
+	border-radius: var(--r-tile);
+	background: var(--surface);
+	/* A 4 px bar in the club's colour across the top. */
+	background-image: linear-gradient(var(--club), var(--club));
+	background-size: 100% 4px;
+	background-repeat: no-repeat;
+}
+
+.team-card--yours {
+	border: 2px solid var(--text);
+	padding: calc(var(--s-4) - 1px);
+	padding-top: calc(var(--s-4) + 3px);
+	background-color: var(--surface-raised);
+}
+
+.team-card__header {
+	display: flex;
+	align-items: center;
+	gap: var(--s-3);
+}
+
+.team-card__name {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: var(--s-2);
+	font-size: var(--fs-display-m);
+	line-height: var(--lh-display-m);
+}
+
+.team-card__you {
+	padding: 2px var(--s-2);
+	border-radius: var(--r-chip);
+	background: var(--text);
+	color: var(--bg);
+	font-family: var(--font-body);
+	font-size: var(--fs-caption);
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.team-card__meta {
+	margin: var(--s-1) 0 0;
+	font-size: var(--fs-body-s);
+	color: var(--text-muted);
+}
+
+.team-card__code,
+.team-card__formation {
+	font-family: var(--font-data);
+}
+
+.team-card__group-heading {
+	margin: 0 0 var(--s-2);
+	font-family: var(--font-body);
+	font-size: var(--fs-label);
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--text-muted);
+}
+
+.team-card__players {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.team-card__player {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--s-3);
+}
+
+/* Shirt numbers drawn as on the pitch: a filled disc for home, a ring for away. */
+.team-card__shirt {
+	flex: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 30px;
+	height: 30px;
+	border-radius: var(--r-pill);
+	font-family: var(--font-display);
+	font-size: var(--fs-body-s);
+	font-weight: 700;
+}
+
+.team-card__shirt--home {
+	background: var(--home);
+	color: var(--home-ink);
+	box-shadow: 0 0 0 2px var(--pitch);
+}
+
+.team-card__shirt--away {
+	background: var(--pitch);
+	color: var(--home);
+	border: 2px solid var(--away);
+}
+
+.team-card__who {
+	flex: 1;
+	min-width: 0;
+}
+
+.team-card__player-name {
+	margin: 0;
+	font-weight: 600;
+}
+
+.team-card__position {
+	margin: 0;
+	font-size: var(--fs-body-s);
+	color: var(--text-2);
+}
+
+.team-card__position-name {
+	font-weight: 600;
+}
+
+.team-card__short {
+	display: inline-block;
+	min-width: 2.4em;
+	padding: 0 var(--s-1);
+	border: 1px solid var(--border-strong);
+	border-radius: var(--r-chip);
+	font-family: var(--font-data);
+	font-size: var(--fs-caption);
+	text-align: center;
+	text-decoration: none;
+}
+
+.team-card__numbers {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: var(--s-1) var(--s-3);
+	margin: var(--s-2) 0 0;
+}
+
+.team-card__numbers div {
+	display: flex;
+	flex-direction: column;
+}
+
+.team-card__numbers dt {
+	font-size: var(--fs-caption);
+	color: var(--text-muted);
+}
+
+.team-card__numbers dd {
+	margin: 0;
+	font-family: var(--font-data);
+	font-size: var(--fs-data);
+}
+
+.team-card__threat {
+	color: var(--know);
+}
+
+.team-card__unseen {
+	margin: var(--s-1) 0 0;
+	font-size: var(--fs-body-s);
+	color: var(--text-muted);
+}
+
+.team-card__watched {
+	margin: 0;
+	font-size: var(--fs-body-s);
+	color: var(--text-muted);
+}

@@ -24,3 +24,13 @@ test('after the last match the viewer is told they have watched them all', () =>
 	expect(screen.getByText('You’ve watched all three matches.')).toBeInTheDocument()
 	expect(screen.getByRole('button', { name: 'See where you stand' })).toBeInTheDocument()
 })
+
+test('the result is said from the viewer’s side, their goals first', () => {
+	render(<FullTime summary={{ ...fullTime, your_team: 'away', your_result: 'lost' }} onNext={vi.fn()} />)
+	expect(screen.getByText('Your team, Ludlow Ferrymen, lost 1–2.')).toBeInTheDocument()
+})
+
+test('a viewer with no team in the match gets no result line', () => {
+	render(<FullTime summary={{ ...fullTime, your_team: null, your_result: null }} onNext={vi.fn()} />)
+	expect(screen.queryByText(/Your team/)).toBeNull()
+})

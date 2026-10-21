@@ -322,6 +322,8 @@ export interface components {
         /**
          * FullTimeOut
          * @description The match just finished: the score, how many questions, and how each concept moved.
+         *
+         *     ``your_result`` is the result for the viewer's team, if it played.
          */
         FullTimeOut: {
             /** Away */
@@ -352,6 +354,8 @@ export interface components {
             /** Questions */
             questions: number;
             thresholds: components["schemas"]["ThresholdsOut"];
+            /** Your Result */
+            your_result: ("won" | "drew" | "lost") | null;
             /** Your Team */
             your_team: ("home" | "away") | null;
         };

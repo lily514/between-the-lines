@@ -9,6 +9,9 @@ export type NextStep = Question | FullTime
 export type Picture = Schemas['PictureOut']
 export type Marker = Schemas['MarkerOut']
 export type Club = Schemas['ClubOut']
+export type TeamSheet = Schemas['TeamSheetOut']
+export type SheetTeam = Schemas['SheetTeamOut']
+export type SheetPlayer = Schemas['SheetPlayerOut']
 
 /** A response other than 2xx. `status` lets callers tell a stale question (409) from a bad name (422). */
 export class ApiError extends Error {
@@ -31,6 +34,8 @@ export const startViewer = (viewerId: string, seed?: number) => {
 export const getStatus = (viewerId: string) => request<Status>(viewerPath(viewerId))
 
 export const getClubs = () => request<Club[]>('/api/clubs')
+
+export const getTeamSheet = (viewerId: string) => request<TeamSheet>(`${viewerPath(viewerId)}/team-sheet`)
 
 export const chooseClub = (viewerId: string, club: number) => {
 	const body: Schemas['ClubIn'] = { club }

@@ -88,6 +88,11 @@ def test_questions_and_full_time_say_which_side_is_yours() -> None:
         assert answer(api, step["pack_id"], step["options"][0]["key"], "lily").status_code == 200
         step = next_step(api, "lily")
     assert step["kind"] == "full_time" and step["your_team"] == side
+    ours, theirs = step["home_goals"], step["away_goals"]
+    if side == "away":
+        ours, theirs = theirs, ours
+    expected = "won" if ours > theirs else "drew" if ours == theirs else "lost"
+    assert step["your_result"] == expected
     assert step["home_code"] == question["home_code"]
 
 

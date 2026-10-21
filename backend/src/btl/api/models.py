@@ -134,7 +134,10 @@ class ClubOut(BaseModel):
 
 
 class FullTimeOut(BaseModel):
-    """The match just finished: the score, how many questions, and how each concept moved."""
+    """The match just finished: the score, how many questions, and how each concept moved.
+
+    ``your_result`` is the result for the viewer's team, if it played.
+    """
 
     kind: Literal["full_time"] = "full_time"
     match_number: int
@@ -145,6 +148,7 @@ class FullTimeOut(BaseModel):
     your_team: YourTeam
     home_goals: int
     away_goals: int
+    your_result: Literal["won", "drew", "lost"] | None
     questions: int
     concepts: list[Movement]
     thresholds: ThresholdsOut

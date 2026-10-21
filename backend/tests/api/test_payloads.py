@@ -4,7 +4,8 @@ from typing import cast
 import numpy as np
 import pytest
 
-from btl.api.payloads import question_payload
+from btl.api.models import YourTeam
+from btl.api.payloads import question_payload, your_result
 from btl.concepts.phase import PhaseOfPlay
 from btl.league.league import generate_league
 from btl.learn.candidates import Candidate
@@ -122,3 +123,13 @@ def test_a_question_payload_says_when_the_moment_happened_and_when_it_is_asked()
         AWAY.short_name,
         "away",
     )
+
+
+@pytest.mark.parametrize(
+    ("side", "home_goals", "away_goals", "result"),
+    [("home", 2, 1, "won"), ("away", 2, 1, "lost"), ("away", 0, 0, "drew"), (None, 3, 0, None)],
+)
+def test_the_result_is_said_from_the_viewer_s_side(
+    side: YourTeam, home_goals: int, away_goals: int, result: str | None
+) -> None:
+    assert your_result(side, home_goals, away_goals) == result

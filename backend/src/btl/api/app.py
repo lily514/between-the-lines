@@ -48,6 +48,7 @@ from btl.api.payloads import (
     question_payload,
     team_sheet_payload,
     thresholds_payload,
+    your_result,
     your_team,
 )
 from btl.api.viewer import (
@@ -217,15 +218,19 @@ def create_app(
         assert start is not None and ended is not None
         mastery, asked = ended
         scored = goals(match.match)
+        home_goals = scored[match.match.home_team_id]
+        away_goals = scored[match.match.away_team_id]
+        side = your_team(club, match.home, match.away)
         return FullTimeOut(
             match_number=start.match_number,
             home=start.home,
             away=start.away,
             home_code=match.home.short_name,
             away_code=match.away.short_name,
-            your_team=your_team(club, match.home, match.away),
-            home_goals=scored[match.match.home_team_id],
-            away_goals=scored[match.match.away_team_id],
+            your_team=side,
+            home_goals=home_goals,
+            away_goals=away_goals,
+            your_result=your_result(side, home_goals, away_goals),
             questions=asked,
             concepts=movements(start.mastery, mastery),
             thresholds=thresholds_payload(course().model.thresholds),

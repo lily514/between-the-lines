@@ -44,6 +44,21 @@
 	color: var(--text-2);
 }
 
+.match-step__you {
+	padding: 0 var(--s-1);
+	border-radius: var(--r-chip);
+	background: var(--text);
+	color: var(--bg);
+	font-size: var(--fs-caption);
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.match-step__yours {
+	font-weight: 700;
+}
+
 .match-step__fixture {
 	order: 3;
 	flex-basis: 100%;

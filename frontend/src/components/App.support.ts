@@ -1,4 +1,4 @@
-import type { Club, Feedback, FullTime, NextStep, Question, Status } from '../api/client.ts'
+import type { Club, Feedback, FullTime, NextStep, Question, Status, TeamSheet } from '../api/client.ts'
 
 /** A point in a match: where the last question left the viewer, so the next step can say how far play moved on. */
 export interface Moment {
@@ -15,11 +15,13 @@ export type Retry =
 	| { kind: 'status' }
 	| { kind: 'pick'; status: Status }
 	| { kind: 'choose'; club: number }
+	| { kind: 'sheet'; status: Status | null }
 	| { kind: 'answer'; question: Question; key: string }
 
 export type Screen =
 	| { kind: 'welcome'; status: Status | null; error: string | null; name: string }
 	| { kind: 'pick'; status: Status; clubs: Club[]; busy: boolean }
+	| { kind: 'sheet'; sheet: TeamSheet; status: Status | null }
 	| { kind: 'loading'; message: string }
 	| { kind: 'step'; question: Question; from: Moment | null }
 	| { kind: 'question'; question: Question; busy: boolean }
@@ -39,6 +41,7 @@ export type Action =
 	| { type: 'started'; status: Status }
 	| { type: 'picking'; status: Status; clubs: Club[] }
 	| { type: 'choosing' }
+	| { type: 'sheet'; sheet: TeamSheet; status: Status | null }
 	| { type: 'rejected'; message: string; name: string }
 	| { type: 'forget'; message?: string }
 	| { type: 'arrived'; step: NextStep }
@@ -50,6 +53,7 @@ export type Action =
 export const LOADING_NEXT = 'The match moves on…'
 export const LOADING_START = 'Finding your matches…'
 export const LOADING_CLUBS = 'Finding the clubs…'
+export const LOADING_SHEET = 'Finding the line-ups…'
 
 /** A viewer who hasn't picked a team yet, and still can: they are asked before anything else. */
 export const needsClub = (status: Status) => status.club === null && status.can_choose_club && !status.finished
@@ -83,6 +87,8 @@ export const reducer = (state: AppState, action: Action): AppState => {
 				screen: { kind: 'pick', status: action.status, clubs: action.clubs, busy: false },
 				last: null
 			}
+		case 'sheet':
+			return { ...state, screen: { kind: 'sheet', sheet: action.sheet, status: action.status }, last: null }
 		case 'choosing':
 			return state.screen.kind === 'pick' ? { ...state, screen: { ...state.screen, busy: true } } : state
 		case 'rejected':
@@ -143,6 +149,13 @@ export const matchHeader = (screen: Screen): { title: string; clock: string | nu
 			return screen.status?.fixture
 				? { title: `${screen.status.fixture.home} v ${screen.status.fixture.away}`, clock: null }
 				: null
+		case 'sheet': {
+			const home = screen.sheet.teams.find(team => team.home)
+			const away = screen.sheet.teams.find(team => !team.home)
+			return home !== undefined && away !== undefined
+				? { title: `${home.name} v ${away.name}`, clock: null }
+				: null
+		}
 		case 'pick':
 		case 'loading':
 		case 'error':

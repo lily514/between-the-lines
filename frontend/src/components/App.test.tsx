@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from './App.tsx'
-import { identifyFeedback, identifyQuestion } from '../test-fixtures/index.ts'
+import { identifyFeedback, identifyQuestion, sheetStage1 } from '../test-fixtures/index.ts'
 import { clubs, fullTime, newStatus, startStatus } from '../test-fixtures/summaries.ts'
 
 const reply = (status: number, body: unknown) =>
@@ -24,13 +24,16 @@ test('a viewer plays from their name through a question and its feedback to full
 	serve({
 		'/api/viewers': [reply(200, startStatus)],
 		'/next': [reply(200, identifyQuestion), reply(200, fullTime)],
-		'/answers': [reply(200, identifyFeedback)]
+		'/answers': [reply(200, identifyFeedback)],
+		'/team-sheet': [reply(200, sheetStage1), reply(200, { ...sheetStage1, match_number: 2 })]
 	})
 	const user = userEvent.setup()
 	render(<App />)
 
 	await user.type(screen.getByLabelText('Your name'), 'lily{Enter}')
 	await user.click(await screen.findByRole('button', { name: 'Watch match 1' }))
+	expect(await screen.findByRole('heading', { name: "Who's playing" })).toHaveFocus()
+	await user.click(screen.getByRole('button', { name: 'Kick off' }))
 
 	await user.click(await screen.findByRole('button', { name: 'See the question' }))
 	expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(identifyQuestion.text)
@@ -40,7 +43,13 @@ test('a viewer plays from their name through a question and its feedback to full
 	await user.click(screen.getByRole('button', { name: 'Back to the match' }))
 
 	expect(await screen.findByRole('heading', { name: /Ripon Wardens 2–1 Ludlow Ferrymen/ })).toHaveFocus()
+	expect(screen.getByText('Your team, Ripon Wardens, won 2–1.')).toBeInTheDocument()
 	expect(localStorage.getItem('btl.viewer')).toBe('lily')
+
+	await user.click(screen.getByRole('button', { name: 'On to match 2' }))
+	await screen.findByRole('heading', { name: "Who's playing" })
+	expect(document.querySelector('.team-sheet__fixture')).toHaveTextContent(/^Match 2 ·/)
+	expect(screen.queryByRole('button', { name: /Change it/ })).toBeNull()
 })
 
 test('a remembered viewer goes straight back to the waiting question', async () => {

@@ -40,8 +40,21 @@
   --home-ink: #2B1018;
   --away: #EFA27A;             /* Westmere: hollow ring, fill = --pitch */
   --on-pitch: #9CC8F0;         /* option arrows, A/B/C tags, real ball path, carrier halo */
+  --yours: #F2CF6E;            /* dashed ring round the viewer's team's players */
   --ball: #FFFFFF;
   --threat: 246, 237, 228;     /* xT grid: rgba(var(--threat), .02–.38) */
+
+  /* club colours (docs/milestone-2e/crests/clubs.json): a club's primary on its own, as a bar or dot */
+  --club-RIP: #34BBB4;
+  --club-HEX: #4873BD;
+  --club-ALN: #914C99;
+  --club-BAK: #6C7888;
+  --club-TRU: #915933;
+  --club-WEL: #B9A8E6;
+  --club-PEN: #CD5B30;
+  --club-SHE: #1A8FBA;
+  --club-LUD: #D2A12E;
+  --club-WHI: #BD2D6B;
 
   /* type */
   --font-display: "Bricolage Grotesque", Georgia, serif;
@@ -95,6 +108,16 @@
   --know-tint: #E3ECF5;
   --on-know: #FFFFFF;
   --note: #9A5B2E;
+  --club-RIP: #1F6F6B;
+  --club-HEX: #22385E;
+  --club-ALN: #8E4A96;
+  --club-BAK: #2F343B;
+  --club-TRU: #6B4226;
+  --club-WEL: #9378D8;
+  --club-PEN: #B4502A;
+  --club-SHE: #1A8FBA;
+  --club-LUD: #A98124;
+  --club-WHI: #A8285F;
   /* butter #F2CF6E may appear in light mode only as a fill or mark, never as text on cream */
 }
 
@@ -104,6 +127,8 @@
     --border: #E3D3C3; --border-strong: #B89F94; --text: #2B1018; --text-2: #4A2E35; --text-muted: #6E5058;
     --text-faint: #7E6268; --act: #8C2440; --act-hover: #5E1428; --act-pressed: #6E1A32; --on-act: #FFFFFF;
     --know: #2F5E8C; --know-dim: #9DB4CC; --know-tint: #E3ECF5; --on-know: #FFFFFF; --note: #9A5B2E;
+    --club-RIP: #1F6F6B; --club-HEX: #22385E; --club-ALN: #8E4A96; --club-BAK: #2F343B; --club-TRU: #6B4226;
+    --club-WEL: #9378D8; --club-PEN: #B4502A; --club-SHE: #1A8FBA; --club-LUD: #A98124; --club-WHI: #A8285F;
   }
 }
 

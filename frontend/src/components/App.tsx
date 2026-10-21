@@ -5,6 +5,7 @@ import {
 	chooseClub,
 	getClubs,
 	getStatus,
+	getTeamSheet,
 	nextStep,
 	startViewer,
 	type Question,
@@ -16,6 +17,7 @@ import {
 	initialState,
 	LOADING_CLUBS,
 	LOADING_NEXT,
+	LOADING_SHEET,
 	LOADING_START,
 	matchHeader,
 	needsClub,
@@ -30,6 +32,7 @@ import FullTime from './FullTime/index.tsx'
 import MatchStep from './MatchStep/index.tsx'
 import PickTeam from './PickTeam/index.tsx'
 import QuestionSheet from './QuestionSheet/index.tsx'
+import TeamSheet from './TeamSheet/index.tsx'
 import Welcome from './Welcome/index.tsx'
 
 const messageOf = (error: unknown) =>
@@ -71,6 +74,18 @@ const App = () => {
 				dispatch({ type: 'started', status: await getStatus(id) })
 			} catch (error) {
 				fail(error, { kind: 'status' })
+			}
+		},
+		[fail]
+	)
+
+	const loadSheet = useCallback(
+		async (id: string, status: Status | null) => {
+			dispatch({ type: 'loading', message: LOADING_SHEET })
+			try {
+				dispatch({ type: 'sheet', sheet: await getTeamSheet(id), status })
+			} catch (error) {
+				fail(error, { kind: 'sheet', status })
 			}
 		},
 		[fail]
@@ -164,6 +179,7 @@ const App = () => {
 			else if (what.kind === 'status') void loadStatus(viewer)
 			else if (what.kind === 'pick') void loadPick(what.status)
 			else if (what.kind === 'choose') void choose(viewer, what.club)
+			else if (what.kind === 'sheet') void loadSheet(viewer, what.status)
 			else void send(viewer, what.question, what.key)
 		}
 	}
@@ -212,7 +228,7 @@ const App = () => {
 							defaultName={screen.name}
 							onStart={name => void start(name, false)}
 							onWatch={() => {
-								if (viewer !== null) void loadNext(viewer)
+								if (viewer !== null) void loadSheet(viewer, screen.status)
 							}}
 							onChangeName={changeName}
 							onChangeTeam={() => {
@@ -227,6 +243,16 @@ const App = () => {
 							suggested={screen.status.suggested_club}
 							busy={screen.busy}
 							onChoose={club => void choose(viewer, club)}
+						/>
+					)}
+					{screen.kind === 'sheet' && viewer !== null && (
+						<TeamSheet
+							sheet={screen.sheet}
+							canChangeTeam={screen.status?.can_choose_club ?? false}
+							onKickOff={() => void loadNext(viewer)}
+							onChangeTeam={() => {
+								if (screen.status !== null) void loadPick(screen.status)
+							}}
 						/>
 					)}
 					{screen.kind === 'loading' && (
@@ -247,6 +273,7 @@ const App = () => {
 									? (screen.question.context.score?.display ?? null)
 									: null
 							}
+							yours={screen.question.your_team}
 							onArrive={() => {
 								dispatch({ type: 'open' })
 							}}
@@ -275,7 +302,7 @@ const App = () => {
 					{screen.kind === 'full_time' && viewer !== null && (
 						<FullTime
 							summary={screen.summary}
-							onNext={() => void (screen.summary.finished ? loadStatus(viewer) : loadNext(viewer))}
+							onNext={() => void (screen.summary.finished ? loadStatus(viewer) : loadSheet(viewer, null))}
 						/>
 					)}
 					{screen.kind === 'error' && (

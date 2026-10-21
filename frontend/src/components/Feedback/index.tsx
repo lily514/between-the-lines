@@ -53,6 +53,7 @@ const Feedback = ({ feedback, question, onContinue }: FeedbackProps) => {
 					reveal
 					crop="moment"
 					label={`The real play from ${question.occurred.clock}`}
+					yours={question.your_team}
 				/>
 			</div>
 			<AnswerGroup

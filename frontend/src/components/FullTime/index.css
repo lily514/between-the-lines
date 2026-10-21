@@ -57,3 +57,10 @@
 .full-time__number--now {
 	color: var(--know);
 }
+
+.full-time__result {
+	margin: 0;
+	font-size: var(--fs-body-l);
+	line-height: var(--lh-body-l);
+	font-weight: 600;
+}

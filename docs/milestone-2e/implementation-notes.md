@@ -76,3 +76,29 @@ Where implementation diverged from [plan.md](plan.md), or something surprising w
 **Checked in the browser** (`btl serve`, headless Chrome): the picker, "Pick one for me" and the welcome, at 390 px in both themes and at 1440 px, with no console errors.
 **Why:** the handoff put crests in the picker; the club lock and the lack of preferences change the wording.
 **Affects:** T6 (the team sheet reuses `Crest`, and adds the club colour tokens).
+
+## T6 — Who's playing (2026-10-21)
+**Plan said:** a `TeamSheet` screen at all three stages; your team highlighted on the pitch, the score chip and full time; tests for each stage and the "first time you've seen them" row; Lily's hand check.
+**We did:** as planned, with these choices:
+- **Where it appears:** "Watch match N" on the welcome and "On to match N" at full time both open the team sheet; "Kick off" then goes to the first step. A remembered viewer who reloads mid-match still goes straight back to their question. "Not your team? Change it" appears while the club can change.
+- **The sheet**, from the handoff's TS boards:
+  - **The key:** filled disc for home, ring for away, a dashed ring and "You" for your team, and that numbers are shirt numbers.
+  - **A card per side:** crest, name, code, "Home · filled discs" or "Away · rings", and the formation from stage 2. A 4 px bar runs across the top in the club's colour.
+  - **The players** are listed by position group. Each row has the shirt number drawn as on the pitch, the name, and the position in words with its description; stage 2 adds the abbreviation.
+  - **Stage 3** adds a 2 × 2 grid of numbers per player, "First time you've seen them" for players not seen yet, and a line per club saying how many of its matches the numbers come from.
+- **Your team's card** has a 2 px outline, the raised fill and a "You" tag.
+- **The kick-off shape (stage 2 on)** reuses `Shared/Pitch` with two new options: `yours` (a dashed ring round your players) and `ball={false}`, since a line-up has no ball. It is hidden from screen readers; the lists say the same.
+- **During the match:** question and feedback pictures ring your players in the same way, and the step's fixture tags your club "You".
+- **Full time** says "Your team, Ludlow Ferrymen, lost 1–2.", with your team's goals first. The result itself comes from the API (`your_result` on the full-time payload, new here), so the page works out no football.
+- **Colours:**
+  - The club colours are tokens in `tokens.css` (`--club-HEX` and so on), each club's dark and light primary from `clubs.json`; the colour lint allows literals only there.
+  - `--yours` is butter (`#F2CF6E`), drawn dashed on the pitch, which looks the same in both themes.
+- **Tests:**
+  - each stage, from real payloads captured from the API (a new viewer at stage 1; a Hexham fan at match 3, stage 3; stage 2 derived from it);
+  - the key, and that no zeros are shown for unseen players;
+  - the result line, the "You" tag, and the whole flow from welcome to sheet to step, and from full time to the next sheet.
+
+**Checked in the browser** (`btl serve`, headless Chrome, learner records made with the server's own threat model): stage 1 in both themes at 390 px and at 1440 px; stage 2 and stage 3 in both themes; the step and a question picture. No console errors.
+**Learned:** stage 1 is long on a phone (about 2,700 px), because each of the 22 players carries its position description. That is what the plan asked for. If it feels like too much in Lily's check, the fallback is to describe each position once per group, or only for the viewer's team.
+**Why:** the plan left the layout to the handoff, and the result line needed one field from the API.
+**Affects:** T7 (README screenshots). **Lily's hand check is still to do.**

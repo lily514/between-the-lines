@@ -16,6 +16,8 @@ export interface MatchStepProps {
 	occurred: Question['occurred']
 	/** The score at a live question; a review question's score may be out of date, so it has none. */
 	score: string | null
+	/** Which side is the viewer's team, tagged "You" in the fixture. */
+	yours: 'home' | 'away' | null
 	onArrive: () => void
 }
 
@@ -23,7 +25,7 @@ export interface MatchStepProps {
  *
  * It takes a span of match time (`from` → `to`) rather than a question, so a component that plays the match at speed
  * can take its place with the same props and call `onArrive` when the clock gets there. */
-const MatchStep = ({ home, away, matchNumber, from, to, occurred, score, onArrive }: MatchStepProps) => {
+const MatchStep = ({ home, away, matchNumber, from, to, occurred, score, yours, onArrive }: MatchStepProps) => {
 	const heading = useRef<HTMLHeadingElement>(null)
 	const headingId = useId()
 
@@ -37,7 +39,7 @@ const MatchStep = ({ home, away, matchNumber, from, to, occurred, score, onArriv
 			<header className="match-step__bar">
 				<span className="match-step__chip">Match {matchNumber}</span>
 				<span className="match-step__fixture">
-					{home} v {away}
+					<Club name={home} yours={yours === 'home'} /> v <Club name={away} yours={yours === 'away'} />
 				</span>
 				<span className="match-step__clock">
 					{to.clock}
@@ -56,5 +58,14 @@ const MatchStep = ({ home, away, matchNumber, from, to, occurred, score, onArriv
 		</section>
 	)
 }
+
+const Club = ({ name, yours }: { name: string; yours: boolean }) =>
+	yours ? (
+		<span className="match-step__yours">
+			{name} <span className="match-step__you">You</span>
+		</span>
+	) : (
+		<>{name}</>
+	)
 
 export default MatchStep

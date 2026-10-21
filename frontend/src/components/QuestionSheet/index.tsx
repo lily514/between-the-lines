@@ -71,6 +71,7 @@ const QuestionSheet = ({ question, onLockIn, busy = false }: QuestionSheetProps)
 					path={shownPath(question)}
 					crop="moment"
 					label={pitchLabel(question)}
+					yours={question.your_team}
 				/>
 			</div>
 			<AnswerGroup

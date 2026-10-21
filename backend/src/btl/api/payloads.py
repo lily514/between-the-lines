@@ -6,6 +6,7 @@ answers. The feedback payload is the whole pack.
 """
 
 from collections.abc import Mapping
+from typing import Literal
 
 from btl.api.models import (
     Bar,
@@ -133,6 +134,16 @@ def your_team(club: TeamId | None, home: Club, away: Club) -> YourTeam:
     if club == away.team_id:
         return "away"
     return None
+
+
+def your_result(
+    side: YourTeam, home_goals: int, away_goals: int
+) -> Literal["won", "drew", "lost"] | None:
+    """The result for the viewer's team, if it played."""
+    if side is None:
+        return None
+    ours, theirs = (home_goals, away_goals) if side == "home" else (away_goals, home_goals)
+    return "won" if ours > theirs else "drew" if ours == theirs else "lost"
 
 
 def club_payload(club: Club) -> ClubOut:

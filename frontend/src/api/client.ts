@@ -8,6 +8,7 @@ export type Feedback = Schemas['FeedbackOut']
 export type NextStep = Question | FullTime
 export type Picture = Schemas['PictureOut']
 export type Marker = Schemas['MarkerOut']
+export type Club = Schemas['ClubOut']
 
 /** A response other than 2xx. `status` lets callers tell a stale question (409) from a bad name (422). */
 export class ApiError extends Error {
@@ -29,6 +30,13 @@ export const startViewer = (viewerId: string, seed?: number) => {
 
 export const getStatus = (viewerId: string) => request<Status>(viewerPath(viewerId))
 
+export const getClubs = () => request<Club[]>('/api/clubs')
+
+export const chooseClub = (viewerId: string, club: number) => {
+	const body: Schemas['ClubIn'] = { club }
+	return request<Status>(`${viewerPath(viewerId)}/club`, body, 'PUT')
+}
+
 export const nextStep = (viewerId: string) => request<NextStep>(`${viewerPath(viewerId)}/next`, {})
 
 export const answer = (viewerId: string, packId: string, key: string) => {
@@ -36,12 +44,12 @@ export const answer = (viewerId: string, packId: string, key: string) => {
 	return request<Feedback>(`${viewerPath(viewerId)}/answers`, body)
 }
 
-const request = async <T>(path: string, body?: object): Promise<T> => {
+const request = async <T>(path: string, body?: object, method = 'POST'): Promise<T> => {
 	const init: RequestInit =
 		body === undefined
 			? { headers: { Accept: 'application/json' } }
 			: {
-					method: 'POST',
+					method,
 					headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
 					body: JSON.stringify(body)
 				}

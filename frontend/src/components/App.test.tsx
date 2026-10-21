@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from './App.tsx'
 import { identifyFeedback, identifyQuestion } from '../test-fixtures/index.ts'
-import { fullTime, startStatus } from '../test-fixtures/summaries.ts'
+import { clubs, fullTime, newStatus, startStatus } from '../test-fixtures/summaries.ts'
 
 const reply = (status: number, body: unknown) =>
 	new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
@@ -105,4 +105,48 @@ test('the viewer can change their name', async () => {
 	await user.click(await screen.findByRole('button', { name: 'Not lily?' }))
 	expect(screen.getByLabelText('Your name')).toHaveValue('')
 	expect(localStorage.getItem('btl.viewer')).toBeNull()
+})
+
+test('a new viewer picks a team before anything else, and can change it from the welcome', async () => {
+	const spy = serve({
+		'/api/viewers': [reply(200, newStatus)],
+		'/api/clubs': [reply(200, clubs), reply(200, clubs)],
+		'/api/viewers/lily/club': [reply(200, { ...startStatus, club: clubs[1] })]
+	})
+	const user = userEvent.setup()
+	render(<App />)
+
+	await user.type(screen.getByLabelText('Your name'), 'lily{Enter}')
+	await user.click(await screen.findByRole('radio', { name: /Hexham Anchors/ }))
+	await user.click(screen.getByRole('button', { name: 'Continue with Hexham Anchors' }))
+
+	expect(await screen.findByText(/Your team:/)).toHaveTextContent('Hexham Anchors')
+	const put = spy.mock.calls.find(([input]) => typeof input === 'string' && input.endsWith('/club'))
+	expect(put?.[1]).toMatchObject({ method: 'PUT', body: JSON.stringify({ club: 2 }) })
+
+	await user.click(screen.getByRole('button', { name: 'Change' }))
+	expect(await screen.findByRole('radio', { name: /Hexham Anchors/ })).toHaveAttribute('aria-checked', 'true')
+})
+
+test('a remembered viewer with no team yet is asked for one', async () => {
+	localStorage.setItem('btl.viewer', 'lily')
+	serve({ '/api/viewers': [reply(200, newStatus)], '/api/clubs': [reply(200, clubs)] })
+	render(<App />)
+	expect(await screen.findByRole('heading', { name: 'Pick your team' })).toBeInTheDocument()
+})
+
+test('a team refused because watching has started shows where the viewer stands', async () => {
+	serve({
+		'/api/viewers': [reply(200, newStatus)],
+		'/api/clubs': [reply(200, clubs)],
+		'/api/viewers/lily/club': [reply(409, { detail: "the team can't change once you've started watching" })],
+		'/api/viewers/lily': [reply(200, { ...startStatus, can_choose_club: false })]
+	})
+	const user = userEvent.setup()
+	render(<App />)
+	await user.type(screen.getByLabelText('Your name'), 'lily{Enter}')
+	await user.click(await screen.findByRole('button', { name: 'Pick one for me' }))
+	await user.click(screen.getByRole('button', { name: 'Continue with Hexham Anchors' }))
+	expect(await screen.findByRole('heading', { name: 'Welcome, lily' })).toBeInTheDocument()
+	expect(screen.queryByRole('button', { name: 'Change' })).toBeNull()
 })

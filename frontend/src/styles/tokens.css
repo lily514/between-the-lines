@@ -31,6 +31,7 @@
   --on-know: #2B1018;
   --incorrect: var(--text-muted); /* never an alarm colour: dashed border + ✕ + "Your pick" */
   --note: #EFA27A;             /* "Common mix-up" label + ⚠ */
+  --crest-outline: var(--text); /* the ring round every club crest, so it follows the theme */
 
   /* pitch — same in both themes */
   --pitch: #1E3A30;

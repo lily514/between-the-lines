@@ -1,9 +1,9 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { finishedStatus, startStatus } from '../../test-fixtures/summaries.ts'
+import { finishedStatus, newStatus, startStatus } from '../../test-fixtures/summaries.ts'
 import Welcome from './index.tsx'
 
-const handlers = () => ({ onStart: vi.fn(), onWatch: vi.fn(), onChangeName: vi.fn() })
+const handlers = () => ({ onStart: vi.fn(), onWatch: vi.fn(), onChangeName: vi.fn(), onChangeTeam: vi.fn() })
 
 test('the name is sent lower-cased and trimmed', async () => {
 	const on = handlers()
@@ -41,4 +41,18 @@ test('a viewer who has watched every match is told so and can start again', () =
 	expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('All three matches watched')
 	expect(screen.queryByRole('button', { name: /Watch match/ })).toBeNull()
 	expect(screen.getByRole('button', { name: 'Start again with another name' })).toBeInTheDocument()
+})
+
+test('the viewer sees their team and can change it until they have answered', async () => {
+	const on = handlers()
+	const { rerender } = render(<Welcome status={startStatus} error={null} defaultName="lily" {...on} />)
+	expect(screen.getByText(/Your team:/)).toHaveTextContent('Your team: Ripon Wardens')
+	await userEvent.click(screen.getByRole('button', { name: 'Change' }))
+	expect(on.onChangeTeam).toHaveBeenCalledOnce()
+
+	rerender(<Welcome status={{ ...startStatus, can_choose_club: false }} error={null} defaultName="lily" {...on} />)
+	expect(screen.queryByRole('button', { name: 'Change' })).toBeNull()
+
+	rerender(<Welcome status={newStatus} error={null} defaultName="lily" {...on} />)
+	expect(screen.queryByText(/Your team:/)).toBeNull()
 })

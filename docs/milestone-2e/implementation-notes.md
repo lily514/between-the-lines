@@ -59,3 +59,20 @@ Where implementation diverged from [plan.md](plan.md), or something surprising w
 
 **Why:** the plan left these details open; the codes are for the crests the design handoff added.
 **Affects:** T5 and T6 read the new fields. The page's hand-built test payloads gained the new fields.
+
+## T5 — Pick your team (2026-10-17)
+**Plan said:** a `PickTeam` screen: the ten clubs as one radio group, keyboard first, plus "Pick one for me"; the flow change in the reducer; Welcome shows your team.
+**We did:** as planned, with these choices:
+- **The crests arrive here, not in T6.** The handoff's picker rows have them, so `Shared/Crest` draws them now, and the welcome uses them too.
+  - They come from one sprite, `src/assets/crests.svg`, built from the handoff's dark files with only the outline changed. Each `<use>` picks a club's symbol.
+  - The outline is `var(--crest-outline)`, which is `--text`. That gives exactly the handoff's two outline colours (`#F6EDE4` on dark, `#2B1018` on light), so one file serves both themes.
+  - The club colours (the 4 px bar on the team-sheet cards) come with T6.
+- **Who is asked:** a new viewer is asked after their name, before the welcome. So is a returning viewer with no club and no answers, as decided. There is no "skip": "Pick one for me" is the beginner's way through.
+- **The wording** says "You can change this until your first question", not the handoff's "any time in Preferences": the club locks after the first answer (T1), and there are no preferences in 2e. The handoff's "Last step" eyebrow is left out, since the picker isn't always reached from the name.
+- **The welcome** shows "Your team: {crest} {club}" with a "Change" link while the club can still change. A 409 when choosing (the viewer started watching in another tab) shows the welcome as it now stands.
+- **"Pick one for me"** selects the server's suggestion, then the next club on each press. A polite live region says which club was picked, since the radio's change alone isn't announced.
+
+**Learned:** a `--` inside an XML comment makes the whole SVG invalid, and browsers then draw nothing from the sprite, silently. The sprite's comment had `--crest-outline` in it. A test now parses the sprite and checks it has a crest for every club, and it fails on that comment.
+**Checked in the browser** (`btl serve`, headless Chrome): the picker, "Pick one for me" and the welcome, at 390 px in both themes and at 1440 px, with no console errors.
+**Why:** the handoff put crests in the picker; the club lock and the lack of preferences change the wording.
+**Affects:** T6 (the team sheet reuses `Crest`, and adds the club colour tokens).

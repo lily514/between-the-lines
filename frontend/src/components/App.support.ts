@@ -1,4 +1,4 @@
-import type { Feedback, FullTime, NextStep, Question, Status } from '../api/client.ts'
+import type { Club, Feedback, FullTime, NextStep, Question, Status } from '../api/client.ts'
 
 /** A point in a match: where the last question left the viewer, so the next step can say how far play moved on. */
 export interface Moment {
@@ -13,10 +13,13 @@ export type Retry =
 	| { kind: 'start'; name: string }
 	| { kind: 'next' }
 	| { kind: 'status' }
+	| { kind: 'pick'; status: Status }
+	| { kind: 'choose'; club: number }
 	| { kind: 'answer'; question: Question; key: string }
 
 export type Screen =
 	| { kind: 'welcome'; status: Status | null; error: string | null; name: string }
+	| { kind: 'pick'; status: Status; clubs: Club[]; busy: boolean }
 	| { kind: 'loading'; message: string }
 	| { kind: 'step'; question: Question; from: Moment | null }
 	| { kind: 'question'; question: Question; busy: boolean }
@@ -34,6 +37,8 @@ export interface AppState {
 export type Action =
 	| { type: 'loading'; message: string }
 	| { type: 'started'; status: Status }
+	| { type: 'picking'; status: Status; clubs: Club[] }
+	| { type: 'choosing' }
 	| { type: 'rejected'; message: string; name: string }
 	| { type: 'forget'; message?: string }
 	| { type: 'arrived'; step: NextStep }
@@ -44,6 +49,10 @@ export type Action =
 
 export const LOADING_NEXT = 'The match moves on…'
 export const LOADING_START = 'Finding your matches…'
+export const LOADING_CLUBS = 'Finding the clubs…'
+
+/** A viewer who hasn't picked a team yet, and still can: they are asked before anything else. */
+export const needsClub = (status: Status) => status.club === null && status.can_choose_club && !status.finished
 
 export const welcome = (error: string | null = null, name = ''): Screen => ({
 	kind: 'welcome',
@@ -68,6 +77,14 @@ export const reducer = (state: AppState, action: Action): AppState => {
 				screen: { kind: 'welcome', status: action.status, error: null, name: action.status.viewer_id },
 				last: null
 			}
+		case 'picking':
+			return {
+				viewer: action.status.viewer_id,
+				screen: { kind: 'pick', status: action.status, clubs: action.clubs, busy: false },
+				last: null
+			}
+		case 'choosing':
+			return state.screen.kind === 'pick' ? { ...state, screen: { ...state.screen, busy: true } } : state
 		case 'rejected':
 			return { viewer: null, screen: welcome(action.message, action.name), last: null }
 		case 'forget':
@@ -126,6 +143,7 @@ export const matchHeader = (screen: Screen): { title: string; clock: string | nu
 			return screen.status?.fixture
 				? { title: `${screen.status.fixture.home} v ${screen.status.fixture.away}`, clock: null }
 				: null
+		case 'pick':
 		case 'loading':
 		case 'error':
 			return null

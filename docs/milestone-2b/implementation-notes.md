@@ -37,3 +37,25 @@ Where implementation diverged from [plan.md](plan.md), or something surprising w
 **Learned:** rewording the map changes the fouls packs' ids, because a pack's id hashes its contents, and the common mix-up is picked by pack id. A fouls question can therefore offer a different mix-up than before. Saved records are unaffected: replay doesn't compare stored pack ids. A pending web answer from before an upgrade gets 409 and fetches the question again, as in 2c. The page's captured test payloads still show the old closing sentence; they test layout, not wording.
 **Why:** the templates must pass the Verifier's own rules, and Lily decided both failures.
 **Affects:** the terminal and the page now show the settling fact after "The answer was …". T4's fallback uses these templates.
+
+## T3 — Prompts and FoundryTutor (2026-10-22)
+**Plan said:** prompt builders and schemas; over 40 seeds and every kind of question, no question prompt holds an outcome fact's name, or a value the context doesn't also show, and no prompt holds the viewer id; a malformed reply raises `ModelError`.
+**We did:** as planned, with these choices:
+- **`question_request(view, plain)`** sends the view's own facts as `{slot} = value`, the option labels it must not point at, and the template's wording as "a plain version" of what is asked. **`feedback_request(pack, grade)`** sends:
+  - the context, outcome and option facts, in separate lists;
+  - `{answer}` and `{chosen}` spelled out;
+  - the concept text at the viewer's level, and the objective;
+  - the numbered mix-ups;
+  - whether the pick was right.
+- **A `Repair` (the first reply and its failures)** can be added to either request, ready for T4.
+- **The leak test** allows an outcome value that the question view already shows anywhere: in a label ("One"), or in the question's own subject ("offside").
+- **No viewer:** the builders take no argument that could carry the viewer, which a test pins.
+- **`FoundryTutor.word_question` and `word_feedback`** return the parsed text with the reply (model, tokens, time) for T4's records. Non-JSON, a missing or empty field, or a misconception that isn't a whole number is a `ModelError`.
+
+**Learned, from five live tries with `gpt-5.4-nano`** (one of each kind of question asked, before and after two rounds of prompt changes):
+- **Questions passed the Verifier every time.** Feedback first failed every time: the model wrote values beside their slots, prefixed outcome facts with `answer.`, and left out `{answer}`. Telling it to write only the slot, spelling out `{answer}` and `{chosen}`, and marking whole-sentence facts brought it to two in five.
+- **Two Verifier gaps, now closed:** braces that aren't a slot (`{second-last defender}`) passed `slots`; and text the checks accepted read badly once filled ("behind the second-last defender the second-last defender", "There was no booking, since There was no booking.."). A new **`echo`** check rejects words said twice in a row, a name or phrase written out beside its own slot, and a whole-sentence fact used inside another sentence. `names` now reads the filled text, since a value can end one sentence and the text start the next.
+- **Accepted but wrong:** one question put the passer and the receiver in different clubs, and one feedback said play would "turn into 0–0 play". No check can catch these; they are what T7's hand review is for. The pass rate is far below T7's 80% target, so T7's prompt iteration matters.
+
+**Why:** the plan left the prompts' wording open, and the live tries showed what the model gets wrong.
+**Affects:** T4 (repairs use `Repair`, and `echo` is one of the reasons it can send). T7 (prompt iteration starts from `PROMPT_VERSION` 1). `verifier.md` now describes `echo`.

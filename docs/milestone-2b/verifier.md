@@ -16,6 +16,7 @@ The examples come from a pass question ("Where should the pass go?") unless they
 
 - Rejected question: "{player} has the ball for {team}. Can they find {receiver}?" The receiver is the answer, so it isn't in the question's facts.
 - Rejected feedback: "… {not_a_fact}". There is no such fact.
+- Rejected: "Was he past the {second-last defender}?" Braces that don't make a slot would reach the viewer as they are.
 
 ## bare_number
 
@@ -30,7 +31,7 @@ Football phrases that contain number words are allowed whole: "second-last defen
 
 ## names
 
-**Rule:** a capitalised word that doesn't start a sentence (or a clause after a colon) must appear in one of the pack's facts, which is where the clubs and players come from. A short allowlist adds "Expected Threat", "Laws of the Game" and "VAR". This catches real clubs and players, and names the model invents.
+**Rule:** read with the slots filled in, a capitalised word that doesn't start a sentence (or a clause after a colon) must appear in one of the pack's facts, which is where the clubs and players come from. A short allowlist adds "Expected Threat", "Laws of the Game" and "VAR". This catches real clubs and players, and names the model invents.
 
 - Rejected: "… against Gortham Rovers." Gortham Rovers isn't in the match.
 
@@ -82,6 +83,19 @@ A comparison code can't check ("better", "faster", or "than" without "more" or "
 ## misconception (feedback only)
 
 **Rule:** after a wrong answer the model may pick one of the concept's common mix-ups by its number, which must exist. After a right answer it must pick none.
+
+## echo
+
+**Rule:** read with the slots filled in, the text must not:
+- say the same words twice in a row;
+- write out a name or phrase in the same sentence as its own slot;
+- use a whole-sentence fact (such as `{foul_outcome}`, "Hexham Anchors get a free kick.") inside another sentence.
+
+This check came from the first live tries with the model (see the implementation notes, T3). It often wrote a slot and then its value, or placed a phrase-valued slot next to the same phrase.
+
+- Rejected: "… was {beyond_or_behind} the second-last defender", which reads "behind the second-last defender the second-last defender".
+- Rejected: "… to {restart_team} (Ripon Wardens)."
+- Rejected: "The answer was {answer}, since {foul_outcome} and that was all."
 
 ## length
 

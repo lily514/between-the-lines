@@ -20,7 +20,7 @@ from dataclasses import dataclass
 from btl.learn.evidence import EvidencePack, Fact, PackOption, QuestionView
 from btl.learn.grader import Grade
 from btl.learn.questions import Asks
-from btl.tutor.slots import SLOT, feedback_values, question_values, slot_names
+from btl.tutor.slots import SLOT, SlotError, feedback_values, fill, question_values, slot_names
 
 MAX_QUESTION_WORDS = 45
 MAX_EXPLANATION_WORDS = 90
@@ -86,6 +86,7 @@ CHECKS = (
     "grounded",
     "comparison",
     "misconception",
+    "echo",
     "length",
 )
 WORD = re.compile(r"[A-Za-zÀ-ÖØ-öø-ÿ][A-Za-zÀ-ÖØ-öø-ÿ'\u2019-]*")
@@ -140,6 +141,7 @@ def verify_question(text: str, view: QuestionView) -> Check:
         *_names(text, values),
         *_betting(text),
         *_hints(text, view),
+        *_echoes(text, values),
         *_length(text, "question", MAX_QUESTION_WORDS),
     ]
     return Check(tuple(failures))
@@ -158,6 +160,7 @@ def verify_feedback(feedback: FeedbackText, pack: EvidencePack, grade: Grade) ->
         *_grounded(feedback.explanation, pack, grade),
         *(failure for text in texts for failure in _comparisons(text, pack, grade)),
         *_misconception(feedback.misconception, pack, grade),
+        *(failure for text in texts for failure in _echoes(text, values)),
         *_length(feedback.explanation, "explanation", MAX_EXPLANATION_WORDS),
         *_takeaway_length(feedback.takeaway),
     ]
@@ -171,7 +174,11 @@ def _without_slots(text: str) -> str:
 
 def _slots(text: str, values: Mapping[str, str]) -> list[Failure]:
     unknown = sorted(slot_names(text) - set(values))
-    return [Failure("slots", f"{{{name}}} is not a fact this text may use") for name in unknown]
+    failures = [Failure("slots", f"{{{name}}} is not a fact this text may use") for name in unknown]
+    # Braces that don't make a slot would reach the viewer as they are.
+    stray = re.findall(r"\{[^{}]*\}|[{}]", SLOT.sub("", text))
+    failures += [Failure("slots", f"{brace!r} is not a slot") for brace in stray]
+    return failures
 
 
 def _bare_numbers(text: str) -> list[Failure]:
@@ -184,8 +191,13 @@ def _bare_numbers(text: str) -> list[Failure]:
 
 def _names(text: str, values: Mapping[str, str]) -> list[Failure]:
     known = {word.lower() for value in values.values() for word in WORD.findall(value)}
+    # Read as the viewer will, since a value can end one sentence and the text start the next.
+    try:
+        readable = fill(text, values)
+    except SlotError:
+        readable = _without_slots(text)
     failures: list[Failure] = []
-    for sentence in SENTENCE_END.split(_without_slots(text).strip()):
+    for sentence in SENTENCE_END.split(readable.strip()):
         words = WORD.findall(sentence)
         for word in words[1:]:
             base = re.sub(r"['\u2019]s$", "", word)
@@ -339,6 +351,32 @@ def _misconception(index: int | None, pack: EvidencePack, grade: Grade) -> list[
     if not 0 <= index < count:
         return [Failure("misconception", f"there is no misconception {index}; there are {count}")]
     return []
+
+
+def _echoes(text: str, values: Mapping[str, str]) -> list[Failure]:
+    """What only shows once the slots are filled: a value said twice, or a sentence split."""
+    try:
+        filled = fill(text, values)
+    except SlotError:
+        return []  # The slots check has already rejected it.
+    failures: list[Failure] = []
+    for sentence in FULL_STOP.split(filled.strip()):
+        words = [word.lower() for word in re.findall(r"[\w'\u2019#%+-]+(?:\.\d+)?", sentence)]
+        for size in range(1, 6):
+            for start in range(len(words) - 2 * size + 1):
+                run = words[start : start + size]
+                if run == words[start + size : start + 2 * size] and any(w.isalpha() for w in run):
+                    failures.append(Failure("echo", f'"{" ".join(run)}" is said twice in a row'))
+    # A name or phrase written out in the same sentence as its own slot ("{receiver} (#8 …)").
+    for sentence in FULL_STOP.split(text.strip()):
+        literal = SLOT.sub(" ", sentence).lower()
+        for name in slot_names(sentence):
+            value = values.get(name, "").lower()
+            if " " in value.strip() and value in literal:
+                failures.append(Failure("echo", f"{{{name}}}'s value is also written out"))
+    if re.search(r"\.\s+[a-z]|\.\.", filled):
+        failures.append(Failure("echo", "a whole-sentence fact is used inside another sentence"))
+    return failures
 
 
 def _length(text: str, what: str, most: int) -> list[Failure]:

@@ -1,10 +1,13 @@
 """The `btl` command and its subcommands."""
 
 import json
+import os
 import time
 from collections import Counter
 from collections.abc import Sequence
+from dataclasses import asdict
 from datetime import UTC, datetime
+from enum import StrEnum
 from pathlib import Path
 from typing import Annotated
 
@@ -31,6 +34,7 @@ from btl.cli.render import (
 )
 from btl.cli.viewer import (
     TerminalViewer,
+    WaitingTutor,
     progress_bars,
     show_feedback,
     show_match_start,
@@ -40,14 +44,18 @@ from btl.concepts.base import ConceptTag, match_context
 from btl.concepts.registry import detect_all
 from btl.io import (
     MatchInfo,
+    append_json_line,
     load_match,
+    load_replies,
     load_threat_model,
     save_match,
+    save_replies,
     save_threat_model,
     saved_match_directories,
 )
 from btl.league.league import Club, League, generate_league, season_fixtures
 from btl.learn.learner import MATCHES_PER_SESSION
+from btl.learn.samples import sample_packs
 from btl.learn.session import (
     LEAGUE_SEED,
     Asked,
@@ -76,7 +84,15 @@ from btl.sim.shape import FOUR_FOUR_TWO
 from btl.store.base import Stored, check_viewer_id
 from btl.store.json_files import JsonLearnerStore
 from btl.store.memory import MemoryLearnerStore
+from btl.tutor.azure import AzureClient, FoundrySettings
+from btl.tutor.base import Tutor
+from btl.tutor.cached import CachedTutor
+from btl.tutor.evaluation import evaluate, report, review_sheet
+from btl.tutor.foundry import FoundryTutor
+from btl.tutor.model import ModelClient, ModelError, ModelRequest, RecordingClient, ReplayClient
+from btl.tutor.prompts import PROMPT_VERSION
 from btl.tutor.templates import TemplateTutor
+from btl.tutor.verified import CheckRecord, VerifiedTutor
 from btl.value.xt import ThreatModel, fit_on_simulated_matches, rate_match
 
 EXAMPLES = (
@@ -111,6 +127,27 @@ DEFAULT_MATCHES = Path("data/matches")
 DEFAULT_LEARNERS = Path("data/learners")
 DEFAULT_FRONTEND = Path("../frontend/dist")
 DEFAULT_PORT = 8000
+DEFAULT_TUTOR_LOG = Path("data/tutor-log.jsonl")
+
+
+class TutorChoice(StrEnum):
+    """Who words the questions and feedback."""
+
+    TEMPLATE = "template"
+    FOUNDRY = "foundry"
+
+
+TutorOption = Annotated[
+    TutorChoice,
+    typer.Option(
+        "--tutor",
+        help="template: wording written in code. foundry: a model in Azure AI Foundry, checked "
+        "by the Verifier, with the template as fallback (see docs/setup.md).",
+    ),
+]
+TutorLogPath = Annotated[
+    Path, typer.Option("--tutor-log", help="Where --tutor foundry logs every model call.")
+]
 ModelPath = Annotated[
     Path,
     typer.Option(
@@ -485,6 +522,8 @@ def learn(
         str | None,
         typer.Option(help='The team you support, e.g. "HEX"; your matches are its fixtures.'),
     ] = None,
+    tutor: TutorOption = TutorChoice.TEMPLATE,
+    tutor_log: TutorLogPath = DEFAULT_TUTOR_LOG,
 ) -> None:
     """Watch your next match. Play pauses for questions; your answers shape the next ones.
 
@@ -499,7 +538,7 @@ def learn(
     if reset:
         (learners / f"{viewer}.json").unlink(missing_ok=True)
     stored = start_session(store, viewer, seed_for_viewer(viewer) if seed is None else seed)
-    course = Course(_threat_model_or_fit(model), TemplateTutor())
+    course = Course(_threat_model_or_fit(model), _tutor(tutor, tutor_log))
     if club is not None:
         stored = _choose_club(course, store, viewer, club)
     if stored.state.club is not None:
@@ -546,6 +585,8 @@ def _choose_club(course: Course, store: JsonLearnerStore, viewer: str, name: str
 def demo_viewer(
     seed: Annotated[int, typer.Option(help="Which three matches.")] = 7,
     model: ModelPath = DEFAULT_MODEL,
+    tutor: TutorOption = TutorChoice.TEMPLATE,
+    tutor_log: TutorLogPath = DEFAULT_TUTOR_LOG,
 ) -> None:
     """A scripted viewer watches three matches and gets better as they go.
 
@@ -553,7 +594,7 @@ def demo_viewer(
     and all of them in the third. Each question shows why it is asked now, the viewer's
     answer, the feedback, and how the progress bars move.
     """
-    course = Course(_threat_model_or_fit(model), TemplateTutor())
+    course = Course(_threat_model_or_fit(model), _tutor(tutor, tutor_log))
     store = MemoryLearnerStore()
     start_session(store, "demo", seed)
 
@@ -581,12 +622,14 @@ def serve(
     frontend: Annotated[
         Path, typer.Option(help="The built web page, served outside /api if it exists.")
     ] = DEFAULT_FRONTEND,
+    tutor: TutorOption = TutorChoice.TEMPLATE,
+    tutor_log: TutorLogPath = DEFAULT_TUTOR_LOG,
 ) -> None:
     """Serve the learning loop to the web page: the API, and the built page if there is one.
 
     Learner records are the same files `btl learn` uses, so a viewer can carry on in either.
     """
-    course = Course(_threat_model_or_fit(model), TemplateTutor())
+    course = Course(_threat_model_or_fit(model), _server_tutor(tutor, tutor_log))
     page = frontend if (frontend / "index.html").is_file() else None
     if page is None:
         console.print(
@@ -596,6 +639,137 @@ def serve(
     api = create_app(lambda: course, JsonLearnerStore(learners), _now, page)
     console.print(f"Serving on http://{host}:{port} (API under /api). Ctrl+C stops it.")
     uvicorn.run(api, host=host, port=port, log_level="warning")
+
+
+# Where the AI Tutor's model is; docs/setup.md says how to find each value.
+FOUNDRY_VARIABLES = ("BTL_FOUNDRY_ENDPOINT", "BTL_FOUNDRY_DEPLOYMENT", "BTL_FOUNDRY_TENANT")
+PING = ModelRequest(
+    instructions="You are checking a connection. Reply in JSON.",
+    prompt='Set "reply" to the word ready.',
+    schema_name="ping",
+    schema={
+        "type": "object",
+        "properties": {"reply": {"type": "string"}},
+        "required": ["reply"],
+        "additionalProperties": False,
+    },
+)
+
+
+def _foundry_settings() -> FoundrySettings:
+    missing = [name for name in FOUNDRY_VARIABLES if not os.environ.get(name)]
+    if missing:
+        console.print(
+            f"Set {', '.join(missing)} to use the AI Tutor; docs/setup.md says how to find them."
+        )
+        raise typer.Exit(1)
+    endpoint, deployment, tenant = (os.environ[name] for name in FOUNDRY_VARIABLES)
+    return FoundrySettings(endpoint, deployment, tenant)
+
+
+def _tutor(choice: TutorChoice, log: Path) -> Tutor:
+    if choice is TutorChoice.TEMPLATE:
+        return TemplateTutor()
+    return WaitingTutor(_verified_tutor(log), console)
+
+
+def _server_tutor(choice: TutorChoice, log: Path) -> Tutor:
+    # Each request replays the match, so the server remembers the words it has already shown.
+    if choice is TutorChoice.TEMPLATE:
+        return TemplateTutor()
+    return CachedTutor(_verified_tutor(log))
+
+
+def _verified_tutor(log: Path) -> VerifiedTutor:
+    client = AzureClient(_foundry_settings())
+
+    def record(check: CheckRecord) -> None:
+        append_json_line(log, {"logged_at": _now(), **asdict(check)})
+
+    return VerifiedTutor(FoundryTutor(client), TemplateTutor(), record)
+
+
+@app.command(name="tutor-ping")
+def tutor_ping() -> None:
+    """Check that the AI Tutor's model answers: one small call, with its time and tokens.
+
+    It signs in with your `az login`, in the tenant BTL_FOUNDRY_TENANT names.
+    """
+    settings = _foundry_settings()
+    try:
+        reply = AzureClient(settings).complete(PING)
+    except ModelError as error:
+        console.print(f"No reply from {settings.deployment}: {error}")
+        raise typer.Exit(1) from None
+    console.print(
+        f"{settings.deployment} ({reply.model}) answered in {reply.seconds:.2f} s, "
+        f"with {reply.input_tokens} tokens in and {reply.output_tokens} out: {reply.text}"
+    )
+
+
+@app.command(name="tutor-eval")
+def tutor_eval(
+    seeds: Annotated[
+        int, typer.Option(help="How many viewers' sessions (seeds 0 …) to sample.")
+    ] = 2,
+    per_kind: Annotated[
+        int, typer.Option(help="Packs kept for each kind of question, level and delivery.")
+    ] = 2,
+    workers: Annotated[int, typer.Option(help="Packs worded at the same time.")] = 4,
+    model: ModelPath = DEFAULT_MODEL,
+    report_path: Annotated[
+        Path | None, typer.Option("--report", help="Also write the report to this file.")
+    ] = None,
+    samples: Annotated[
+        Path | None, typer.Option(help="Write samples for a hand review to this file.")
+    ] = None,
+    record: Annotated[
+        Path | None, typer.Option(help="Save every reply here, for replaying in tests.")
+    ] = None,
+    replay: Annotated[
+        Path | None, typer.Option(help="Use replies saved with --record instead of the model.")
+    ] = None,
+    price_in: Annotated[
+        float | None, typer.Option(help="US dollars per million input tokens, for a cost.")
+    ] = None,
+    price_out: Annotated[
+        float | None, typer.Option(help="US dollars per million output tokens, for a cost.")
+    ] = None,
+) -> None:
+    """Measure the AI Tutor: how often the model's words pass, are repaired, or fall back.
+
+    It words each sampled question, and its feedback after a right and a wrong pick, through the
+    model and the Verifier, and prints pass rates, failed checks, time and tokens.
+    """
+    course = Course(_threat_model_or_fit(model), TemplateTutor())
+    if replay is not None:
+        version, model_name, replies = load_replies(replay)
+        if version != PROMPT_VERSION:
+            console.print(
+                f"{replay} was recorded with prompt version {version}; this is {PROMPT_VERSION}."
+            )
+            raise typer.Exit(1)
+        client: ModelClient = ReplayClient(replies, model_name)
+    else:
+        model_name = _foundry_settings().deployment
+        client = AzureClient(_foundry_settings())
+    recording = RecordingClient(client) if record is not None else None
+    with console.status("Choosing questions…"):
+        packs = sample_packs(course, range(seeds), per_kind)
+    with console.status(f"Wording {len(packs)} questions and their feedback…"):
+        words = evaluate(FoundryTutor(recording or client), TemplateTutor(), packs, workers)
+    text = report(words, PROMPT_VERSION, model_name, price_in, price_out)
+    typer.echo(text)
+    if report_path is not None:
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+        report_path.write_text(text, encoding="utf-8")
+    if samples is not None:
+        samples.parent.mkdir(parents=True, exist_ok=True)
+        samples.write_text(review_sheet(words), encoding="utf-8")
+        console.print(f"Wrote samples for review to {samples}.")
+    if recording is not None and record is not None:
+        save_replies(record, PROMPT_VERSION, model_name, recording.replies)
+        console.print(f"Saved {len(recording.replies)} replies to {record}.")
 
 
 @app.command()

@@ -167,7 +167,7 @@ concepts:
     strand: game_flow
     tier: 0
     prerequisites: []
-    objective: "Say what a foul gives (a free kick or a penalty, and to whom), why a player is booked, and when the referee lets play go on."
+    objective: "Say what a foul gives, and to whom, why a player is booked, and when the referee plays advantage."
     detector: foul
     data_requirements: [events]
     question_types: [identify, predict]

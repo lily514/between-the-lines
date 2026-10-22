@@ -4,11 +4,15 @@ from pathlib import Path
 import pytest
 import uvicorn
 from fastapi import FastAPI
+from fastapi.testclient import TestClient
 from typer.testing import CliRunner
 
+from btl.cli import app as cli
 from btl.cli.app import app
 from btl.io import save_threat_model
+from btl.tutor.azure import FoundrySettings
 from tests.fixtures.learning import threat_model
+from tests.fixtures.tutor import ByKind
 
 runner = CliRunner()
 WIDE = {"COLUMNS": "200"}
@@ -73,3 +77,44 @@ def test_serve_runs_the_api_and_says_when_there_is_no_built_page(
     assert result.exit_code == 0, result.output
     assert "serving the API only" in result.output
     assert [(host, port) for _, host, port in served] == [("127.0.0.1", 8123)]
+
+
+def test_serve_with_the_model_words_the_page_s_questions_through_it(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    model = tmp_path / "model.json"
+    save_threat_model(threat_model(), model)
+    served: list[FastAPI] = []
+
+    def run(api: FastAPI, host: str, port: int, log_level: str) -> None:
+        served.append(api)
+
+    def fake_azure(settings: FoundrySettings) -> ByKind:
+        return ByKind()
+
+    monkeypatch.setattr(uvicorn, "run", run)
+    monkeypatch.setattr(cli, "AzureClient", fake_azure)
+    env = {
+        **WIDE,
+        "BTL_FOUNDRY_ENDPOINT": "https://example-resource.openai.azure.com/",
+        "BTL_FOUNDRY_DEPLOYMENT": "tutor-model",
+        "BTL_FOUNDRY_TENANT": "00000000-0000-0000-0000-000000000001",
+    }
+
+    result = runner.invoke(
+        app,
+        [
+            "serve",
+            *("--model", str(model), "--learners", str(tmp_path / "learners")),
+            *("--frontend", str(tmp_path / "dist"), "--tutor", "foundry"),
+            *("--tutor-log", str(tmp_path / "tutor-log.jsonl")),
+        ],
+        env=env,
+    )
+
+    assert result.exit_code == 0, result.output
+    page = TestClient(served[0])
+    page.post("/api/viewers", json={"viewer_id": "lily", "seed": 7})
+    question = page.post("/api/viewers/lily/next").json()
+    assert question["text"].startswith("Over to you: what is your read on ")
+    assert (tmp_path / "tutor-log.jsonl").read_text().count('"kind": "question"') == 1

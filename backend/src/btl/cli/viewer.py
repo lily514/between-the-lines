@@ -1,6 +1,7 @@
 """The learning loop in the terminal: questions on an ASCII pitch, feedback, progress bars."""
 
 from collections.abc import Callable, Mapping
+from dataclasses import dataclass
 
 from rich.console import Console
 from rich.rule import Rule
@@ -8,14 +9,35 @@ from rich.table import Table
 from rich.text import Text
 
 from btl.cli.render import pitch_picture
-from btl.learn.evidence import EvidencePack, percent_points
-from btl.learn.grader import Answer, ChoiceAnswer
+from btl.learn.evidence import EvidencePack, QuestionView, percent_points
+from btl.learn.grader import Answer, ChoiceAnswer, Grade
 from btl.learn.player_stats import PlayerStats
 from btl.learn.session import Asked, MatchStart, Told
 from btl.learn.team_sheet import NEXT_STAGE, SHAPE_STAGE, SheetTeam, TeamSheet
 from btl.schema.frames import to_left_to_right
+from btl.tutor.base import NO_HISTORY, History, Tutor, TutorFeedback, TutorQuestion
 
 BAR_WIDTH = 20
+
+
+@dataclass(frozen=True, slots=True)
+class WaitingTutor:
+    """A `btl.tutor.base.Tutor` that shows a spinner while the Tutor it wraps is wording."""
+
+    inner: Tutor
+    console: Console
+
+    def question(self, view: QuestionView) -> TutorQuestion:
+        """The inner Tutor's question, with a spinner meanwhile."""
+        with self.console.status("Wording the question…"):
+            return self.inner.question(view)
+
+    def feedback(
+        self, pack: EvidencePack, grade: Grade, history: History = NO_HISTORY
+    ) -> TutorFeedback:
+        """The inner Tutor's feedback, with a spinner meanwhile."""
+        with self.console.status("Wording the feedback…"):
+            return self.inner.feedback(pack, grade, history)
 
 
 class TerminalViewer:
@@ -133,13 +155,14 @@ def show_question(console: Console, asked: Asked) -> None:
 
 
 def show_feedback(console: Console, told: Told) -> None:
-    """The verdict, the explanation and takeaway, the update sentence, and the bars."""
+    """The verdict, the explanation and takeaway, who worded them, the update, and the bars."""
     style = "bold green" if told.grade.correct else "bold yellow"
     explanation = told.explanation
     if told.misconception is not None:
         explanation += f" A common mix-up: “{told.misconception}”"
     console.print(Text.assemble((told.verdict, style), " ", explanation), highlight=False)
     console.print(Text(f"Takeaway: {told.takeaway}", style="italic"))
+    console.print(Text(f"Worded by {told.source}.", style="dim"))
     console.print(Text(told.update, style="dim"))
     console.print(progress_bars(told.mastery))
 

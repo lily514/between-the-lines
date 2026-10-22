@@ -3,8 +3,8 @@
 ## Git workflow
 - GitHub remote, no PRs. One branch per milestone, named after the milestone (M1 "The Data Engine": `feature/data-engine`;
   M2a "The loop in the terminal": `feature/learning-loop`; M2c "The web page": `feature/web-page`;
-  M2d "The basics": `feature/the-basics`; M2e "Getting started": `feature/getting-started`). 2c, 2d and then 2e
-  are built before 2b, because Azure isn't set up yet.
+  M2d "The basics": `feature/the-basics`; M2e "Getting started": `feature/getting-started`;
+  M2b "The AI Tutor": `feature/ai-tutor`). 2c, 2d and then 2e were built before 2b, while Azure wasn't set up yet.
 - Each plan task is one commit on the milestone branch, made after Lily reviews the diff.
 - When a milestone is done, merge it into main with `git merge --no-ff`, so each milestone shows up as one merge in the graph.
 - Claude commits locally only; Lily pushes when ready. CI runs on every push, to any branch.
@@ -17,6 +17,8 @@ Milestone 2c puts the learning loop in a browser: a React page over a small Fast
 Milestone 2d adds the basics: restarts, offside, and fouls and cards.
 Milestone 2e adds getting started: picking a team to support, and a team sheet before each match
 that grows with the viewer.
+Milestone 2b adds the AI Tutor: model-worded questions and feedback, checked by the Verifier, in the
+terminal and on the page.
 
 ## Learning design rules
 - The match never depends on the viewer. Adaptation lives in which moments we ask about, when, and
@@ -37,6 +39,9 @@ that grows with the viewer.
 - The browser computes no football and invents no numbers: everything it shows comes from the API.
   Question payloads are built from the question view only, so the right answer never leaves the
   server before the viewer answers.
+- Model text reaches the viewer only through the Verifier; on any failure the template is used.
+  Question prompts are built from the question view only. No viewer id, name or club goes in a prompt.
+  A question is worded once: replays reuse the words the viewer saw.
 
 ## Hard rules
 - All data synthetic: fictional league/clubs/players only. No real league, club, or player names or marks.
@@ -64,6 +69,8 @@ that grows with the viewer.
 - Types: `uv run pyright`
 - CLI: `uv run btl --help` · learning loop: `uv run btl learn --viewer NAME`, `uv run btl demo-viewer`
 - Web page: `uv run btl serve` (serves the API and the built page)
+- AI Tutor: add `--tutor foundry` to `btl learn`, `btl demo-viewer` or `btl serve` · `uv run btl tutor-ping` ·
+  `uv run btl tutor-eval`
 
 ## Commands (run from frontend/)
 - Install: `npm ci` (Node 24, see `.nvmrc`)
@@ -90,7 +97,7 @@ cli, api, plus `replay.py`. `api` holds the HTTP routes the page calls; the page
   `btl/schema/__init__.py`; do not invent another one. Direction flipping happens only in `frames.py`.
 - pandas only in `schema/frames.py`, `io.py` (parquet files), `value/`, and `cli/`. Everything else uses typed dataclasses.
   pandas and socceraction are only partly typed, so only those edge modules may start with `# pyright: basic`; nowhere else.
-- Pure functions where possible; I/O only in `btl/io.py`, `btl/store/`, `btl/cli/` and `btl/api/`.
+- Pure functions where possible; I/O only in `btl/io.py`, `btl/store/`, `btl/cli/`, `btl/api/` and `btl/tutor/azure.py`.
 
 ## Naming
 - Modules/functions: snake_case; functions are verbs (`simulate_match`), data types are nouns (`Snapshot`).
@@ -109,7 +116,7 @@ cli, api, plus `replay.py`. `api` holds the HTTP routes the page calls; the page
 - Hand-built mini matches in `tests/fixtures/` for detector and schema tests (readable, < 15 events).
 - Property tests for invariants (coords in bounds, time monotonic, SPADL schema valid).
 - Simulator realism is tested with *bands* over many seeds, never exact numbers.
-- No network, no files outside tmp_path. Slow tests marked `@pytest.mark.slow`.
+- No network, no files outside tmp_path. Model calls use `FakeClient` or `ReplayClient`. Slow tests marked `@pytest.mark.slow`.
 
 ## Commits
 - Short imperative subject line, no prefixes: `Add possession-chain simulator`, `Plant line-breaking moments`.

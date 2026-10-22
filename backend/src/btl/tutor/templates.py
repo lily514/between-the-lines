@@ -5,8 +5,8 @@ check. Every number reaches the viewer through a slot, so its text can always be
 
 Questions are worded by what they ask. A question asked after the play opens by saying when it
 happened. Feedback uses the concept map's explanation at the viewer's level (beginner,
-intermediate or analyst), compares the right option with the viewer's pick, and offers a common
-misconception when the answer was wrong.
+intermediate or analyst), then gives the answer with the outcome fact that settles it (for a pass,
+compared with the viewer's pick), and offers a common misconception when the answer was wrong.
 """
 
 from collections.abc import Mapping
@@ -15,7 +15,8 @@ from dataclasses import dataclass, field
 from btl.learn.evidence import EvidencePack, QuestionView, Timing
 from btl.learn.grader import Grade
 from btl.learn.questions import Asks
-from btl.tutor.base import TutorFeedback, TutorQuestion
+from btl.tutor.base import NO_HISTORY, History, TutorFeedback, TutorQuestion
+from btl.tutor.slots import slot_names
 
 SOURCE = "template"
 # What each question asks, in words. Every slot here is in the question view.
@@ -57,6 +58,24 @@ CONFIRM_PASS = (
     "lines and changed the chance of scoring soon by {answer.threat_added}."
 )
 CORRECT_CHOICE = "The answer was {answer}."
+# After any other question, the outcome fact that settles it, unless the explanation already
+# cites one.
+SETTLED_BY: Mapping[Asks, str] = {
+    Asks.LINES_BROKEN: "The pass went through {lines_broken} of the defending team's lines.",
+    Asks.GAP_WIDTH: "The gap was {gap_m} m wide.",
+    Asks.WHAT_THEY_DID: "{player} won the ball back {seconds_to_regain} seconds after it was lost.",
+    Asks.SECONDS_TO_REGAIN: "{player} won the ball back {seconds_to_regain} seconds after it was "
+    "lost.",
+    Asks.WHAT_RESTART: "It was a {restart_type} to {restart_team}.",
+    Asks.FLAG_OR_NOT: "{attacker} was {margin_m} m {beyond_or_behind} when the pass was played, "
+    "so the call was {offside_call}.",
+    Asks.WHO_IS_OFFSIDE: "{attacker} was {margin_m} m {beyond_or_behind} when the pass was played.",
+    Asks.WAS_IT_OFFSIDE: "{attacker} was {margin_m} m {beyond_or_behind} when the pass was "
+    "played, so the call was {offside_call}.",
+    Asks.AFTER_THE_FOUL: "{foul_outcome} {booking_note}",
+    Asks.WHY_BOOKED: "{booking_note}",
+    Asks.WHY_PLAY_ON: "{foul_outcome}",
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -69,18 +88,24 @@ class TemplateTutor:
         """The question for what it asks, opening with when it happened if asked later."""
         return TutorQuestion(_looking_back(view.timing) + ASKING[view.asks])
 
-    def feedback(self, pack: EvidencePack, grade: Grade) -> TutorFeedback:
+    def feedback(
+        self, pack: EvidencePack, grade: Grade, history: History = NO_HISTORY
+    ) -> TutorFeedback:
         """The concept's explanation at the viewer's level, the comparison, and a misconception.
+
+        The viewer's history is ignored: the same pick always gets the same words.
 
         The verdict ("Right read." or "Good instinct, not this one.") comes from the grade,
         not from here.
         """
-        sentences = [_explanation(pack)]
-        is_pass = pack.asks is Asks.WHERE_TO_PASS
-        if grade.correct:
-            sentences.append(CONFIRM_PASS if is_pass else CORRECT_CHOICE)
+        explanation = _explanation(pack)
+        sentences = [explanation]
+        if pack.asks is Asks.WHERE_TO_PASS:
+            sentences.append(CONFIRM_PASS if grade.correct else COMPARE_PASSES)
         else:
-            sentences.append(COMPARE_PASSES if is_pass else CORRECT_CHOICE)
+            sentences.append(CORRECT_CHOICE)
+            if not slot_names(explanation) & set(pack.outcome):
+                sentences.append(SETTLED_BY[pack.asks])
         return TutorFeedback(
             explanation=" ".join(sentences),
             takeaway=pack.concept.objective,

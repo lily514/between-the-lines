@@ -14,7 +14,7 @@ Built for the "Inside the Game" hackathon.
 |---|---|---|
 | 1. Data engine | Event schema, match simulator, Expected Threat valuation, concept detectors, planted teachable moments, CLI | Done |
 | 2a. The learning loop | Concept map, learner model (Bayesian Knowledge Tracing), phase-of-play gating, live moment selector, adaptive questions, evidence pack, templated feedback, learner storage; played in the terminal | Done |
-| 2b. The AI Tutor | Question and feedback wording from a model in Azure AI Foundry, checked against the evidence by plain code | Planned |
+| 2b. The AI Tutor | Questions and feedback worded by a model in Azure AI Foundry, checked against the evidence by plain code (the Verifier), repaired once or replaced by the template; in the terminal and on the page | Done |
 | 2c. The web page | The same loop in a browser: a React page over a small FastAPI layer, for phone and desktop, in light and dark | Done |
 | 2d. The basics | Restarts, offside, and fouls and cards as newcomer concepts, asked at the stoppage they cause; a simulator whose blocks, offside pictures and bookings agree with the Laws | Done |
 | 2e. Getting started | Pick a team to support, with club crests; a team sheet before each match that grows with you: names and positions in plain words, then the formation and kick-off shape, then players' numbers from matches you've watched | Done |
@@ -113,13 +113,49 @@ Type a name, then pick a team to support, or let the page pick one for you. Your
 - **Keyboard:** 1, 2 and 3 (or the arrow keys) pick an answer and Enter locks it in. Light or dark follows your system setting, and reduced motion is respected.
 - **For development,** run `uv run btl serve` in `backend/` and `npm run dev` in `frontend/`; the page reloads as you edit, and `/api` is passed to the server.
 
+## Try the AI Tutor
+
+By default every question and explanation is worded by templates written in code. With `--tutor foundry`, a model in Azure AI Foundry (`gpt-5.4-nano`) words them instead, and plain code checks every word before you see it. Setting it up needs an Azure subscription and the Azure CLI: [docs/setup.md](docs/setup.md#optional-the-ai-tutor-azure) has the steps, and the app signs in with your `az login`, never with a key.
+
+```sh
+cd backend
+uv run btl tutor-ping                                # one small call: is the model there?
+uv run btl learn --viewer yourname --tutor foundry   # the terminal
+uv run btl serve --tutor foundry                     # the web page
+uv run btl tutor-eval --seeds 3 --per-kind 2         # measure it (about 230 calls)
+```
+
+- **The model writes words around slots, and code fills in the facts.** It writes `{answer.threat_added}`, never "+0.22%", so every number and name you see comes from the match's evidence. A value it writes out in full is turned back into its slot before checking.
+- **The Verifier checks every reply** with eleven plain-code checks:
+  - no number or name outside the evidence;
+  - no hint at the answer before you've answered;
+  - no verdict, which the grade gives;
+  - the answer and a fact that settles it are cited;
+  - comparisons match the numbers;
+  - nothing said twice;
+  - lengths.
+
+  [docs/milestone-2b/verifier.md](docs/milestone-2b/verifier.md) explains each one with an example.
+- **One repair, then the template.** A reply that fails is sent back once with the reasons. If it fails again, or the call fails or is slow, the template's words are used. Under each explanation you can see who wrote it: "worded by gpt-5.4-nano", "(repaired)", or "template (fallback: …)".
+- **It knows your recent answers, but not who you are.** After a wrong answer the explanation can open with a word about how you've been doing on that concept ("You've been reading these well lately, but…"). Nothing about you goes to the model: no name, no id, no team.
+- **The web page words each question once.** A reload shows the same words, and the model is never asked twice.
+- **Wording never changes what you learn.** The same answers give the same record whichever Tutor runs, which the tests check with and without a team.
+- **How well it does** ([docs/milestone-2b/tutor-evaluation.md](docs/milestone-2b/tutor-evaluation.md)):
+  - 80% of the model's first replies pass every check, and 92% of shown text is the model's after the repair (100% of questions, 88% of feedback);
+  - a call takes about 1.8 s (2.6 s at the 95th percentile);
+  - a wording uses about 1,200 tokens in and 120 out.
+
+  Every call is logged to `data/tutor-log.jsonl`.
+
 ## Honest limits
 
 - **Synthetic matches.** The simulator is calibrated against 40 real matches (see the implementation notes), but it isn't real football. It plays at a slower tempo, so more of its play counts as transition (54% of playing time against 49% in real matches), and it has about 80% of the real stoppages long enough for a question. Offside flags and bookings are drawn by chance, as they always were, and the players' positions are then drawn to agree with them: a flagged receiver stands past the offside line, and most bookings stop a promising attack.
 - **Event data doesn't record a block.** About one throw-in in five and nearly half of corners follow the restarting team's own action in real event data, and the simulator does the same. The app works out the last touch from the Laws: the restart always goes against it.
 - **Expected Threat is learned from the simulator,** so it can only rediscover the simulator's own rules.
 - **On a live broadcast you couldn't pause before a play.** Predict questions would have to become quick answer-in-five-seconds prompts while play continues; questions held for a stoppage would work as they are.
-- **The feedback is templated** for now; Milestone 2b words it with a model, checked against the same evidence.
+- **The Verifier checks the model's facts, not its football.** It can tell that every number and name came from the evidence, and that nothing gives the answer away. It can't tell whether an explanation of the Laws is true, or pitched at the right level. A hand review of twenty samples found them accurate enough for a prototype, but some wording is clumsy ("For how many defensive lines did that pass go through"), and so are some of the remarks about your recent answers.
+- **About one explanation in eight falls back to the template,** most often for fouls, whose facts are whole sentences the model tends to fold into its own. The numbers vary by a few points from run to run.
+- **The AI Tutor needs Azure.** Without it, the templates word everything, as they always did.
 - **The web page steps from question to question;** it doesn't play the match. Each question says when it is asked and why, and the page is built so a played-back match can replace the step later.
 - **No accounts.** The web page knows you only by the name you type, which is fine for a demo on your own machine and nothing more.
 - **Every club plays 4-4-2,** so the team sheet's formation never changes. Giving clubs their own shape would change every match, and the simulator's realism checks with it.
@@ -206,4 +242,6 @@ uv run btl simulate --seed 7 --plant line_breaking_pass:1,2,3 --plant counter_pr
 - [docs/milestone-1/plan.md](docs/milestone-1/plan.md): what Milestone 1 set out to build, and [implementation-notes.md](docs/milestone-1/implementation-notes.md): what changed along the way.
 - [docs/milestone-2a/plan.md](docs/milestone-2a/plan.md): what Milestone 2a set out to build, [implementation-notes.md](docs/milestone-2a/implementation-notes.md): what changed along the way, and [learner-model.md](docs/milestone-2a/learner-model.md): the learner model in plain words.
 - [docs/milestone-2c/plan.md](docs/milestone-2c/plan.md): what Milestone 2c set out to build, [implementation-notes.md](docs/milestone-2c/implementation-notes.md): what changed along the way, and [design/](docs/milestone-2c/design/): the design handoff the page follows.
+- [docs/milestone-2d/plan.md](docs/milestone-2d/plan.md): what Milestone 2d set out to build, and [implementation-notes.md](docs/milestone-2d/implementation-notes.md): what changed along the way.
 - [docs/milestone-2e/plan.md](docs/milestone-2e/plan.md): what Milestone 2e set out to build, [implementation-notes.md](docs/milestone-2e/implementation-notes.md): what changed along the way, and [design/](docs/milestone-2e/design/) and [crests/](docs/milestone-2e/crests/): the team sheet, picker and crest designs.
+- [docs/milestone-2b/plan.md](docs/milestone-2b/plan.md): what Milestone 2b set out to build, [implementation-notes.md](docs/milestone-2b/implementation-notes.md): what changed along the way, [verifier.md](docs/milestone-2b/verifier.md): each of the Verifier's checks, and [tutor-evaluation.md](docs/milestone-2b/tutor-evaluation.md) with [tutor-review.md](docs/milestone-2b/tutor-review.md): how well the model does.

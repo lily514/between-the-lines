@@ -61,7 +61,7 @@ def test_learn_explains_each_question_and_how_the_bars_moved(tmp_path: Path) -> 
     output = learn(tmp_path)
 
     assert "Right read." in output or "Good instinct, not this one." in output
-    assert "Takeaway:" in output
+    assert "Takeaway:" in output and "Worded by template." in output
     assert "sure you understand it" in output
     assert "Line-breaking passes" in output and "Counter-pressing" in output
 

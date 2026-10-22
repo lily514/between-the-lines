@@ -6,8 +6,10 @@ authors = [{ name = "Lily Carlson" }]
 license = "MIT"
 requires-python = ">=3.11,<3.12"
 dependencies = [
+    "azure-identity>=1.26.0",
     "fastapi>=0.143.0",
     "numpy>=1.26.4",
+    "openai>=3.36.1",
     "pandas>=2.3.3",
     "pyarrow>=25.0.1",
     "pyyaml>=6.0.3",

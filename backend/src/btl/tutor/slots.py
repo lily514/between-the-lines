@@ -13,7 +13,7 @@ cites an outcome fails rather than giving the answer away.
 """
 
 import re
-from collections.abc import Mapping
+from collections.abc import Collection, Mapping
 
 from btl.learn.evidence import EvidencePack, Fact, QuestionView, Timing
 
@@ -62,6 +62,44 @@ def feedback_values(pack: EvidencePack, chosen: str | None) -> dict[str, str]:
             values[alias] = option.label
             values |= {f"{alias}.{name}": text for name, text in option_values.items()}
     return values
+
+
+def slotify(text: str, values: Mapping[str, str], prefer: Collection[str] = ()) -> str:
+    """Turn values written out in full back into their slots, longest first.
+
+    A model sometimes copies a value ("#10 Chinedu Trankwo", "00:32") instead of writing its
+    slot. Only values with a digit or a capital letter are turned back, since a plain word such
+    as "one" or "free kick" is often just a word. The text then reads exactly as before once
+    filled, but every number and name in it comes from a slot the checks can follow.
+
+    When two slots hold the same value, {answer} and {chosen} win, then the names in ``prefer``
+    (feedback prefers the outcome facts), then the others.
+    """
+
+    def rank(pair: tuple[str, str]) -> tuple[int, int]:
+        value, name = pair
+        tie = 0 if name.startswith(("answer", "chosen")) else 1 if name in prefer else 2
+        return -len(value), tie
+
+    # Longest first, so a full name wins over part of it.
+    found = sorted(
+        ((value, name) for name, value in values.items() if _distinctive(value)), key=rank
+    )
+    pieces = SLOT.split(text)
+    # SLOT.split gives text, slot name, text, …: only the text between slots is searched.
+    for index in range(0, len(pieces), 2):
+        for value, name in found:
+            pieces[index] = re.sub(
+                rf"(?<![\w#]){re.escape(value)}(?![\w])", f"\x00{name}\x00", pieces[index]
+            )
+    joined = "".join(
+        piece if index % 2 == 0 else f"{{{piece}}}" for index, piece in enumerate(pieces)
+    )
+    return re.sub(r"\x00([^\x00]+)\x00", r"{\1}", joined)
+
+
+def _distinctive(value: str) -> bool:
+    return any(character.isdigit() or character.isupper() for character in value)
 
 
 def _shown(facts: Mapping[str, Fact]) -> dict[str, str]:

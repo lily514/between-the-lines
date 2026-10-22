@@ -74,6 +74,63 @@ The committed repo contains no real club, player, place, or league names, not ev
 - `uv run pytest` fails if any name style could produce a listed full name, and also scans 200 generated leagues for listed names. Without the file (in CI or a fresh clone), these tests are skipped.
 - Source lists for the name pools are in `docs/name-sources.md`.
 
+## Optional: the AI Tutor (Azure)
+
+Everything else runs without Azure: the template Tutor is the default, and the tests never touch the network. To have a model word the questions and feedback (`--tutor foundry`), you need a model deployment in Azure AI Foundry that you can sign in to with Microsoft Entra ID. The app never uses a key.
+
+The values below are placeholders: `<subscription>`, `<tenant-id>`, `<resource-group>` and `<resource-name>` are your own.
+
+1. Install the Azure CLI and sign in:
+   ```sh
+   brew install azure-cli
+   az login
+   ```
+2. **Name the subscription in every `az` command**, even one with a full `--ids`. If your login's default tenant isn't the subscription's, `az` otherwise sends the default tenant's token, and Azure answers `InvalidAuthenticationTokenTenant`. Find the subscription's tenant with:
+   ```sh
+   az account show --subscription <subscription> --query tenantId -o tsv
+   ```
+3. Create an Azure AI services resource (kind `AIServices`) in a resource group, and switch off key access, so only Entra ID sign-in works:
+   ```sh
+   az cognitiveservices account create --subscription <subscription> \
+     --resource-group <resource-group> --name <resource-name> --custom-domain <resource-name> \
+     --kind AIServices --sku S0 --location eastus2
+   az resource update --subscription <subscription> \
+     --resource-group <resource-group> --name <resource-name> \
+     --resource-type Microsoft.CognitiveServices/accounts --set properties.disableLocalAuth=true
+   ```
+4. Deploy the model. The project uses `gpt-5.4-nano`, version `2026-03-17`, Global Standard (it retires on 2027-09-21):
+   ```sh
+   az cognitiveservices account deployment create --subscription <subscription> \
+     --resource-group <resource-group> --name <resource-name> \
+     --deployment-name gpt-5.4-nano --model-name gpt-5.4-nano --model-version 2026-03-17 \
+     --model-format OpenAI --sku-name GlobalStandard --sku-capacity 250
+   ```
+5. Give yourself the **Cognitive Services OpenAI User** role on the resource. Owner of the subscription isn't enough: it has no data actions, so calls are refused with 401 until this role is added. If your tenant forbids directory (Graph) lookups, assign the role by your object id, which is the `oid` claim of your access token:
+   ```sh
+   az account get-access-token --subscription <subscription> --query accessToken -o tsv | python3 -c \
+     "import base64,json,sys; p=sys.stdin.read().split('.')[1]; print(json.loads(base64.urlsafe_b64decode(p + '=' * (-len(p) % 4)))['oid'])"
+   az role assignment create --subscription <subscription> \
+     --role "Cognitive Services OpenAI User" --assignee-object-id <object-id> \
+     --assignee-principal-type User \
+     --scope "$(az cognitiveservices account show --subscription <subscription> \
+       --resource-group <resource-group> --name <resource-name> --query id -o tsv)"
+   ```
+   **A new role takes a few minutes to work** (about 6 when this was first set up). Until then, calls get 401 `PermissionDenied`.
+6. Tell the app where the model is, for example in your shell profile. Only the CLI reads these:
+   ```sh
+   export BTL_FOUNDRY_ENDPOINT=https://<resource-name>.openai.azure.com/
+   export BTL_FOUNDRY_DEPLOYMENT=gpt-5.4-nano
+   export BTL_FOUNDRY_TENANT=<tenant-id>
+   ```
+   The tenant is always named, because `az login` may default to a different one.
+7. Check the model answers, from `backend/`:
+   ```sh
+   uv run btl tutor-ping
+   ```
+   It prints the deployment, how long the call took and the tokens used. A first call takes a second or two.
+
+Optional: connect the resource to an Azure AI Foundry hub project (with Entra ID) to try prompts in its playground. The app doesn't use the hub; it calls the resource's endpoint directly. A small budget alert on the resource group is also worth setting.
+
 ## Editor (VS Code)
 
 The repo includes workspace settings in `.vscode/`. Open the repo root as the workspace.

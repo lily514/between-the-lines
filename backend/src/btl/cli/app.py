@@ -1,6 +1,7 @@
 """The `btl` command and its subcommands."""
 
 import json
+import os
 import time
 from collections import Counter
 from collections.abc import Sequence
@@ -76,6 +77,8 @@ from btl.sim.shape import FOUR_FOUR_TWO
 from btl.store.base import Stored, check_viewer_id
 from btl.store.json_files import JsonLearnerStore
 from btl.store.memory import MemoryLearnerStore
+from btl.tutor.azure import AzureClient, FoundrySettings
+from btl.tutor.model import ModelError, ModelRequest
 from btl.tutor.templates import TemplateTutor
 from btl.value.xt import ThreatModel, fit_on_simulated_matches, rate_match
 
@@ -596,6 +599,50 @@ def serve(
     api = create_app(lambda: course, JsonLearnerStore(learners), _now, page)
     console.print(f"Serving on http://{host}:{port} (API under /api). Ctrl+C stops it.")
     uvicorn.run(api, host=host, port=port, log_level="warning")
+
+
+# Where the AI Tutor's model is; docs/setup.md says how to find each value.
+FOUNDRY_VARIABLES = ("BTL_FOUNDRY_ENDPOINT", "BTL_FOUNDRY_DEPLOYMENT", "BTL_FOUNDRY_TENANT")
+PING = ModelRequest(
+    instructions="You are checking a connection. Reply in JSON.",
+    prompt='Set "reply" to the word ready.',
+    schema_name="ping",
+    schema={
+        "type": "object",
+        "properties": {"reply": {"type": "string"}},
+        "required": ["reply"],
+        "additionalProperties": False,
+    },
+)
+
+
+def _foundry_settings() -> FoundrySettings:
+    missing = [name for name in FOUNDRY_VARIABLES if not os.environ.get(name)]
+    if missing:
+        console.print(
+            f"Set {', '.join(missing)} to use the AI Tutor; docs/setup.md says how to find them."
+        )
+        raise typer.Exit(1)
+    endpoint, deployment, tenant = (os.environ[name] for name in FOUNDRY_VARIABLES)
+    return FoundrySettings(endpoint, deployment, tenant)
+
+
+@app.command(name="tutor-ping")
+def tutor_ping() -> None:
+    """Check that the AI Tutor's model answers: one small call, with its time and tokens.
+
+    It signs in with your `az login`, in the tenant BTL_FOUNDRY_TENANT names.
+    """
+    settings = _foundry_settings()
+    try:
+        reply = AzureClient(settings).complete(PING)
+    except ModelError as error:
+        console.print(f"No reply from {settings.deployment}: {error}")
+        raise typer.Exit(1) from None
+    console.print(
+        f"{settings.deployment} ({reply.model}) answered in {reply.seconds:.2f} s, "
+        f"with {reply.input_tokens} tokens in and {reply.output_tokens} out: {reply.text}"
+    )
 
 
 @app.command()

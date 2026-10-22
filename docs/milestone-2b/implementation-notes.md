@@ -109,3 +109,22 @@ Where implementation diverged from [plan.md](plan.md), or something surprising w
 **Checked in the browser** (`btl serve --tutor foundry` with `gpt-5.4-nano`, headless Chrome at 390 px): a new viewer picked a team, saw the team sheet and kicked off. The restart question was the model's ("Play pauses at 02:02. The ball has gone over the goal line Hexham Anchors defend and was last touched by Alnwick Weavers. What restart happens now?"), and the same after a reload. The feedback fell back to the template, and the source line said "worded by template (fallback: slots)". No console errors.
 **Why:** the plan's design held.
 **Affects:** Lily's hand check with `--tutor foundry`. T7 measures the pass rates properly.
+
+## T7 — Evaluation (2026-10-22)
+**Plan said:** `btl tutor-eval --seeds N` runs packs across concepts × kinds of question × levels × delivery × right and wrong through the real model, and prints the first-try, repaired and fallback shares per check, latency, tokens and an estimated cost. Prompt changes bump `PROMPT_VERSION`. Replies are recorded to the fixture. Lily hand-reviews 20 samples. Results go in `tutor-evaluation.md`.
+**We did:** as planned, with these choices and one change to how replies are checked:
+- **Packs come from `learn/samples.py`:** the course's own matches, at most *n* per kind of question, level and delivery (`--per-kind`).
+- **The report** (`tutor/evaluation.py`) gives pass rates overall, by concept and by kind of question, the checks failed on the first try, and the time and tokens. A cost needs `--price-in` and `--price-out`, since the price isn't something the code can know.
+- **`--samples`** writes the review sheet, and `--record` and `--replay` save and replay real replies (`RecordingClient`, `ReplayClient`, keyed by a hash of the request). Packs are worded four at a time (`--workers`).
+- **Values written out in full are turned back into their slots before checking** (`slots.slotify`). This changes the plan's "the model writes slots". In every evaluation the commonest failure was the model copying a value ("00:32", "#10 Chinedu Trankwo") instead of writing its slot, and telling it not to didn't stop it.
+
+  The guarantee stays: the words shown are the same, and every number and name in them is word for word a pack fact. Only facts the text may use are converted, so an outcome copied into a question is still rejected. Only values with a digit or a capital are converted. On a tie, `{answer}` and `{chosen}` win, then (in feedback) the outcome facts.
+- **Mix-ups are numbered from 1 in the prompt,** and converted back to the pack's index. The model counted from 1 when they started at 0.
+- **The feedback prompt includes the template's feedback** as a plain version, as the question prompt already included the template's question.
+- **`names` recognises a plural possessive** ("Anchors’").
+
+**Results:** prompt versions 1 to 3 went from 40% to 80% passing first time, and from 70% to 94% model-worded after repair. Call times were 1.8 s median and 2.6 s at the 95th percentile. The model-worded share misses the 95% target by one point; fouls feedback is the weakest, at 88%. "Why booked" questions didn't occur in the sample. Details are in `tutor-evaluation.md`.
+**The fixture** (`tests/fixtures/tutor-replies.json`, 104 replies) was recorded with the tests' own threat model, so the tests can rebuild the same prompts without the gitignored model in `data/`.
+**Why:** the evaluation showed where the model failed; each change fixed the largest remaining cause.
+**Hand review:** Lily scanned the twenty samples and judged them accurate enough for the prototype, with nothing the Verifier accepted that was wrong about the match. This was a scan rather than a mark per sample, so the plan's target ("no accepted text judged wrong") is met on that lighter review. Some wording is clumsy without being wrong.
+**Affects:** T9 (the README's honest limits gain the evaluation's numbers, the clumsy wording, and what the checks can't catch).

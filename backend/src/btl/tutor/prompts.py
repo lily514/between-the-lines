@@ -17,8 +17,9 @@ from dataclasses import dataclass
 from btl.learn.evidence import EvidencePack, Fact, QuestionView, Timing
 from btl.learn.grader import Grade
 from btl.learn.questions import Asks
+from btl.tutor.base import TutorFeedback
 from btl.tutor.model import JsonSchema, ModelRequest
-from btl.tutor.slots import question_values
+from btl.tutor.slots import feedback_values, question_values
 from btl.tutor.verifier import (
     MAX_EXPLANATION_WORDS,
     MAX_QUESTION_WORDS,
@@ -26,7 +27,7 @@ from btl.tutor.verifier import (
     Failure,
 )
 
-PROMPT_VERSION = 1
+PROMPT_VERSION = 3
 LEVEL_NAMES = {1: "beginner", 2: "intermediate", 3: "analyst"}
 
 INSTRUCTIONS = """\
@@ -37,6 +38,9 @@ Rules for everything you write:
 - Every number, club, player, time and place comes from the facts you are given, written as its \
 slot in curly braces, such as {player} or {answer.threat_added}. Never write a digit, a number \
 word (two, half, second, dozen) or a name yourself.
+- Clock times (such as 00:32), shirt numbers (such as #10), scores and measurements are numbers \
+too: use the slot that holds them, such as {occurred_at} or {player}. Never copy a value you \
+were shown into your text.
 - Write each fact only as its slot. Its value is filled in for you, so never also write the \
 value, in brackets or otherwise, and never add a sign or unit the value already has: write \
 "{threat_added}", not "+{threat_added}" or "{threat_added} (+0.1%)". The values are shown only \
@@ -115,9 +119,16 @@ def question_request(view: QuestionView, plain: str, repair: Repair | None = Non
 
 
 def feedback_request(
-    pack: EvidencePack, grade: Grade, repair: Repair | None = None
+    pack: EvidencePack, grade: Grade, plain: TutorFeedback, repair: Repair | None = None
 ) -> ModelRequest:
-    """The request for the feedback after an answer, from the whole pack."""
+    """The request for the feedback after an answer, from the whole pack.
+
+    Args:
+        pack: Everything about the question.
+        grade: The viewer's answer, graded.
+        plain: The template's feedback, which passes every check, as a starting point.
+        repair: The first try and why it failed, for a second one.
+    """
     right = next(option for option in pack.options if option.correct)
     picked = next((option for option in pack.options if option.key == grade.chosen), None)
     level = LEVEL_NAMES[pack.level]
@@ -143,31 +154,30 @@ def feedback_request(
         explanation,
         f"What the viewer should take away: {pack.concept.objective}",
         "",
+        "A plain version, which follows every rule:",
+        f"Explanation: {plain.explanation}",
+        f"Takeaway: {plain.takeaway}",
+        "Write a clearer, more natural version for this viewer. Keep {answer} and the outcome "
+        "slots the plain version uses.",
+        "",
         "Facts known before answering:",
         *_fact_lines({**_shown(pack.context), **_timing(pack.timing)}),
         "Facts that answer the question (outcome facts):",
         *_fact_lines(_shown(pack.outcome)),
-        "Write outcome facts as listed, with nothing in front: {restart_team}, not "
-        "{answer.restart_team}.",
+        "Write outcome facts as listed, with nothing in front of the name.",
         f"{{answer}} = {right.label} (the right option)",
         *([f"{{chosen}} = {picked.label} (the viewer's pick)"] if picked is not None else []),
-        "The options and their own facts. The right option's facts can also be written "
-        "{answer.name}, and the viewer's pick's {chosen.name}:",
-        *(
-            line
-            for option in pack.options
-            for line in _option_lines(option.key, option.label, option.neutral, option.outcome)
-        ),
+        *_option_section(pack),
+        *_sentence_note(feedback_values(pack, grade.chosen)),
         "",
         "Common mix-ups for this concept, by number:",
-        *(f"{index}. {text}" for index, text in enumerate(pack.concept.misconceptions)),
+        *(f"{index}. {text}" for index, text in enumerate(pack.concept.misconceptions, start=1)),
         "",
         "Rules for the feedback:",
         "- The verdict has already been shown, so never say the answer was right or wrong "
         '(no "correct", "wrong", "well done", "not quite").',
-        "- The explanation must contain {answer} itself, or one of the right option's facts as "
-        '{answer.name}, and at least one outcome fact. For example: "The answer was {answer}: '
-        '..."',
+        "- The explanation must contain {answer} itself, or one of the right option's own "
+        "facts, and at least one outcome fact.",
         *(
             ["- Compare the right pass with the viewer's, citing a {chosen.*} fact."]
             if pack.asks is Asks.WHERE_TO_PASS and not grade.correct
@@ -205,11 +215,38 @@ def _request(
 def _when(timing: Timing) -> str:
     if timing.delivery == "live":
         return "It is asked live, the moment it happens; play is paused on it."
-    place = f"a stoppage for a {timing.restart}" if timing.restart else timing.delivered_phase.value
+    place = "a stoppage for a {restart}" if timing.restart else timing.delivered_phase.value
     return (
         f"It is asked later, at {place}, about a moment that happened at {{occurred_at}}. "
         "Say first where play is and when the moment happened."
     )
+
+
+def _option_section(pack: EvidencePack) -> list[str]:
+    own = [name for option in pack.options for name in {**option.neutral, **option.outcome}]
+    if not own:
+        return ["The options have no facts of their own: {answer} and {chosen} are their labels."]
+    example = own[0]
+    return [
+        "The options and their own facts. The right option's facts can also be written with "
+        f"\"answer.\" in front, such as {{answer.{example}}}, and the viewer's pick's with "
+        f'"chosen." in front, such as {{chosen.{example}}}:',
+        *(
+            line
+            for option in pack.options
+            for line in _option_lines(option.key, option.label, option.neutral, option.outcome)
+        ),
+    ]
+
+
+def _sentence_note(values: Mapping[str, str]) -> list[str]:
+    sentences = [f"{{{name}}}" for name, value in values.items() if _sentence(value)]
+    if not sentences:
+        return []
+    return [
+        f"These facts are whole sentences: {', '.join(sentences)}. Use each on its own, never "
+        "inside another sentence."
+    ]
 
 
 def _option_lines(
@@ -220,11 +257,7 @@ def _option_lines(
 
 
 def _fact_lines(values: Mapping[str, str]) -> list[str]:
-    return [
-        f"{{{name}}} = {value}"
-        + (" (a whole sentence: use it on its own)" if _sentence(value) else "")
-        for name, value in values.items()
-    ] or ["(none)"]
+    return [f"{{{name}}} = {value}" for name, value in values.items()] or ["(none)"]
 
 
 def _sentence(value: str) -> bool:

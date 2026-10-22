@@ -8,6 +8,7 @@ from typer.testing import CliRunner
 
 from btl.cli import app as cli
 from btl.tutor.azure import FoundrySettings
+from btl.tutor.prompts import PROMPT_VERSION
 from tests.cli.test_learn import saved_model
 from tests.fixtures.tutor import ByKind
 
@@ -59,7 +60,9 @@ def test_learn_with_the_model_says_who_worded_each_feedback_and_logs_every_call(
     lines = (tmp_path / "tutor-log.jsonl").read_text().splitlines()
     records = [json.loads(line) for line in lines]
     assert {record["kind"] for record in records} == {"question", "feedback"}
-    assert all(record["prompt_version"] == 1 and record["logged_at"] for record in records)
+    assert all(
+        record["prompt_version"] == PROMPT_VERSION and record["logged_at"] for record in records
+    )
 
 
 def test_learn_with_the_model_needs_its_settings(

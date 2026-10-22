@@ -200,7 +200,7 @@ def _names(text: str, values: Mapping[str, str]) -> list[Failure]:
     for sentence in SENTENCE_END.split(readable.strip()):
         words = WORD.findall(sentence)
         for word in words[1:]:
-            base = re.sub(r"['\u2019]s$", "", word)
+            base = re.sub(r"['\u2019]s?$", "", word)
             # A lone capital letter names an option; the hint check deals with that.
             if len(base) == 1 or not base[0].isupper() or base in ALLOWED_NAMES:
                 continue

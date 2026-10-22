@@ -54,7 +54,12 @@ def test_a_question_prompt_holds_no_outcome_before_the_viewer_answers(seed: int)
 
 def test_no_prompt_can_carry_anything_about_the_viewer() -> None:
     assert list(inspect.signature(question_request).parameters) == ["view", "plain", "repair"]
-    assert list(inspect.signature(feedback_request).parameters) == ["pack", "grade", "repair"]
+    assert list(inspect.signature(feedback_request).parameters) == [
+        "pack",
+        "grade",
+        "plain",
+        "repair",
+    ]
 
 
 def test_a_question_prompt_lists_its_facts_as_slots_and_its_options_to_avoid() -> None:
@@ -82,17 +87,32 @@ def test_a_feedback_prompt_has_the_whole_pack_and_the_viewer_s_pick(correct: boo
     option = next(o for o in pack.options if o.correct is correct)
     grade = Grade(correct=correct, chosen=option.key)
 
-    request = feedback_request(pack, grade)
+    plain = TUTOR.feedback(pack, grade)
+
+    request = feedback_request(pack, grade, plain)
 
     assert (request.schema_name, request.schema) == ("feedback", FEEDBACK_SCHEMA)
     values = feedback_values(pack, grade.chosen)
     for name in [*pack.outcome, *pack.context]:
         assert f"{{{name}}} = {values[name]}" in request.prompt
     assert all(
-        f"{i}. {text}" in request.prompt for i, text in enumerate(pack.concept.misconceptions)
+        f"{i}. {text}" in request.prompt
+        for i, text in enumerate(pack.concept.misconceptions, start=1)
     )
     assert ("The viewer picked it." in request.prompt) is correct
     assert ("citing a {chosen.*} fact" in request.prompt) is not correct
+    assert f"Explanation: {plain.explanation}" in request.prompt
+    assert "such as {answer.target}" in request.prompt or "such as {answer." in request.prompt
+
+
+def test_a_feedback_prompt_says_which_facts_are_whole_sentences() -> None:
+    pack = first_of(Asks.AFTER_THE_FOUL)
+    grade = Grade(correct=True, chosen=pack.correct_key)
+
+    prompt = feedback_request(pack, grade, TUTOR.feedback(pack, grade)).prompt
+
+    assert "These facts are whole sentences: " in prompt and "{foul_outcome}" in prompt
+    assert "no facts of their own" in prompt
 
 
 def test_a_repair_shows_the_last_reply_and_every_failed_check() -> None:

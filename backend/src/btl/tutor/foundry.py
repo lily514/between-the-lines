@@ -13,6 +13,7 @@ from typing import cast
 
 from btl.learn.evidence import EvidencePack, QuestionView
 from btl.learn.grader import Grade
+from btl.tutor.base import TutorFeedback
 from btl.tutor.model import ModelClient, ModelError, ModelReply, ModelRequest
 from btl.tutor.prompts import Repair, feedback_request, question_request
 from btl.tutor.verifier import FeedbackText
@@ -60,23 +61,30 @@ class FoundryTutor:
         self,
         pack: EvidencePack,
         grade: Grade,
+        plain: TutorFeedback,
         repair: Repair | None = None,
         timeout: float | None = None,
     ) -> WordedFeedback:
-        """The model's feedback after an answer; ``timeout`` (seconds) overrides the default.
+        """The model's feedback after an answer, starting from ``plain`` (the template's).
+
+        ``timeout`` (seconds) overrides the default.
 
         Raises:
             ModelError: If the call fails or the reply isn't the feedback's JSON.
         """
-        reply = self.client.complete(_within(feedback_request(pack, grade, repair), timeout))
+        request = feedback_request(pack, grade, plain, repair)
+        reply = self.client.complete(_within(request, timeout))
         fields = _fields(reply)
         misconception = fields.get("misconception")
         if misconception is not None and (
             not isinstance(misconception, int) or isinstance(misconception, bool)
         ):
             raise ModelError(f"misconception should be a number or null, not {misconception!r}")
+        # The prompt numbers the mix-ups from 1; the pack counts them from 0.
         feedback = FeedbackText(
-            _text(fields, "explanation"), _text(fields, "takeaway"), misconception
+            _text(fields, "explanation"),
+            _text(fields, "takeaway"),
+            None if misconception is None else misconception - 1,
         )
         return WordedFeedback(feedback, reply)
 

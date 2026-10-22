@@ -46,13 +46,16 @@ from btl.io import (
     MatchInfo,
     append_json_line,
     load_match,
+    load_replies,
     load_threat_model,
     save_match,
+    save_replies,
     save_threat_model,
     saved_match_directories,
 )
 from btl.league.league import Club, League, generate_league, season_fixtures
 from btl.learn.learner import MATCHES_PER_SESSION
+from btl.learn.samples import sample_packs
 from btl.learn.session import (
     LEAGUE_SEED,
     Asked,
@@ -84,8 +87,10 @@ from btl.store.memory import MemoryLearnerStore
 from btl.tutor.azure import AzureClient, FoundrySettings
 from btl.tutor.base import Tutor
 from btl.tutor.cached import CachedTutor
+from btl.tutor.evaluation import evaluate, report, review_sheet
 from btl.tutor.foundry import FoundryTutor
-from btl.tutor.model import ModelError, ModelRequest
+from btl.tutor.model import ModelClient, ModelError, ModelRequest, RecordingClient, ReplayClient
+from btl.tutor.prompts import PROMPT_VERSION
 from btl.tutor.templates import TemplateTutor
 from btl.tutor.verified import CheckRecord, VerifiedTutor
 from btl.value.xt import ThreatModel, fit_on_simulated_matches, rate_match
@@ -700,6 +705,71 @@ def tutor_ping() -> None:
         f"{settings.deployment} ({reply.model}) answered in {reply.seconds:.2f} s, "
         f"with {reply.input_tokens} tokens in and {reply.output_tokens} out: {reply.text}"
     )
+
+
+@app.command(name="tutor-eval")
+def tutor_eval(
+    seeds: Annotated[
+        int, typer.Option(help="How many viewers' sessions (seeds 0 …) to sample.")
+    ] = 2,
+    per_kind: Annotated[
+        int, typer.Option(help="Packs kept for each kind of question, level and delivery.")
+    ] = 2,
+    workers: Annotated[int, typer.Option(help="Packs worded at the same time.")] = 4,
+    model: ModelPath = DEFAULT_MODEL,
+    report_path: Annotated[
+        Path | None, typer.Option("--report", help="Also write the report to this file.")
+    ] = None,
+    samples: Annotated[
+        Path | None, typer.Option(help="Write samples for a hand review to this file.")
+    ] = None,
+    record: Annotated[
+        Path | None, typer.Option(help="Save every reply here, for replaying in tests.")
+    ] = None,
+    replay: Annotated[
+        Path | None, typer.Option(help="Use replies saved with --record instead of the model.")
+    ] = None,
+    price_in: Annotated[
+        float | None, typer.Option(help="US dollars per million input tokens, for a cost.")
+    ] = None,
+    price_out: Annotated[
+        float | None, typer.Option(help="US dollars per million output tokens, for a cost.")
+    ] = None,
+) -> None:
+    """Measure the AI Tutor: how often the model's words pass, are repaired, or fall back.
+
+    It words each sampled question, and its feedback after a right and a wrong pick, through the
+    model and the Verifier, and prints pass rates, failed checks, time and tokens.
+    """
+    course = Course(_threat_model_or_fit(model), TemplateTutor())
+    if replay is not None:
+        version, model_name, replies = load_replies(replay)
+        if version != PROMPT_VERSION:
+            console.print(
+                f"{replay} was recorded with prompt version {version}; this is {PROMPT_VERSION}."
+            )
+            raise typer.Exit(1)
+        client: ModelClient = ReplayClient(replies, model_name)
+    else:
+        model_name = _foundry_settings().deployment
+        client = AzureClient(_foundry_settings())
+    recording = RecordingClient(client) if record is not None else None
+    with console.status("Choosing questions…"):
+        packs = sample_packs(course, range(seeds), per_kind)
+    with console.status(f"Wording {len(packs)} questions and their feedback…"):
+        words = evaluate(FoundryTutor(recording or client), TemplateTutor(), packs, workers)
+    text = report(words, PROMPT_VERSION, model_name, price_in, price_out)
+    typer.echo(text)
+    if report_path is not None:
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+        report_path.write_text(text, encoding="utf-8")
+    if samples is not None:
+        samples.parent.mkdir(parents=True, exist_ok=True)
+        samples.write_text(review_sheet(words), encoding="utf-8")
+        console.print(f"Wrote samples for review to {samples}.")
+    if recording is not None and record is not None:
+        save_replies(record, PROMPT_VERSION, model_name, recording.replies)
+        console.print(f"Saved {len(recording.replies)} replies to {record}.")
 
 
 @app.command()

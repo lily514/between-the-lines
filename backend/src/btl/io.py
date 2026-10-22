@@ -171,6 +171,23 @@ def append_json_line(path: Path, record: Mapping[str, object]) -> None:
         log.write(json.dumps(record, ensure_ascii=False) + "\n")
 
 
+def save_replies(path: Path, prompt_version: int, model: str, replies: Mapping[str, str]) -> None:
+    """Save a model's recorded replies, by request key, for replaying in tests."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    content = {
+        "prompt_version": prompt_version,
+        "model": model,
+        "replies": dict(sorted(replies.items())),
+    }
+    path.write_text(json.dumps(content, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
+def load_replies(path: Path) -> tuple[int, str, dict[str, str]]:
+    """Load replies saved by `save_replies`: the prompt version, the model, and the replies."""
+    content = json.loads(path.read_text(encoding="utf-8"))
+    return content["prompt_version"], content["model"], dict(content["replies"])
+
+
 def load_threat_model(path: Path) -> ThreatModel:
     """Load a threat model saved by `save_threat_model`.
 

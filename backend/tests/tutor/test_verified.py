@@ -30,7 +30,8 @@ GOOD_EXPLANATION = (
 CONFIRM = "The pass to {answer.target} went through {answer.lines_broken} lines."
 
 
-def feedback_reply(explanation: str = GOOD_EXPLANATION, misconception: int | None = 0) -> str:
+def feedback_reply(explanation: str = GOOD_EXPLANATION, misconception: int | None = 1) -> str:
+    """The model's JSON reply; ``misconception`` counts from 1, as the prompt numbers them."""
     return json.dumps(
         {
             "explanation": explanation,
@@ -131,7 +132,7 @@ def test_no_repair_is_tried_once_the_budget_is_spent() -> None:
 
 def test_feedback_that_passes_names_the_model_and_its_mix_up() -> None:
     grade = wrong_grade()
-    verified, _, _ = tutor(feedback_reply(misconception=1))
+    verified, _, _ = tutor(feedback_reply(misconception=2))
 
     feedback = verified.feedback(PACK, grade)
 
@@ -191,3 +192,11 @@ def test_a_bad_mix_up_pick_is_sent_back_for_repair(
     assert records[0].reasons == ("misconception",)
     assert "- misconception:" in fake.requests[1].prompt
     assert feedback.source == "fake-model (repaired)" and feedback.misconception is None
+
+
+def test_a_value_written_out_is_turned_back_into_its_slot_before_checking() -> None:
+    player = VIEW.context["player"].display
+    verified, _, records = tutor(json.dumps({"text": f"{player} is on the ball. Where now?"}))
+
+    assert verified.question(VIEW).text == "{player} is on the ball. Where now?"
+    assert records[0].passed

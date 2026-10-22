@@ -19,6 +19,7 @@ from btl.tutor.base import Tutor, TutorFeedback, TutorQuestion
 from btl.tutor.foundry import FoundryTutor
 from btl.tutor.model import ModelError, ModelReply
 from btl.tutor.prompts import PROMPT_VERSION, Repair
+from btl.tutor.slots import feedback_values, question_values, slotify
 from btl.tutor.verifier import Check, FeedbackText, verify_feedback, verify_question
 
 # Seconds for one question or feedback, repair included.
@@ -80,15 +81,17 @@ class VerifiedTutor:
             except ModelError as error:
                 self._failed("question", view.pack_id, attempt, error)
                 break
-            check = verify_question(worded.text, view)
+            text = slotify(worded.text, question_values(view))
+            check = verify_question(text, view)
             self._record("question", view.pack_id, attempt, check, worded.reply)
             if check.passed:
-                return TutorQuestion(worded.text)
+                return TutorQuestion(text)
             repair = Repair(worded.reply.text, check.failures)
         return plain
 
     def feedback(self, pack: EvidencePack, grade: Grade) -> TutorFeedback:
         """The model's feedback if it passes, else the fallback's, labelled with who wrote it."""
+        plain = self.fallback.feedback(pack, grade)
         started = self.clock()
         repair: Repair | None = None
         reasons: tuple[str, ...] = ("no reply",)
@@ -97,24 +100,30 @@ class VerifiedTutor:
             if attempt == 2 and timeout < MIN_REPAIR_SECONDS:
                 break
             try:
-                worded = self.primary.word_feedback(pack, grade, repair, timeout)
+                worded = self.primary.word_feedback(pack, grade, plain, repair, timeout)
             except ModelError as error:
                 self._failed("feedback", pack.pack_id, attempt, error)
                 reasons = ("no reply",)
                 break
-            check = verify_feedback(worded.feedback, pack, grade)
+            values = feedback_values(pack, grade.chosen)
+            outcome = set(pack.outcome)
+            text = FeedbackText(
+                slotify(worded.feedback.explanation, values, outcome),
+                slotify(worded.feedback.takeaway, values, outcome),
+                worded.feedback.misconception,
+            )
+            check = verify_feedback(text, pack, grade)
             self._record("feedback", pack.pack_id, attempt, check, worded.reply)
             if check.passed:
                 source = worded.reply.model + (" (repaired)" if attempt == 2 else "")
-                return _feedback(worded.feedback, pack, source)
+                return _feedback(text, pack, source)
             repair = Repair(worded.reply.text, check.failures)
             reasons = check.reasons
-        fallen_back = self.fallback.feedback(pack, grade)
         return TutorFeedback(
-            explanation=fallen_back.explanation,
-            takeaway=fallen_back.takeaway,
+            explanation=plain.explanation,
+            takeaway=plain.takeaway,
             source=f"{TEMPLATE} (fallback: {', '.join(reasons)})",
-            misconception=fallen_back.misconception,
+            misconception=plain.misconception,
         )
 
     def _left(self, started: float) -> float:

@@ -91,3 +91,21 @@ Where implementation diverged from [plan.md](plan.md), or something surprising w
 
 **Why:** the plan left these details open.
 **Affects:** T6 reuses `ByKind`, and builds the server's Tutor the same way, wrapped in `CachedTutor`. T7's evaluation starts from these numbers.
+
+## T6 — Web wiring (2026-10-22)
+**Plan said:** `btl serve --tutor template|foundry`, through `CachedTutor`; with the fake model, a question's text is the same from `/next` and from the `/answers` that follows, the model is called once per question and once per feedback, the API's attempt log equals `btl demo-viewer`'s (also with a club), no question payload holds an outcome, and the page needs no change.
+**We did:** as planned:
+- **`btl serve --tutor foundry`** builds `CachedTutor(VerifiedTutor(…))`, with no spinner (the page has its own waiting state), and logs to `--tutor-log` like the terminal. With `--tutor template` the server keeps the plain template.
+- **Only the waiting question is worded.** A replay passes answered questions without asking the Tutor, so the cache only has to cover the pending question and its feedback.
+- **Tests with the fake model** play the demo viewer's answers through the API, without and with a club:
+  - the stored answers equal the terminal's;
+  - each question is worded once, and each pick's feedback once;
+  - a reload returns the same words;
+  - no question payload carries an outcome.
+
+  A further test shows why the cache is needed: without it, one question is worded three times over a `/next`, a reload and an `/answers`.
+- **The page is unchanged.** It shows the question text it is sent, and the source line ("worded by …") it already had.
+
+**Checked in the browser** (`btl serve --tutor foundry` with `gpt-5.4-nano`, headless Chrome at 390 px): a new viewer picked a team, saw the team sheet and kicked off. The restart question was the model's ("Play pauses at 02:02. The ball has gone over the goal line Hexham Anchors defend and was last touched by Alnwick Weavers. What restart happens now?"), and the same after a reload. The feedback fell back to the template, and the source line said "worded by template (fallback: slots)". No console errors.
+**Why:** the plan's design held.
+**Affects:** Lily's hand check with `--tutor foundry`. T7 measures the pass rates properly.

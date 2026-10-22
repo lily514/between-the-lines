@@ -83,6 +83,7 @@ from btl.store.json_files import JsonLearnerStore
 from btl.store.memory import MemoryLearnerStore
 from btl.tutor.azure import AzureClient, FoundrySettings
 from btl.tutor.base import Tutor
+from btl.tutor.cached import CachedTutor
 from btl.tutor.foundry import FoundryTutor
 from btl.tutor.model import ModelError, ModelRequest
 from btl.tutor.templates import TemplateTutor
@@ -616,12 +617,14 @@ def serve(
     frontend: Annotated[
         Path, typer.Option(help="The built web page, served outside /api if it exists.")
     ] = DEFAULT_FRONTEND,
+    tutor: TutorOption = TutorChoice.TEMPLATE,
+    tutor_log: TutorLogPath = DEFAULT_TUTOR_LOG,
 ) -> None:
     """Serve the learning loop to the web page: the API, and the built page if there is one.
 
     Learner records are the same files `btl learn` uses, so a viewer can carry on in either.
     """
-    course = Course(_threat_model_or_fit(model), TemplateTutor())
+    course = Course(_threat_model_or_fit(model), _server_tutor(tutor, tutor_log))
     page = frontend if (frontend / "index.html").is_file() else None
     if page is None:
         console.print(
@@ -662,13 +665,23 @@ def _foundry_settings() -> FoundrySettings:
 def _tutor(choice: TutorChoice, log: Path) -> Tutor:
     if choice is TutorChoice.TEMPLATE:
         return TemplateTutor()
+    return WaitingTutor(_verified_tutor(log), console)
+
+
+def _server_tutor(choice: TutorChoice, log: Path) -> Tutor:
+    # Each request replays the match, so the server remembers the words it has already shown.
+    if choice is TutorChoice.TEMPLATE:
+        return TemplateTutor()
+    return CachedTutor(_verified_tutor(log))
+
+
+def _verified_tutor(log: Path) -> VerifiedTutor:
     client = AzureClient(_foundry_settings())
 
     def record(check: CheckRecord) -> None:
         append_json_line(log, {"logged_at": _now(), **asdict(check)})
 
-    verified = VerifiedTutor(FoundryTutor(client), TemplateTutor(), record)
-    return WaitingTutor(verified, console)
+    return VerifiedTutor(FoundryTutor(client), TemplateTutor(), record)
 
 
 @app.command(name="tutor-ping")

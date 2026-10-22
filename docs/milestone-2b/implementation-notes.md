@@ -2,6 +2,31 @@
 
 Where implementation diverged from [plan.md](plan.md), or something surprising was learned. One note per occurrence, added in the same commit as the change.
 
+## Summary (2026-10-22)
+
+Milestone 2b is done. With `--tutor foundry`, a model in Azure AI Foundry (`gpt-5.4-nano`) words the questions and feedback, in the terminal and on the page. Plain code, the Verifier, checks every reply against the evidence pack before it is shown. A reply that fails is repaired once with the reasons; then the template is used. Measured on prompt version 5:
+- **First try:** 80% of first replies pass (the target was 80%).
+- **Model-worded:** 92% of shown text is the model's after repair (target 95%): all the questions, and 88% of feedback.
+- **Speed:** a call takes 1.8 s (2.6 s at the 95th percentile).
+- **Hand review:** Lily scanned twenty samples and found them accurate enough for the prototype.
+
+**Biggest changes from the plan**
+- **Values written out are turned back into slots (T7).** The model kept copying values ("00:32", "#10 Chinedu Trankwo") instead of writing slots. Code now turns an exact copy of a fact the text may use back into its slot before checking, so what is shown, and the guarantee behind it, stay the same.
+- **An eleventh check, `echo` (T3).** Live tries showed text the checks accepted but that read badly once filled: a value written beside its own slot, phrases said twice, a whole-sentence fact inside another sentence. The `slots` check also learned to reject stray braces.
+- **The templates now cite the deciding fact (T2).** "The answer was {answer}." is followed by the outcome fact that settles it, because Lily chose to make the templates pass `grounded` rather than exempt them. The fouls takeaway in the concept map was shortened to fit the length check.
+- **The feedback prompt starts from the template's own feedback (T7),** as the question prompt did. With the other prompt changes and the value-to-slot conversion, first-try passes went from 40% to 80%.
+- **The history clause is asked for, not offered (T8).** Offered, the model never used it.
+
+**Cut:** nothing. The `--tutor replay` demo mode was never needed: `tutor-eval --replay` covers replaying, and the tests use `ReplayClient`.
+
+**Carries over**
+- **To Milestone 3:** deployment. The server's word cache and the tutor log live in one process and one file; a deployed server needs them shared or per instance. The Azure settings come from the environment, never the repo.
+- **Prompt work:** fouls feedback falls back most (19% in the full run). A stronger model or another prompt version would likely help; `btl tutor-eval` measures either.
+- **Open points:**
+  - The pass rates vary by a few points from run to run.
+  - "Why booked" questions never came up in the evaluation's samples.
+  - Some of the model's wording, and some history clauses, are clumsy without being wrong.
+
 ## 0 — Plan and CLAUDE.md (2026-10-22)
 **Plan said:** CLAUDE.md's new rule is "No viewer id or name goes in a prompt", and the plan names Lily's Azure tenant, endpoint and subscription.
 **We did:** the rule says "No viewer id, name or club", as the plan's own Decisions section says. The repo went public on 2026-10-22, so the committed plan uses placeholders (`<tenant-id>`, `<resource-name>`, …) for Lily's Azure details, at her request.

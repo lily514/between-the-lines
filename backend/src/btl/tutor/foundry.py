@@ -8,12 +8,12 @@ template. A reply that isn't the JSON asked for is a `ModelError`, like a failed
 
 import json
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import cast
 
 from btl.learn.evidence import EvidencePack, QuestionView
 from btl.learn.grader import Grade
-from btl.tutor.model import ModelClient, ModelError, ModelReply
+from btl.tutor.model import ModelClient, ModelError, ModelReply, ModelRequest
 from btl.tutor.prompts import Repair, feedback_request, question_request
 from btl.tutor.verifier import FeedbackText
 
@@ -41,26 +41,34 @@ class FoundryTutor:
     client: ModelClient
 
     def word_question(
-        self, view: QuestionView, plain: str, repair: Repair | None = None
+        self,
+        view: QuestionView,
+        plain: str,
+        repair: Repair | None = None,
+        timeout: float | None = None,
     ) -> WordedQuestion:
-        """The model's wording of a question.
+        """The model's wording of a question; ``timeout`` (seconds) overrides the default.
 
         Raises:
             ModelError: If the call fails or the reply isn't ``{"text": ...}``.
         """
-        reply = self.client.complete(question_request(view, plain, repair))
+        reply = self.client.complete(_within(question_request(view, plain, repair), timeout))
         fields = _fields(reply)
         return WordedQuestion(_text(fields, "text"), reply)
 
     def word_feedback(
-        self, pack: EvidencePack, grade: Grade, repair: Repair | None = None
+        self,
+        pack: EvidencePack,
+        grade: Grade,
+        repair: Repair | None = None,
+        timeout: float | None = None,
     ) -> WordedFeedback:
-        """The model's feedback after an answer.
+        """The model's feedback after an answer; ``timeout`` (seconds) overrides the default.
 
         Raises:
             ModelError: If the call fails or the reply isn't the feedback's JSON.
         """
-        reply = self.client.complete(feedback_request(pack, grade, repair))
+        reply = self.client.complete(_within(feedback_request(pack, grade, repair), timeout))
         fields = _fields(reply)
         misconception = fields.get("misconception")
         if misconception is not None and (
@@ -71,6 +79,10 @@ class FoundryTutor:
             _text(fields, "explanation"), _text(fields, "takeaway"), misconception
         )
         return WordedFeedback(feedback, reply)
+
+
+def _within(request: ModelRequest, timeout: float | None) -> ModelRequest:
+    return request if timeout is None else replace(request, timeout=timeout)
 
 
 def _fields(reply: ModelReply) -> Mapping[str, object]:

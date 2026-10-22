@@ -59,7 +59,9 @@ def question_reasons(text: str, pack: EvidencePack) -> tuple[str, ...]:
     return verify_question(text, question_view(pack)).reasons
 
 
-def wrong_pass_reasons(explanation: str, takeaway: str = TAKEAWAY, misconception: int | None = 0):
+def wrong_pass_reasons(
+    explanation: str, takeaway: str = TAKEAWAY, misconception: int | None = 0
+) -> tuple[str, ...]:
     pack = pass_pack()
     grade = Grade(correct=False, chosen=worse_pick(pack).key)
     return verify_feedback(FeedbackText(explanation, takeaway, misconception), pack, grade).reasons

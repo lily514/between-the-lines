@@ -59,3 +59,18 @@ Where implementation diverged from [plan.md](plan.md), or something surprising w
 
 **Why:** the plan left the prompts' wording open, and the live tries showed what the model gets wrong.
 **Affects:** T4 (repairs use `Repair`, and `echo` is one of the reasons it can send). T7 (prompt iteration starts from `PROMPT_VERSION` 1). `verifier.md` now describes `echo`.
+
+## T4 — VerifiedTutor and CachedTutor (2026-10-22)
+**Plan said:** `VerifiedTutor(primary, fallback, on_check)`: the model's text if the Verifier passes it, one repair with the failed checks' reasons, then the template; `CALL_BUDGET` 12 s covering the repair; `source` labels; a `CheckRecord` per call. `CachedTutor` by pack, and by pack and pick, least recently used first.
+**We did:** as planned, with these choices:
+- **The repair gets only what is left of the budget,** and isn't tried with less than a second left (`MIN_REPAIR_SECONDS`). `FoundryTutor` now takes a per-call `timeout` for that. The clock is a parameter, so tests control it.
+- **A question has no source field** (`TutorQuestion` is only text), so who worded a question shows only in the `CheckRecord`s. The page and terminal label feedback, as planned.
+- **The fallback's source** lists the last try's failed checks ("template (fallback: slots, bare_number)"), or "no reply" when the call failed, timed out or wasn't the JSON asked for.
+- **A `CheckRecord`** holds the prompt version, kind, pack id, attempt (1, or 2 for the repair), whether it passed, the failed checks, any error, and the model, time and tokens. Writing them to `data/tutor-log.jsonl` is T5's.
+
+**Checked live** (one feedback after a wrong pick for each of six kinds of question, with `gpt-5.4-nano`):
+- **Questions:** all six passed first time, in 1.4–2.5 s.
+- **Feedback:** one passed first time, three passed after the repair, and two fell back to the template (one for `slots` and `bare_number`, one for `grounded`). Feedback took 2.1–4.2 s with the repair, well inside the budget.
+
+**Why:** the plan left these details open.
+**Affects:** T5 and T6 build the Tutor as `VerifiedTutor` (wrapped in `CachedTutor` on the server) and log its records.

@@ -74,3 +74,20 @@ Where implementation diverged from [plan.md](plan.md), or something surprising w
 
 **Why:** the plan left these details open.
 **Affects:** T5 and T6 build the Tutor as `VerifiedTutor` (wrapped in `CachedTutor` on the server) and log its records.
+
+## T5 — Terminal wiring (2026-10-22)
+**Plan said:** `btl learn` and `btl demo-viewer --tutor template|foundry`, on the path 2e built; a spinner while waiting; the source line; the takeaway filled; `data/tutor-log.jsonl`; with the fake model, every shown text passes the Verifier, and the attempt log is identical to the template run's, with and without a club.
+**We did:** as planned, with these choices:
+- **`--tutor foundry`** builds `VerifiedTutor(FoundryTutor(AzureClient(…)), TemplateTutor(), log)`, wrapped in a `WaitingTutor` that shows "Wording the question…" or "Wording the feedback…" while it waits. Without the three `BTL_FOUNDRY_*` settings it stops and says which are missing.
+- **`--tutor-log`** says where the records go (by default `data/tutor-log.jsonl`, under the gitignored `backend/data/`). Each line is a `CheckRecord` with a `logged_at` time from the CLI's clock, appended by `io.append_json_line`.
+- **"Worded by …"** follows the takeaway, in dim text, for every Tutor ("Worded by template." by default).
+- **The session fills the takeaway's slots,** the one change in `learn/`.
+- **The fake model for end-to-end tests** (`tests/fixtures/tutor.py`) words every question the same way, and writes feedback from the first outcome fact in its prompt. Every third feedback, and its repair, gives a verdict instead, so the fallback is used too. A test checks the attempt log is identical with the template and with the fake model, with and without a club. It also checks both the model's words and the template's are shown, and no slot is left unfilled.
+
+**Checked live:** `btl demo-viewer --seed 7 --tutor foundry` made the same picks and moved the bars exactly as the template run did.
+- **Questions:** 15 of 18 passed first time and all 18 after the repair (the three failures were `bare_number`).
+- **Feedback:** 7 of 18 passed first time and 6 more after the repair; 5 fell back to the template. The most common failures were `slots` (8), `echo` (5) and `grounded` (4).
+- **Cost and speed:** 50 calls, median 1.7 s and 95th percentile 2.3 s, with about 44,000 tokens in and 4,600 out for three matches.
+
+**Why:** the plan left these details open.
+**Affects:** T6 reuses `ByKind`, and builds the server's Tutor the same way, wrapped in `CachedTutor`. T7's evaluation starts from these numbers.

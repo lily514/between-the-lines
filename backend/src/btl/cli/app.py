@@ -5,7 +5,9 @@ import os
 import time
 from collections import Counter
 from collections.abc import Sequence
+from dataclasses import asdict
 from datetime import UTC, datetime
+from enum import StrEnum
 from pathlib import Path
 from typing import Annotated
 
@@ -32,6 +34,7 @@ from btl.cli.render import (
 )
 from btl.cli.viewer import (
     TerminalViewer,
+    WaitingTutor,
     progress_bars,
     show_feedback,
     show_match_start,
@@ -41,6 +44,7 @@ from btl.concepts.base import ConceptTag, match_context
 from btl.concepts.registry import detect_all
 from btl.io import (
     MatchInfo,
+    append_json_line,
     load_match,
     load_threat_model,
     save_match,
@@ -78,8 +82,11 @@ from btl.store.base import Stored, check_viewer_id
 from btl.store.json_files import JsonLearnerStore
 from btl.store.memory import MemoryLearnerStore
 from btl.tutor.azure import AzureClient, FoundrySettings
+from btl.tutor.base import Tutor
+from btl.tutor.foundry import FoundryTutor
 from btl.tutor.model import ModelError, ModelRequest
 from btl.tutor.templates import TemplateTutor
+from btl.tutor.verified import CheckRecord, VerifiedTutor
 from btl.value.xt import ThreatModel, fit_on_simulated_matches, rate_match
 
 EXAMPLES = (
@@ -114,6 +121,27 @@ DEFAULT_MATCHES = Path("data/matches")
 DEFAULT_LEARNERS = Path("data/learners")
 DEFAULT_FRONTEND = Path("../frontend/dist")
 DEFAULT_PORT = 8000
+DEFAULT_TUTOR_LOG = Path("data/tutor-log.jsonl")
+
+
+class TutorChoice(StrEnum):
+    """Who words the questions and feedback."""
+
+    TEMPLATE = "template"
+    FOUNDRY = "foundry"
+
+
+TutorOption = Annotated[
+    TutorChoice,
+    typer.Option(
+        "--tutor",
+        help="template: wording written in code. foundry: a model in Azure AI Foundry, checked "
+        "by the Verifier, with the template as fallback (see docs/setup.md).",
+    ),
+]
+TutorLogPath = Annotated[
+    Path, typer.Option("--tutor-log", help="Where --tutor foundry logs every model call.")
+]
 ModelPath = Annotated[
     Path,
     typer.Option(
@@ -488,6 +516,8 @@ def learn(
         str | None,
         typer.Option(help='The team you support, e.g. "HEX"; your matches are its fixtures.'),
     ] = None,
+    tutor: TutorOption = TutorChoice.TEMPLATE,
+    tutor_log: TutorLogPath = DEFAULT_TUTOR_LOG,
 ) -> None:
     """Watch your next match. Play pauses for questions; your answers shape the next ones.
 
@@ -502,7 +532,7 @@ def learn(
     if reset:
         (learners / f"{viewer}.json").unlink(missing_ok=True)
     stored = start_session(store, viewer, seed_for_viewer(viewer) if seed is None else seed)
-    course = Course(_threat_model_or_fit(model), TemplateTutor())
+    course = Course(_threat_model_or_fit(model), _tutor(tutor, tutor_log))
     if club is not None:
         stored = _choose_club(course, store, viewer, club)
     if stored.state.club is not None:
@@ -549,6 +579,8 @@ def _choose_club(course: Course, store: JsonLearnerStore, viewer: str, name: str
 def demo_viewer(
     seed: Annotated[int, typer.Option(help="Which three matches.")] = 7,
     model: ModelPath = DEFAULT_MODEL,
+    tutor: TutorOption = TutorChoice.TEMPLATE,
+    tutor_log: TutorLogPath = DEFAULT_TUTOR_LOG,
 ) -> None:
     """A scripted viewer watches three matches and gets better as they go.
 
@@ -556,7 +588,7 @@ def demo_viewer(
     and all of them in the third. Each question shows why it is asked now, the viewer's
     answer, the feedback, and how the progress bars move.
     """
-    course = Course(_threat_model_or_fit(model), TemplateTutor())
+    course = Course(_threat_model_or_fit(model), _tutor(tutor, tutor_log))
     store = MemoryLearnerStore()
     start_session(store, "demo", seed)
 
@@ -625,6 +657,18 @@ def _foundry_settings() -> FoundrySettings:
         raise typer.Exit(1)
     endpoint, deployment, tenant = (os.environ[name] for name in FOUNDRY_VARIABLES)
     return FoundrySettings(endpoint, deployment, tenant)
+
+
+def _tutor(choice: TutorChoice, log: Path) -> Tutor:
+    if choice is TutorChoice.TEMPLATE:
+        return TemplateTutor()
+    client = AzureClient(_foundry_settings())
+
+    def record(check: CheckRecord) -> None:
+        append_json_line(log, {"logged_at": _now(), **asdict(check)})
+
+    verified = VerifiedTutor(FoundryTutor(client), TemplateTutor(), record)
+    return WaitingTutor(verified, console)
 
 
 @app.command(name="tutor-ping")

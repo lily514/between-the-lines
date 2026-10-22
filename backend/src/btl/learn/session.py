@@ -336,7 +336,7 @@ def watch_match(
                 grade=grade,
                 verdict=grade.verdict,
                 explanation=fill(feedback.explanation, values),
-                takeaway=feedback.takeaway,
+                takeaway=fill(feedback.takeaway, values),
                 source=feedback.source,
                 update=model.explain(update),
                 mastery=bars(),

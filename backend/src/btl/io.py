@@ -1,6 +1,6 @@
 # pyright: basic
 # pandas is only partially typed; see CLAUDE.md on edge modules.
-"""Saving and loading matches and Expected Threat models.
+"""Saving and loading matches and Expected Threat models, and appending to logs.
 
 A match gets one directory, with parquet tables and a JSON summary:
 
@@ -13,9 +13,12 @@ A threat model is one JSON file: the grid, plus the matches and seeds it was fit
 
 The files are a convenience. Any simulated match can be regenerated from the seeds in
 ``meta.json``, and any model refitted from the seeds in its file.
+
+A log is a JSON Lines file: one JSON object per line, appended as things happen.
 """
 
 import json
+from collections.abc import Mapping
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
@@ -159,6 +162,13 @@ def save_threat_model(model: ThreatModel, path: Path) -> None:
         "grid": [list(row) for row in model.grid],
     }
     path.write_text(json.dumps(content, indent=2) + "\n")
+
+
+def append_json_line(path: Path, record: Mapping[str, object]) -> None:
+    """Add one record to a JSON Lines log, creating it and its folder if needed."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as log:
+        log.write(json.dumps(record, ensure_ascii=False) + "\n")
 
 
 def load_threat_model(path: Path) -> ThreatModel:

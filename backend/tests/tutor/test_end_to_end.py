@@ -1,12 +1,23 @@
 """The model's words never change what is learned, and every word shown has been checked."""
 
+from dataclasses import dataclass, field
+
 import pytest
 
+from btl.learn.evidence import EvidencePack, QuestionView
+from btl.learn.grader import Grade
 from btl.learn.learner import MATCHES_PER_SESSION, Attempt
-from btl.learn.session import Course, DemoViewer, choose_club, start_session, watch_match
+from btl.learn.session import (
+    RECENT_ANSWERS,
+    Course,
+    DemoViewer,
+    choose_club,
+    start_session,
+    watch_match,
+)
 from btl.schema.ids import TeamId
 from btl.store.memory import MemoryLearnerStore
-from btl.tutor.base import Tutor
+from btl.tutor.base import NO_HISTORY, History, Tutor, TutorFeedback, TutorQuestion
 from btl.tutor.foundry import FoundryTutor
 from btl.tutor.templates import TemplateTutor
 from btl.tutor.verified import CheckRecord, VerifiedTutor
@@ -51,3 +62,32 @@ def test_the_model_s_words_never_change_what_is_learned(club: TeamId | None) -> 
                 told.takeaway.removeprefix("Watch how ").removesuffix(" played it.") in team_names
             )
     assert all(asked.text != QUESTION and "{" not in asked.text for asked in viewer.asked)
+
+
+@dataclass
+class Listening:
+    """The template Tutor, noting the history each feedback is given."""
+
+    heard: list[tuple[str, History]] = field(default_factory=list[tuple[str, History]])
+
+    def question(self, view: QuestionView) -> TutorQuestion:
+        return TemplateTutor().question(view)
+
+    def feedback(
+        self, pack: EvidencePack, grade: Grade, history: History = NO_HISTORY
+    ) -> TutorFeedback:
+        self.heard.append((pack.concept.key, history))
+        return TemplateTutor().feedback(pack, grade, history)
+
+
+def test_each_feedback_hears_the_viewer_s_earlier_answers_on_its_concept() -> None:
+    tutor = Listening()
+
+    attempts, _ = watch_three(tutor, None)
+
+    assert len(tutor.heard) == len(attempts)
+    for index, (concept, history) in enumerate(tutor.heard):
+        earlier = [a.correct for a in attempts[:index] if a.concept == concept]
+        assert history.recent == tuple(earlier[-RECENT_ANSWERS:])
+        wrong = [a.asks.value for a in attempts[:index] if a.concept == concept and not a.correct]
+        assert history.last_wrong == (wrong[-1] if wrong else None)

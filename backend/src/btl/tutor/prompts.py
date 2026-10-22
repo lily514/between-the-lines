@@ -17,7 +17,7 @@ from dataclasses import dataclass
 from btl.learn.evidence import EvidencePack, Fact, QuestionView, Timing
 from btl.learn.grader import Grade
 from btl.learn.questions import Asks
-from btl.tutor.base import TutorFeedback
+from btl.tutor.base import NO_HISTORY, History, TutorFeedback
 from btl.tutor.model import JsonSchema, ModelRequest
 from btl.tutor.slots import feedback_values, question_values
 from btl.tutor.verifier import (
@@ -27,7 +27,7 @@ from btl.tutor.verifier import (
     Failure,
 )
 
-PROMPT_VERSION = 3
+PROMPT_VERSION = 5
 LEVEL_NAMES = {1: "beginner", 2: "intermediate", 3: "analyst"}
 
 INSTRUCTIONS = """\
@@ -119,7 +119,11 @@ def question_request(view: QuestionView, plain: str, repair: Repair | None = Non
 
 
 def feedback_request(
-    pack: EvidencePack, grade: Grade, plain: TutorFeedback, repair: Repair | None = None
+    pack: EvidencePack,
+    grade: Grade,
+    plain: TutorFeedback,
+    repair: Repair | None = None,
+    history: History = NO_HISTORY,
 ) -> ModelRequest:
     """The request for the feedback after an answer, from the whole pack.
 
@@ -128,6 +132,7 @@ def feedback_request(
         grade: The viewer's answer, graded.
         plain: The template's feedback, which passes every check, as a starting point.
         repair: The first try and why it failed, for a second one.
+        history: The viewer's recent answers on the concept; no id, no name, no club.
     """
     right = next(option for option in pack.options if option.correct)
     picked = next((option for option in pack.options if option.key == grade.chosen), None)
@@ -170,6 +175,7 @@ def feedback_request(
         *_option_section(pack),
         *_sentence_note(feedback_values(pack, grade.chosen)),
         "",
+        *_history_lines(history),
         "Common mix-ups for this concept, by number:",
         *(f"{index}. {text}" for index, text in enumerate(pack.concept.misconceptions, start=1)),
         "",
@@ -220,6 +226,22 @@ def _when(timing: Timing) -> str:
         f"It is asked later, at {place}, about a moment that happened at {{occurred_at}}. "
         "Say first where play is and when the moment happened."
     )
+
+
+def _history_lines(history: History) -> list[str]:
+    if not history.recent:
+        return []
+    answers = ", ".join("right" if right else "wrong" for right in history.recent)
+    lines = [f"The viewer's recent answers on this concept, oldest first: {answers}."]
+    if history.last_wrong is not None:
+        lines.append(f"Their last wrong answer was to a question asking: {history.last_wrong}.")
+    return [
+        *lines,
+        "Open the explanation with one short, kind clause about these answers, in words only: "
+        'never count them. For example "You\'ve been reading these well lately, but…" or '
+        '"This kind has tripped you up before:".',
+        "",
+    ]
 
 
 def _option_section(pack: EvidencePack) -> list[str]:

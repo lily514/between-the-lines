@@ -13,7 +13,7 @@ from typing import cast
 
 from btl.learn.evidence import EvidencePack, QuestionView
 from btl.learn.grader import Grade
-from btl.tutor.base import TutorFeedback
+from btl.tutor.base import NO_HISTORY, History, TutorFeedback
 from btl.tutor.model import ModelClient, ModelError, ModelReply, ModelRequest
 from btl.tutor.prompts import Repair, feedback_request, question_request
 from btl.tutor.verifier import FeedbackText
@@ -64,6 +64,7 @@ class FoundryTutor:
         plain: TutorFeedback,
         repair: Repair | None = None,
         timeout: float | None = None,
+        history: History = NO_HISTORY,
     ) -> WordedFeedback:
         """The model's feedback after an answer, starting from ``plain`` (the template's).
 
@@ -72,7 +73,7 @@ class FoundryTutor:
         Raises:
             ModelError: If the call fails or the reply isn't the feedback's JSON.
         """
-        request = feedback_request(pack, grade, plain, repair)
+        request = feedback_request(pack, grade, plain, repair, history)
         reply = self.client.complete(_within(request, timeout))
         fields = _fields(reply)
         misconception = fields.get("misconception")

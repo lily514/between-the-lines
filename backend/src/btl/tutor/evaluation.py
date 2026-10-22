@@ -1,10 +1,11 @@
 """Measuring the model's Tutor: how often its words pass, get repaired, or fall back.
 
 `evaluate` asks a `VerifiedTutor` for every pack's question and for its feedback after a right
-and a wrong pick, keeping every try's `CheckRecord`. `report` turns that into tables: pass
-rates overall, by concept and by kind of question, which checks failed, and the time and tokens
-it took. `review_sheet` picks samples of the model's words, beside the template's, for a person
-to judge what no check can: whether they are true, pitched right and natural.
+pick and after a wrong one (which comes after a sample of recent answers, so the prompt's
+history part is measured too), keeping every try's `CheckRecord`. `report` turns that into
+tables: pass rates overall, by concept and by kind of question, which checks failed, and the time
+and tokens it took. `review_sheet` picks samples of the model's words, beside the template's,
+for a person to judge what no check can: whether they are true, pitched right and natural.
 """
 
 import statistics
@@ -16,13 +17,15 @@ from typing import Literal
 
 from btl.learn.evidence import EvidencePack, Fact, question_view
 from btl.learn.grader import Grade
-from btl.tutor.base import Tutor, TutorFeedback
+from btl.tutor.base import NO_HISTORY, History, Tutor, TutorFeedback
 from btl.tutor.foundry import FoundryTutor
 from btl.tutor.slots import feedback_values, fill, question_values
 from btl.tutor.verified import CheckRecord, VerifiedTutor
 from btl.tutor.verifier import CHECKS
 
 Shown = Literal["first try", "repaired", "template"]
+# The recent answers a wrong pick is measured after: right, right, then wrong.
+SAMPLE_RECENT = (True, True, False)
 
 
 @dataclass(frozen=True, slots=True)
@@ -76,7 +79,9 @@ def _word_pack(primary: FoundryTutor, fallback: Tutor, pack: EvidencePack) -> li
         tutor = VerifiedTutor(primary, fallback, records.append)
         grade = Grade(correct=right, chosen=chosen)
         values = feedback_values(pack, chosen)
-        feedback = _filled(tutor.feedback(pack, grade), values)
+        # A wrong pick comes after some history, so the prompt's history part is measured too.
+        history = NO_HISTORY if right else History(SAMPLE_RECENT, pack.asks.value)
+        feedback = _filled(tutor.feedback(pack, grade, history), values)
         template = _filled(fallback.feedback(pack, grade), values)
         results.append(_worded(pack, "feedback", right, records, feedback, template))
     return results

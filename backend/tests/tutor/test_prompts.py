@@ -1,6 +1,7 @@
 import inspect
 import re
 from collections.abc import Mapping
+from dataclasses import fields
 from typing import cast
 
 import pytest
@@ -8,6 +9,7 @@ import pytest
 from btl.learn.evidence import EvidencePack, question_view
 from btl.learn.grader import Grade
 from btl.learn.questions import Asks
+from btl.tutor.base import History
 from btl.tutor.prompts import (
     FEEDBACK_SCHEMA,
     INSTRUCTIONS,
@@ -59,7 +61,24 @@ def test_no_prompt_can_carry_anything_about_the_viewer() -> None:
         "grade",
         "plain",
         "repair",
+        "history",
     ]
+    # The viewer's history is only right or wrong, and what a wrong answer was asked.
+    assert [f.name for f in fields(History)] == ["recent", "last_wrong"]
+
+
+def test_a_feedback_prompt_tells_the_viewer_s_recent_answers_in_words_only() -> None:
+    pack = first_of(Asks.WHERE_TO_PASS)
+    grade = Grade(correct=True, chosen=pack.correct_key)
+    plain = TUTOR.feedback(pack, grade)
+
+    told = feedback_request(pack, grade, plain, history=History((True, False), "lines broken"))
+    untold = feedback_request(pack, grade, plain)
+
+    assert "recent answers on this concept, oldest first: right, wrong." in told.prompt
+    assert "last wrong answer was to a question asking: lines broken." in told.prompt
+    assert "in words only: never count them" in told.prompt
+    assert "recent answers" not in untold.prompt
 
 
 def test_a_question_prompt_lists_its_facts_as_slots_and_its_options_to_avoid() -> None:

@@ -15,7 +15,7 @@ from typing import Literal
 
 from btl.learn.evidence import EvidencePack, QuestionView
 from btl.learn.grader import Grade
-from btl.tutor.base import Tutor, TutorFeedback, TutorQuestion
+from btl.tutor.base import NO_HISTORY, History, Tutor, TutorFeedback, TutorQuestion
 from btl.tutor.foundry import FoundryTutor
 from btl.tutor.model import ModelError, ModelReply
 from btl.tutor.prompts import PROMPT_VERSION, Repair
@@ -89,9 +89,11 @@ class VerifiedTutor:
             repair = Repair(worded.reply.text, check.failures)
         return plain
 
-    def feedback(self, pack: EvidencePack, grade: Grade) -> TutorFeedback:
+    def feedback(
+        self, pack: EvidencePack, grade: Grade, history: History = NO_HISTORY
+    ) -> TutorFeedback:
         """The model's feedback if it passes, else the fallback's, labelled with who wrote it."""
-        plain = self.fallback.feedback(pack, grade)
+        plain = self.fallback.feedback(pack, grade, history)
         started = self.clock()
         repair: Repair | None = None
         reasons: tuple[str, ...] = ("no reply",)
@@ -100,7 +102,7 @@ class VerifiedTutor:
             if attempt == 2 and timeout < MIN_REPAIR_SECONDS:
                 break
             try:
-                worded = self.primary.word_feedback(pack, grade, plain, repair, timeout)
+                worded = self.primary.word_feedback(pack, grade, plain, repair, timeout, history)
             except ModelError as error:
                 self._failed("feedback", pack.pack_id, attempt, error)
                 reasons = ("no reply",)

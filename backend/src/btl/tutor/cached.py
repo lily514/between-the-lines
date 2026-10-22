@@ -2,8 +2,8 @@
 
 The web server keeps no session, so each request replays the viewer's match up to the waiting
 question, and asks the Tutor for its words again. `CachedTutor` answers those replays with the
-words the viewer already saw: a question by its pack, and feedback by its pack and the option
-picked. It never calls a model twice for the same thing.
+words the viewer already saw: a question by its pack, and feedback by its pack, the option
+picked and the viewer's recent answers. It never calls a model twice for the same thing.
 
 Nothing about the viewer is in a prompt, so two viewers who meet the same pack can share its
 words. The cache is bounded, and forgets the least recently used entries first.
@@ -16,7 +16,7 @@ from typing import TypeVar
 
 from btl.learn.evidence import EvidencePack, QuestionView
 from btl.learn.grader import Grade
-from btl.tutor.base import Tutor, TutorFeedback, TutorQuestion
+from btl.tutor.base import NO_HISTORY, History, Tutor, TutorFeedback, TutorQuestion
 
 # Questions and feedback kept, each.
 CACHE_SIZE = 2048
@@ -34,8 +34,10 @@ class CachedTutor:
     _questions: OrderedDict[str, TutorQuestion] = field(
         default_factory=OrderedDict[str, TutorQuestion], init=False, repr=False
     )
-    _feedback: OrderedDict[tuple[str, str | None], TutorFeedback] = field(
-        default_factory=OrderedDict[tuple[str, str | None], TutorFeedback], init=False, repr=False
+    _feedback: OrderedDict[tuple[str, str | None, History], TutorFeedback] = field(
+        default_factory=OrderedDict[tuple[str, str | None, History], TutorFeedback],
+        init=False,
+        repr=False,
     )
 
     def question(self, view: QuestionView) -> TutorQuestion:
@@ -44,12 +46,18 @@ class CachedTutor:
             self._questions, view.pack_id, lambda: self.inner.question(view), self.size
         )
 
-    def feedback(self, pack: EvidencePack, grade: Grade) -> TutorFeedback:
-        """The feedback this pick of this question was first given."""
+    def feedback(
+        self, pack: EvidencePack, grade: Grade, history: History = NO_HISTORY
+    ) -> TutorFeedback:
+        """The feedback this pick of this question was first given, after the same history.
+
+        The history is part of the key: words that mention one viewer's recent answers must
+        never reach a viewer whose answers were different.
+        """
         return _remembered(
             self._feedback,
-            (pack.pack_id, grade.chosen),
-            lambda: self.inner.feedback(pack, grade),
+            (pack.pack_id, grade.chosen, history),
+            lambda: self.inner.feedback(pack, grade, history),
             self.size,
         )
 

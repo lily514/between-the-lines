@@ -128,3 +128,15 @@ Where implementation diverged from [plan.md](plan.md), or something surprising w
 **Why:** the evaluation showed where the model failed; each change fixed the largest remaining cause.
 **Hand review:** Lily scanned the twenty samples and judged them accurate enough for the prototype, with nothing the Verifier accepted that was wrong about the match. This was a scan rather than a mark per sample, so the plan's target ("no accepted text judged wrong") is met on that lighter review. Some wording is clumsy without being wrong.
 **Affects:** T9 (the README's honest limits gain the evaluation's numbers, the clumsy wording, and what the checks can't catch).
+
+## T8 — The viewer's history (stretch, 2026-10-22)
+**Plan said:** the feedback prompt gets a short, id-free summary of the viewer's recent attempts on the concept (how many right, the last wrong pick's kind). `Tutor.feedback`'s signature changes; the template ignores the summary; the Verifier is unchanged.
+**We did:** as planned, with these choices:
+- **`History`** (in `tutor/base.py`) holds the last five answers on the concept, right or wrong and oldest first, and what the question asked when they were last wrong ("where to pass"). There is no id, name or club, and a test pins its fields. The session builds it from the answers before this one (`RECENT_ANSWERS = 5`), and `Tutor.feedback` takes it as an optional argument. The template ignores it.
+- **The model may use the history only in words,** never counting it. That keeps the Verifier unchanged, as planned: "two right in a row" would fail `bare_number`.
+- **`CachedTutor` keys feedback on the history too.** Otherwise words about one viewer's recent answers could reach another viewer who met the same question with a different record.
+- **The evaluation measures it:** each wrong pick is worded after a sample history (right, right, wrong).
+
+**Learned:** told it "may mention" the history (prompt version 4), the model mentioned it in none of 16 wrong-pick feedbacks. Asked to open with one short, kind clause about it (version 5), it did in 11 of 16 ("You've been reading these well lately, but this kind has tripped you up before."). Some clauses are clumsy. Version 5 measures 80% first try and 92% model-worded after repair, within the run-to-run noise of version 3's 80% and 94%.
+**Why:** the plan's stretch goal, and a feature the model ignores isn't a feature.
+**Affects:** T9 (the README mentions it). Lily's hand review was of version 3's words, before this clause.

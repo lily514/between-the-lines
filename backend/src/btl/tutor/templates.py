@@ -15,7 +15,7 @@ from dataclasses import dataclass, field
 from btl.learn.evidence import EvidencePack, QuestionView, Timing
 from btl.learn.grader import Grade
 from btl.learn.questions import Asks
-from btl.tutor.base import TutorFeedback, TutorQuestion
+from btl.tutor.base import NO_HISTORY, History, TutorFeedback, TutorQuestion
 from btl.tutor.slots import slot_names
 
 SOURCE = "template"
@@ -88,8 +88,12 @@ class TemplateTutor:
         """The question for what it asks, opening with when it happened if asked later."""
         return TutorQuestion(_looking_back(view.timing) + ASKING[view.asks])
 
-    def feedback(self, pack: EvidencePack, grade: Grade) -> TutorFeedback:
+    def feedback(
+        self, pack: EvidencePack, grade: Grade, history: History = NO_HISTORY
+    ) -> TutorFeedback:
         """The concept's explanation at the viewer's level, the comparison, and a misconception.
+
+        The viewer's history is ignored: the same pick always gets the same words.
 
         The verdict ("Right read." or "Good instinct, not this one.") comes from the grade,
         not from here.

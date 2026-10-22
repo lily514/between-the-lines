@@ -15,7 +15,7 @@ from btl.learn.player_stats import PlayerStats
 from btl.learn.session import Asked, MatchStart, Told
 from btl.learn.team_sheet import NEXT_STAGE, SHAPE_STAGE, SheetTeam, TeamSheet
 from btl.schema.frames import to_left_to_right
-from btl.tutor.base import Tutor, TutorFeedback, TutorQuestion
+from btl.tutor.base import NO_HISTORY, History, Tutor, TutorFeedback, TutorQuestion
 
 BAR_WIDTH = 20
 
@@ -32,10 +32,12 @@ class WaitingTutor:
         with self.console.status("Wording the question…"):
             return self.inner.question(view)
 
-    def feedback(self, pack: EvidencePack, grade: Grade) -> TutorFeedback:
+    def feedback(
+        self, pack: EvidencePack, grade: Grade, history: History = NO_HISTORY
+    ) -> TutorFeedback:
         """The inner Tutor's feedback, with a spinner meanwhile."""
         with self.console.status("Wording the feedback…"):
-            return self.inner.feedback(pack, grade)
+            return self.inner.feedback(pack, grade, history)
 
 
 class TerminalViewer:

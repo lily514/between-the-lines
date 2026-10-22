@@ -38,7 +38,7 @@ from btl.schema.ids import TeamId
 from btl.schema.match import Match
 from btl.sim.lineup import Lineup
 from btl.store.base import LearnerStore, Stored
-from btl.tutor.base import Tutor
+from btl.tutor.base import History, Tutor
 from btl.tutor.slots import feedback_values, fill, question_values
 from btl.value.xt import ThreatModel, rate_match
 
@@ -328,7 +328,7 @@ def watch_match(
         state = state.answered(attempt)
         etag = store.put(state, etag)
         _, update = model.update(before, attempt.observation())
-        feedback = course.tutor.feedback(pack, grade)
+        feedback = course.tutor.feedback(pack, grade, _history(history[:-1], attempt.concept))
         values = feedback_values(pack, grade.chosen)
         viewer.tell(
             Told(
@@ -361,6 +361,17 @@ def watch_match(
     store.put(state, etag)
     viewer.end(bars(), len(prompts))
     return state
+
+
+# How many earlier answers on the concept the Tutor is told about.
+RECENT_ANSWERS = 5
+
+
+def _history(earlier: Sequence[Attempt], concept: ConceptKey) -> History:
+    """The viewer's answers on one concept before this one, for the Tutor: right or wrong."""
+    on_concept = [attempt for attempt in earlier if attempt.concept == concept]
+    last_wrong = next((a.asks.value for a in reversed(on_concept) if not a.correct), None)
+    return History(tuple(a.correct for a in on_concept[-RECENT_ANSWERS:]), last_wrong)
 
 
 @dataclass

@@ -29,6 +29,21 @@ class TutorFeedback:
     misconception: str | None = None
 
 
+@dataclass(frozen=True, slots=True)
+class History:
+    """The viewer's recent answers on the concept, before this one: no id, no name, no club.
+
+    ``recent`` is right (True) or wrong (False), oldest first. ``last_wrong`` is what the
+    question asked when they last got it wrong ("where to pass"), if they ever did.
+    """
+
+    recent: tuple[bool, ...] = ()
+    last_wrong: str | None = None
+
+
+NO_HISTORY = History()
+
+
 class Tutor(Protocol):
     """Writes a question's wording and its feedback."""
 
@@ -36,6 +51,8 @@ class Tutor(Protocol):
         """Word the question from what the viewer may know before answering."""
         ...
 
-    def feedback(self, pack: EvidencePack, grade: Grade) -> TutorFeedback:
-        """Explain the answer from the whole pack."""
+    def feedback(
+        self, pack: EvidencePack, grade: Grade, history: History = NO_HISTORY
+    ) -> TutorFeedback:
+        """Explain the answer from the whole pack, and perhaps the viewer's recent answers."""
         ...

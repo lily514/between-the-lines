@@ -36,6 +36,8 @@ uv run btl serve
 uv run btl openapi --out ../frontend/src/api/openapi.json   # the schema the page's types are made from
 ```
 
+Each `btl serve` option can also come from an environment variable, which is how the container is configured: `BTL_HOST`, `BTL_PORT`, `BTL_STORE` (`json` or `memory`), `BTL_LEARNERS`, `BTL_MODEL`, `BTL_FRONTEND`, `BTL_TUTOR` and `BTL_TUTOR_LOG`. An option given on the command line wins. `GET /api/health` answers `{"status": "ok"}` once the server is listening.
+
 ## The web page
 
 The page lives in `frontend/`: Vite, React and TypeScript, installed with npm.

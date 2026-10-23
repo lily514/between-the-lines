@@ -81,7 +81,7 @@ from btl.schema.moment import PlantedMoment
 from btl.schema.vocab import ConceptId
 from btl.sim.engine import simulate_match
 from btl.sim.shape import FOUR_FOUR_TWO
-from btl.store.base import Stored, check_viewer_id
+from btl.store.base import LearnerStore, Stored, check_viewer_id
 from btl.store.json_files import JsonLearnerStore
 from btl.store.memory import MemoryLearnerStore
 from btl.tutor.azure import AzureClient, FoundrySettings
@@ -135,6 +135,13 @@ class TutorChoice(StrEnum):
 
     TEMPLATE = "template"
     FOUNDRY = "foundry"
+
+
+class StoreChoice(StrEnum):
+    """Where `btl serve` keeps learner records."""
+
+    MEMORY = "memory"
+    JSON = "json"
 
 
 TutorOption = Annotated[
@@ -613,30 +620,72 @@ def demo_viewer(
     console.print(progress_bars(viewer.seen[-1].mastery))
 
 
+# `btl serve` reads its options from these variables too, so a container is configured by its
+# environment; an option given on the command line wins.
 @app.command()
 def serve(
-    host: Annotated[str, typer.Option(help="Address to listen on.")] = "127.0.0.1",
-    port: Annotated[int, typer.Option(help="Port to listen on.")] = DEFAULT_PORT,
-    learners: Annotated[Path, typer.Option(help="Folder for learner records.")] = DEFAULT_LEARNERS,
-    model: ModelPath = DEFAULT_MODEL,
+    host: Annotated[
+        str, typer.Option(help="Address to listen on.", envvar="BTL_HOST")
+    ] = "127.0.0.1",
+    port: Annotated[int, typer.Option(help="Port to listen on.", envvar="BTL_PORT")] = DEFAULT_PORT,
+    store: Annotated[
+        StoreChoice,
+        typer.Option(
+            help="json: files in --learners, shared with `btl learn`. memory: forgotten when "
+            "the server stops.",
+            envvar="BTL_STORE",
+        ),
+    ] = StoreChoice.JSON,
+    learners: Annotated[
+        Path, typer.Option(help="Folder for learner records.", envvar="BTL_LEARNERS")
+    ] = DEFAULT_LEARNERS,
+    model: Annotated[
+        Path,
+        typer.Option(
+            help="The threat model file; fitted on 200 simulated matches and saved if missing.",
+            envvar="BTL_MODEL",
+        ),
+    ] = DEFAULT_MODEL,
     frontend: Annotated[
-        Path, typer.Option(help="The built web page, served outside /api if it exists.")
+        Path,
+        typer.Option(
+            help="The built web page, served outside /api if it exists.", envvar="BTL_FRONTEND"
+        ),
     ] = DEFAULT_FRONTEND,
-    tutor: TutorOption = TutorChoice.TEMPLATE,
-    tutor_log: TutorLogPath = DEFAULT_TUTOR_LOG,
+    tutor: Annotated[
+        TutorChoice,
+        typer.Option(
+            "--tutor",
+            help="template: wording written in code. foundry: a model in Azure AI Foundry, "
+            "checked by the Verifier, with the template as fallback (see docs/setup.md).",
+            envvar="BTL_TUTOR",
+        ),
+    ] = TutorChoice.TEMPLATE,
+    tutor_log: Annotated[
+        Path,
+        typer.Option(
+            "--tutor-log",
+            help="Where --tutor foundry logs every model call.",
+            envvar="BTL_TUTOR_LOG",
+        ),
+    ] = DEFAULT_TUTOR_LOG,
 ) -> None:
     """Serve the learning loop to the web page: the API, and the built page if there is one.
 
-    Learner records are the same files `btl learn` uses, so a viewer can carry on in either.
+    With the JSON store, learner records are the same files `btl learn` uses, so a viewer can
+    carry on in either.
     """
     course = Course(_threat_model_or_fit(model), _server_tutor(tutor, tutor_log))
+    records: LearnerStore = (
+        MemoryLearnerStore() if store is StoreChoice.MEMORY else JsonLearnerStore(learners)
+    )
     page = frontend if (frontend / "index.html").is_file() else None
     if page is None:
         console.print(
             f"No built page in {frontend}: serving the API only. "
             "Build it with `npm run build` in frontend/, or use `npm run dev` there."
         )
-    api = create_app(lambda: course, JsonLearnerStore(learners), _now, page)
+    api = create_app(lambda: course, records, _now, page)
     console.print(f"Serving on http://{host}:{port} (API under /api). Ctrl+C stops it.")
     uvicorn.run(api, host=host, port=port, log_level="warning")
 

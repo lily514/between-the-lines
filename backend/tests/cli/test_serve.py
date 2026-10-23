@@ -118,3 +118,35 @@ def test_serve_with_the_model_words_the_page_s_questions_through_it(
     question = page.post("/api/viewers/lily/next").json()
     assert question["text"].startswith("Over to you: what is your read on ")
     assert (tmp_path / "tutor-log.jsonl").read_text().count('"kind": "question"') == 1
+
+
+def test_serve_reads_its_options_from_the_environment(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    model = tmp_path / "model.json"
+    save_threat_model(threat_model(), model)
+    served: list[tuple[FastAPI, str, int]] = []
+
+    def run(api: FastAPI, host: str, port: int, log_level: str) -> None:
+        served.append((api, host, port))
+
+    monkeypatch.setattr(uvicorn, "run", run)
+    env = {
+        **WIDE,
+        "BTL_HOST": "0.0.0.0",
+        "BTL_PORT": "8124",
+        "BTL_STORE": "memory",
+        "BTL_LEARNERS": str(tmp_path / "learners"),
+        "BTL_MODEL": str(model),
+        "BTL_FRONTEND": str(tmp_path / "dist"),
+        "BTL_TUTOR": "template",
+    }
+
+    result = runner.invoke(app, ["serve"], env=env)
+
+    assert result.exit_code == 0, result.output
+    [(api, host, port)] = served
+    assert (host, port) == ("0.0.0.0", 8124)
+    page = TestClient(api)
+    assert page.post("/api/viewers", json={"viewer_id": "lily", "seed": 7}).status_code == 200
+    assert not (tmp_path / "learners").exists()  # the memory store writes no files

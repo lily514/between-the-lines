@@ -19,9 +19,14 @@ Routes:
 - ``POST /api/viewers/{viewer_id}/answers``: answer the pending question (`AnswerIn` →
   `FeedbackOut`). It never returns the next question: that is a separate request, so each
   request words at most one thing.
+- ``GET /api/health``: the server is up (left out of the schema; the page never calls it).
+
+Requests for different viewers run at the same time; one viewer's requests take turns.
 """
 
 import threading
+import weakref
+from collections import OrderedDict
 from collections.abc import Callable
 from pathlib import Path
 
@@ -75,12 +80,16 @@ from btl.schema.ids import TeamId
 from btl.schema.scoreboard import goals
 from btl.store.base import LearnerStore, StaleWriteError, Stored, check_viewer_id
 
+# Prepared matches kept, most recently used first; each is about 2 MB.
+PREPARED_SIZE = 32
+
 
 def create_app(
     load_course: Callable[[], Course],
     store: LearnerStore,
     now: Callable[[], str],
     frontend: Path | None = None,
+    prepared_size: int = PREPARED_SIZE,
 ) -> FastAPI:
     """The web API over a learner store.
 
@@ -91,24 +100,46 @@ def create_app(
         now: The time of each answer, as ISO 8601. The server's clock, never `learn/`'s.
         frontend: The built web page (``frontend/dist``), served for every path outside
             ``/api``; None serves the API only.
+        prepared_size: How many prepared matches to keep; the least recently used goes first.
     """
     app = FastAPI(title="Between the Lines", version="0.1.0")
-    # One viewer's requests replay and save the same record, so they take turns. A single lock
-    # is enough for a demo server.
-    lock = threading.Lock()
+    # A viewer's requests replay and save the same record, so they take turns; other viewers
+    # don't wait for them, even while a model words a question. A lock lives only while a
+    # request holds it, so the table doesn't grow with every visitor.
+    viewer_locks: weakref.WeakValueDictionary[str, threading.Lock] = weakref.WeakValueDictionary()
+    locks_guard = threading.Lock()
     loaded: list[Course] = []
-    prepared: dict[tuple[int, int, TeamId | None], PreparedMatch] = {}
+    course_guard = threading.Lock()
+    prepared: OrderedDict[tuple[int, int, TeamId | None], PreparedMatch] = OrderedDict()
+    prepared_guard = threading.Lock()
+
+    def lock(viewer_id: str) -> threading.Lock:
+        with locks_guard:
+            found = viewer_locks.get(viewer_id)
+            if found is None:
+                found = viewer_locks[viewer_id] = threading.Lock()
+            return found
 
     def course() -> Course:
-        if not loaded:
-            loaded.append(load_course())
-        return loaded[0]
+        with course_guard:
+            if not loaded:
+                loaded.append(load_course())
+            return loaded[0]
 
     def prepare(seed: int, match_number: int, club: TeamId | None) -> PreparedMatch:
         key = (seed, match_number, club)
-        if key not in prepared:
-            prepared[key] = prepare_match(course(), seed, match_number, club)
-        return prepared[key]
+        with prepared_guard:
+            if key in prepared:
+                prepared.move_to_end(key)
+                return prepared[key]
+        # Preparing takes a fraction of a second, so it happens outside the guard; two viewers
+        # meeting the same new match may both prepare it, and get identical results.
+        match = prepare_match(course(), seed, match_number, club)
+        with prepared_guard:
+            prepared[key] = match
+            while len(prepared) > prepared_size:
+                prepared.popitem(last=False)
+        return match
 
     def stored(viewer_id: str) -> Stored:
         _check(viewer_id)
@@ -153,6 +184,11 @@ def create_app(
         except StaleWriteError:
             raise HTTPException(409, "the record changed; try again") from None
 
+    @app.get("/api/health", include_in_schema=False)
+    def health() -> dict[str, str]:
+        """The server is up. It loads nothing, so a probe never waits for a match."""
+        return {"status": "ok"}
+
     @app.get("/api/clubs")
     def clubs() -> list[ClubOut]:
         """The league's clubs, in team id order."""
@@ -163,7 +199,7 @@ def create_app(
         """Start watching, or carry on where the viewer stopped."""
         _check(body.viewer_id)
         seed = seed_for_viewer(body.viewer_id) if body.seed is None else body.seed
-        with lock:
+        with lock(body.viewer_id):
             found = start_session(store, body.viewer_id, seed)
             if body.club is not None:
                 found = chosen(body.viewer_id, body.club)
@@ -172,27 +208,27 @@ def create_app(
     @app.put("/api/viewers/{viewer_id}/club")
     def put_club(viewer_id: str, body: ClubIn) -> StatusOut:
         """Choose the team to support, before answering anything."""
-        with lock:
+        with lock(viewer_id):
             stored(viewer_id)
             return status(chosen(viewer_id, body.club))
 
     @app.get("/api/viewers/{viewer_id}/team-sheet")
     def get_team_sheet(viewer_id: str) -> TeamSheetOut:
         """Who's playing in the viewer's next match, as much as their stage shows."""
-        with lock:
+        with lock(viewer_id):
             state = _watching(stored(viewer_id))
             return team_sheet_payload(viewer_sheet(course(), state, prepare))
 
     @app.get("/api/viewers/{viewer_id}")
     def get_status(viewer_id: str) -> StatusOut:
         """Where a viewer stands."""
-        with lock:
+        with lock(viewer_id):
             return status(stored(viewer_id))
 
     @app.post("/api/viewers/{viewer_id}/next")
     def next_step(viewer_id: str) -> NextOut:
         """The question waiting to be answered, or full time if the match has no more."""
-        with lock:
+        with lock(viewer_id):
             state = _watching(stored(viewer_id))
             viewer = WebViewer()
             try:
@@ -241,7 +277,7 @@ def create_app(
     @app.post("/api/viewers/{viewer_id}/answers")
     def answer(viewer_id: str, body: AnswerIn) -> FeedbackOut:
         """Answer the waiting question and hear the feedback."""
-        with lock:
+        with lock(viewer_id):
             state = _watching(stored(viewer_id))
             before = course().bars(state)
             viewer = WebViewer(answer=(body.pack_id, body.key))

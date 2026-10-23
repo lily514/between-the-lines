@@ -104,6 +104,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/viewers/{viewer_id}/matches": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Matches
+         * @description The viewer's matches in order, each telling only what the viewer has seen of it.
+         */
+        get: operations["get_matches_api_viewers__viewer_id__matches_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/viewers/{viewer_id}/next": {
         parameters: {
             query?: never;
@@ -386,6 +406,45 @@ export interface components {
             y: number;
         };
         /**
+         * MatchOut
+         * @description One of the viewer's matches, for the Matches screen.
+         *
+         *     ``score`` and ``your_result`` are null until the viewer has seen some of the match:
+         *     an upcoming match tells only its clubs and date.
+         */
+        MatchOut: {
+            /** Away */
+            away: string;
+            /** Away Code */
+            away_code: string;
+            /** Date */
+            date: string;
+            /** Date Label */
+            date_label: string;
+            /** Home */
+            home: string;
+            /** Home Code */
+            home_code: string;
+            /** Kick Off */
+            kick_off: string;
+            /** Match Number */
+            match_number: number;
+            /** Matchday */
+            matchday: number;
+            /** Questions */
+            questions: number;
+            score: components["schemas"]["ScoreOut"] | null;
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "upcoming" | "in_progress" | "finished";
+            /** Your Result */
+            your_result: ("won" | "drew" | "lost") | null;
+            /** Your Team */
+            your_team: ("home" | "away") | null;
+        };
+        /**
          * MomentTime
          * @description A point in the match: period, seconds into it, the match clock and the phase of play.
          */
@@ -530,6 +589,18 @@ export interface components {
             text: string;
             /** Your Team */
             your_team: ("home" | "away") | null;
+        };
+        /**
+         * ScoreOut
+         * @description Goals for each side, at ``clock`` for a match in progress (null at full time).
+         */
+        ScoreOut: {
+            /** Away */
+            away: number;
+            /** Clock */
+            clock: string | null;
+            /** Home */
+            home: number;
         };
         /**
          * SheetPlayerOut
@@ -808,6 +879,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StatusOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_matches_api_viewers__viewer_id__matches_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                viewer_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MatchOut"][];
                 };
             };
             /** @description Validation Error */

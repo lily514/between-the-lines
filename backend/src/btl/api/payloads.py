@@ -16,6 +16,7 @@ from btl.api.models import (
     FeedbackOption,
     FeedbackOut,
     MarkerOut,
+    MatchOut,
     MomentTime,
     Movement,
     OptionOut,
@@ -23,6 +24,7 @@ from btl.api.models import (
     PlayerNumbersOut,
     PositionOut,
     QuestionOut,
+    ScoreOut,
     SheetPlayerOut,
     SheetTeamOut,
     TeamSheetOut,
@@ -30,10 +32,11 @@ from btl.api.models import (
     YourTeam,
 )
 from btl.concepts.phase import PhaseOfPlay
-from btl.league.league import Club
+from btl.league.league import Club, League
 from btl.learn.concept_map import Thresholds
 from btl.learn.evidence import Fact, Picture, percent_points
 from btl.learn.knowledge import Delivery
+from btl.learn.matches import MatchState, ViewerMatch
 from btl.learn.questions import Form
 from btl.learn.session import Asked, Told
 from btl.learn.team_sheet import NEXT_STAGE, SheetPlayer, SheetTeam, TeamSheet
@@ -196,6 +199,33 @@ def _sheet_player(player: SheetPlayer) -> SheetPlayerOut:
             line_breaking_passes=numbers.line_breaking_passes,
             threat_added=_fact(percent_points(numbers.threat_added)),
         ),
+    )
+
+
+def match_payload(match: ViewerMatch, league: League, club: TeamId | None) -> MatchOut:
+    """One of the viewer's matches, with the result from their side once it is finished."""
+    home, away = league.club(match.home_id), league.club(match.away_id)
+    side = your_team(club, home, away)
+    score = match.score
+    finished = match.state is MatchState.FINISHED
+    score_out = None
+    if score is not None:
+        score_out = ScoreOut(home=score.home, away=score.away, clock=score.clock)
+    return MatchOut(
+        match_number=match.match_number,
+        matchday=match.matchday.number,
+        date=match.matchday.day.isoformat(),
+        date_label=match.matchday.label,
+        kick_off=match.matchday.kick_off,
+        home=home.name,
+        away=away.name,
+        home_code=home.short_name,
+        away_code=away.short_name,
+        your_team=side,
+        state=match.state.value,
+        score=score_out,
+        your_result=your_result(side, score.home, score.away) if finished and score else None,
+        questions=match.questions,
     )
 
 

@@ -70,8 +70,9 @@ def test_openapi_writes_the_schema_the_page_s_types_are_made_from(tmp_path: Path
         "/api/clubs",
         "/api/viewers/{viewer_id}/club",
         "/api/viewers/{viewer_id}/team-sheet",
+        "/api/viewers/{viewer_id}/matches",
     }
-    assert {"QuestionOut", "FullTimeOut", "FeedbackOut", "TeamSheetOut"} <= set(
+    assert {"QuestionOut", "FullTimeOut", "FeedbackOut", "TeamSheetOut", "MatchOut"} <= set(
         schema["components"]["schemas"]
     )
 

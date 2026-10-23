@@ -299,6 +299,37 @@ class TeamSheetOut(BaseModel):
     teams: list[SheetTeamOut]
 
 
+class ScoreOut(BaseModel):
+    """Goals for each side, at ``clock`` for a match in progress (null at full time)."""
+
+    home: int
+    away: int
+    clock: str | None
+
+
+class MatchOut(BaseModel):
+    """One of the viewer's matches, for the Matches screen.
+
+    ``score`` and ``your_result`` are null until the viewer has seen some of the match:
+    an upcoming match tells only its clubs and date.
+    """
+
+    match_number: int
+    matchday: int
+    date: str
+    date_label: str
+    kick_off: str
+    home: str
+    away: str
+    home_code: str
+    away_code: str
+    your_team: YourTeam
+    state: Literal["upcoming", "in_progress", "finished"]
+    score: ScoreOut | None
+    your_result: Literal["won", "drew", "lost"] | None
+    questions: int
+
+
 class AnswerIn(BaseModel):
     """An answer to the pending question, which ``pack_id`` names."""
 

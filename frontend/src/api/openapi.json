@@ -606,6 +606,119 @@
         "title": "MarkerOut",
         "type": "object"
       },
+      "MatchOut": {
+        "description": "One of the viewer's matches, for the Matches screen.\n\n``score`` and ``your_result`` are null until the viewer has seen some of the match:\nan upcoming match tells only its clubs and date.",
+        "properties": {
+          "away": {
+            "title": "Away",
+            "type": "string"
+          },
+          "away_code": {
+            "title": "Away Code",
+            "type": "string"
+          },
+          "date": {
+            "title": "Date",
+            "type": "string"
+          },
+          "date_label": {
+            "title": "Date Label",
+            "type": "string"
+          },
+          "home": {
+            "title": "Home",
+            "type": "string"
+          },
+          "home_code": {
+            "title": "Home Code",
+            "type": "string"
+          },
+          "kick_off": {
+            "title": "Kick Off",
+            "type": "string"
+          },
+          "match_number": {
+            "title": "Match Number",
+            "type": "integer"
+          },
+          "matchday": {
+            "title": "Matchday",
+            "type": "integer"
+          },
+          "questions": {
+            "title": "Questions",
+            "type": "integer"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ScoreOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "state": {
+            "enum": [
+              "upcoming",
+              "in_progress",
+              "finished"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "your_result": {
+            "anyOf": [
+              {
+                "enum": [
+                  "won",
+                  "drew",
+                  "lost"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Your Result"
+          },
+          "your_team": {
+            "anyOf": [
+              {
+                "enum": [
+                  "home",
+                  "away"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Your Team"
+          }
+        },
+        "required": [
+          "match_number",
+          "matchday",
+          "date",
+          "date_label",
+          "kick_off",
+          "home",
+          "away",
+          "home_code",
+          "away_code",
+          "your_team",
+          "state",
+          "score",
+          "your_result",
+          "questions"
+        ],
+        "title": "MatchOut",
+        "type": "object"
+      },
       "MomentTime": {
         "description": "A point in the match: period, seconds into it, the match clock and the phase of play.",
         "properties": {
@@ -958,6 +1071,37 @@
           "picture"
         ],
         "title": "QuestionOut",
+        "type": "object"
+      },
+      "ScoreOut": {
+        "description": "Goals for each side, at ``clock`` for a match in progress (null at full time).",
+        "properties": {
+          "away": {
+            "title": "Away",
+            "type": "integer"
+          },
+          "clock": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clock"
+          },
+          "home": {
+            "title": "Home",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "home",
+          "away",
+          "clock"
+        ],
+        "title": "ScoreOut",
         "type": "object"
       },
       "SheetPlayerOut": {
@@ -1502,6 +1646,50 @@
           }
         },
         "summary": "Put Club"
+      }
+    },
+    "/api/viewers/{viewer_id}/matches": {
+      "get": {
+        "description": "The viewer's matches in order, each telling only what the viewer has seen of it.",
+        "operationId": "get_matches_api_viewers__viewer_id__matches_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "viewer_id",
+            "required": true,
+            "schema": {
+              "title": "Viewer Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MatchOut"
+                  },
+                  "title": "Response Get Matches Api Viewers  Viewer Id  Matches Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Matches"
       }
     },
     "/api/viewers/{viewer_id}/next": {

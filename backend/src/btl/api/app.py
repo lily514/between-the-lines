@@ -14,6 +14,8 @@ Routes:
   started watching (`ClubIn` → `StatusOut`).
 - ``GET /api/viewers/{viewer_id}/team-sheet``: who's playing in the viewer's next match
   (`TeamSheetOut`).
+- ``GET /api/viewers/{viewer_id}/matches``: the viewer's matches, upcoming, in progress and
+  finished, with their dates (`MatchOut`).
 - ``POST /api/viewers/{viewer_id}/next``: the pending question, or the full-time summary when
   the match has no more, which also moves the viewer on to their next match (`NextOut`).
 - ``POST /api/viewers/{viewer_id}/answers``: answer the pending question (`AnswerIn` →
@@ -43,6 +45,7 @@ from btl.api.models import (
     FeedbackOut,
     Fixture,
     FullTimeOut,
+    MatchOut,
     NextOut,
     StartIn,
     StatusOut,
@@ -52,6 +55,7 @@ from btl.api.payloads import (
     bars,
     club_payload,
     feedback_payload,
+    match_payload,
     movements,
     question_payload,
     team_sheet_payload,
@@ -68,6 +72,7 @@ from btl.api.viewer import (
     WebViewer,
 )
 from btl.learn.learner import MATCHES_PER_SESSION, LearnerState
+from btl.learn.matches import viewer_matches
 from btl.learn.session import (
     ClubLockedError,
     Course,
@@ -231,6 +236,17 @@ def create_app(
         with serving(viewer_id):
             state = _watching(stored(viewer_id))
             return team_sheet_payload(viewer_sheet(course(), state, prepare))
+
+    @app.get("/api/viewers/{viewer_id}/matches")
+    def get_matches(viewer_id: str) -> list[MatchOut]:
+        """The viewer's matches in order, each telling only what the viewer has seen of it."""
+        with serving(viewer_id):
+            state = stored(viewer_id).state
+            league, club = course().league, state.club
+            return [
+                match_payload(match, league, club)
+                for match in viewer_matches(course(), state, prepare)
+            ]
 
     @app.get("/api/viewers/{viewer_id}")
     def get_status(viewer_id: str) -> StatusOut:

@@ -86,6 +86,25 @@ The public demo runs as one container: the built page, the API and the learning 
 
 On Apple Silicon, Docker builds an arm64 image. Azure runs amd64, which is fine, because azd builds the deployed image in Azure's registry.
 
+## Optional: the public demo's infrastructure (Bicep and azd)
+
+The public demo is described in Bicep (`infra/`) and deployed with the Azure Developer CLI (azd), which reads `azure.yaml`. Writing and checking the Bicep needs only the first two steps, and creates nothing in Azure.
+
+1. Install the Bicep CLI (into the Azure CLI) and azd:
+   ```sh
+   az bicep install
+   brew tap azure/azd && brew install azd
+   ```
+2. In VS Code, install the **Bicep** extension (the workspace recommends it): completions, hover docs and lint as you type. Check the Bicep from the repo root, as CI does:
+   ```sh
+   az bicep build --file infra/main.bicep --stdout > /dev/null
+   az bicep lint --file infra/main.bicep
+   ```
+3. Sign azd in, **naming the tenant**. azd keeps its own sign-in, separate from `az login`, and has the same trap: without the tenant it may use your default one, and Azure refuses the token.
+   ```sh
+   azd auth login --tenant-id <tenant-id>
+   ```
+
 ## Optional: check generated names against real ones
 
 The committed repo contains no real club, player, place, or league names, not even as a list of names to avoid. To check that generated leagues never produce one, keep a private list at `backend/private/real-names.txt`. The whole `backend/private/` folder is gitignored, so the list is visible in your editor but never committed.

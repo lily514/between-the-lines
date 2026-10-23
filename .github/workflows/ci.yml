@@ -34,3 +34,12 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run build
+
+  # Builds and lints the Bicep only; it never signs in to Azure or deploys anything.
+  infra:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: az bicep install
+      - run: az bicep build --file infra/main.bicep --stdout > /dev/null
+      - run: az bicep lint --file infra/main.bicep

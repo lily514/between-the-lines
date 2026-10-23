@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+# What azd deploys: the infrastructure in infra/, and one service, "web", built from the Dockerfile at the repo root.
+# azd builds the image in Azure's registry (remoteBuild), so deploying needs no local Docker.
+name: between-the-lines
+infra:
+  provider: bicep
+  path: infra
+services:
+  web:
+    project: .
+    language: docker
+    host: containerapp
+    docker:
+      path: ./Dockerfile
+      context: .
+      remoteBuild: true

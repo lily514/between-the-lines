@@ -48,3 +48,25 @@ Where implementation diverged from [plan.md](plan.md), or something surprising w
 
 **Why:** the plan left these details open; the log path came from the read-only files.
 **Affects:** T5 (azd builds this `Dockerfile` remotely; the probes use `/api/health`); T6 (`BTL_TUTOR=foundry` works with the log in `/tmp`); T9 (the log file gives way to log lines).
+
+## T4 — Lily's module: Log Analytics and the Container Apps environment (2026-10-23)
+**Plan said:** Lily writes `infra/modules/environment.bicep` (Log Analytics and the Container Apps environment), with each line explained; `azure.yaml`, `main.bicep`, `main.parameters.json` and `bicepconfig.json` around it; `az bicep lint` and `az bicep build` clean; a CI Bicep build step; `setup.md` covers azd, Bicep and `azd auth login --tenant-id`.
+**We did:** as planned. Lily wrote the module in three steps (parameters, the workspace, then the environment, the diagnostic setting and the outputs). Her choices:
+- **Logs reach the workspace through Azure Monitor and a diagnostic setting, not the workspace's shared key** (Lily's choice, 2026-10-23). The environment's `appLogsConfiguration.destination` is `azure-monitor`, a `Microsoft.Insights/diagnosticSettings` resource on the environment sends `allLogs` to the workspace, and the workspace has `disableLocalAuth: true`. The other route, `destination: 'log-analytics'`, needs the workspace's key, read in Bicep with `listKeys()` and stored in the environment. That breaks "no secrets anywhere", even though the key never reaches the repo.
+- **The free settings:** pay-as-you-go (`PerGB2018`), 30-day retention, and a daily cap of 0.15 GB (`json('0.15')`, since Bicep has no decimals), about 4.5 GB a month inside the free 5 GB.
+- **The Consumption workload profile,** and no zone redundancy.
+
+Around the module:
+- `main.bicep` is at subscription scope, creates `rg-${environmentName}`, and allows only eastus2. Names come from one `resourceToken`, and every resource carries the `azd-env-name` tag.
+- `azure.yaml` builds the root `Dockerfile` in Azure's registry (`remoteBuild: true`).
+- `bicepconfig.json` makes the secret and location rules errors.
+- CI gains an `infra` job that builds and lints without signing in.
+- `.azure/` is gitignored, and the Bicep extension is recommended for the workspace.
+
+**Learned:**
+- **The log tables are `ContainerAppConsoleLogs` (column `Log`) and `ContainerAppSystemLogs`,** not the plan's `ContainerAppConsoleLogs_CL` with `Log_s`, which belong to the key route.
+- **`az bicep build` must run from the repo root:** from `backend/`, the relative path fails with "Could not find a part of the path".
+- **Commands run with `!` inside a Claude Code session** inherit a temp folder Lily's user can't write to, so Bicep fails before reading the file. Lily's own terminal is unaffected.
+
+**Why:** the plan left the logs route open; route B keeps the rule with no exceptions.
+**Affects:** T9 (its KQL queries use `ContainerAppConsoleLogs` and `Log`); T5 (`main.bicep` gains the registry, identity, app and budget modules).

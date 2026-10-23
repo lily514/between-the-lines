@@ -25,6 +25,9 @@
     },
     "foundryDeployment": {
       "value": "${FOUNDRY_DEPLOYMENT=}"
+    },
+    "principalId": {
+      "value": "${AZURE_PRINCIPAL_ID=}"
     }
   }
 }

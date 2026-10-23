@@ -147,3 +147,26 @@ Around the module:
 
 **Why:** the plan left these details open.
 **Affects:** T8 (Bicep sets `BTL_STORE=blob` and `BTL_BLOB_ACCOUNT_URL`, and grants the identity Storage Blob Data Contributor on the `learners` container).
+
+## T8 — Storage in the cloud (2026-10-23)
+**Plan said:** `storage.bicep` with shared keys off and the two roles; `BTL_STORE=blob`; previewed, then provisioned; progress survives a reload and a new revision (a second `azd deploy`), which also proves the app's data role works.
+**We did:** as planned:
+- **`storage.bicep`:**
+  - a StorageV2 account (Standard LRS, hot) with `allowSharedKeyAccess: false`, `defaultToOAuthAuthentication: true` (so the portal signs in with Entra ID), no public blob access, HTTPS and TLS 1.2 only;
+  - the blob service and a private `learners` container;
+  - Storage Blob Data Contributor **on the container**, not the account, for the app's identity, and for the developer when azd passes one.
+- **The app's variables** become `BTL_STORE=blob`, plus `BTL_BLOB_ACCOUNT_URL` and `BTL_BLOB_CONTAINER` from the module's outputs. The app module reads those outputs, so Bicep creates the storage and its roles before the app's new revision.
+
+**Checked against Azure:**
+- **The preview** (Lily's go-ahead to run `azd up` followed it) showed the account, blob service, container and Lily's role assignment to create. The app's role showed as unsupported, as T5's AcrPull did, since its principal is only known during the deployment.
+- **`azd up`** took 3 m 51 s. Both role assignments exist on `learners`, and the account has shared keys and public access off.
+- **A new viewer's record is in the container** (`<id>.json`, 560 bytes), listed with `az storage blob list --auth-mode login` as Lily, which proves her data role. Read back through the API it shows the same match, bars and waiting question: what a reload sees.
+- **After a second `azd deploy` (Lily's go-ahead)** and a new revision, the same viewer reads back unchanged. That is the acceptance check, and it also proves the app's data role.
+
+**Learned:**
+- **The first request after the deploy hit the T6 switchover problem once more.** A viewer was created by the outgoing revision, which still used the memory store, and the next request reached the new one: 404. That viewer isn't in storage. It was the last time: every revision now shares the container.
+- **azd passes `AZURE_PRINCIPAL_ID` to the parameters during each provision without saving it** in the environment file; `azd env get-value` shows nothing. The developer's role was created with Lily's object id all the same.
+- **The new data role worked at once:** no 403 while it took effect.
+
+**Why:** the plan's design held.
+**Affects:** T10 (the README's honest limits: progress lives in one browser's id, and nothing else identifies a visitor).

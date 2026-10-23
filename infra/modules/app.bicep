@@ -43,6 +43,10 @@ param foundryDeployment string
 param wordingsPerViewer int
 param wordingsPerDay int
 
+@description('Where learners are kept: the storage account\'s blob endpoint, and the container.')
+param blobEndpoint string
+param blobContainer string
+
 module image 'app-image.bicep' = {
   name: '${name}-image'
   params: {
@@ -95,7 +99,9 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
           // The app's configuration, read by `btl serve` (docs/setup.md). None of it is secret.
           env: [
             { name: 'AZURE_CLIENT_ID', value: identityClientId }
-            { name: 'BTL_STORE', value: 'memory' }
+            { name: 'BTL_STORE', value: 'blob' }
+            { name: 'BTL_BLOB_ACCOUNT_URL', value: blobEndpoint }
+            { name: 'BTL_BLOB_CONTAINER', value: blobContainer }
             { name: 'BTL_TUTOR', value: tutor }
             { name: 'BTL_FOUNDRY_ENDPOINT', value: foundryEndpoint }
             { name: 'BTL_FOUNDRY_DEPLOYMENT', value: foundryDeployment }

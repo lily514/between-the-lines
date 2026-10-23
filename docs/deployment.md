@@ -14,6 +14,7 @@ One `azd up` builds the app's image in Azure and creates everything in `infra/` 
 | Log Analytics workspace `log-…` | The logs, queried with KQL; 30 days, capped at 0.15 GB a day |
 | Container Registry `cr…` (Basic) | The app's image, built here by azd |
 | User-assigned identity `id-…` | Who the app signs in as, for every Azure call |
+| Storage account `st…`, container `learners` | Learner records, one JSON blob per viewer. Shared keys are off; the app and you each hold Storage Blob Data Contributor on the `learners` container only |
 | Budgets | `budget-demo` ($10, this group) and `budget-monthly-credit` ($150, the whole subscription), emailing `ALERT_EMAIL` |
 
 The model is not in this group. The app calls a deployment on your existing Azure AI Foundry resource (`docs/setup.md`, "Optional: the AI Tutor"), set up by the two commands below.
@@ -47,6 +48,17 @@ azd provision --preview
 azd up
 ```
 
+## Learner records
+
+Each viewer is a blob, `<viewer id>.json`, in the `learners` container, holding the same document `btl learn` writes to a file. Azure checks every write against the version the app read (the blob's ETag), so two revisions of the app, as during a deploy, can never overwrite each other. Records survive restarts, scaling to zero and deploys.
+
+To look at them, signed in as yourself (your role is on the container; there is no key to use):
+```sh
+az storage blob list --subscription <subscription-id> --account-name <storage-account> \
+  --container-name learners --auth-mode login -o table
+```
+In the portal, open the storage account, then **Containers → learners**; it signs in with Entra ID by default.
+
 ## The model's limits
 
 A wording is one question or one feedback: at most two model calls (the first try and one repair). Words already in the server's cache are free and not counted.
@@ -67,6 +79,7 @@ The counts are in memory and start again when the app restarts; the deployment's
 | Container app at minimum 0 | $0 | inside the monthly free grant |
 | Container app at minimum 1 | about $8–12 a month | |
 | Log Analytics | $0 (the daily cap keeps it inside the free 5 GB a month) | |
+| Storage account | under a cent a month | fractions of a cent per session |
 | The model | $0 | about 1–2¢ per three-match session; at most about $0.50 a day |
 
 The subscription's spending limit is the hard stop; the budgets only email.

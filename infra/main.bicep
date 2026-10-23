@@ -41,6 +41,9 @@ param wordingsPerViewer int = 60
 @description('Model wordings a day for everyone, then the template\'s: at most 2,000 calls, about $0.50.')
 param wordingsPerDay int = 1000
 
+@description('Who runs azd (azd sets AZURE_PRINCIPAL_ID): given a data role to browse learners in the portal.')
+param principalId string = ''
+
 // The budgets' first month. Fixed, so a provision in a later month doesn't try to move it.
 var budgetStart = '2026-10-01'
 
@@ -89,6 +92,19 @@ module registry 'modules/registry.bicep' = {
   }
 }
 
+module storage 'modules/storage.bicep' = {
+  name: 'storage'
+  scope: group
+  params: {
+    location: location
+    tags: tags
+    // Storage account names allow lower-case letters and digits only.
+    name: 'st${resourceToken}'
+    appPrincipalId: identity.outputs.principalId
+    userPrincipalId: principalId
+  }
+}
+
 module app 'modules/app.bicep' = {
   name: 'app'
   scope: group
@@ -107,6 +123,8 @@ module app 'modules/app.bicep' = {
     foundryDeployment: foundryDeployment
     wordingsPerViewer: wordingsPerViewer
     wordingsPerDay: wordingsPerDay
+    blobEndpoint: storage.outputs.blobEndpoint
+    blobContainer: storage.outputs.containerName
   }
 }
 

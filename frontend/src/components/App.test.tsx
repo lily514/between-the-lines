@@ -48,7 +48,7 @@ test('a viewer plays from their name through a question and its feedback to full
 
 	await user.click(screen.getByRole('button', { name: 'On to match 2' }))
 	await screen.findByRole('heading', { name: "Who's playing" })
-	expect(document.querySelector('.team-sheet__fixture')).toHaveTextContent(/^Match 2 ·/)
+	expect(screen.getByText(/^Before kick-off · Match/)).toHaveTextContent('Before kick-off · Match 2')
 	expect(screen.queryByRole('button', { name: /Change it/ })).toBeNull()
 })
 

@@ -10,25 +10,28 @@ const show = (sheet: TeamSheetData, canChangeTeam = false) => {
 	return { on, view }
 }
 
-test('a beginner sees both elevens, their team first, in plain words', async () => {
-	const { on } = show(sheetStage1, true)
+const card = () => screen.getByRole('region', { name: 'Chosen player' })
+const pitch = () => screen.getByRole('group', { name: /^Kick-off positions/ })
+
+test('a beginner sees both clubs and all 22 starters on the pitch, their team first, with no tags', async () => {
+	const { on, view } = show(sheetStage1, true)
 	expect(screen.getByRole('heading', { name: "Who's playing" })).toHaveFocus()
 	const [yours, theirs] = screen.getAllByRole('article')
-	if (yours === undefined || theirs === undefined) throw new Error('no cards')
-	expect(within(yours).getByRole('heading', { level: 3 })).toHaveTextContent('Ripon WardensYou')
-	expect(within(theirs).getByRole('heading', { level: 3 })).toHaveTextContent('Truro Otters')
-	expect(within(yours).getAllByRole('listitem')).toHaveLength(11)
-	expect(
-		within(yours)
-			.getAllByRole('heading', { level: 4 })
-			.map(h => h.textContent)
-	).toEqual(['Goalkeeper', 'Defenders', 'Midfielders', 'Forwards'])
-	expect(within(yours).getAllByText('Left back')[0]?.closest('p')).toHaveTextContent(
-		'Left back: Defends the left side, and joins attacks down it.'
+	if (yours === undefined || theirs === undefined) throw new Error('no club cards')
+	expect(yours).toHaveTextContent('Ripon WardensYouHome, filled discs')
+	expect(theirs).toHaveTextContent('Truro OttersAway, rings')
+	expect(within(pitch()).getAllByRole('button')).toHaveLength(22)
+	expect(pitch()).toHaveAccessibleName(
+		'Kick-off positions. Ripon Wardens, your team, filled discs, attacking up from the bottom. Truro Otters, ' +
+			'rings, at the top. Each player is a button: choose one to see who they are.'
 	)
-	expect(screen.queryByText('LB')).toBeNull()
-	expect(screen.queryByText('Kick-off shape', { exact: false })).toBeNull()
-	expect(screen.getByText('Get to level 2 in any concept to see the formation.')).toBeInTheDocument()
+	expect(view.container.querySelector('[data-testid="your-half"]')).not.toBeNull()
+	expect(within(card()).getByRole('heading')).toHaveTextContent('Adama Trafo')
+	expect(card()).toHaveTextContent('Ripon Wardens · home · your team')
+	expect(card()).toHaveTextContent('Striker Plays furthest forward, closest to goal: there to score.')
+	expect(screen.queryByText('ST')).toBeNull()
+	expect(screen.queryByText('4-4-2')).toBeNull()
+	expect(screen.getByText('Get to level 2 in any concept to see formations and position tags.')).toBeInTheDocument()
 
 	await userEvent.click(screen.getByRole('button', { name: 'Not your team? Change it' }))
 	expect(on.onChangeTeam).toHaveBeenCalledOnce()
@@ -36,38 +39,59 @@ test('a beginner sees both elevens, their team first, in plain words', async () 
 	expect(on.onKickOff).toHaveBeenCalledOnce()
 })
 
-test('the key explains discs, rings, the viewer’s team and shirt numbers', () => {
+test('hovering, tapping or tabbing to a player on the pitch fills the card and marks them chosen', async () => {
 	show(sheetStage1)
-	const key = screen.getByRole('list', { name: 'Key' })
-	expect(
-		within(key)
-			.getAllByRole('listitem')
-			.map(item => item.textContent)
-	).toEqual([
-		'7Filled disc: home side',
-		'7Ring: away side',
-		'YouDashed ring and "You": your team',
-		'#Numbers are shirt numbers'
-	])
+	const leftBack = within(pitch()).getByRole('button', {
+		name: 'Number 5, Dennis Hafkamp, Ripon Wardens, Left back'
+	})
+	await userEvent.hover(leftBack)
+	expect(within(card()).getByRole('heading')).toHaveTextContent('Dennis Hafkamp')
+	expect(leftBack).toHaveAttribute('aria-pressed', 'true')
+
+	const keeper = within(pitch()).getByRole('button', { name: /Khaled Mehiri/ })
+	await userEvent.click(keeper)
+	expect(within(card()).getByRole('heading')).toHaveTextContent('Khaled Mehiri')
+	expect(card()).toHaveTextContent('Truro Otters · away')
+	expect(card()).toHaveAttribute('aria-live', 'polite')
+	expect(leftBack).toHaveAttribute('aria-pressed', 'false')
+
+	keeper.focus()
+	await userEvent.tab()
+	expect(within(card()).getByRole('heading')).not.toHaveTextContent('Khaled Mehiri')
 })
 
-test('stage two adds formations, abbreviations and the kick-off shape with the viewer’s team marked', () => {
-	const { view } = show(sheetStage2)
+test('the line-ups list chooses the same player as the pitch', async () => {
+	show(sheetStage2)
+	await userEvent.click(screen.getByText('Both line-ups as a list'))
+	const name = 'Number 1, Diogo Marteiro, Bakewell Badgers, Goalkeeper'
+	const list = screen.getByRole('region', { name: 'Bakewell Badgers' })
+	await userEvent.click(within(list).getByRole('button', { name }))
+	expect(within(card()).getByRole('heading')).toHaveTextContent('Diogo Marteiro')
+	expect(within(pitch()).getByRole('button', { name })).toHaveAttribute('aria-pressed', 'true')
+	expect(within(list).getByRole('button', { name })).toHaveTextContent('1MarteiroGK')
+})
+
+test('stage two adds formations and position tags, and says what level three adds', () => {
+	show(sheetStage2)
 	expect(screen.getAllByText('4-4-2')).toHaveLength(2)
-	expect(screen.getAllByTitle('Left back')[0]).toHaveTextContent('LB')
-	expect(screen.getByText(/Kick-off shape: your team attacks up/)).toBeInTheDocument()
-	expect(view.container.querySelectorAll('[data-testid="pitch-yours"]')).toHaveLength(11)
-	expect(view.container.querySelector('.pitch__ball')).toBeNull()
-	expect(screen.queryByText('Passes completed')).toBeNull()
+	expect(within(card()).getByTitle('Striker')).toHaveTextContent('ST')
+	expect(within(card()).queryByText('Passes completed')).toBeNull()
+	expect(
+		screen.getByText("Get to level 3 in any concept to see players' numbers from matches you've watched.")
+	).toBeInTheDocument()
 })
 
-test('stage three shows numbers for players the viewer has seen, and says who they haven’t', () => {
+test('stage three shows numbers for players the viewer has seen, and says who they haven’t', async () => {
 	show(sheetStage3)
-	const [yours, theirs] = screen.getAllByRole('article')
-	if (yours === undefined || theirs === undefined) throw new Error('no cards')
-	expect(within(yours).getAllByText('Passes completed')).toHaveLength(11)
-	expect(within(yours).getByText("From the 2 matches of theirs you've watched.")).toBeInTheDocument()
-	expect(within(theirs).getAllByText("First time you've seen them")).toHaveLength(11)
-	expect(within(theirs).queryByText('0')).toBeNull()
+	expect(card()).toHaveTextContent('Niels Meiner')
+	expect(within(card()).getByText('Passes completed').nextSibling).toHaveTextContent('74/110')
+	expect(within(card()).getByText('+39%')).toBeInTheDocument()
+	expect(card()).toHaveTextContent("From the 2 matches of theirs you've watched.")
+	expect(screen.queryByText(/Get to level/)).toBeNull()
+
+	await userEvent.click(within(pitch()).getByRole('button', { name: /Ousmane Ekekunle/ }))
+	expect(within(card()).getByText("First time you've seen them")).toBeInTheDocument()
+	expect(within(card()).queryByText('0')).toBeNull()
+	expect(card()).toHaveTextContent("You haven't watched Bakewell Badgers yet, so there are no numbers for them.")
 	expect(screen.queryByRole('button', { name: /Change it/ })).toBeNull()
 })

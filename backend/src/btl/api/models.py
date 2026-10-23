@@ -259,7 +259,7 @@ class SheetPlayerOut(BaseModel):
     """A starter on the team sheet.
 
     ``at_kickoff`` is where they stood at kick-off, with the sheet's first team attacking left
-    to right; null before stage 2. ``numbers`` is null before stage 3, or if the viewer hasn't
+    to right. ``numbers`` is null before stage 3, or if the viewer hasn't
     seen them play.
     """
 
@@ -267,7 +267,7 @@ class SheetPlayerOut(BaseModel):
     name: str
     role: str
     position: PositionOut
-    at_kickoff: Point | None
+    at_kickoff: Point
     numbers: PlayerNumbersOut | None
 
 

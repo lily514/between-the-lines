@@ -1,9 +1,11 @@
-import { useEffect, useId, useRef } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import type { TeamSheet as TeamSheetData } from '../../api/client.ts'
-import Pitch from '../Shared/Pitch/index.tsx'
+import ClubCard from './ClubCard.tsx'
 import './index.css'
-import { kickoffPicture, yourSide } from './index.support.ts'
-import TeamCard from './TeamCard.tsx'
+import { firstPick, spotsOf } from './index.support.ts'
+import KickoffPitch from './KickoffPitch.tsx'
+import LineupList from './LineupList.tsx'
+import PlayerCard from './PlayerCard.tsx'
 
 export interface TeamSheetProps {
 	sheet: TeamSheetData
@@ -13,14 +15,16 @@ export interface TeamSheetProps {
 	onChangeTeam: () => void
 }
 
-/** Who's playing, before each match: the viewer's team first, growing with the viewer's level. */
+/** Who's playing, before each match: both elevens on the kick-off pitch, the viewer's team attacking up. Choosing a
+ * player fills the card under the pitch, which grows with the viewer's level. */
 const TeamSheet = ({ sheet, canChangeTeam, onKickOff, onChangeTeam }: TeamSheetProps) => {
 	const heading = useRef<HTMLHeadingElement>(null)
 	const headingId = useId()
-	const side = yourSide(sheet)
-	const picture = kickoffPicture(sheet)
-	const home = sheet.teams.find(team => team.home)
-	const away = sheet.teams.find(team => !team.home)
+	const spots = spotsOf(sheet)
+	const [chosenKey, setChosenKey] = useState(() => firstPick(spots)?.key)
+	const chosen = spots.find(spot => spot.key === chosenKey)
+	const abbreviated = sheet.stage >= 2
+	const counted = sheet.stage >= 3
 
 	useEffect(() => {
 		heading.current?.focus()
@@ -28,59 +32,65 @@ const TeamSheet = ({ sheet, canChangeTeam, onKickOff, onChangeTeam }: TeamSheetP
 
 	return (
 		<section className="team-sheet" aria-labelledby={headingId}>
-			<p className="team-sheet__eyebrow">Before kick-off</p>
+			<p className="team-sheet__eyebrow">
+				Before kick-off · Match <span className="team-sheet__number">{sheet.match_number}</span>
+			</p>
 			<h2 id={headingId} ref={heading} tabIndex={-1} className="team-sheet__heading screen-heading">
 				Who's playing
 			</h2>
-			{home !== undefined && away !== undefined && (
-				<p className="team-sheet__fixture">
-					Match <span className="team-sheet__number">{sheet.match_number}</span> · {home.name} (home) v{' '}
-					{away.name} (away)
-				</p>
-			)}
-			<ul className="team-sheet__key" aria-label="Key">
-				<li>
-					<span className="team-sheet__glyph team-sheet__glyph--home" aria-hidden="true">
-						7
-					</span>
-					Filled disc: home side
-				</li>
-				<li>
-					<span className="team-sheet__glyph team-sheet__glyph--away" aria-hidden="true">
-						7
-					</span>
-					Ring: away side
-				</li>
-				{side !== null && (
-					<li>
-						<span className="team-sheet__glyph team-sheet__glyph--yours" aria-hidden="true">
-							You
-						</span>
-						Dashed ring and "You": your team
-					</li>
-				)}
-				<li>
-					<span className="team-sheet__glyph team-sheet__glyph--hash" aria-hidden="true">
-						#
-					</span>
-					Numbers are shirt numbers
-				</li>
-			</ul>
-			{picture !== null && (
-				// The lists below say the same, so screen readers skip the picture.
-				<figure className="team-sheet__pitch" aria-hidden="true">
-					<figcaption className="team-sheet__pitch-caption">
-						Kick-off shape{side !== null && ': your team attacks up'}
-					</figcaption>
-					<Pitch picture={picture} label="Kick-off" yours={side} ball={false} />
-				</figure>
-			)}
-			<div className="team-sheet__teams">
+			<div className="team-sheet__clubs">
 				{sheet.teams.map(team => (
-					<TeamCard key={team.code} team={team} abbreviated={sheet.stage >= 2} counted={sheet.stage >= 3} />
+					<ClubCard key={team.code} team={team} />
 				))}
 			</div>
-			{sheet.next_stage !== null && <p className="team-sheet__next">{sheet.next_stage}</p>}
+			<figure className="team-sheet__pitch">
+				<div className="team-sheet__pitch-head">
+					<h3 className="team-sheet__pitch-heading">Kick-off positions</h3>
+					<span className="team-sheet__hint team-sheet__hint--touch">Tap a player</span>
+					<span className="team-sheet__hint team-sheet__hint--pointer">Hover or click a player</span>
+				</div>
+				<KickoffPitch
+					sheet={sheet}
+					spots={spots}
+					chosen={chosen}
+					abbreviated={abbreviated}
+					onChoose={setChosenKey}
+				/>
+				<figcaption className="team-sheet__key">
+					<span>
+						<span className="team-sheet__glyph team-sheet__glyph--home" aria-hidden="true" />
+						Home
+					</span>
+					<span>
+						<span className="team-sheet__glyph team-sheet__glyph--away" aria-hidden="true" />
+						Away
+					</span>
+					{sheet.teams.some(team => team.yours) && (
+						<span>
+							<span className="team-sheet__glyph team-sheet__glyph--yours" aria-hidden="true" />
+							Your team
+						</span>
+					)}
+					<span>Numbers are shirt numbers</span>
+				</figcaption>
+			</figure>
+			{chosen !== undefined && <PlayerCard spot={chosen} abbreviated={abbreviated} counted={counted} />}
+			<LineupList
+				teams={sheet.teams}
+				spots={spots}
+				chosen={chosen}
+				abbreviated={abbreviated}
+				onChoose={setChosenKey}
+			/>
+			{sheet.next_stage !== null && (
+				<p className="team-sheet__next">
+					<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+						<rect x="5" y="11" width="14" height="10" rx="2" />
+						<path d="M8 11V8a4 4 0 0 1 8 0v3" />
+					</svg>
+					{sheet.next_stage}
+				</p>
+			)}
 			<button type="button" className="primary-button" onClick={onKickOff}>
 				Kick off
 			</button>

@@ -1,7 +1,8 @@
 """The team sheet shown before a match: who plays for each side, growing with the viewer.
 
-A beginner (stage 1) sees each starter's shirt number, name and position in plain words. Stage 2
-adds each side's formation and where every starter stood at kick-off. Stage 3 adds each
+A beginner (stage 1) sees each starter's shirt number, name, position in plain words and where
+they stood at kick-off, so the page can put them on a pitch. Stage 2 adds each side's formation.
+Stage 3 adds each
 player's numbers from the matches the viewer has finished (`btl.learn.player_stats`). The stage
 follows the viewer's best concept: it is the level the selector would ask them about that
 concept at, so one concept going well is enough to see more.
@@ -25,13 +26,13 @@ from btl.sim.lineup import Lineup
 from btl.sim.position_names import Position, position_names
 
 STAGES = (1, 2, 3)
-# The stages from which the sheet shows formations and kick-off positions, then numbers.
+# The stages from which the sheet shows formations, then numbers.
 SHAPE_STAGE = 2
 NUMBERS_STAGE = 3
 ROLE_ORDER = (Role.GOALKEEPER, Role.DEFENDER, Role.MIDFIELDER, Role.FORWARD)
 # What opens the next stage, shown under the sheet so the viewer knows it will grow.
 NEXT_STAGE: dict[int, str] = {
-    1: "Get to level 2 in any concept to see the formation.",
+    1: "Get to level 2 in any concept to see formations and position tags.",
     2: "Get to level 3 in any concept to see players' numbers from matches you've watched.",
 }
 
@@ -41,7 +42,7 @@ class SheetPlayer:
     """A starter on the sheet.
 
     ``at_kickoff`` is where they stood at kick-off, with the sheet's first team attacking
-    towards x = 105; None before stage 2. ``numbers`` are from the watched matches they
+    towards x = 105. ``numbers`` are from the watched matches they
     started; None before stage 3, or if the viewer hasn't seen them play.
     """
 
@@ -50,7 +51,7 @@ class SheetPlayer:
     name: str
     role: Role
     position: Position
-    at_kickoff: tuple[float, float] | None
+    at_kickoff: tuple[float, float]
     numbers: PlayerStats | None
 
 
@@ -140,10 +141,17 @@ def team_sheet(
         raise ValueError(f"stage must be one of {STAGES}, got {stage}")
     playing = (match.home_team_id, match.away_team_id)
     first = club if club is not None and club in playing else match.home_team_id
-    kickoff = _kickoff_spots(match, first) if stage >= SHAPE_STAGE else None
+    kickoff = _kickoff_spots(match, first)
     shown = numbers if stage >= NUMBERS_STAGE else None
     teams = tuple(
-        _team(lineup, match, kickoff, shown, yours=lineup.club.team_id == club)
+        _team(
+            lineup,
+            match,
+            kickoff,
+            shown,
+            yours=lineup.club.team_id == club,
+            shape=stage >= SHAPE_STAGE,
+        )
         for lineup in lineups
     )
     home, away = teams
@@ -161,10 +169,11 @@ def _kickoff_spots(match: Match, first: TeamId) -> dict[PlayerId, tuple[float, f
 def _team(
     lineup: Lineup,
     match: Match,
-    kickoff: dict[PlayerId, tuple[float, float]] | None,
+    kickoff: dict[PlayerId, tuple[float, float]],
     numbers: WatchedNumbers | None,
     *,
     yours: bool,
+    shape: bool,
 ) -> SheetTeam:
     slots = lineup.formation.slots
     positions = position_names(lineup.formation)
@@ -176,11 +185,8 @@ def _team(
     players: list[SheetPlayer] = []
     for index in order:
         player = lineup.players[index]
-        spot = None
-        if kickoff is not None:
-            if player.player_id not in kickoff:
-                raise ValueError(f"{player.full_name} has no kick-off position")
-            spot = kickoff[player.player_id]
+        if player.player_id not in kickoff:
+            raise ValueError(f"{player.full_name} has no kick-off position")
         players.append(
             SheetPlayer(
                 player.player_id,
@@ -188,7 +194,7 @@ def _team(
                 player.full_name,
                 player.role,
                 positions[index],
-                spot,
+                kickoff[player.player_id],
                 None if numbers is None else numbers.players.get(player.player_id),
             )
         )
@@ -199,7 +205,7 @@ def _team(
         short_name=club.short_name,
         home=club.team_id == match.home_team_id,
         yours=yours,
-        formation=lineup.formation.name if kickoff is not None else None,
+        formation=lineup.formation.name if shape else None,
         matches_watched=None if numbers is None else numbers.team_matches.get(club.team_id, 0),
         players=tuple(players),
     )

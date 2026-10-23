@@ -124,3 +124,18 @@ Milestone 2e is done, and Lily has checked it in the browser. A new viewer types
 **Learned:** stage 1 is long on a phone (about 2,700 px), because each of the 22 players carries its position description. That is what the plan asked for. If it feels like too much in Lily's check, the fallback is to describe each position once per group, or only for the viewer's team.
 **Why:** the plan left the layout to the handoff, and the result line needed one field from the API.
 **Affects:** T7 (README screenshots). **Lily's hand check is still to do.**
+
+## After 2e — Pitch-first team sheet (2026-10-23)
+**Plan said:** T6's sheet: a card per side with every player's row, and a kick-off pitch from stage 2.
+**We did:** rebuilt "Who's playing" from the updated TS boards (handoff §14.2, "pitch-first"):
+- **Two short club cards** side by side: shape glyph, name, "You", Home or Away, and the formation from stage 2. The cards have no crests and no colour bar, as on the boards; the picker still shows crests.
+- **One kick-off pitch at every stage**, your team attacking up, its half outlined dashed with a "YOU · {CODE}" tag, and the clubs' names (with formations from stage 2) above and below. Every player is numbered; each is a focusable `role="button"`, and hovering, clicking, tapping or focusing one chooses them. The chosen player gets a blue ring and a "#9 Name · ST" label.
+- **One player card** (`aria-live="polite"`) for the chosen player: name, club, position in words and its description. Stage 2 adds the tag; stage 3 adds the numbers, or "First time you've seen them", and the club's watched line. It opens on the first team's first forward, so it is never empty.
+- **"Both line-ups as a list"**, collapsed: the same choice as plain buttons.
+- **The note for the next stage** sits in a dashed box with a lock. Stage 1's now reads "Get to level 2 in any concept to see formations and position tags."
+- **The API sends `at_kickoff` at every stage**, so `SheetPlayerOut.at_kickoff` is no longer nullable; formations still start at stage 2.
+- **Spots are spread for legibility** (§14.4): the first action's snapshot can put two players within a disc of each other, so the page nudges overlapping discs apart, just far enough to tap. This is layout only; the API's spots are unchanged.
+- `TeamCard` and `Shared/Pitch`'s `ball` option are gone; the shared pitch is used only for questions and feedback again.
+
+**Why:** Lily's design update; the long per-player list was the T6 concern about length on a phone.
+**Affects:** README screenshots of the team sheet.

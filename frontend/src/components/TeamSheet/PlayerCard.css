@@ -1,0 +1,128 @@
+/* The chosen player's card, under the pitch. */
+
+.player-card {
+	padding: 14px;
+	border: 1px solid var(--border);
+	border-radius: var(--r-pitch);
+	background: var(--surface);
+}
+
+.player-card__header {
+	display: flex;
+	align-items: center;
+	gap: var(--s-3);
+}
+
+/* The player's shirt drawn as on the pitch: a filled disc for home, a ring for away. */
+.player-card__shirt {
+	flex: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 30px;
+	height: 30px;
+	border-radius: var(--r-pill);
+	font-family: var(--font-data);
+	font-size: var(--fs-caption);
+	font-weight: 500;
+}
+
+.player-card__shirt--home {
+	background: var(--text);
+	color: var(--bg);
+}
+
+.player-card__shirt--away {
+	border: 2px solid var(--text);
+	color: var(--text);
+}
+
+.player-card__who {
+	flex: 1;
+	min-width: 0;
+}
+
+.player-card__name {
+	font-size: var(--fs-display-m);
+	line-height: var(--lh-display-m);
+	font-weight: 700;
+}
+
+.player-card__team {
+	margin: 2px 0 0;
+	font-size: var(--fs-label);
+	color: var(--text-muted);
+}
+
+.player-card__tag {
+	flex: none;
+	padding: 3px 7px;
+	border: 1px solid var(--border-strong);
+	border-radius: var(--r-chip);
+	font-family: var(--font-data);
+	font-size: var(--fs-label);
+	color: var(--text-2);
+	text-decoration: none;
+}
+
+.player-card__position {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	margin: 10px 0 0;
+}
+
+.player-card__position-name {
+	font-size: 16px;
+	font-weight: 600;
+}
+
+.player-card__description {
+	font-size: var(--fs-body-s);
+	line-height: 1.4;
+	color: var(--text-2);
+}
+
+.player-card__unseen {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin: var(--s-3) 0 0;
+	font-size: var(--fs-body-s);
+	color: var(--text-muted);
+}
+
+.player-card__unseen svg {
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2;
+}
+
+.player-card__numbers {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: var(--s-2) var(--s-3);
+	margin: var(--s-3) 0 0;
+}
+
+.player-card__numbers dt {
+	font-size: var(--fs-caption);
+	color: var(--text-muted);
+}
+
+.player-card__numbers dd {
+	margin: 0;
+	font-family: var(--font-data);
+	font-size: 16px;
+}
+
+.player-card__threat {
+	color: var(--know);
+}
+
+.player-card__watched {
+	margin: 10px 0 0;
+	font-size: var(--fs-caption);
+	line-height: 1.4;
+	color: var(--text-muted);
+}

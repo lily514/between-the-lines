@@ -1,0 +1,66 @@
+/* One side in short. The viewer's team: a 2 px outline, the raised fill and a "You" tag, never colour alone. */
+
+.club-card {
+	min-width: 0;
+	padding: 10px var(--s-3);
+	border: 1px solid var(--border);
+	border-radius: var(--r-btn);
+}
+
+.club-card--yours {
+	padding: 9px calc(var(--s-3) - 1px);
+	border: 2px solid var(--text);
+	background: var(--surface-raised);
+}
+
+.club-card__name {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 18px;
+	line-height: 1.1;
+	font-weight: 700;
+}
+
+/* The side's shape on the pitch: a filled disc for home, a ring for away. */
+.club-card__glyph {
+	flex: none;
+	width: 13px;
+	height: 13px;
+	border-radius: var(--r-pill);
+}
+
+.club-card__glyph--home {
+	background: var(--text);
+}
+
+.club-card__glyph--away {
+	border: 2px solid var(--text);
+}
+
+.club-card__meta {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+	margin: var(--s-1) 0 0;
+	font-size: var(--fs-caption);
+	color: var(--text-muted);
+}
+
+.club-card__you {
+	display: inline-flex;
+	align-items: center;
+	height: 20px;
+	padding: 0 7px;
+	border-radius: 5px;
+	background: var(--text);
+	color: var(--bg);
+	font-size: var(--fs-caption);
+	font-weight: 700;
+}
+
+.club-card__formation {
+	font-family: var(--font-data);
+	color: var(--text-2);
+}

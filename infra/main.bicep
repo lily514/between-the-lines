@@ -20,8 +20,26 @@ param alertEmail string
 @description('The app\'s minimum replicas: 0 normally (free when idle), 1 while judges are likely to visit.')
 param minReplicas int = 0
 
-@description('Whether the app has been deployed before; azd sets SERVICE_WEB_RESOURCE_EXISTS.')
+@description('Whether the app has been deployed before; azure.yaml\'s hooks keep SERVICE_WEB_RESOURCE_EXISTS.')
 param webExists bool = false
+
+@allowed(['template', 'foundry'])
+@description('Who words questions and feedback (azd env TUTOR): the template, or the model.')
+param tutor string = 'template'
+
+// The model lives on Lily's existing Foundry resource, outside this deployment (docs/deployment.md). Its real
+// endpoint is kept in the azd environment, never in the repo.
+@description('The Foundry resource\'s endpoint (azd env FOUNDRY_ENDPOINT).')
+param foundryEndpoint string = ''
+
+@description('The demo\'s model deployment (azd env FOUNDRY_DEPLOYMENT).')
+param foundryDeployment string = ''
+
+@description('Model wordings per viewer a day, then the template\'s. A wording is at most two model calls.')
+param wordingsPerViewer int = 60
+
+@description('Model wordings a day for everyone, then the template\'s: at most 2,000 calls, about $0.50.')
+param wordingsPerDay int = 1000
 
 // The budgets' first month. Fixed, so a provision in a later month doesn't try to move it.
 var budgetStart = '2026-10-01'
@@ -84,6 +102,11 @@ module app 'modules/app.bicep' = {
     registryServer: registry.outputs.loginServer
     exists: webExists
     minReplicas: minReplicas
+    tutor: tutor
+    foundryEndpoint: foundryEndpoint
+    foundryDeployment: foundryDeployment
+    wordingsPerViewer: wordingsPerViewer
+    wordingsPerDay: wordingsPerDay
   }
 }
 

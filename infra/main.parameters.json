@@ -16,6 +16,15 @@
     },
     "webExists": {
       "value": "${SERVICE_WEB_RESOURCE_EXISTS=false}"
+    },
+    "tutor": {
+      "value": "${TUTOR=template}"
+    },
+    "foundryEndpoint": {
+      "value": "${FOUNDRY_ENDPOINT=}"
+    },
+    "foundryDeployment": {
+      "value": "${FOUNDRY_DEPLOYMENT=}"
     }
   }
 }

@@ -20,6 +20,7 @@ from rich.rule import Rule
 from rich.text import Text
 
 from btl.api.app import create_app
+from btl.api.limits import WORDINGS_PER_DAY, WORDINGS_PER_VIEWER, Allowance, LimitedTutor
 from btl.cli.render import (
     counted,
     events_table,
@@ -669,13 +670,30 @@ def serve(
             envvar="BTL_TUTOR_LOG",
         ),
     ] = DEFAULT_TUTOR_LOG,
+    wordings_per_viewer: Annotated[
+        int,
+        typer.Option(
+            min=0,
+            help="With --tutor foundry: model wordings per viewer a day, then the template's.",
+            envvar="BTL_WORDINGS_PER_VIEWER",
+        ),
+    ] = WORDINGS_PER_VIEWER,
+    wordings_per_day: Annotated[
+        int,
+        typer.Option(
+            min=0,
+            help="With --tutor foundry: model wordings a day for everyone, then the template's.",
+            envvar="BTL_WORDINGS_PER_DAY",
+        ),
+    ] = WORDINGS_PER_DAY,
 ) -> None:
     """Serve the learning loop to the web page: the API, and the built page if there is one.
 
     With the JSON store, learner records are the same files `btl learn` uses, so a viewer can
     carry on in either.
     """
-    course = Course(_threat_model_or_fit(model), _server_tutor(tutor, tutor_log))
+    allowance = Allowance(wordings_per_viewer, wordings_per_day, lambda: datetime.now(UTC).date())
+    course = Course(_threat_model_or_fit(model), _server_tutor(tutor, tutor_log, allowance))
     records: LearnerStore = (
         MemoryLearnerStore() if store is StoreChoice.MEMORY else JsonLearnerStore(learners)
     )
@@ -706,14 +724,21 @@ PING = ModelRequest(
 
 
 def _foundry_settings() -> FoundrySettings:
-    missing = [name for name in FOUNDRY_VARIABLES if not os.environ.get(name)]
+    # In Azure, AZURE_CLIENT_ID names the app's managed identity, which needs no tenant.
+    client_id = os.environ.get("AZURE_CLIENT_ID") or None
+    needed = FOUNDRY_VARIABLES[:2] if client_id else FOUNDRY_VARIABLES
+    missing = [name for name in needed if not os.environ.get(name)]
     if missing:
         console.print(
             f"Set {', '.join(missing)} to use the AI Tutor; docs/setup.md says how to find them."
         )
         raise typer.Exit(1)
-    endpoint, deployment, tenant = (os.environ[name] for name in FOUNDRY_VARIABLES)
-    return FoundrySettings(endpoint, deployment, tenant)
+    return FoundrySettings(
+        os.environ["BTL_FOUNDRY_ENDPOINT"],
+        os.environ["BTL_FOUNDRY_DEPLOYMENT"],
+        os.environ.get("BTL_FOUNDRY_TENANT", ""),
+        client_id,
+    )
 
 
 def _tutor(choice: TutorChoice, log: Path) -> Tutor:
@@ -722,11 +747,12 @@ def _tutor(choice: TutorChoice, log: Path) -> Tutor:
     return WaitingTutor(_verified_tutor(log), console)
 
 
-def _server_tutor(choice: TutorChoice, log: Path) -> Tutor:
-    # Each request replays the match, so the server remembers the words it has already shown.
+def _server_tutor(choice: TutorChoice, log: Path, allowance: Allowance) -> Tutor:
+    # Each request replays the match, so the server remembers the words it has already shown; and
+    # a public server limits how much the model words each day.
     if choice is TutorChoice.TEMPLATE:
         return TemplateTutor()
-    return CachedTutor(_verified_tutor(log))
+    return LimitedTutor(CachedTutor(_verified_tutor(log)), TemplateTutor(), allowance)
 
 
 def _verified_tutor(log: Path) -> VerifiedTutor:

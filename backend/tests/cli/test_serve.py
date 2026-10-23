@@ -120,6 +120,46 @@ def test_serve_with_the_model_words_the_page_s_questions_through_it(
     assert (tmp_path / "tutor-log.jsonl").read_text().count('"kind": "question"') == 1
 
 
+def test_serve_in_azure_signs_in_as_the_app_s_identity_and_needs_no_tenant(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    model = tmp_path / "model.json"
+    save_threat_model(threat_model(), model)
+    settings: list[FoundrySettings] = []
+
+    def fake_azure(given: FoundrySettings) -> ByKind:
+        settings.append(given)
+        return ByKind()
+
+    def run(api: FastAPI, host: str, port: int, log_level: str) -> None:
+        pass
+
+    monkeypatch.setattr(uvicorn, "run", run)
+    monkeypatch.setattr(cli, "AzureClient", fake_azure)
+    env: dict[str, str | None] = {
+        **WIDE,
+        "BTL_FOUNDRY_ENDPOINT": "https://example-resource.openai.azure.com/",
+        "BTL_FOUNDRY_DEPLOYMENT": "tutor-model-demo",
+        "BTL_FOUNDRY_TENANT": None,
+        "AZURE_CLIENT_ID": "00000000-0000-0000-0000-00000000c11d",
+    }
+
+    result = runner.invoke(
+        app,
+        [
+            "serve",
+            *("--model", str(model), "--store", "memory", "--tutor", "foundry"),
+            *("--frontend", str(tmp_path / "dist"), "--tutor-log", str(tmp_path / "log.jsonl")),
+        ],
+        env=env,
+    )
+
+    assert result.exit_code == 0, result.output
+    assert [(s.deployment, s.client_id) for s in settings] == [
+        ("tutor-model-demo", "00000000-0000-0000-0000-00000000c11d")
+    ]
+
+
 def test_serve_reads_its_options_from_the_environment(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

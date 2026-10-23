@@ -28,8 +28,20 @@ param exists bool
 
 @minValue(0)
 @maxValue(1)
-@description('0: scale to zero when idle (free, but the first visitor waits a few seconds). 1: always warm.')
+@description('0: scale to zero when idle (free, but the first visitor waits about 30 s). 1: always warm.')
 param minReplicas int
+
+@allowed(['template', 'foundry'])
+@description('Who words questions and feedback: the template, or the model through the Verifier.')
+param tutor string
+
+@description('The Foundry resource\'s endpoint and the demo deployment\'s name; used when tutor is foundry.')
+param foundryEndpoint string
+param foundryDeployment string
+
+@description('Model wordings per viewer a day, and for everyone; past either, the template words it.')
+param wordingsPerViewer int
+param wordingsPerDay int
 
 module image 'app-image.bicep' = {
   name: '${name}-image'
@@ -84,7 +96,11 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
           env: [
             { name: 'AZURE_CLIENT_ID', value: identityClientId }
             { name: 'BTL_STORE', value: 'memory' }
-            { name: 'BTL_TUTOR', value: 'template' }
+            { name: 'BTL_TUTOR', value: tutor }
+            { name: 'BTL_FOUNDRY_ENDPOINT', value: foundryEndpoint }
+            { name: 'BTL_FOUNDRY_DEPLOYMENT', value: foundryDeployment }
+            { name: 'BTL_WORDINGS_PER_VIEWER', value: string(wordingsPerViewer) }
+            { name: 'BTL_WORDINGS_PER_DAY', value: string(wordingsPerDay) }
           ]
           // In the order Azure stores them, so a preview doesn't report the list as changed.
           probes: [

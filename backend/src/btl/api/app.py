@@ -27,12 +27,14 @@ Requests for different viewers run at the same time; one viewer's requests take 
 import threading
 import weakref
 from collections import OrderedDict
-from collections.abc import Callable
+from collections.abc import Callable, Generator
+from contextlib import contextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 
+from btl.api.limits import current_viewer
 from btl.api.models import (
     AnswerIn,
     ClubIn,
@@ -120,6 +122,16 @@ def create_app(
                 found = viewer_locks[viewer_id] = threading.Lock()
             return found
 
+    @contextmanager
+    def serving(viewer_id: str) -> Generator[None, None, None]:
+        # The viewer's turn, and whose request it is, for the model's daily limits.
+        with lock(viewer_id):
+            token = current_viewer.set(viewer_id)
+            try:
+                yield
+            finally:
+                current_viewer.reset(token)
+
     def course() -> Course:
         with course_guard:
             if not loaded:
@@ -199,7 +211,7 @@ def create_app(
         """Start watching, or carry on where the viewer stopped."""
         _check(body.viewer_id)
         seed = seed_for_viewer(body.viewer_id) if body.seed is None else body.seed
-        with lock(body.viewer_id):
+        with serving(body.viewer_id):
             found = start_session(store, body.viewer_id, seed)
             if body.club is not None:
                 found = chosen(body.viewer_id, body.club)
@@ -208,27 +220,27 @@ def create_app(
     @app.put("/api/viewers/{viewer_id}/club")
     def put_club(viewer_id: str, body: ClubIn) -> StatusOut:
         """Choose the team to support, before answering anything."""
-        with lock(viewer_id):
+        with serving(viewer_id):
             stored(viewer_id)
             return status(chosen(viewer_id, body.club))
 
     @app.get("/api/viewers/{viewer_id}/team-sheet")
     def get_team_sheet(viewer_id: str) -> TeamSheetOut:
         """Who's playing in the viewer's next match, as much as their stage shows."""
-        with lock(viewer_id):
+        with serving(viewer_id):
             state = _watching(stored(viewer_id))
             return team_sheet_payload(viewer_sheet(course(), state, prepare))
 
     @app.get("/api/viewers/{viewer_id}")
     def get_status(viewer_id: str) -> StatusOut:
         """Where a viewer stands."""
-        with lock(viewer_id):
+        with serving(viewer_id):
             return status(stored(viewer_id))
 
     @app.post("/api/viewers/{viewer_id}/next")
     def next_step(viewer_id: str) -> NextOut:
         """The question waiting to be answered, or full time if the match has no more."""
-        with lock(viewer_id):
+        with serving(viewer_id):
             state = _watching(stored(viewer_id))
             viewer = WebViewer()
             try:
@@ -277,7 +289,7 @@ def create_app(
     @app.post("/api/viewers/{viewer_id}/answers")
     def answer(viewer_id: str, body: AnswerIn) -> FeedbackOut:
         """Answer the waiting question and hear the feedback."""
-        with lock(viewer_id):
+        with serving(viewer_id):
             state = _watching(stored(viewer_id))
             before = course().bars(state)
             viewer = WebViewer(answer=(body.pack_id, body.key))

@@ -96,3 +96,30 @@ Around the module:
 
 **Why:** the plan didn't foresee azd's limit; the preview caught it before anything broke.
 **Affects:** T6 and T8 (each later provision keeps the image); T10 (the docs explain the first-deploy window and the hooks).
+
+## T6 — The model, in the cloud (2026-10-23)
+**Plan said:** `cli/` chooses `ManagedIdentityCredential` when `AZURE_CLIENT_ID` is set; the two `az` commands in `docs/deployment.md`, run with Lily's go-ahead after a read-only quota check; limits of 120 model calls per viewer and 2,000 a day, with "template (daily limit)"; then `BTL_TUTOR=foundry`, model-worded text on the URL.
+**We did:** as planned, with these choices:
+- **The credential is chosen in `tutor/azure.py`, not `cli/`,** since only `azure.py` may import an Azure SDK. `FoundrySettings` gains an optional `client_id`, and `default_credential` gives the managed identity when it is set, otherwise the Azure CLI in the named tenant. `cli/` reads `AZURE_CLIENT_ID` into the settings, and asks for `BTL_FOUNDRY_TENANT` only without it.
+- **The limits count wordings, not calls:**
+  - **60 per viewer and 1,000 a day.** A wording is one question or one feedback, and costs at most two calls, so these bound the calls at the plan's 120 and 2,000. Counting calls exactly would mean following each call back to its viewer through the Verifier's records, from several viewers at once.
+  - **The limit sits in front of the wording cache** (`LimitedTutor` over `CachedTutor`, in `api/limits.py`). Cached words are free and never counted, so a reload past the limit still shows the same words. Uncached words past it come from the template; only feedback carries a source to say so.
+  - **The API marks whose request it is in a context variable,** set with each viewer's lock. The Tutor protocol never sees the viewer, and no viewer reaches a prompt.
+  - **The variables are `BTL_WORDINGS_PER_VIEWER` and `BTL_WORDINGS_PER_DAY`,** not the plan's `BTL_MODEL_CALLS_*`.
+- **`docs/deployment.md` starts here,** as a living reference: what is deployed, the two commands, the limits, costs, and taking it down. T10 adds the diagram and the queries.
+
+**Checked against Azure:**
+- **Quota:** gpt-5.4-nano Global Standard in eastus2 allows 5,000 and the existing deployment uses 250, so the demo's 10 fits (read-only check).
+- **Lily approved the two `az` commands.** `gpt-5.4-nano-demo` was created (Global Standard, capacity 10), and the identity now holds exactly AcrPull on the registry and Cognitive Services OpenAI User on the Foundry resource.
+- **The preview** showed only the container's variables changing.
+- **`azd up` (Lily's go-ahead)** took 4 minutes, and the `postdeploy` hook set `SERVICE_WEB_RESOURCE_EXISTS=true` by itself.
+- **On the public URL,** a round trip was worded by the model: the question took 5.4 s, including preparing the match, and the feedback 2.3 s, with source `gpt-5.4-nano-demo`. The role worked at once, with no wait.
+
+**Learned:**
+- **In Azure, the service names the model by its deployment** (`gpt-5.4-nano-demo`), so that is what the source line shows. Locally it showed `gpt-5.4-nano`.
+- **The provision's revision ran the old image with the new variables** (`…0000001`). That image doesn't know `AZURE_CLIENT_ID` and stops without a tenant, so the revision never took traffic; single-revision mode kept the previous one serving until the deploy replaced both.
+- **KQL treats `last` as a reserved word.**
+- **The first round trip after the deploy failed with 404 on `/next`.** The system log shows why. During the switchover the platform woke the previous revision from zero (17:53:28), moved traffic to the new one (17:53:42) and deactivated the old one (17:54:13). The new viewer was created in the old revision's memory, and its next request reached the new revision, which had never seen it. A second round trip worked. With the memory store every deploy or restart forgets every viewer, and a request that straddles a switchover can be forgotten at once; T8's Blob store, shared by every revision, is the fix.
+
+**Why:** counting calls exactly per viewer would need the viewer inside the Tutor chain, which the design keeps out.
+**Affects:** T9 (a `limit_reached` event from `LimitedTutor`); T10 (the docs build on `deployment.md`).

@@ -73,6 +73,18 @@ class CachedTutor:
             self._lock,
         )
 
+    def remembers_question(self, view: QuestionView) -> bool:
+        """Whether this question's words are already kept, so wording it again costs nothing."""
+        with self._lock:
+            return view.pack_id in self._questions
+
+    def remembers_feedback(
+        self, pack: EvidencePack, grade: Grade, history: History = NO_HISTORY
+    ) -> bool:
+        """Whether this pick's feedback, after this history, is already kept."""
+        with self._lock:
+            return (pack.pack_id, grade.chosen, history) in self._feedback
+
 
 def _remembered(
     cache: OrderedDict[KeyT, ValueT],

@@ -284,11 +284,8 @@ const App = () => {
 							from={screen.from?.clock ?? null}
 							to={screen.question.delivered}
 							occurred={screen.question.occurred}
-							score={
-								screen.question.delivered.delivery === 'live'
-									? (screen.question.context.score?.display ?? null)
-									: null
-							}
+							score={`${String(screen.question.score.home)}–${String(screen.question.score.away)}`}
+							catchUp={screen.question.catch_up}
 							yours={screen.question.your_team}
 							onArrive={() => {
 								dispatch({ type: 'open' })

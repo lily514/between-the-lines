@@ -38,3 +38,23 @@ recap, from `GET …/matches/{n}/report?at=…`; `FullTimeOut` points to it.
 
 **Why:** without the period, a halftime report would either leak second-half reviews or have to guess.
 **Affects:** T8 builds both report screens on `ReportOut`; T5 decides when the page shows halftime.
+
+## T4 — Three asking rules (2026-10-23)
+
+**Plan said:** one question per stoppage (the live basics question wins); no live question in the last 30 s of a half
+(it becomes a replay); the step after feedback carries a "While you were answering" summary.
+**We did:**
+- **One per stoppage.** `SPACING` already kept two questions apart at any one dead ball (none in 800 questions over
+  40 viewers). But 487 restart and foul moments come after the start of their own dead ball, so a saved review could
+  take the stoppage first. A dead ball now holds its review when its own restart or foul will be asked.
+- **Not near the whistle.** In the last 30 s before half-time or full time (`WHISTLE_MARGIN`), a settled moment is
+  saved for the break. A restart or foul there isn't asked: CLAUDE.md says those are asked at their own stoppage or
+  not at all, which beats "becomes a replay". A saved review waits for the break rather than a dead ball there.
+- **Catch-up.** Each question now carries `score` (at delivery) and `catch_up`: a server-written line with the goals
+  since the viewer's last answer in this match. The step shows it after "While you were answering:", and the step's
+  score is now the server's for review questions too.
+
+Over the same 40 viewers: 799 questions instead of 800, and 224 asked at the stoppage instead of 223.
+**Why:** the rules hold by construction rather than by spacing luck; the catch-up needs goal facts the browser must
+not compute.
+**Affects:** nothing later; the demo viewer's attempt log changes slightly.

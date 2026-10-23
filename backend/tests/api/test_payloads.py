@@ -5,16 +5,19 @@ import numpy as np
 import pytest
 
 from btl.api.models import YourTeam
-from btl.api.payloads import question_payload, your_result
+from btl.api.payloads import catch_up_text, question_payload, your_result
 from btl.concepts.phase import PhaseOfPlay
 from btl.league.league import generate_league
 from btl.learn.candidates import Candidate
 from btl.learn.concept_map import load_concept_map
 from btl.learn.evidence import Delivered, EvidencePack, build_pack, question_view
 from btl.learn.knowledge import Delivery
+from btl.learn.matches import CatchUp
 from btl.learn.questions import Form, build_question
+from btl.learn.report import Goal
 from btl.learn.selector import Prompt
 from btl.learn.session import Asked
+from btl.schema.ids import ActionId
 from btl.schema.vocab import ConceptId
 from tests.fixtures.learning import designed_with_candidates, threat_model
 
@@ -41,6 +44,7 @@ HIDDEN = {
 }
 HOME, AWAY = generate_league(np.random.default_rng(0)).clubs[:2]
 ASKED_LATER = Delivered(Delivery.DEFERRED, 1, 2000.0, PhaseOfPlay.DEAD_BALL, "goal kick")
+NO_CATCH_UP = CatchUp(0, 0, None)
 
 
 def asked_for(candidate: Candidate, level: int, delivery: Delivery, seed: int) -> Asked | None:
@@ -91,7 +95,7 @@ def test_a_question_payload_never_holds_the_answer_or_an_outcome(seed: int) -> N
                     asked = asked_for(candidate, level, delivery, seed)
                     if asked is None:
                         continue
-                    payload = question_payload(asked, 1, HOME, AWAY, None)
+                    payload = question_payload(asked, 1, HOME, AWAY, None, NO_CATCH_UP)
                     text = payload.model_dump_json()
                     names = keys_in(json.loads(text))
 
@@ -108,7 +112,7 @@ def test_a_question_payload_says_when_the_moment_happened_and_when_it_is_asked()
     asked = asked_for(candidate, 1, Delivery.DEFERRED, 0)
     assert asked is not None
 
-    payload = question_payload(asked, 2, HOME, AWAY, AWAY.team_id)
+    payload = question_payload(asked, 2, HOME, AWAY, AWAY.team_id, NO_CATCH_UP)
 
     assert payload.occurred.period == candidate.period_id
     assert payload.occurred.seconds == candidate.time_seconds
@@ -133,3 +137,15 @@ def test_the_result_is_said_from_the_viewer_s_side(
     side: YourTeam, home_goals: int, away_goals: int, result: str | None
 ) -> None:
     assert your_result(side, home_goals, away_goals) == result
+
+
+def test_the_catch_up_names_each_goal_and_the_score() -> None:
+    scored = Goal(ActionId(5), 1, 900.0, "15:00", home=False, scorer="Someone", own_goal=False)
+    own = Goal(ActionId(9), 1, 1200.0, "20:00", home=True, scorer="Someone", own_goal=True)
+
+    assert catch_up_text(CatchUp(0, 0, None), HOME, AWAY) is None
+    assert catch_up_text(CatchUp(0, 0, ()), HOME, AWAY) == "No goals. It's still 0\N{EN DASH}0."
+    assert catch_up_text(CatchUp(1, 1, (scored, own)), HOME, AWAY) == (
+        f"{AWAY.name} scored at 15:00. {HOME.name} scored at 20:00, an own goal. "
+        "It's 1\N{EN DASH}1."
+    )

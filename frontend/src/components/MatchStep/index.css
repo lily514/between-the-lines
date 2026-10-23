@@ -73,6 +73,13 @@
 	color: var(--text-muted);
 }
 
+.match-step__catch-up {
+	margin: 0;
+	font-size: var(--fs-body);
+	line-height: var(--lh-body);
+	color: var(--text);
+}
+
 .match-step__moved {
 	margin: 0;
 	font-size: var(--fs-body-s);

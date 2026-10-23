@@ -392,3 +392,50 @@ def test_a_review_at_the_stoppage_its_moment_caused_names_no_restart() -> None:
 
     assert named_not.delivered.restart is None
     assert named.delivered.restart == "free kick"
+
+
+def test_a_stoppage_asks_only_its_own_restart_and_the_review_waits() -> None:
+    scene = Scenario()
+    scene.mastery |= {RESTARTS: 0.15}
+    scene.moment(10, 0.2, TRANSITION, COUNTER_PRESS)
+    scene.dead_ball(14, seconds=25, restart=ActionType.THROW_IN)
+    scene.moment(14 + 5 / 60, 0.1, TRANSITION, RESTARTS, asked_when=AskedWhen.AT_THE_STOPPAGE)
+    scene.dead_ball(30, seconds=25)
+
+    prompts = scene.run()
+
+    assert [(p.candidate.concept, p.delivered.delivery) for p in prompts] == [
+        (RESTARTS, Delivery.LIVE),
+        (COUNTER_PRESS, Delivery.DEFERRED),
+    ]
+    assert minutes(prompts)[1] == 30
+
+
+def test_a_settled_moment_near_the_whistle_is_saved_for_the_break() -> None:
+    scene = Scenario()
+    scene.moment(44.75, difficulty=0.2)
+    scene.breaks()
+
+    (prompt,) = scene.run()
+
+    assert prompt.delivered.delivery is Delivery.DEFERRED
+    assert prompt.delivered.phase is PhaseOfPlay.HALF_TIME
+
+
+def test_a_restart_near_the_whistle_is_not_asked() -> None:
+    scene = beginner_on_the_basics()
+    scene.moment(44.8, 0.1, TRANSITION, RESTARTS, asked_when=AskedWhen.AT_THE_STOPPAGE)
+    scene.breaks()
+
+    assert scene.run() == []
+
+
+def test_a_review_waits_for_the_break_rather_than_a_dead_ball_near_the_whistle() -> None:
+    scene = Scenario()
+    scene.moment(40, 0.2, TRANSITION, COUNTER_PRESS)
+    scene.dead_ball(44.6, seconds=20)
+    scene.breaks()
+
+    (prompt,) = scene.run()
+
+    assert prompt.delivered.phase is PhaseOfPlay.HALF_TIME

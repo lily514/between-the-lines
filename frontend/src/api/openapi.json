@@ -1179,7 +1179,7 @@
         "type": "object"
       },
       "QuestionOut": {
-        "description": "The next question, built from its question view only.",
+        "description": "The next question, built from its question view only.\n\n``score`` is the score as the question comes. ``catch_up`` says what happened since the\nviewer's last answer in this match, such as \"Truro Otters scored at 41:02.\", then the\nscore; null for the match's first question.",
         "properties": {
           "asks": {
             "title": "Asks",
@@ -1192,6 +1192,17 @@
           "away_code": {
             "title": "Away Code",
             "type": "string"
+          },
+          "catch_up": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Catch Up"
           },
           "concept_name": {
             "title": "Concept Name",
@@ -1254,6 +1265,9 @@
           "picture": {
             "$ref": "#/components/schemas/PictureOut"
           },
+          "score": {
+            "$ref": "#/components/schemas/ScoreOut"
+          },
           "text": {
             "title": "Text",
             "type": "string"
@@ -1291,7 +1305,9 @@
           "delivered",
           "context",
           "options",
-          "picture"
+          "picture",
+          "score",
+          "catch_up"
         ],
         "title": "QuestionOut",
         "type": "object"

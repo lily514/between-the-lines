@@ -682,6 +682,10 @@ export interface components {
         /**
          * QuestionOut
          * @description The next question, built from its question view only.
+         *
+         *     ``score`` is the score as the question comes. ``catch_up`` says what happened since the
+         *     viewer's last answer in this match, such as "Truro Otters scored at 41:02.", then the
+         *     score; null for the match's first question.
          */
         QuestionOut: {
             /** Asks */
@@ -690,6 +694,8 @@ export interface components {
             away: string;
             /** Away Code */
             away_code: string;
+            /** Catch Up */
+            catch_up: string | null;
             /** Concept Name */
             concept_name: string;
             /** Context */
@@ -721,6 +727,7 @@ export interface components {
             /** Pack Id */
             pack_id: string;
             picture: components["schemas"]["PictureOut"];
+            score: components["schemas"]["ScoreOut"];
             /** Text */
             text: string;
             /** Your Team */

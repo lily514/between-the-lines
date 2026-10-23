@@ -17,13 +17,14 @@ from dataclasses import dataclass
 from enum import StrEnum
 from statistics import fmean
 
+from btl.league.league import League
 from btl.learn.bkt import BktState
 from btl.learn.concept_map import ConceptKey
 from btl.learn.curriculum import strand_name
 from btl.learn.learner import Attempt, LearnerState
 from btl.learn.levels import level_word
 from btl.learn.session import Course, PreparedMatch
-from btl.schema.ids import TeamId
+from btl.schema.ids import ActionId, TeamId
 from btl.schema.match import Match
 from btl.schema.possession import SHOTS
 from btl.schema.scoreboard import match_clock
@@ -64,8 +65,11 @@ class ConceptMove:
 
 @dataclass(frozen=True, slots=True)
 class Goal:
-    """A goal: when, for which side, and who scored (the player whose shot it was)."""
+    """A goal: its action, when, for which side, and who scored (the player whose shot it was)."""
 
+    action_id: ActionId
+    period_id: int
+    seconds: float
     clock: str
     home: bool
     scorer: str
@@ -123,7 +127,11 @@ def report(
         model, course.active
     )
     concepts = tuple(_move(course, kickoff, now, key) for key in course.active)
-    goals = _goals(course, match, at)
+    goals = tuple(
+        goal
+        for goal in match_goals(course.league, match)
+        if at is Break.FULL_TIME or goal.period_id == 1
+    )
     return Report(
         match_number=number,
         at=at,
@@ -210,17 +218,24 @@ def _strands(course: Course, concepts: Sequence[ConceptMove]) -> tuple[StrandVal
     return tuple(values)
 
 
-def _goals(course: Course, match: Match, at: Break) -> tuple[Goal, ...]:
+def match_goals(league: League, match: Match) -> tuple[Goal, ...]:
+    """Every goal in a match, in order, own goals counted for the other side."""
     home = match.home_team_id
     goals: list[Goal] = []
     for event in match.events:
-        if at is Break.HALFTIME and event.period_id > 1:
-            break
         scored = event.action_type in SHOTS and event.result is Result.SUCCESS
         own_goal = event.result is Result.OWNGOAL
         if not (scored or own_goal):
             continue
-        for_home = (event.team_id == home) != own_goal
-        scorer = course.league.player(event.player_id).full_name
-        goals.append(Goal(match_clock(event), for_home, scorer, own_goal))
+        goals.append(
+            Goal(
+                action_id=event.action_id,
+                period_id=event.period_id,
+                seconds=event.time_seconds,
+                clock=match_clock(event),
+                home=(event.team_id == home) != own_goal,
+                scorer=league.player(event.player_id).full_name,
+                own_goal=own_goal,
+            )
+        )
     return tuple(goals)

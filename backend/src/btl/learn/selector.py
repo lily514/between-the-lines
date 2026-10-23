@@ -18,10 +18,16 @@ the very next decision:
   break asks about the best moment already passed, whatever its difficulty. Tier-0 concepts
   come round every few minutes, so each is asked at most ``TIER0_CAP`` times a match, and
   all of them ``TIER0_MATCH_CAP`` times, leaving room for the others.
+- **One per stoppage:** a dead ball whose own restart or foul will be asked about live doesn't
+  also ask a saved review; the review waits for the next long stoppage or a break.
+- **Not near the whistle:** nothing is asked in play or at a dead ball in the last
+  ``WHISTLE_MARGIN`` seconds of a half. A settled moment there is saved for the break; a
+  restart or foul there isn't asked, since it is asked at its own stoppage or not at all.
 
 When every active concept is mastered, it asks the occasional level-3 review question.
 """
 
+import math
 from collections import Counter
 from collections.abc import Callable, Collection, Iterator, Mapping, Sequence
 from dataclasses import dataclass, replace
@@ -48,6 +54,7 @@ QUEUE_LIMIT = 2
 REVIEW_CAP = 1
 TIER0_CAP = 2
 TIER0_MATCH_CAP = 3
+WHISTLE_MARGIN = 30.0
 RESTART_NAMES: Mapping[ActionType, str] = {
     ActionType.THROW_IN: "throw-in",
     ActionType.GOALKICK: "goal kick",
@@ -121,6 +128,7 @@ def run_match(
         Every question asked, in order.
     """
     walk = _Walk()
+    period_ends = _period_ends(timeline)
     queue: list[Candidate] = []
     passed: list[Candidate] = []
     used: set[tuple[str, int]] = set()
@@ -164,6 +172,20 @@ def run_match(
     def room_in_play() -> bool:
         return walk.in_play < (REVIEW_CAP if reviewing() else IN_PLAY_CAP)
 
+    def near_the_whistle(period_id: int, seconds: float) -> bool:
+        return seconds > period_ends.get(period_id, math.inf) - WHISTLE_MARGIN
+
+    def asked_at(stoppage: Segment) -> bool:
+        # Whether a restart or foul in this dead ball will be asked about live, as it comes.
+        return any(
+            c.asked_when is AskedWhen.AT_THE_STOPPAGE
+            and c.period_id == stoppage.period_id
+            and stoppage.start < c.time_seconds <= stoppage.end
+            and wanted(c.concept)
+            and fits_level(c, level_now(c.concept))
+            for c in candidates
+        )
+
     for kind, period_id, seconds, item in _walk_order(candidates, timeline):
         if kind is _Kind.CANDIDATE:
             assert isinstance(item, Candidate)
@@ -173,12 +195,14 @@ def run_match(
             level = level_now(item.concept)
             if not (wanted(item.concept) and fits_level(item, level)):
                 continue
+            late = near_the_whistle(period_id, seconds)
             if at_the_stoppage:
-                if room_in_play() and spaced(period_id, seconds):
+                if room_in_play() and spaced(period_id, seconds) and not late:
                     now = Delivered(Delivery.LIVE, period_id, seconds, PhaseOfPlay.DEAD_BALL)
                     deliver(Prompt(item, level, now), in_play=True)
                 continue
-            if item.phase is PhaseOfPlay.SETTLED and item.asked_when is AskedWhen.IN_PLAY:
+            settled = item.phase is PhaseOfPlay.SETTLED and item.asked_when is AskedWhen.IN_PLAY
+            if settled and not late:
                 if room_in_play() and spaced(period_id, seconds):
                     live = Delivered(Delivery.LIVE, period_id, seconds, PhaseOfPlay.SETTLED)
                     deliver(Prompt(item, level, live), in_play=True)
@@ -189,6 +213,8 @@ def run_match(
         assert isinstance(item, Segment)
         if kind is _Kind.DEAD_BALL:
             if not (room_in_play() and spaced(period_id, seconds)):
+                continue
+            if near_the_whistle(period_id, seconds) or asked_at(item):
                 continue
             restart = RESTART_NAMES.get(events[item.last].action_type)
             when = Delivered(Delivery.DEFERRED, period_id, seconds, PhaseOfPlay.DEAD_BALL, restart)
@@ -272,6 +298,12 @@ def _walk_order(
         items.append(((segment.period_id, segment.start, kind.value), kind, segment))
     for (period_id, seconds, _), kind, item in sorted(items, key=lambda entry: entry[0]):
         yield kind, period_id, seconds, item
+
+
+def _period_ends(timeline: PhaseTimeline) -> dict[int, float]:
+    # A period ends where its break, half-time or full time, begins.
+    breaks = (PhaseOfPlay.HALF_TIME, PhaseOfPlay.FULL_TIME)
+    return {s.period_id: s.start for s in timeline.segments if s.phase in breaks}
 
 
 def _identity(candidate: Candidate) -> tuple[str, int]:

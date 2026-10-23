@@ -70,8 +70,21 @@ class OptionOut(BaseModel):
     target_at: Point | None
 
 
+class ScoreOut(BaseModel):
+    """Goals for each side, at ``clock`` for a match in progress (null at full time)."""
+
+    home: int
+    away: int
+    clock: str | None
+
+
 class QuestionOut(BaseModel):
-    """The next question, built from its question view only."""
+    """The next question, built from its question view only.
+
+    ``score`` is the score as the question comes. ``catch_up`` says what happened since the
+    viewer's last answer in this match, such as "Truro Otters scored at 41:02.", then the
+    score; null for the match's first question.
+    """
 
     kind: Literal["question"] = "question"
     pack_id: str
@@ -91,6 +104,8 @@ class QuestionOut(BaseModel):
     context: dict[str, FactOut]
     options: list[OptionOut]
     picture: PictureOut
+    score: ScoreOut
+    catch_up: str | None
 
 
 class Bar(BaseModel):
@@ -298,14 +313,6 @@ class TeamSheetOut(BaseModel):
     stage: int
     next_stage: str | None
     teams: list[SheetTeamOut]
-
-
-class ScoreOut(BaseModel):
-    """Goals for each side, at ``clock`` for a match in progress (null at full time)."""
-
-    home: int
-    away: int
-    clock: str | None
 
 
 class MatchOut(BaseModel):

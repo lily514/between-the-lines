@@ -46,7 +46,7 @@ from btl.learn.curriculum import Curriculum
 from btl.learn.evidence import Fact, Picture, percent_points
 from btl.learn.knowledge import Delivery
 from btl.learn.levels import level_word
-from btl.learn.matches import MatchState, ViewerMatch
+from btl.learn.matches import CatchUp, MatchState, ViewerMatch
 from btl.learn.questions import Form
 from btl.learn.report import Break, Report
 from btl.learn.session import Asked, Told
@@ -56,9 +56,14 @@ from btl.schema.scoreboard import clock
 
 
 def question_payload(
-    asked: Asked, match_number: int, home: Club, away: Club, club: TeamId | None
+    asked: Asked,
+    match_number: int,
+    home: Club,
+    away: Club,
+    club: TeamId | None,
+    caught: CatchUp,
 ) -> QuestionOut:
-    """The question as the page shows it: its view, its wording and when it is asked."""
+    """The question as the page shows it: its view, its wording, when it is asked and the score."""
     view, prompt = asked.view, asked.prompt
     candidate, delivered = prompt.candidate, prompt.delivered
     return QuestionOut(
@@ -91,7 +96,28 @@ def question_payload(
             for option in view.options
         ],
         picture=_picture(view.picture),
+        score=ScoreOut(
+            home=caught.home,
+            away=caught.away,
+            clock=clock(delivered.period_id, delivered.time_seconds),
+        ),
+        catch_up=catch_up_text(caught, home, away),
     )
+
+
+def catch_up_text(caught: CatchUp, home: Club, away: Club) -> str | None:
+    """The goals since the viewer's last answer and the score, in a sentence or two."""
+    if caught.goals is None:
+        return None
+    score = f"{caught.home}\N{EN DASH}{caught.away}"
+    if not caught.goals:
+        return f"No goals. It's still {score}."
+    said = [
+        f"{(home if goal.home else away).name} scored at {goal.clock}"
+        + (", an own goal" if goal.own_goal else "")
+        for goal in caught.goals
+    ]
+    return f"{'. '.join(said)}. It's {score}."
 
 
 def feedback_payload(

@@ -262,5 +262,11 @@
 			[45.9, 33.7]
 		],
 		"mark": null
-	}
+	},
+	"score": {
+		"home": 0,
+		"away": 0,
+		"clock": "13:59"
+	},
+	"catch_up": null
 }

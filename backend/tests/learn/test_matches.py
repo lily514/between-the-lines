@@ -2,7 +2,8 @@ from dataclasses import replace
 from functools import cache
 
 from btl.learn.learner import MATCHES_PER_SESSION, LearnerState
-from btl.learn.matches import MatchState, viewer_matches
+from btl.learn.matches import MatchState, catch_up, viewer_matches
+from btl.learn.report import Goal
 from btl.learn.session import Course, PreparedMatch, prepare_match
 from btl.schema.ids import ActionId, TeamId
 from btl.schema.scoreboard import goals, match_clock
@@ -88,3 +89,30 @@ def test_an_upcoming_match_is_never_prepared() -> None:
     viewer_matches(course(), LearnerState("new", SEED, match_number=2), counting)
 
     assert prepared == [1]
+
+
+def goal(action: int, period: int, seconds: float, home: bool) -> Goal:
+    return Goal(ActionId(action), period, seconds, "00:00", home, "Someone", own_goal=False)
+
+
+GOALS = (goal(10, 1, 600.0, True), goal(50, 1, 2000.0, False), goal(90, 2, 300.0, True))
+
+
+def test_the_first_question_has_a_score_and_nothing_to_catch_up_on() -> None:
+    caught = catch_up(GOALS, None, 1, 2100.0)
+
+    assert (caught.home, caught.away, caught.goals) == (1, 1, None)
+
+
+def test_a_later_question_catches_up_on_the_goals_since_the_last_answer() -> None:
+    caught = catch_up(GOALS, ActionId(20), 2, 400.0)
+
+    assert (caught.home, caught.away) == (2, 1)
+    assert caught.goals == GOALS[1:]
+
+
+def test_goals_after_the_question_are_never_told() -> None:
+    caught = catch_up(GOALS, ActionId(20), 1, 2100.0)
+
+    assert caught.goals == (GOALS[1],)
+    assert (caught.home, caught.away) == (1, 1)

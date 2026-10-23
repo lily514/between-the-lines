@@ -16,7 +16,9 @@ from collections.abc import Callable
 from contextvars import ContextVar
 from dataclasses import dataclass, field, replace
 from datetime import date
+from typing import Literal
 
+from btl.api.events import emit
 from btl.learn.evidence import EvidencePack, QuestionView
 from btl.learn.grader import Grade
 from btl.tutor.base import NO_HISTORY, History, Tutor, TutorFeedback, TutorQuestion
@@ -48,18 +50,24 @@ class Allowance:
     _total: int = field(default=0, init=False, repr=False)
     _lock: threading.Lock = field(default_factory=threading.Lock, init=False, repr=False)
 
-    def take(self, viewer: str) -> bool:
-        """Count one wording for ``viewer`` if both limits allow it; False if either is spent."""
+    def take(self, viewer: str) -> Literal["viewer", "day"] | None:
+        """Count one wording for ``viewer`` if both limits allow it.
+
+        Returns:
+            None if the wording is counted; otherwise which limit is spent.
+        """
         with self._lock:
             day = self.today()
             if day != self._day:
                 self._day, self._used, self._total = day, {}, 0
             used = self._used.get(viewer, 0)
-            if used >= self.per_viewer or self._total >= self.per_day:
-                return False
+            if used >= self.per_viewer:
+                return "viewer"
+            if self._total >= self.per_day:
+                return "day"
             self._used[viewer] = used + 1
             self._total += 1
-            return True
+            return None
 
 
 @dataclass
@@ -76,7 +84,7 @@ class LimitedTutor:
 
     def question(self, view: QuestionView) -> TutorQuestion:
         """The model's question if it is cached or the allowance lasts, else the fallback's."""
-        if self.inner.remembers_question(view) or self._allowed():
+        if self.inner.remembers_question(view) or self._allowed("question"):
             return self.inner.question(view)
         return self.fallback.question(view)
 
@@ -84,9 +92,13 @@ class LimitedTutor:
         self, pack: EvidencePack, grade: Grade, history: History = NO_HISTORY
     ) -> TutorFeedback:
         """The model's feedback if it is cached or the allowance lasts, else the fallback's."""
-        if self.inner.remembers_feedback(pack, grade, history) or self._allowed():
+        if self.inner.remembers_feedback(pack, grade, history) or self._allowed("feedback"):
             return self.inner.feedback(pack, grade, history)
         return replace(self.fallback.feedback(pack, grade, history), source=LIMITED)
 
-    def _allowed(self) -> bool:
-        return self.allowance.take(current_viewer.get() or "")
+    def _allowed(self, kind: Literal["question", "feedback"]) -> bool:
+        viewer = current_viewer.get() or ""
+        spent = self.allowance.take(viewer)
+        if spent is not None:
+            emit("limit_reached", viewer_id=viewer, kind=kind, scope=spent)
+        return spent is None

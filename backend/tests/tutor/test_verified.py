@@ -12,7 +12,7 @@ from btl.tutor.foundry import FoundryTutor
 from btl.tutor.model import FakeClient, ModelError
 from btl.tutor.prompts import PROMPT_VERSION
 from btl.tutor.templates import TemplateTutor
-from btl.tutor.verified import CALL_BUDGET, CheckRecord, VerifiedTutor
+from btl.tutor.verified import CALL_BUDGET, CheckRecord, Fallback, VerifiedTutor
 from tests.fixtures.packs import first_of
 
 PACK = first_of(Asks.WHERE_TO_PASS)
@@ -200,3 +200,20 @@ def test_a_value_written_out_is_turned_back_into_its_slot_before_checking() -> N
 
     assert verified.question(VIEW).text == "{player} is on the ball. Where now?"
     assert records[0].passed
+
+
+def test_each_fallback_is_reported_with_its_reasons_and_a_pass_is_not() -> None:
+    fake = FakeClient([BAD_QUESTION, BAD_QUESTION, GOOD_QUESTION, ModelError("timed out")])
+    fallbacks: list[Fallback] = []
+    verified = VerifiedTutor(
+        FoundryTutor(fake), TEMPLATE, clock=Clock(0.0), on_fallback=fallbacks.append
+    )
+
+    verified.question(VIEW)  # fails twice: the template's
+    verified.question(VIEW)  # passes
+    verified.feedback(PACK, RIGHT)  # no reply: the template's
+
+    assert fallbacks == [
+        Fallback("question", VIEW.pack_id, VIEW.concept_name, ("hint",)),
+        Fallback("feedback", PACK.pack_id, PACK.concept.name, ("no reply",)),
+    ]

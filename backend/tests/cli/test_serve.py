@@ -1,4 +1,7 @@
+import io
 import json
+import logging
+from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
@@ -7,6 +10,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from typer.testing import CliRunner
 
+from btl.api.events import LOGGER, emit
 from btl.cli import app as cli
 from btl.cli.app import app
 from btl.io import save_threat_model
@@ -17,6 +21,38 @@ from tests.fixtures.tutor import ByKind
 
 runner = CliRunner()
 WIDE = {"COLUMNS": "200"}
+EVENTS_TO_STDOUT = cli._events_to_stdout  # pyright: ignore[reportPrivateUsage]
+
+
+@pytest.fixture(autouse=True)
+def events_stay_put(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Sending events to stdout changes the process's logging, so the serve tests leave it alone.
+    monkeypatch.setattr(cli, "_events_to_stdout", lambda: None)
+
+
+@pytest.fixture
+def events_logger() -> Iterator[logging.Logger]:
+    logger = logging.getLogger(LOGGER)
+    handlers, level = list(logger.handlers), logger.level
+    yield logger
+    logger.handlers, logger.level = handlers, level
+
+
+def test_serve_writes_events_to_stdout_one_json_object_a_line(
+    events_logger: logging.Logger, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    out = io.StringIO()
+    monkeypatch.setattr("sys.stdout", out)
+
+    EVENTS_TO_STDOUT()
+    emit("full_time", viewer_id="ana", match_number=1, finished=False)
+
+    assert json.loads(out.getvalue()) == {
+        "event": "full_time",
+        "viewer_id": "ana",
+        "match_number": 1,
+        "finished": False,
+    }
 
 
 def test_openapi_writes_the_schema_the_page_s_types_are_made_from(tmp_path: Path) -> None:

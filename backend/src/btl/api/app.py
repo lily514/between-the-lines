@@ -34,6 +34,7 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 
+from btl.api.events import emit
 from btl.api.limits import current_viewer
 from btl.api.models import (
     AnswerIn,
@@ -247,17 +248,36 @@ def create_app(
                 after = watch_match(course(), store, viewer_id, viewer, now, prepare)
             except QuestionPendingError as pending:
                 match = prepare(state.seed, state.match_number, state.club)
-                return question_payload(
+                question = question_payload(
                     pending.asked, state.match_number, match.home, match.away, state.club
                 )
+                # A reload asks again; the queries count each pack_id once.
+                emit(
+                    "question_asked",
+                    viewer_id=viewer_id,
+                    match_number=question.match_number,
+                    pack_id=question.pack_id,
+                    concept=question.concept_name,
+                    level=question.level,
+                    form=question.form,
+                    delivery=question.delivered.delivery,
+                )
+                return question
             except StaleWriteError:
                 raise HTTPException(409, "the record changed; try again") from None
-            return _full_time(
+            summary = _full_time(
                 viewer,
                 prepare(state.seed, state.match_number, state.club),
                 state.club,
                 after.finished,
             )
+            emit(
+                "full_time",
+                viewer_id=viewer_id,
+                match_number=summary.match_number,
+                finished=summary.finished,
+            )
+            return summary
 
     def _full_time(
         viewer: WebViewer, match: PreparedMatch, club: TeamId | None, finished: bool
@@ -298,13 +318,15 @@ def create_app(
                 watch_match(course(), guarded, viewer_id, viewer, now, prepare)
             except FeedbackGivenError as given:
                 _, _, match_seed = course().fixture(state.seed, state.match_number, state.club)
-                return feedback_payload(
+                feedback = feedback_payload(
                     given.told,
                     before,
                     course().model.thresholds,
                     state.match_number,
                     match_seed,
                 )
+                _report_answer(viewer_id, feedback)
+                return feedback
             except (NotPendingError, QuestionPendingError):
                 raise HTTPException(409, "that isn't the question waiting to be answered") from None
             except BadKeyError:
@@ -324,6 +346,28 @@ def _check(viewer_id: str) -> None:
         check_viewer_id(viewer_id)
     except ValueError as error:
         raise HTTPException(422, str(error)) from None
+
+
+def _report_answer(viewer_id: str, feedback: FeedbackOut) -> None:
+    emit(
+        "answer_graded",
+        viewer_id=viewer_id,
+        match_number=feedback.match_number,
+        pack_id=feedback.pack_id,
+        concept=feedback.concept_name,
+        level=feedback.level,
+        correct=feedback.correct,
+        source=feedback.source,
+    )
+    for move in feedback.concepts:
+        if move.name == feedback.concept_name:
+            emit(
+                "mastery_updated",
+                viewer_id=viewer_id,
+                concept=move.name,
+                before=move.before,
+                after=move.after,
+            )
 
 
 def _watching(found: Stored) -> LearnerState:

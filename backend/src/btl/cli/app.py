@@ -1,7 +1,9 @@
 """The `btl` command and its subcommands."""
 
 import json
+import logging
 import os
+import sys
 import time
 from collections import Counter
 from collections.abc import Sequence
@@ -20,6 +22,8 @@ from rich.rule import Rule
 from rich.text import Text
 
 from btl.api.app import create_app
+from btl.api.events import LOGGER as EVENTS_LOGGER
+from btl.api.events import emit
 from btl.api.limits import WORDINGS_PER_DAY, WORDINGS_PER_VIEWER, Allowance, LimitedTutor
 from btl.cli.render import (
     counted,
@@ -94,7 +98,7 @@ from btl.tutor.foundry import FoundryTutor
 from btl.tutor.model import ModelClient, ModelError, ModelRequest, RecordingClient, ReplayClient
 from btl.tutor.prompts import PROMPT_VERSION
 from btl.tutor.templates import TemplateTutor
-from btl.tutor.verified import CheckRecord, VerifiedTutor
+from btl.tutor.verified import CheckRecord, Fallback, VerifiedTutor
 from btl.value.xt import ThreatModel, fit_on_simulated_matches, rate_match
 
 EXAMPLES = (
@@ -717,8 +721,18 @@ def serve(
             "Build it with `npm run build` in frontend/, or use `npm run dev` there."
         )
     api = create_app(lambda: course, records, _now, page)
+    _events_to_stdout()
     console.print(f"Serving on http://{host}:{port} (API under /api). Ctrl+C stops it.")
     uvicorn.run(api, host=host, port=port, log_level="warning")
+
+
+def _events_to_stdout() -> None:
+    # One JSON object per line, which Container Apps sends on to Log Analytics.
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(logging.Formatter("%(message)s"))
+    events = logging.getLogger(EVENTS_LOGGER)
+    events.handlers = [handler]
+    events.setLevel(logging.INFO)
 
 
 def _records(
@@ -789,8 +803,12 @@ def _verified_tutor(log: Path) -> VerifiedTutor:
 
     def record(check: CheckRecord) -> None:
         append_json_line(log, {"logged_at": _now(), **asdict(check)})
+        emit("model_call", **asdict(check))
 
-    return VerifiedTutor(FoundryTutor(client), TemplateTutor(), record)
+    def fell_back(fallback: Fallback) -> None:
+        emit("wording_fallback", **asdict(fallback))
+
+    return VerifiedTutor(FoundryTutor(client), TemplateTutor(), record, on_fallback=fell_back)
 
 
 @app.command(name="tutor-ping")

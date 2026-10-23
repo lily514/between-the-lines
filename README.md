@@ -147,6 +147,94 @@ uv run btl tutor-eval --seeds 3 --per-kind 2         # measure it (about 230 cal
 
   Every call is logged to `data/tutor-log.jsonl`.
 
+## Watching the demo
+
+In Azure, the app writes one JSON line for each step of the loop (`backend/src/btl/api/events.py` lists them all): `question_asked`, `answer_graded`, `mastery_updated`, `full_time`, `model_call`, `wording_fallback` and `limit_reached`. Container Apps sends them to the Log Analytics workspace, where they arrive in the `ContainerAppConsoleLogs` table a few minutes later. The viewer id in them is the random id the browser made.
+
+Run these in the portal (the workspace `log-…` → **Logs**), or from the command line:
+```sh
+az monitor log-analytics query --subscription <subscription-id> \
+  --workspace "$(azd env get-value AZURE_LOG_ANALYTICS_CUSTOMER_ID)" --analytics-query '<query>'
+```
+
+**The funnel, by day:** who came, and how far they got. A reload asks a question again, so questions are counted once each.
+```kql
+ContainerAppConsoleLogs
+| where Log startswith '{"event"'
+| extend e = parse_json(Log)
+| extend Event = tostring(e.event), Viewer = tostring(e.viewer_id)
+| summarize
+    Visitors = dcountif(Viewer, Event == "question_asked"),
+    Questions = dcountif(strcat(Viewer, "/", tostring(e.pack_id)), Event == "question_asked"),
+    Answers = countif(Event == "answer_graded"),
+    RightAnswers = countif(Event == "answer_graded" and tobool(e.correct)),
+    MatchesFinished = countif(Event == "full_time")
+    by Day = startofday(TimeGenerated)
+| order by Day desc
+```
+
+**Who worded the feedback, by concept:** the model, the template after a failed check or a failed call (the next query says which), or the template past a daily limit.
+```kql
+ContainerAppConsoleLogs
+| where Log startswith '{"event"'
+| extend e = parse_json(Log)
+| where tostring(e.event) == "answer_graded"
+| extend Concept = tostring(e.concept), Source = tostring(e.source)
+| extend WordedBy = case(
+    Source startswith "template (fallback", "Template: fallback",
+    Source startswith "template (daily limit", "Template: daily limit",
+    Source == "template", "Template: model off",
+    "Model")
+| summarize Feedback = count() by Concept, WordedBy
+| as Counts
+| join kind=inner (Counts | summarize Total = sum(Feedback) by Concept) on Concept
+| project Concept, WordedBy, Feedback, Share = round(100.0 * Feedback / Total, 1)
+| order by Concept asc, Feedback desc
+```
+
+**The model, by day:** calls, how often the first try passes, failed calls, speed, tokens and an estimated cost (set the prices to the deployment's current ones, per million tokens).
+```kql
+let PriceIn = 0.20;
+let PriceOut = 1.25;
+ContainerAppConsoleLogs
+| where Log startswith '{"event"'
+| extend e = parse_json(Log)
+| extend Event = tostring(e.event)
+| where Event in ("model_call", "wording_fallback", "limit_reached")
+| extend Call = Event == "model_call", Failed = isnotempty(tostring(e.error))
+// Seconds only for calls that got a reply; percentiles skip the empty ones.
+| extend Seconds = iff(Call and not(Failed), todouble(e.seconds), real(null))
+| summarize
+    Calls = countif(Call),
+    // Of the first tries that got a reply: comparable with docs/milestone-2b/tutor-evaluation.md.
+    FirstTries = countif(Call and not(Failed) and toint(e.attempt) == 1),
+    FirstTriesPassed = countif(Call and toint(e.attempt) == 1 and tobool(e.passed)),
+    NoReply = countif(Call and Failed),
+    P50Seconds = round(percentile(Seconds, 50), 2),
+    P95Seconds = round(percentile(Seconds, 95), 2),
+    TokensIn = sumif(tolong(e.input_tokens), Call),
+    TokensOut = sumif(tolong(e.output_tokens), Call),
+    Fallbacks = countif(Event == "wording_fallback"),
+    LimitsReached = countif(Event == "limit_reached")
+    by Day = startofday(TimeGenerated)
+| extend FirstTryPassRate = round(100.0 * FirstTriesPassed / FirstTries, 1)
+| extend EstimatedCost = round((TokensIn * PriceIn + TokensOut * PriceOut) / 1e6, 3)
+| project Day, Calls, FirstTryPassRate, NoReply, P50Seconds, P95Seconds, TokensIn, TokensOut,
+    EstimatedCost, Fallbacks, LimitsReached
+| order by Day desc
+```
+
+**Why the template was used:** the Verifier's failed checks, or "no reply" when a call failed (a 429 from the deployment's token cap counts here).
+```kql
+ContainerAppConsoleLogs
+| where Log startswith '{"event"'
+| extend e = parse_json(Log)
+| where tostring(e.event) == "wording_fallback"
+| mv-expand Reason = e.reasons to typeof(string)
+| summarize Times = count() by Reason, Kind = tostring(e.kind)
+| order by Times desc
+```
+
 ## Honest limits
 
 - **Synthetic matches.** The simulator is calibrated against 40 real matches (see the implementation notes), but it isn't real football. It plays at a slower tempo, so more of its play counts as transition (54% of playing time against 49% in real matches), and it has about 80% of the real stoppages long enough for a question. Offside flags and bookings are drawn by chance, as they always were, and the players' positions are then drawn to agree with them: a flagged receiver stands past the offside line, and most bookings stop a promising attack.

@@ -23,12 +23,12 @@ The model is not in this group. The app calls a deployment on your existing Azur
 
 These touch the Foundry resource's own resource group, which azd must never manage: `azd down` deletes whole resource groups. They are the only part of the demo not created from code. Run them once, after the first `azd up` (the second needs the identity it creates).
 
-1. **The demo's model deployment:** the same model as `btl tutor-ping` uses, with its own small token cap of 10,000 tokens a minute. Past the cap Azure answers 429, which the app treats like any model failure: the template words it.
+1. **The demo's model deployment:** the same model as `btl tutor-ping` uses, with its own small cap. Capacity 30 allows 30,000 tokens and 30 requests a minute, enough for two or three people playing at once. Past either, Azure answers 429, which the app treats like any model failure: the template words it. The cap costs nothing in itself (you pay per token used), so raising it only lets more people be worded by the model at once; running the same command with another `--sku-capacity` changes it in place.
    ```sh
    az cognitiveservices account deployment create --subscription <subscription-id> \
      --resource-group <foundry-resource-group> --name <foundry-resource> \
      --deployment-name gpt-5.4-nano-demo --model-name gpt-5.4-nano --model-version 2026-03-17 \
-     --model-format OpenAI --sku-name GlobalStandard --sku-capacity 10
+     --model-format OpenAI --sku-name GlobalStandard --sku-capacity 30
    ```
 2. **The app's role on the Foundry resource.** "Cognitive Services OpenAI User" is a data-plane role: it allows calling the resource's deployments and nothing else, not changing them or reading keys. Azure can't scope it to one deployment; the app's configuration names only the demo's. The principal id is the identity's, from `azd env get-value AZURE_IDENTITY_PRINCIPAL_ID`. A new role takes a few minutes to work; until then the template words everything.
    ```sh
@@ -67,7 +67,7 @@ A wording is one question or one feedback: at most two model calls (the first tr
 |---|---|---|
 | Per viewer, per UTC day | 60 wordings (`BTL_WORDINGS_PER_VIEWER`) | That viewer's feedback says "template (daily limit)" |
 | Everyone, per UTC day | 1,000 wordings, at most 2,000 calls, about $0.50 (`BTL_WORDINGS_PER_DAY`) | Everyone gets the template's words |
-| The deployment | 10,000 tokens a minute | Azure answers 429; the template words it |
+| The deployment | 30,000 tokens and 30 requests a minute (capacity 30) | Azure answers 429; the template words it |
 
 The counts are in memory and start again when the app restarts; the deployment's cap holds regardless. Bicep sets the two variables from `wordingsPerViewer` and `wordingsPerDay` in `infra/main.bicep`.
 

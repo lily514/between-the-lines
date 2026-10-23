@@ -170,3 +170,44 @@ Around the module:
 
 **Why:** the plan's design held.
 **Affects:** T10 (the README's honest limits: progress lives in one browser's id, and nothing else identifies a visitor).
+
+## T9 — Events and queries (2026-10-23)
+**Plan said:** JSON log lines and the access log; the events `question_asked`, `answer_graded`, `mastery_updated`, `model_call`, `wording_fallback` and `limit_reached`; three KQL queries over `ContainerAppConsoleLogs`, checked against the live workspace, in the README.
+**We did:** as planned, with these choices:
+- **`api/events.py`** writes each event as one JSON line through the `btl.events` logger. Only `btl serve` sends that logger to stdout, so the terminal stays quiet.
+- **Who writes which event:**
+  - `api/app.py` writes the loop's own events.
+  - **`full_time` is new:** the funnel needs finished matches.
+  - `cli/` writes `model_call` from each `CheckRecord`.
+  - `wording_fallback` comes from a new `on_fallback` callback on `VerifiedTutor`, with a `Fallback(kind, pack_id, concept, reasons)`. Its check records alone can't say when the template was finally used.
+  - `limit_reached` comes from `LimitedTutor`. `Allowance.take` now returns which limit is spent ("viewer" or "day"), or None, instead of a yes or no.
+- **No uvicorn access log.** Container Apps already records every request at its ingress (`ContainerAppHTTPLogs`, seen in T5), and an access log would add a health-probe line every 10 s.
+- **`question_asked` repeats on a reload,** so the queries count distinct questions by `pack_id`.
+- **The README gains "Watching the demo":** the funnel, who worded the feedback by concept, the model by day, and a fourth query, why the template was used.
+- **Logging is process-wide state,** so the CLI tests that run `serve` leave it alone, and one test checks the stdout handler itself and cleans up after it.
+
+**Checked against Azure:**
+- **`azd deploy` (Lily's go-ahead) took 2 m 54 s.**
+- **Two scripted viewers each played a whole match** through the model. The container's live log stream (`az containerapp logs show`) shows every event as one JSON line.
+
+**Learned:**
+- **Log Analytics has no `percentileif`.** The model query keeps the seconds of successful calls in their own column and takes percentiles of that, since percentiles skip empty values.
+- **The deployment's 10K tokens a minute cap is easy to reach for a script.** The second scripted viewer, answering at once and straight after the first, got `RateLimitError: Error code: 429` on most calls, and every one fell back cleanly to the template: the guardrail worked as designed. A person reading each question and feedback uses far fewer tokens a minute.
+- **The events reached the workspace about 8 minutes after they were written.**
+- **Two fixes after running the queries:**
+  - The fallback label says "Template: fallback", not "Verifier fallback", since a failed call (such as a 429) falls back too; the reasons query tells them apart.
+  - The first-try pass rate counts only calls that got a reply. Counting the 429s gave 46%, which isn't comparable with 2b's evaluation.
+
+**The queries against the live workspace** (the two scripted viewers):
+
+| Query | Result |
+|---|---|
+| Funnel | 2 visitors, 13 questions, 13 answers (3 right), 2 matches finished |
+| Who worded the feedback | the model or the template's fallback, per concept, with shares |
+| The model | 30 calls, first try passed 75% of those that got a reply, 11 with no reply, 1.59 s median and 7.33 s at the 95th percentile, 17,449 tokens in and 1,747 out, about $0.006 |
+| Why the template | "no reply" 6 times for feedback and 5 for questions: all the token cap, none a failed check |
+
+**The cap, raised (Lily's go-ahead):** the demo deployment went from capacity 10 to 30, the plan's `az` command run again with `--sku-capacity 30`. Azure reports what a capacity unit gives: **1,000 tokens and 1 request a minute**. So capacity 10 had allowed only 10 requests a minute, and the scripted viewer's ~15 calls a minute met the request limit before the token one. Capacity 30 allows 30,000 tokens and 30 requests a minute, about two or three people playing at once. The cap costs nothing in itself (tokens are paid per use), and the daily limits still bound the spending. `docs/deployment.md` shows capacity 30.
+
+**Why:** the plan left the events' sources open; the access log was redundant with the platform's own.
+**Affects:** T10 (the README's honest limits mention the cap under load).

@@ -50,7 +50,20 @@ class CheckRecord:
     output_tokens: int
 
 
-def _ignore(_: CheckRecord) -> None:
+@dataclass(frozen=True, slots=True)
+class Fallback:
+    """The model was asked to word something, and the fallback's words were used instead.
+
+    ``reasons`` are the last try's failed checks, or "no reply" when the call failed.
+    """
+
+    kind: Literal["question", "feedback"]
+    pack_id: str
+    concept: str
+    reasons: tuple[str, ...]
+
+
+def _ignore(_: CheckRecord | Fallback) -> None:
     pass
 
 
@@ -58,7 +71,8 @@ def _ignore(_: CheckRecord) -> None:
 class VerifiedTutor:
     """A `btl.tutor.base.Tutor`: the model's wording if the Verifier passes it, else the fallback's.
 
-    ``clock`` reads seconds; it is a parameter so tests can control the budget.
+    ``clock`` reads seconds; it is a parameter so tests can control the budget. ``on_fallback``
+    hears each time the fallback's words are used.
     """
 
     primary: FoundryTutor
@@ -66,12 +80,14 @@ class VerifiedTutor:
     on_check: Callable[[CheckRecord], None] = field(default=_ignore)
     budget: float = CALL_BUDGET
     clock: Callable[[], float] = field(default=time.monotonic)
+    on_fallback: Callable[[Fallback], None] = field(default=_ignore)
 
     def question(self, view: QuestionView) -> TutorQuestion:
         """The model's question if it passes, else the fallback's."""
         plain = self.fallback.question(view)
         started = self.clock()
         repair: Repair | None = None
+        reasons: tuple[str, ...] = ("no reply",)
         for attempt in (1, 2):
             timeout = self._left(started)
             if attempt == 2 and timeout < MIN_REPAIR_SECONDS:
@@ -80,6 +96,7 @@ class VerifiedTutor:
                 worded = self.primary.word_question(view, plain.text, repair, timeout)
             except ModelError as error:
                 self._failed("question", view.pack_id, attempt, error)
+                reasons = ("no reply",)
                 break
             text = slotify(worded.text, question_values(view))
             check = verify_question(text, view)
@@ -87,6 +104,8 @@ class VerifiedTutor:
             if check.passed:
                 return TutorQuestion(text)
             repair = Repair(worded.reply.text, check.failures)
+            reasons = check.reasons
+        self.on_fallback(Fallback("question", view.pack_id, view.concept_name, reasons))
         return plain
 
     def feedback(
@@ -121,6 +140,7 @@ class VerifiedTutor:
                 return _feedback(text, pack, source)
             repair = Repair(worded.reply.text, check.failures)
             reasons = check.reasons
+        self.on_fallback(Fallback("feedback", pack.pack_id, pack.concept.name, reasons))
         return TutorFeedback(
             explanation=plain.explanation,
             takeaway=plain.takeaway,

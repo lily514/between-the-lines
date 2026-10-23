@@ -30,17 +30,18 @@ def test_each_viewer_has_their_own_allowance_within_the_day_s() -> None:
 
     taken = [allowance.take(viewer) for viewer in ("ana", "ana", "ana", "ben", "cat")]
 
-    assert taken == [True, True, False, True, False]  # ana's two, then the day's third is ben's
+    # ana's two, then ana's limit; ben has the day's third, so cat meets the day's limit.
+    assert taken == [None, None, "viewer", None, "day"]
 
 
 def test_a_new_day_starts_every_allowance_again() -> None:
     today = [DAY]
     allowance = Allowance(per_viewer=1, per_day=1, today=lambda: today[0])
-    assert allowance.take("ana") and not allowance.take("ana")
+    assert allowance.take("ana") is None and allowance.take("ana") == "viewer"
 
     today[0] = date(2026, 10, 24)
 
-    assert allowance.take("ana")
+    assert allowance.take("ana") is None
 
 
 def test_past_the_limit_the_template_words_it_and_says_why() -> None:

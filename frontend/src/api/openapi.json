@@ -20,6 +20,30 @@
         "title": "AnswerIn",
         "type": "object"
       },
+      "AnswerLineOut": {
+        "description": "A question answered before the break: the moment's clock, the concept, right or not.",
+        "properties": {
+          "clock": {
+            "title": "Clock",
+            "type": "string"
+          },
+          "concept": {
+            "title": "Concept",
+            "type": "string"
+          },
+          "correct": {
+            "title": "Correct",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "clock",
+          "concept",
+          "correct"
+        ],
+        "title": "AnswerLineOut",
+        "type": "object"
+      },
       "Bar": {
         "description": "One concept's mastery, from 0 to 1, and the level word for it (\"Solid\").",
         "properties": {
@@ -43,6 +67,15 @@
         ],
         "title": "Bar",
         "type": "object"
+      },
+      "Break": {
+        "description": "Which break a report is for.",
+        "enum": [
+          "halftime",
+          "full_time"
+        ],
+        "title": "Break",
+        "type": "string"
       },
       "ClubIn": {
         "description": "Choose the team to support, by team id.",
@@ -117,6 +150,50 @@
           "thresholds"
         ],
         "title": "ConceptMapOut",
+        "type": "object"
+      },
+      "ConceptMoveOut": {
+        "description": "A concept asked about now: mastery and level word at kick-off and at the break.",
+        "properties": {
+          "after": {
+            "title": "After",
+            "type": "number"
+          },
+          "before": {
+            "title": "Before",
+            "type": "number"
+          },
+          "level": {
+            "title": "Level",
+            "type": "string"
+          },
+          "level_before": {
+            "title": "Level Before",
+            "type": "string"
+          },
+          "mastered": {
+            "title": "Mastered",
+            "type": "boolean"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "strand": {
+            "title": "Strand",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "strand",
+          "before",
+          "after",
+          "level_before",
+          "level",
+          "mastered"
+        ],
+        "title": "ConceptMoveOut",
         "type": "object"
       },
       "DeliveredTime": {
@@ -590,6 +667,39 @@
           "next_match"
         ],
         "title": "FullTimeOut",
+        "type": "object"
+      },
+      "GoalOut": {
+        "description": "A goal, by match clock, side and scorer.",
+        "properties": {
+          "clock": {
+            "title": "Clock",
+            "type": "string"
+          },
+          "own_goal": {
+            "title": "Own Goal",
+            "type": "boolean"
+          },
+          "scorer": {
+            "title": "Scorer",
+            "type": "string"
+          },
+          "side": {
+            "enum": [
+              "home",
+              "away"
+            ],
+            "title": "Side",
+            "type": "string"
+          }
+        },
+        "required": [
+          "clock",
+          "side",
+          "scorer",
+          "own_goal"
+        ],
+        "title": "GoalOut",
         "type": "object"
       },
       "HTTPValidationError": {
@@ -1186,6 +1296,138 @@
         "title": "QuestionOut",
         "type": "object"
       },
+      "ReportOut": {
+        "description": "The scouting report for one of the viewer's matches at halftime or full time.\n\nIt covers the match up to that break only. ``right`` counts the answers that were right.",
+        "properties": {
+          "answers": {
+            "items": {
+              "$ref": "#/components/schemas/AnswerLineOut"
+            },
+            "title": "Answers",
+            "type": "array"
+          },
+          "at": {
+            "enum": [
+              "halftime",
+              "full_time"
+            ],
+            "title": "At",
+            "type": "string"
+          },
+          "away": {
+            "title": "Away",
+            "type": "string"
+          },
+          "away_code": {
+            "title": "Away Code",
+            "type": "string"
+          },
+          "away_goals": {
+            "title": "Away Goals",
+            "type": "integer"
+          },
+          "concepts": {
+            "items": {
+              "$ref": "#/components/schemas/ConceptMoveOut"
+            },
+            "title": "Concepts",
+            "type": "array"
+          },
+          "goals": {
+            "items": {
+              "$ref": "#/components/schemas/GoalOut"
+            },
+            "title": "Goals",
+            "type": "array"
+          },
+          "home": {
+            "title": "Home",
+            "type": "string"
+          },
+          "home_code": {
+            "title": "Home Code",
+            "type": "string"
+          },
+          "home_goals": {
+            "title": "Home Goals",
+            "type": "integer"
+          },
+          "match_number": {
+            "title": "Match Number",
+            "type": "integer"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "right": {
+            "title": "Right",
+            "type": "integer"
+          },
+          "strands": {
+            "items": {
+              "$ref": "#/components/schemas/StrandValueOut"
+            },
+            "title": "Strands",
+            "type": "array"
+          },
+          "thresholds": {
+            "$ref": "#/components/schemas/ThresholdsOut"
+          },
+          "your_result": {
+            "anyOf": [
+              {
+                "enum": [
+                  "won",
+                  "drew",
+                  "lost"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Your Result"
+          },
+          "your_team": {
+            "anyOf": [
+              {
+                "enum": [
+                  "home",
+                  "away"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Your Team"
+          }
+        },
+        "required": [
+          "match_number",
+          "at",
+          "home",
+          "away",
+          "home_code",
+          "away_code",
+          "your_team",
+          "home_goals",
+          "away_goals",
+          "your_result",
+          "goals",
+          "strands",
+          "concepts",
+          "answers",
+          "right",
+          "note",
+          "thresholds"
+        ],
+        "title": "ReportOut",
+        "type": "object"
+      },
       "ScoreOut": {
         "description": "Goals for each side, at ``clock`` for a match in progress (null at full time).",
         "properties": {
@@ -1475,6 +1717,54 @@
           "description"
         ],
         "title": "StrandOut",
+        "type": "object"
+      },
+      "StrandValueOut": {
+        "description": "A strand on the radar. ``kickoff`` and ``now`` are null when nothing in it is asked yet.",
+        "properties": {
+          "concepts": {
+            "title": "Concepts",
+            "type": "integer"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "kickoff": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kickoff"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "now": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Now"
+          }
+        },
+        "required": [
+          "key",
+          "name",
+          "concepts",
+          "kickoff",
+          "now"
+        ],
+        "title": "StrandValueOut",
         "type": "object"
       },
       "TeamSheetOut": {
@@ -1867,6 +2157,63 @@
           }
         },
         "summary": "Get Matches"
+      }
+    },
+    "/api/viewers/{viewer_id}/matches/{match_number}/report": {
+      "get": {
+        "description": "The scouting report for a match at a break, once the viewer has reached it.",
+        "operationId": "get_report_api_viewers__viewer_id__matches__match_number__report_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "viewer_id",
+            "required": true,
+            "schema": {
+              "title": "Viewer Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "match_number",
+            "required": true,
+            "schema": {
+              "title": "Match Number",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "at",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Break"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Report"
       }
     },
     "/api/viewers/{viewer_id}/next": {

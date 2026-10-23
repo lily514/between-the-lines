@@ -365,6 +365,70 @@ class ConceptMapOut(BaseModel):
     thresholds: ThresholdsOut
 
 
+class StrandValueOut(BaseModel):
+    """A strand on the radar. ``kickoff`` and ``now`` are null when nothing in it is asked yet."""
+
+    key: str
+    name: str
+    concepts: int
+    kickoff: float | None
+    now: float | None
+
+
+class ConceptMoveOut(BaseModel):
+    """A concept asked about now: mastery and level word at kick-off and at the break."""
+
+    name: str
+    strand: str
+    before: float
+    after: float
+    level_before: str
+    level: str
+    mastered: bool
+
+
+class GoalOut(BaseModel):
+    """A goal, by match clock, side and scorer."""
+
+    clock: str
+    side: Literal["home", "away"]
+    scorer: str
+    own_goal: bool
+
+
+class AnswerLineOut(BaseModel):
+    """A question answered before the break: the moment's clock, the concept, right or not."""
+
+    clock: str
+    concept: str
+    correct: bool
+
+
+class ReportOut(BaseModel):
+    """The scouting report for one of the viewer's matches at halftime or full time.
+
+    It covers the match up to that break only. ``right`` counts the answers that were right.
+    """
+
+    match_number: int
+    at: Literal["halftime", "full_time"]
+    home: str
+    away: str
+    home_code: str
+    away_code: str
+    your_team: YourTeam
+    home_goals: int
+    away_goals: int
+    your_result: Literal["won", "drew", "lost"] | None
+    goals: list[GoalOut]
+    strands: list[StrandValueOut]
+    concepts: list[ConceptMoveOut]
+    answers: list[AnswerLineOut]
+    right: int
+    note: str
+    thresholds: ThresholdsOut
+
+
 class AnswerIn(BaseModel):
     """An answer to the pending question, which ``pack_id`` names."""
 

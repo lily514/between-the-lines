@@ -144,6 +144,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/viewers/{viewer_id}/matches/{match_number}/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Report
+         * @description The scouting report for a match at a break, once the viewer has reached it.
+         */
+        get: operations["get_report_api_viewers__viewer_id__matches__match_number__report_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/viewers/{viewer_id}/next": {
         parameters: {
             query?: never;
@@ -199,6 +219,18 @@ export interface components {
             pack_id: string;
         };
         /**
+         * AnswerLineOut
+         * @description A question answered before the break: the moment's clock, the concept, right or not.
+         */
+        AnswerLineOut: {
+            /** Clock */
+            clock: string;
+            /** Concept */
+            concept: string;
+            /** Correct */
+            correct: boolean;
+        };
+        /**
          * Bar
          * @description One concept's mastery, from 0 to 1, and the level word for it ("Solid").
          */
@@ -210,6 +242,12 @@ export interface components {
             /** Value */
             value: number;
         };
+        /**
+         * Break
+         * @description Which break a report is for.
+         * @enum {string}
+         */
+        Break: "halftime" | "full_time";
         /**
          * ClubIn
          * @description Choose the team to support, by team id.
@@ -244,6 +282,26 @@ export interface components {
             thresholds: components["schemas"]["ThresholdsOut"];
             /** Tiers */
             tiers: string[];
+        };
+        /**
+         * ConceptMoveOut
+         * @description A concept asked about now: mastery and level word at kick-off and at the break.
+         */
+        ConceptMoveOut: {
+            /** After */
+            after: number;
+            /** Before */
+            before: number;
+            /** Level */
+            level: string;
+            /** Level Before */
+            level_before: string;
+            /** Mastered */
+            mastered: boolean;
+            /** Name */
+            name: string;
+            /** Strand */
+            strand: string;
         };
         /**
          * DeliveredTime
@@ -415,6 +473,23 @@ export interface components {
             your_result: ("won" | "drew" | "lost") | null;
             /** Your Team */
             your_team: ("home" | "away") | null;
+        };
+        /**
+         * GoalOut
+         * @description A goal, by match clock, side and scorer.
+         */
+        GoalOut: {
+            /** Clock */
+            clock: string;
+            /** Own Goal */
+            own_goal: boolean;
+            /** Scorer */
+            scorer: string;
+            /**
+             * Side
+             * @enum {string}
+             */
+            side: "home" | "away";
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -652,6 +727,50 @@ export interface components {
             your_team: ("home" | "away") | null;
         };
         /**
+         * ReportOut
+         * @description The scouting report for one of the viewer's matches at halftime or full time.
+         *
+         *     It covers the match up to that break only. ``right`` counts the answers that were right.
+         */
+        ReportOut: {
+            /** Answers */
+            answers: components["schemas"]["AnswerLineOut"][];
+            /**
+             * At
+             * @enum {string}
+             */
+            at: "halftime" | "full_time";
+            /** Away */
+            away: string;
+            /** Away Code */
+            away_code: string;
+            /** Away Goals */
+            away_goals: number;
+            /** Concepts */
+            concepts: components["schemas"]["ConceptMoveOut"][];
+            /** Goals */
+            goals: components["schemas"]["GoalOut"][];
+            /** Home */
+            home: string;
+            /** Home Code */
+            home_code: string;
+            /** Home Goals */
+            home_goals: number;
+            /** Match Number */
+            match_number: number;
+            /** Note */
+            note: string;
+            /** Right */
+            right: number;
+            /** Strands */
+            strands: components["schemas"]["StrandValueOut"][];
+            thresholds: components["schemas"]["ThresholdsOut"];
+            /** Your Result */
+            your_result: ("won" | "drew" | "lost") | null;
+            /** Your Team */
+            your_team: ("home" | "away") | null;
+        };
+        /**
          * ScoreOut
          * @description Goals for each side, at ``clock`` for a match in progress (null at full time).
          */
@@ -762,6 +881,22 @@ export interface components {
             key: string;
             /** Name */
             name: string;
+        };
+        /**
+         * StrandValueOut
+         * @description A strand on the radar. ``kickoff`` and ``now`` are null when nothing in it is asked yet.
+         */
+        StrandValueOut: {
+            /** Concepts */
+            concepts: number;
+            /** Key */
+            key: string;
+            /** Kickoff */
+            kickoff: number | null;
+            /** Name */
+            name: string;
+            /** Now */
+            now: number | null;
         };
         /**
          * TeamSheetOut
@@ -1014,6 +1149,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MatchOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_report_api_viewers__viewer_id__matches__match_number__report_get: {
+        parameters: {
+            query: {
+                at: components["schemas"]["Break"];
+            };
+            header?: never;
+            path: {
+                viewer_id: string;
+                match_number: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportOut"];
                 };
             };
             /** @description Validation Error */

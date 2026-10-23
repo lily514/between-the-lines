@@ -14,7 +14,7 @@ from btl.learn.knowledge import Delivery, KnowledgeModel, Observation, replay
 from btl.learn.questions import Asks, Form
 from btl.schema.ids import TeamId
 
-LEARNER_VERSION = 2
+LEARNER_VERSION = 3
 MATCHES_PER_SESSION = 3
 
 StateT = TypeVar("StateT")
@@ -25,7 +25,8 @@ class Attempt:
     """One answered question, with enough to replay it and to show it again.
 
     ``answered_at`` is an ISO 8601 timestamp supplied by the caller; nothing here reads the
-    clock.
+    clock. ``asked_in`` is the period the question was asked in, which for a review can be later
+    than the moment; None in records written before it was kept.
     """
 
     match_number: int
@@ -41,6 +42,7 @@ class Attempt:
     correct: bool
     pack_id: str
     answered_at: str
+    asked_in: int | None = None
 
     def observation(self) -> Observation:
         """The answer as a knowledge model sees it."""

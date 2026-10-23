@@ -18,6 +18,8 @@ Routes:
   on each concept asked about now (`ConceptMapOut`).
 - ``GET /api/viewers/{viewer_id}/matches``: the viewer's matches, upcoming, in progress and
   finished, with their dates (`MatchOut`).
+- ``GET /api/viewers/{viewer_id}/matches/{match_number}/report?at=halftime|full_time``: the
+  scouting report at a break the viewer has reached (`ReportOut`).
 - ``POST /api/viewers/{viewer_id}/next``: the pending question, or the full-time summary when
   the match has no more, which also moves the viewer on to their next match (`NextOut`).
 - ``POST /api/viewers/{viewer_id}/answers``: answer the pending question (`AnswerIn` →
@@ -50,6 +52,7 @@ from btl.api.models import (
     FullTimeOut,
     MatchOut,
     NextOut,
+    ReportOut,
     StartIn,
     StatusOut,
     TeamSheetOut,
@@ -62,6 +65,7 @@ from btl.api.payloads import (
     match_payload,
     movements,
     question_payload,
+    report_payload,
     team_sheet_payload,
     thresholds_payload,
     your_result,
@@ -71,13 +75,16 @@ from btl.api.viewer import (
     AnswerOnlyStore,
     BadKeyError,
     FeedbackGivenError,
+    MatchOverError,
     NotPendingError,
     QuestionPendingError,
+    ReadOnlyStore,
     WebViewer,
 )
 from btl.learn.curriculum import curriculum
 from btl.learn.learner import MATCHES_PER_SESSION, LearnerState
 from btl.learn.matches import viewer_matches
+from btl.learn.report import Break, report
 from btl.learn.session import (
     ClubLockedError,
     Course,
@@ -259,6 +266,35 @@ def create_app(
                 match_payload(match, league, club)
                 for match in viewer_matches(course(), state, prepare)
             ]
+
+    @app.get("/api/viewers/{viewer_id}/matches/{match_number}/report")
+    def get_report(viewer_id: str, match_number: int, at: Break) -> ReportOut:
+        """The scouting report for a match at a break, once the viewer has reached it."""
+        with serving(viewer_id):
+            state = stored(viewer_id).state
+            if not 1 <= match_number <= MATCHES_PER_SESSION:
+                raise HTTPException(404, f"there is no match {match_number}")
+            if not reached(state, match_number, at):
+                raise HTTPException(409, "the match hasn't reached that break yet")
+            made = report(
+                course(), state, prepare(state.seed, match_number, state.club), match_number, at
+            )
+            return report_payload(made, course().league, state.club, course().model.thresholds)
+
+    def reached(state: LearnerState, match_number: int, at: Break) -> bool:
+        # A finished match has reached both breaks; the one being watched, only halftime, and
+        # only once the next question is in the second half or none is left.
+        if match_number < state.match_number:
+            return True
+        if match_number > state.match_number or at is Break.FULL_TIME:
+            return False
+        try:
+            watch_match(course(), ReadOnlyStore(store), state.viewer_id, WebViewer(), now, prepare)
+        except QuestionPendingError as pending:
+            return pending.asked.prompt.delivered.period_id > 1
+        except MatchOverError:
+            return True
+        return True
 
     @app.get("/api/viewers/{viewer_id}")
     def get_status(viewer_id: str) -> StatusOut:

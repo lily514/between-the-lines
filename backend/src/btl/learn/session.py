@@ -322,6 +322,7 @@ def watch_match(
             correct=grade.correct,
             pack_id=pack.pack_id,
             answered_at=now(),
+            asked_in=prompt.delivered.period_id,
         )
         before = mastery_state()
         history.append(attempt)

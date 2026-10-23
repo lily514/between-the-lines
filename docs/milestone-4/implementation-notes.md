@@ -19,3 +19,22 @@ Transitions is "coming later" on the map, as the handoff says. Level words live 
 `level_for`, with "Mastered" at the mastery threshold.
 **Why:** the map carries the viewer's values, so it needs the viewer, like the matches and team sheet.
 **Affects:** T7 calls the viewer's route.
+
+## T3 — Reports (2026-10-23)
+
+**Plan said:** a radar, in progress/mastered, a scout's note, up to 2 replay cards, and at full time a goal timeline and
+recap, from `GET …/matches/{n}/report?at=…`; `FullTimeOut` points to it.
+**We did:**
+- **Asked-in period on each attempt.** Each attempt now records the period its question was asked in (`asked_in`),
+  so a halftime report counts exactly the questions asked by the break. A review of a first-half moment asked in the
+  second half doesn't count. The learner record is version 3; version 1 and 2 records still load, and their attempts
+  fall back to the moment's own period.
+- **Replay cards are the answers list.** Each question answered in the span gets one line: clock, concept, right or
+  not. Moments held back from the last 30 s of a half are asked at the break before the report (T4), so they
+  appear here too.
+- **Reaching halftime.** The server checks it with a read-only replay (`ReadOnlyStore`): the match being watched has
+  reached halftime once its next question is in the second half, or none is left.
+- **The full-time summary is unchanged.** The page fetches the report by its `match_number`.
+
+**Why:** without the period, a halftime report would either leak second-half reviews or have to guess.
+**Affects:** T8 builds both report screens on `ReportOut`; T5 decides when the page shows halftime.

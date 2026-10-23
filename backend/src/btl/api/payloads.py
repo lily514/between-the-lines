@@ -9,13 +9,16 @@ from collections.abc import Mapping
 from typing import Literal
 
 from btl.api.models import (
+    AnswerLineOut,
     Bar,
     ClubOut,
     ConceptMapOut,
+    ConceptMoveOut,
     DeliveredTime,
     FactOut,
     FeedbackOption,
     FeedbackOut,
+    GoalOut,
     MapConceptOut,
     MarkerOut,
     MatchOut,
@@ -26,10 +29,12 @@ from btl.api.models import (
     PlayerNumbersOut,
     PositionOut,
     QuestionOut,
+    ReportOut,
     ScoreOut,
     SheetPlayerOut,
     SheetTeamOut,
     StrandOut,
+    StrandValueOut,
     TeamSheetOut,
     ThresholdsOut,
     YourTeam,
@@ -43,6 +48,7 @@ from btl.learn.knowledge import Delivery
 from btl.learn.levels import level_word
 from btl.learn.matches import MatchState, ViewerMatch
 from btl.learn.questions import Form
+from btl.learn.report import Break, Report
 from btl.learn.session import Asked, Told
 from btl.learn.team_sheet import NEXT_STAGE, SheetPlayer, SheetTeam, TeamSheet
 from btl.schema.ids import TeamId
@@ -231,6 +237,65 @@ def match_payload(match: ViewerMatch, league: League, club: TeamId | None) -> Ma
         score=score_out,
         your_result=your_result(side, score.home, score.away) if finished and score else None,
         questions=match.questions,
+    )
+
+
+def report_payload(
+    made: Report, league: League, club: TeamId | None, thresholds: Thresholds
+) -> ReportOut:
+    """The scouting report, with the result from the viewer's side at full time."""
+    home, away = league.club(made.home_id), league.club(made.away_id)
+    side = your_team(club, home, away)
+    full_time = made.at is Break.FULL_TIME
+    return ReportOut(
+        match_number=made.match_number,
+        at=made.at.value,
+        home=home.name,
+        away=away.name,
+        home_code=home.short_name,
+        away_code=away.short_name,
+        your_team=side,
+        home_goals=made.home_goals,
+        away_goals=made.away_goals,
+        your_result=your_result(side, made.home_goals, made.away_goals) if full_time else None,
+        goals=[
+            GoalOut(
+                clock=goal.clock,
+                side="home" if goal.home else "away",
+                scorer=goal.scorer,
+                own_goal=goal.own_goal,
+            )
+            for goal in made.goals
+        ],
+        strands=[
+            StrandValueOut(
+                key=strand.key,
+                name=strand.name,
+                concepts=strand.concepts,
+                kickoff=strand.kickoff,
+                now=strand.now,
+            )
+            for strand in made.strands
+        ],
+        concepts=[
+            ConceptMoveOut(
+                name=move.name,
+                strand=move.strand,
+                before=move.before,
+                after=move.after,
+                level_before=move.level_before,
+                level=move.level,
+                mastered=move.mastered,
+            )
+            for move in made.concepts
+        ],
+        answers=[
+            AnswerLineOut(clock=line.clock, concept=line.concept, correct=line.correct)
+            for line in made.answers
+        ],
+        right=sum(line.correct for line in made.answers),
+        note=made.note,
+        thresholds=thresholds_payload(thresholds),
     )
 
 

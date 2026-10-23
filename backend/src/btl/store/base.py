@@ -13,8 +13,9 @@ from btl.schema.ids import TeamId
 
 # Viewer ids become file names and document ids, so they are kept plain.
 VIEWER_ID = re.compile(r"[a-z0-9][a-z0-9_-]{0,63}")
-# Version 1 records have no club; they read as a viewer who hasn't chosen one.
-READABLE_VERSIONS = (1, LEARNER_VERSION)
+# Version 1 records have no club; they read as a viewer who hasn't chosen one. Version 2
+# attempts don't say which period they were asked in.
+READABLE_VERSIONS = (1, 2, LEARNER_VERSION)
 
 
 class LearnerExistsError(Exception):
@@ -88,7 +89,7 @@ def to_document(state: LearnerState) -> dict[str, object]:
 
 
 def from_document(document: Mapping[str, object]) -> LearnerState:
-    """Read a document written by `to_document`, now or before clubs (version 1, no club).
+    """Read a document written by `to_document`, now or in an earlier version.
 
     Raises:
         ValueError: If it was written for another version of the record.
@@ -124,4 +125,5 @@ def _attempt(raw: Mapping[str, object]) -> Attempt:
         correct=cast(bool, raw["correct"]),
         pack_id=str(raw["pack_id"]),
         answered_at=str(raw["answered_at"]),
+        asked_in=cast(int | None, raw.get("asked_in")),
     )

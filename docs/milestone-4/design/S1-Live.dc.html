@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<title>Between the Lines — Live companion</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<style>/* vietnamese */
+@font-face {
+  font-family: 'Bricolage Grotesque';
+  font-style: normal;
+  font-weight: 600;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/bricolagegrotesque/v9/3y9K6as8bTXq_nANBjzKo3IeZx8z6up5BeSl9D4dj_x9PpZBMlGHInHWVyNJtvI.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Bricolage Grotesque';
+  font-style: normal;
+  font-weight: 600;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/bricolagegrotesque/v9/3y9K6as8bTXq_nANBjzKo3IeZx8z6up5BeSl9D4dj_x9PpZBMlGGInHWVyNJtvI.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Bricolage Grotesque';
+  font-style: normal;
+  font-weight: 600;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("d2f7b829-501e-40a6-9cfc-f9315e21dff2") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Bricolage Grotesque';
+  font-style: normal;
+  font-weight: 700;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/bricolagegrotesque/v9/3y9K6as8bTXq_nANBjzKo3IeZx8z6up5BeSl9D4dj_x9PpZBMlGHInHWVyNJtvI.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Bricolage Grotesque';
+  font-style: normal;
+  font-weight: 700;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/bricolagegrotesque/v9/3y9K6as8bTXq_nANBjzKo3IeZx8z6up5BeSl9D4dj_x9PpZBMlGGInHWVyNJtvI.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Bricolage Grotesque';
+  font-style: normal;
+  font-weight: 700;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url("d2f7b829-501e-40a6-9cfc-f9315e21dff2") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/dmsans/v17/rP2Hp2ywxg089UriCZ2IHTWEBlwu8Q.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("e2fac5ff-1cb0-4299-8dc3-67435af7da47") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/dmsans/v17/rP2Hp2ywxg089UriCZ2IHTWEBlwu8Q.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("e2fac5ff-1cb0-4299-8dc3-67435af7da47") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/dmsans/v17/rP2Hp2ywxg089UriCZ2IHTWEBlwu8Q.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("e2fac5ff-1cb0-4299-8dc3-67435af7da47") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/dmsans/v17/rP2Hp2ywxg089UriCZ2IHTWEBlwu8Q.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("e2fac5ff-1cb0-4299-8dc3-67435af7da47") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPx3cwgknk-6nFg.woff2) format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPxTcwgknk-6nFg.woff2) format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* greek */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPxPcwgknk-6nFg.woff2) format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPx_cwgknk-6nFg.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPx7cwgknk-6nFg.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("f9425d52-2e50-48d8-82a9-6e0417ae1249") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPx3cwgknk-6nFg.woff2) format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPxTcwgknk-6nFg.woff2) format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* greek */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPxPcwgknk-6nFg.woff2) format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPx_cwgknk-6nFg.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPx7cwgknk-6nFg.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("f9425d52-2e50-48d8-82a9-6e0417ae1249") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+</style>
+<style>
+body{margin:0}
+a{color:#9CC8F0}a:hover{color:#C2DDF6}
+button{font:inherit;color:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: {{t.c2B1018}}; color: {{t.cF6EDE4}}; font-family: 'DM Sans', system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden">
+
+  <header style="height: 56px; padding: 0 8px 0 16px; display: flex; align-items: center; gap: 8px">
+    <div aria-label="Northbridge 1, Westmere 1" style="display: flex; align-items: center; gap: 8px; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 22px; letter-spacing: 0.01em; white-space: nowrap; font-variant-numeric: tabular-nums">
+      <svg width="12" height="12" sc-camel-view-box="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="5.5" fill="{{t.cF6EDE4}}"></circle></svg>NOR 1–1 WES<svg width="12" height="12" sc-camel-view-box="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4.6" fill="none" stroke="{{t.cEFA27A}}" stroke-width="1.8"></circle></svg>
+    </div>
+    <div style="font-family: 'JetBrains Mono', monospace; font-size: 15px; color: {{t.cE3D3CB}}">58:11</div>
+    <button aria-label="Curriculum map" title="Curriculum map" style="margin-left: auto; width: 44px; height: 44px; border: 0; background: transparent; display: flex; align-items: center; justify-content: center; border-radius: 10px; flex: none"><svg width="22" height="22" sc-camel-view-box="0 0 24 24" fill="none" stroke="{{t.cF6EDE4}}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"></rect><circle cx="9" cy="16" r="1.9"></circle><circle cx="15" cy="8" r="1.9"></circle><path d="M10.2 14.4l3.6-4.8"></path></svg></button>
+    <button aria-label="Preferences" style="width: 44px; height: 44px; border: 0; background: transparent; display: flex; align-items: center; justify-content: center; border-radius: 10px">
+      <svg width="22" height="22" sc-camel-view-box="0 0 24 24" fill="none" stroke="{{t.cF6EDE4}}" stroke-width="1.8" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"></line><line x1="4" y1="17" x2="20" y2="17"></line><circle cx="9" cy="7" r="2.4" fill="{{t.c2B1018}}"></circle><circle cx="15" cy="17" r="2.4" fill="{{t.c2B1018}}"></circle></svg>
+    </button>
+  </header>
+
+  <div style="position: relative; margin: 0 auto; width: 358px">
+    <svg sc-camel-view-box="-3 -3 74 111" width="358" height="537" role="img" aria-label="Live pitch, Northbridge attacking upwards. Number 11 has the ball just inside Westmere's half. Westmere sit in two banks of four." style="display: block; border-radius: 16px">
+      <rect x="-3" y="-3" width="74" height="111" fill="#1E3A30"></rect>
+      <g fill="none" stroke="#F6EDE4" stroke-opacity="0.22" stroke-width="0.4">
+        <rect x="0" y="0" width="68" height="105"></rect>
+        <line x1="0" y1="52.5" x2="68" y2="52.5"></line>
+        <circle cx="34" cy="52.5" r="9.15"></circle>
+        <rect x="13.84" y="0" width="40.32" height="16.5"></rect>
+        <rect x="24.84" y="0" width="18.32" height="5.5"></rect>
+        <rect x="13.84" y="88.5" width="40.32" height="16.5"></rect>
+        <rect x="24.84" y="99.5" width="18.32" height="5.5"></rect>
+      </g>
+      <g fill="#1E3A30" stroke="#EFA27A" stroke-width="0.65">
+        <circle cx="32" cy="6.4" r="1.8"></circle>
+        <circle cx="55.2" cy="27.3" r="1.8"></circle><circle cx="39.3" cy="30.4" r="1.8"></circle><circle cx="31" cy="28.3" r="1.8"></circle><circle cx="18.3" cy="26" r="1.8"></circle>
+        <circle cx="49.5" cy="40.5" r="1.8"></circle><circle cx="40.7" cy="42.1" r="1.8"></circle><circle cx="28.8" cy="39.8" r="1.8"></circle><circle cx="18.4" cy="43.3" r="1.8"></circle>
+        <circle cx="43.7" cy="55.9" r="1.8"></circle><circle cx="23.9" cy="54" r="1.8"></circle>
+      </g>
+      <g font-family="'Bricolage Grotesque', sans-serif" font-weight="700" font-size="2.4" text-anchor="middle" fill="#2B1018">
+        <circle cx="33.9" cy="96.7" r="2.2" fill="#F6EDE4"></circle><text x="33.9" y="97.55">1</text>
+        <circle cx="15.3" cy="77.6" r="2.2" fill="#F6EDE4"></circle><text x="15.3" y="78.45">3</text>
+        <circle cx="27.2" cy="76.2" r="2.2" fill="#F6EDE4"></circle><text x="27.2" y="77.05">4</text>
+        <circle cx="42.1" cy="76.5" r="2.2" fill="#F6EDE4"></circle><text x="42.1" y="77.35">5</text>
+        <circle cx="52.5" cy="75.7" r="2.2" fill="#F6EDE4"></circle><text x="52.5" y="76.55">6</text>
+        <circle cx="13.8" cy="56.1" r="2.2" fill="#F6EDE4"></circle><text x="13.8" y="56.95">10</text>
+        <circle cx="34.7" cy="46.4" r="2.2" fill="#F6EDE4"></circle><text x="34.7" y="47.25">11</text>
+        <circle cx="42.9" cy="59" r="2.2" fill="#F6EDE4"></circle><text x="42.9" y="59.85">12</text>
+        <circle cx="55.9" cy="53.8" r="2.2" fill="#F6EDE4"></circle><text x="55.9" y="54.65">13</text>
+        <circle cx="23.8" cy="35.2" r="2.2" fill="#F6EDE4"></circle><text x="23.8" y="36.05">16</text>
+        <circle cx="49" cy="36.2" r="2.2" fill="#F6EDE4"></circle><text x="49" y="37.05">17</text>
+      </g>
+      <circle cx="36.6" cy="44.6" r="0.95" fill="#FFFFFF" stroke="#2B1018" stroke-width="0.35"></circle>
+    </svg>
+
+    <div style="position: absolute; top: 12px; left: 12px; display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; background: {{t.c4A2430}}; border: 1px solid {{t.c5E3140}}; color: {{t.cF6EDE4}}; border-radius: 999px; font-family: 'Bricolage Grotesque', sans-serif; font-size: 16px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase">
+      <svg width="14" height="14" sc-camel-view-box="0 0 24 24" fill="none" stroke="{{t.cF6EDE4}}" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M3 12h4l3-5 4 10 3-5h4"></path></svg>Settled possession
+    </div>
+    <button aria-label="1 question saved for the next break, about the turnover at 56:23" style="position: absolute; top: 12px; right: 0; height: 32px; padding: 0 10px 0 12px; border: 1px solid {{t.c5E3140}}; border-right: 0; background: {{t.c4A2430}}; color: {{t.cF6EDE4}}; border-radius: 999px 0 0 999px; display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600">
+      <svg width="13" height="13" sc-camel-view-box="0 0 24 24" fill="none" stroke="{{t.cF2CF6E}}" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4z"></path></svg>1 for the break
+    </button>
+    <div aria-hidden="true" style="position: absolute; bottom: 12px; left: 12px; font-size: 13px; font-weight: 500; color: {{t.cE3D3CB}}; background: rgba(43,16,24,0.8); padding: 4px 8px; border-radius: 6px">● Northbridge ↑ · ○ Westmere</div>
+  </div>
+
+  <section aria-live="polite" aria-label="Latest caption" style="margin: 14px 16px 0; display: grid; grid-template-columns: 48px 1fr; gap: 10px; align-items: start">
+    <div style="font-family: 'JetBrains Mono', monospace; font-size: 14px; color: {{t.cC9B3AE}}; padding-top: 4px">58:05</div>
+    <p style="margin: 0; font-size: 19px; line-height: 1.35; font-weight: 500">Northbridge have kept it for <span style="font-family: 'JetBrains Mono', monospace; font-size: 17px">30 s</span>. Westmere are sitting deep in two banks of four, waiting.</p>
+    <div style="font-family: 'JetBrains Mono', monospace; font-size: 14px; color: {{t.cB09590}}">56:24</div>
+    <p style="margin: 0; font-size: 15px; line-height: 1.4; color: {{t.cC9B3AE}}">Lost it, won it straight back. More on that at the next break.</p>
+  </section>
+
+  <div style="margin-top: auto; padding: 0 16px 18px; display: flex; justify-content: space-between; align-items: center">
+    <button style="height: 44px; padding: 0 4px; border: 0; background: transparent; font-size: 15px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; color: {{t.cE3D3CB}}">Earlier notes (9)</button>
+    <button style="height: 44px; padding: 0 14px; border: 1px solid {{t.c5E3140}}; background: transparent; border-radius: 999px; font-size: 15px; font-weight: 600">Questions: Normal</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script="" data-props="{&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;dark&quot;,&quot;light&quot;],&quot;default&quot;:&quot;dark&quot;},&quot;$preview&quot;:{&quot;width&quot;:390,&quot;height&quot;:844}}">
+class Component extends DCLogic {
+  renderVals() {
+    const themeTokens = { dark: {"c2B1018": "#2B1018", "c4A2430": "#4A2430", "c5E3140": "#5E3140", "cB09590": "#B09590", "cC9B3AE": "#C9B3AE", "cE3D3CB": "#E3D3CB", "cEFA27A": "#EFA27A", "cF2CF6E": "#9CC8F0", "cF6EDE4": "#F6EDE4"}, light: {"c2B1018": "#F5EDE0", "c4A2430": "#F1E6D8", "c5E3140": "#E3D3C3", "cB09590": "#7E6268", "cC9B3AE": "#6E5058", "cE3D3CB": "#4A2E35", "cEFA27A": "#9A5B2E", "cF2CF6E": "#8C2440", "cF6EDE4": "#2B1018"} };
+    const theme = this.props.theme === 'light' ? 'light' : 'dark';
+    return { t: themeTokens[theme] };
+  }
+}
+</script>
+
+
+</body></html>

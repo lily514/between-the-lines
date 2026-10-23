@@ -1,4 +1,4 @@
-/* Home base: the viewer's matches. */
+/* Home base: the match to rejoin or watch next, progress on what is asked now, and earlier matches (S0). */
 
 .matches {
 	display: flex;
@@ -7,9 +7,10 @@
 }
 
 .matches__heading {
-	font-size: var(--fs-display-l);
-	line-height: var(--lh-display-l);
-	font-weight: 600;
+	font-family: var(--font-display);
+	font-size: 40px;
+	line-height: 1;
+	font-weight: 700;
 }
 
 .matches__team {
@@ -20,36 +21,209 @@
 	font-size: var(--fs-body);
 }
 
-.matches__list {
+.matches__card {
 	display: flex;
 	flex-direction: column;
 	gap: var(--s-3);
+	padding: var(--s-4);
+	border: 1px solid var(--border);
+	border-radius: var(--r-pitch);
+	background: var(--surface);
+}
+
+/* The match part-way through stands out with the action colour's border, and says so in words. */
+.matches__card--now {
+	border: 2px solid var(--act);
+}
+
+.matches__card--plain {
+	gap: var(--s-2);
+	background: transparent;
+}
+
+.matches__label {
+	display: flex;
+	justify-content: space-between;
+	gap: var(--s-2);
+	margin: 0;
+	font-size: var(--fs-caption);
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--text-muted);
+}
+
+.matches__label--now {
+	color: var(--act);
+}
+
+.matches__clock {
+	flex: none;
+	white-space: nowrap;
+	font-family: var(--font-data);
+	font-size: var(--fs-data);
+	font-weight: 400;
+	letter-spacing: 0;
+	text-transform: none;
+	color: var(--text);
+}
+
+.matches__fixture {
+	display: grid;
+	grid-template-columns: 1fr auto 1fr;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.matches__side {
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+	min-width: 0;
+}
+
+.matches__side--end {
+	align-items: flex-end;
+	text-align: right;
+}
+
+.matches__club {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.matches__side--end .matches__club {
+	flex-direction: row-reverse;
+}
+
+.matches__name {
+	font-family: var(--font-display);
+	font-size: var(--fs-body-l);
+	font-weight: 700;
+	line-height: 1.1;
+}
+
+.matches__where {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: var(--fs-caption);
+	color: var(--text-muted);
+}
+
+.matches__you {
+	padding: 0 7px;
+	border-radius: 5px;
+	background: var(--text);
+	color: var(--bg);
+	font-size: 12px;
+	font-weight: 700;
+	line-height: 20px;
+}
+
+.matches__versus {
+	font-size: var(--fs-body-s);
+	color: var(--text-muted);
+}
+
+.matches__score {
+	font-family: var(--font-display);
+	font-size: 30px;
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+}
+
+.matches__when {
+	margin: 0;
+	font-size: var(--fs-body);
+}
+
+.matches__number {
+	font-family: var(--font-data);
+}
+
+.matches__note {
+	margin: 0;
+	font-size: var(--fs-body-s);
+	line-height: var(--lh-body);
+	color: var(--text-2);
+}
+
+.matches__section-head {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: var(--s-2);
+}
+
+.matches__section {
+	margin: 0 0 var(--s-1);
+	font-family: var(--font-display);
+	font-size: 20px;
+	font-weight: 700;
+}
+
+.matches__aside {
+	font-size: var(--fs-caption);
+	color: var(--text-muted);
+}
+
+.matches__progress {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	font-size: var(--fs-body-s);
+}
+
+.matches__progress li {
+	display: flex;
+	justify-content: space-between;
+	gap: var(--s-2);
+}
+
+.matches__level {
+	font-weight: 600;
+	color: var(--know);
+}
+
+.matches .matches__map {
+	align-self: flex-start;
+	padding: 0;
+}
+
+.matches__earlier {
 	margin: 0;
 	padding: 0;
 	list-style: none;
 }
 
-.matches__match {
+.matches__earlier li {
 	display: flex;
 	flex-direction: column;
-	gap: var(--s-2);
-	padding: var(--s-4);
-	border: 1px solid var(--border);
-	border-radius: var(--r-tile);
-	background: var(--surface);
+	justify-content: center;
+	gap: 2px;
+	min-height: 56px;
+	padding: var(--s-1) 2px;
+	border-top: 1px solid var(--border);
 }
 
-.matches__when {
-	margin: 0;
+.matches__earlier li:last-child {
+	border-bottom: 1px solid var(--border);
+}
+
+.matches__earlier .matches__when {
 	font-family: var(--font-data);
-	font-size: var(--fs-data);
+	font-size: var(--fs-caption);
 	color: var(--text-muted);
 }
 
-.matches__fixture {
-	margin: 0;
+.matches__result {
 	font-size: var(--fs-body);
-	font-weight: 700;
+	font-weight: 600;
 }
 
 .matches__start-over {

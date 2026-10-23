@@ -77,3 +77,17 @@ match" → Matches; Welcome rebuilt to S7.
 
 **Why:** the map from anywhere must not lose a pick in progress; the Welcome may show only what the API says.
 **Affects:** T7 fills the map overlay; T8 adds the report screen; T9 adds ⚙.
+
+## T6 — Matches screen (2026-10-23)
+
+**Plan said:** next match + "See who's playing"; in-progress card with "Rejoin"; Your progress with level words and "See
+your full map"; Earlier with report links.
+**We did:** as planned, from the S0 board.
+- The board's companion copy ("Put the match on your TV…", "● Live now", the saved-question count and the ±10 s
+  sync) is replaced by stepped-match wording: "Part-way through · at {clock}", "{n} questions answered. The match
+  waits for you."
+- Earlier lists finished matches with their score; the report links arrive with the report screen in T8.
+- With every match watched, the lead card says so.
+
+**Why:** the live clock and saved questions are carried over to a later milestone.
+**Affects:** T8 adds the report links.

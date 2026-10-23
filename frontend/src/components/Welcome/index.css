@@ -87,7 +87,7 @@
 	color: var(--know);
 }
 
-.welcome__all {
+.welcome .welcome__all {
 	align-self: flex-start;
 	padding: 0;
 }

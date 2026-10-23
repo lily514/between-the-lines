@@ -306,6 +306,7 @@ const App = () => {
 							onWatch={() => void loadSheet(viewer, screen.status)}
 							onRejoin={() => void loadNext(viewer)}
 							onChangeTeam={() => void loadPick(screen.status)}
+							onMap={() => void openMap()}
 							onStartOver={startOver}
 						/>
 					)}

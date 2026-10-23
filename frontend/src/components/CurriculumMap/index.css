@@ -6,7 +6,7 @@
 	gap: var(--s-3);
 }
 
-.curriculum-map__back {
+.curriculum-map .curriculum-map__back {
 	align-self: flex-start;
 	padding: 0;
 }

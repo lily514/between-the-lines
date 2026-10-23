@@ -91,3 +91,21 @@ your full map"; Earlier with report links.
 
 **Why:** the live clock and saved questions are carried over to a later milestone.
 **Affects:** T8 adds the report links.
+
+## T7 — Curriculum map (2026-10-23)
+
+**Plan said:** CM-A pitch layout by strand and tier; "coming later" dashed; level words; prerequisite arrows; a list
+fallback for screen readers.
+**We did:** as planned, with these details:
+- **Layout from the old board.** The updated CM-A board was never exported, so the layout follows the 16 October CM-A
+  (strands across, tiers up, deepest at the top) and the content follows §16: 20 concepts, level words.
+- **Stacked cells.** A cell with more than one concept stacks them in its band (tier 0 Game flow holds three).
+- **Arrows show only the chosen concept's chain** (what it builds on, and what those build on), so the pitch isn't
+  crossed by every line at once.
+- **Choosing a concept.** Tap, or focus a node (`role="button"`, Enter or Space), to fill the card (`aria-live`); "All
+  20 concepts as a list" gives the same choices as plain buttons.
+- **Opening concept.** The map opens on the asked-about concept with the lowest mastery.
+- **Overflow.** "Counterattacks" is one word longer than a column and runs slightly past it.
+
+**Why:** no updated board to copy, and a pitch with every arrow drawn is unreadable at phone width.
+**Affects:** nothing.

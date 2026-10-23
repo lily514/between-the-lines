@@ -1,4 +1,4 @@
-/* The curriculum map, opened over any screen. */
+/* "Your pitch" (CM-A): the curriculum map, opened over any screen. */
 
 .curriculum-map {
 	display: flex;
@@ -11,14 +11,261 @@
 	padding: 0;
 }
 
+.curriculum-map__title {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: var(--s-2);
+}
+
 .curriculum-map__heading {
-	font-size: var(--fs-display-l);
-	line-height: var(--lh-display-l);
+	font-family: var(--font-display);
+	font-size: 28px;
+	font-weight: 700;
+}
+
+.curriculum-map__count {
+	font-family: var(--font-data);
+	font-size: var(--fs-caption);
+	color: var(--text-muted);
+}
+
+.curriculum-map__intro {
+	margin: 0;
+	font-size: var(--fs-body);
+	line-height: var(--lh-body);
+	color: var(--text-2);
+}
+
+.curriculum-map__error {
+	margin: 0;
+	color: var(--text);
+}
+
+.curriculum-map__strands {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	margin-bottom: 6px;
+	font-family: var(--font-display);
+	font-size: var(--fs-caption);
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	text-align: center;
+	text-transform: uppercase;
+	color: var(--text-2);
+}
+
+.curriculum-map__svg {
+	display: block;
+	width: 100%;
+	height: auto;
+	border-radius: var(--r-pitch);
+}
+
+.curriculum-map__grass {
+	fill: var(--pitch);
+}
+
+.curriculum-map__band {
+	fill: var(--pitch-line);
+	fill-opacity: 0.05;
+}
+
+.curriculum-map__line {
+	fill: none;
+	stroke: var(--pitch-line);
+	stroke-opacity: 0.2;
+	stroke-width: 0.3;
+}
+
+.curriculum-map__divider {
+	stroke: var(--pitch-line);
+	stroke-opacity: 0.15;
+	stroke-width: 0.25;
+	stroke-dasharray: 0.8 0.8;
+}
+
+.curriculum-map__tier {
+	font-family: var(--font-display);
+	font-size: 2.1px;
+	font-weight: 700;
+	letter-spacing: 0.1px;
+	fill: var(--on-pitch);
+	fill-opacity: 0.7;
+}
+
+.curriculum-map__node {
+	cursor: pointer;
+	outline: none;
+}
+
+.curriculum-map__dot {
+	fill: var(--pitch);
+	stroke: var(--on-pitch);
+	stroke-width: 0.45;
+}
+
+.curriculum-map__node--mastered .curriculum-map__dot {
+	fill: var(--know);
+	stroke: var(--know);
+}
+
+.curriculum-map__node--later .curriculum-map__dot {
+	stroke: var(--pitch-line);
+	stroke-opacity: 0.6;
+	stroke-dasharray: 0.9 0.7;
+}
+
+.curriculum-map__arc {
+	fill: none;
+	stroke: var(--know);
+	stroke-width: 0.8;
+}
+
+.curriculum-map__tick {
+	fill: none;
+	stroke: var(--on-know);
+	stroke-width: 0.6;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+
+.curriculum-map__pip {
+	fill: var(--pitch-line);
+	fill-opacity: 0.6;
+}
+
+.curriculum-map__halo {
+	fill: none;
+	stroke: var(--act);
+	stroke-width: 0.6;
+}
+
+.curriculum-map__node:focus-visible .curriculum-map__halo,
+.curriculum-map__node:focus-visible .curriculum-map__dot {
+	stroke: var(--act);
+	stroke-width: 0.8;
+}
+
+.curriculum-map__label {
+	font-family: var(--font-body);
+	font-size: 2.5px;
+	paint-order: stroke;
+	stroke: var(--pitch);
+	stroke-width: 0.9px;
+	stroke-linejoin: round;
 	font-weight: 600;
+	text-anchor: middle;
+	fill: var(--pitch-line);
+}
+
+.curriculum-map__node--later .curriculum-map__label {
+	fill-opacity: 0.75;
+	font-weight: 500;
+}
+
+.curriculum-map__arrow {
+	stroke: var(--act);
+	stroke-width: 0.45;
+}
+
+.curriculum-map__arrow-head {
+	fill: var(--act);
+}
+
+.curriculum-map__legend {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-1) var(--s-4);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	font-size: var(--fs-caption);
+	color: var(--text-2);
+}
+
+.curriculum-map__legend li {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.curriculum-map__key {
+	width: 14px;
+	height: 14px;
+	border-radius: 50%;
+}
+
+.curriculum-map__key--mastered {
+	background: var(--know);
+}
+
+.curriculum-map__key--asked {
+	border: 2px solid var(--know);
+	border-right-color: var(--border-strong);
+}
+
+.curriculum-map__key--later {
+	border: 2px dashed var(--border-strong);
+}
+
+.curriculum-map__card {
+	padding: var(--s-4);
+	border: 1px solid var(--border);
+	border-radius: var(--r-tile);
+	background: var(--surface);
+}
+
+.curriculum-map__card p {
+	margin: 0;
+}
+
+.curriculum-map__card-name {
+	font-family: var(--font-display);
+	font-size: var(--fs-display-m);
+	font-weight: 700;
+}
+
+.curriculum-map__card-where {
+	margin-top: 2px;
+	font-size: var(--fs-caption);
+	color: var(--text-muted);
+}
+
+.curriculum-map__card .curriculum-map__card-level {
+	margin-top: var(--s-2);
+	font-weight: 700;
+	color: var(--know);
+}
+
+.curriculum-map__percent {
+	font-family: var(--font-data);
+	font-weight: 400;
+}
+
+.curriculum-map__card .curriculum-map__card-objective {
+	margin-top: var(--s-2);
+	font-size: var(--fs-body);
+	line-height: var(--lh-body);
+}
+
+.curriculum-map__card .curriculum-map__card-builds {
+	margin-top: var(--s-2);
+	font-size: var(--fs-body-s);
+	color: var(--text-2);
+}
+
+.curriculum-map__list summary {
+	min-height: var(--touch-min);
+	display: flex;
+	align-items: center;
+	font-weight: 600;
+	color: var(--act);
+	cursor: pointer;
 }
 
 .curriculum-map__strand-name {
-	margin: 0 0 var(--s-2);
+	margin: var(--s-2) 0 var(--s-1);
 	font-family: var(--font-display);
 	font-size: var(--fs-label);
 	font-weight: 700;
@@ -26,17 +273,17 @@
 	text-transform: uppercase;
 }
 
-.curriculum-map__concepts {
+.curriculum-map__list ul {
 	margin: 0;
 	padding: 0;
 	list-style: none;
 }
 
-.curriculum-map__level {
-	color: var(--text-muted);
+.curriculum-map__list .text-button {
+	padding: 0;
 }
 
-.curriculum-map__error {
-	margin: 0;
-	color: var(--text);
+.curriculum-map__level {
+	font-size: var(--fs-body-s);
+	color: var(--text-muted);
 }

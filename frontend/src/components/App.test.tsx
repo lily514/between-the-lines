@@ -136,7 +136,7 @@ test('the map opens from the header over a question, and Back returns to it as i
 	const picked = screen.getByRole('radio', { checked: true })
 
 	await user.click(screen.getByRole('button', { name: 'Curriculum map' }))
-	expect(await screen.findByRole('heading', { name: 'Your map' })).toHaveFocus()
+	expect(await screen.findByRole('heading', { name: 'Your pitch' })).toHaveFocus()
 	expect(screen.queryByRole('radio')).toBeNull()
 
 	await user.click(screen.getByRole('button', { name: 'Close the map and go back to where you were' }))
@@ -150,7 +150,7 @@ test('onboarding has no map button, but the welcome opens the whole map', async 
 	render(<App />)
 	expect(screen.queryByRole('button', { name: 'Curriculum map' })).toBeNull()
 	await user.click(await screen.findByRole('button', { name: /See all 20 concepts/ }))
-	expect(await screen.findByRole('heading', { name: 'Your map' })).toBeInTheDocument()
+	expect(await screen.findByRole('heading', { name: 'Your pitch' })).toBeInTheDocument()
 	await user.keyboard('{Escape}')
 	expect(screen.getByRole('button', { name: 'Continue' })).toBeInTheDocument()
 })

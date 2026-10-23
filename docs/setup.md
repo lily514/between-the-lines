@@ -104,6 +104,21 @@ The public demo is described in Bicep (`infra/`) and deployed with the Azure Dev
    ```sh
    azd auth login --tenant-id <tenant-id>
    ```
+4. Create the azd environment, from the repo root. It lives in `.azure/btl-demo/` (gitignored): the resource group becomes `rg-btl-demo`, and the alert email reaches the budgets as a parameter, never the repo.
+   ```sh
+   azd env new btl-demo --subscription <subscription-id> --location eastus2
+   azd env set ALERT_EMAIL <your-email>
+   ```
+5. **Preview first**, every time; it changes nothing:
+   ```sh
+   azd provision --preview
+   ```
+   The summary lists only the main resource types. The identity, role assignments, diagnostic setting and budgets show in the full what-if: `az deployment sub what-if --subscription <subscription-id> --location eastus2 --template-file infra/main.bicep --parameters environmentName=btl-demo location=eastus2 alertEmail=<your-email>`. Lines marked `-`, which Azure fills in by default, are noise; so are values shown as `[reference(…)]`, which are only known during the deployment.
+6. Create everything and deploy, about 20 minutes the first time (most of it the Container Apps environment). It prints the public URL:
+   ```sh
+   azd up
+   ```
+   The registry costs about $5 a month from then on; everything else costs nothing while the app is idle. After the first deploy, a hook sets `SERVICE_WEB_RESOURCE_EXISTS=true`, so later provisions keep the deployed image instead of the placeholder. `azd deploy` alone rebuilds and redeploys the app.
 
 ## Optional: check generated names against real ones
 

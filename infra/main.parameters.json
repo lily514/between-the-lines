@@ -7,6 +7,15 @@
     },
     "location": {
       "value": "${AZURE_LOCATION}"
+    },
+    "alertEmail": {
+      "value": "${ALERT_EMAIL}"
+    },
+    "minReplicas": {
+      "value": "${MIN_REPLICAS=0}"
+    },
+    "webExists": {
+      "value": "${SERVICE_WEB_RESOURCE_EXISTS=false}"
     }
   }
 }

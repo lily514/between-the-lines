@@ -70,3 +70,29 @@ Around the module:
 
 **Why:** the plan left the logs route open; route B keeps the rule with no exceptions.
 **Affects:** T9 (its KQL queries use `ContainerAppConsoleLogs` and `Log`); T5 (`main.bicep` gains the registry, identity, app and budget modules).
+
+## T5 — Registry, identity, app and budgets: the public URL (2026-10-23)
+**Plan said:** the rest of the modules except storage; `azd provision --preview` summarised for Lily, then `azd up` with her go-ahead; the public URL serves the page with the memory store and template Tutor; a second `azd provision` keeps the deployed image.
+**We did:** as planned:
+- **Modules:**
+  - `identity.bicep`;
+  - `registry.bicep` (Basic, admin user off, AcrPull for the identity on the registry alone);
+  - `app.bicep` (0.5 vCPU, 1 GiB, at most one replica, probes on `/api/health`, pulls with the identity);
+  - `app-image.bicep` (keeps the running image on later provisions);
+  - `budget.bicep` ($10 for the group).
+- **The $150 budget** sits in `main.bicep` at subscription scope.
+- **Role ids** were looked up with `az role definition list`; AcrPull's id as remembered was wrong.
+- **Lily approved `azd up`** after the preview. It took 21 minutes: 18 to create the Container Apps environment, under 3 to build the image in the registry and deploy it.
+- **The public URL serves the page.** A question round trip with a new random viewer took 0.16 s to start, 0.77 s for the first question (preparing the match) and 0.14 s for the feedback, worded by the template.
+- **Both budgets were created,** so the credit subscription accepts them. The app runs the image from our registry, with min 0 and max 1 replicas.
+
+**Learned:**
+- **azd 1.37 doesn't maintain `SERVICE_WEB_RESOURCE_EXISTS` for an app defined in our own Bicep;** it does that only for templates it generated. A preview after the first deploy showed the next provision would have restored the placeholder image and taken the site down. Two hooks in `azure.yaml` now keep it: `postdeploy` sets it to `true`, and `postdown` back to `false`. They change only the local azd environment.
+- **The first deploy has a short broken window.** The placeholder (Microsoft's hello-world image) doesn't answer on port 8000, so its startup probes fail and it restarts. Single-revision mode keeps traffic on it until our revision is healthy. A request in that window waited 240 s and got a 504; the system log shows the whole sequence. This happens only on the very first deploy.
+- **What-if noise:** Azure stores the three probes as liveness, readiness, startup, so `app.bicep` lists them in that order and previews don't report a change. Properties Azure fills in (`traffic`, `exposedPort`, `runningStatus`, the registry's defaults) show as `-`, and values from other resources as `[reference(…)]`; neither is a real change. azd's preview summary leaves out identities, role assignments, diagnostic settings and budgets; `az deployment sub what-if` shows them.
+- **The diagnostic setting reports an extra category group, `audit`,** alongside `allLogs`.
+- **A second `azd provision` (Lily's go-ahead) kept the image and the revision,** and took 57 s.
+- **A cold start from zero replicas took 26.6 s** for the first request; warm requests take about 0.15 s. Locally the container is healthy in 1.9 s, so most of the wait is Azure placing the replica and pulling the 755 MB image onto a node that hasn't cached it (to confirm from the system log in T9). Minimum 1 replica while judges visit avoids it, as planned. A smaller image would pull faster; that is an idea for later, not a task.
+
+**Why:** the plan didn't foresee azd's limit; the preview caught it before anything broke.
+**Affects:** T6 and T8 (each later provision keeps the image); T10 (the docs explain the first-deploy window and the hooks).

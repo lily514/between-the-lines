@@ -14,3 +14,13 @@ services:
       path: ./Dockerfile
       context: .
       remoteBuild: true
+# Once azd has deployed the real image, later provisions must keep it rather than restore the placeholder
+# (infra/modules/app-image.bicep). azd doesn't track this for a service like ours, so these hooks do; they change
+# only the local azd environment.
+hooks:
+  postdeploy:
+    shell: sh
+    run: azd env set SERVICE_WEB_RESOURCE_EXISTS true
+  postdown:
+    shell: sh
+    run: azd env set SERVICE_WEB_RESOURCE_EXISTS false

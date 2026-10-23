@@ -19,6 +19,7 @@ Built for the "Inside the Game" hackathon.
 | 2d. The basics | Restarts, offside, and fouls and cards as newcomer concepts, asked at the stoppage they cause; a simulator whose blocks, offside pictures and bookings agree with the Laws | Done |
 | 2e. Getting started | Pick a team to support, with club crests; a team sheet before each match that grows with you: names and positions in plain words, then the formation and kick-off shape, then players' numbers from matches you've watched | Done |
 | 3. Deploy it properly | A public demo on Azure Container Apps: one `azd up` builds the container and creates every resource from Bicep; managed identity and no keys anywhere; progress kept in Blob Storage; daily limits on the model; events and queries in Log Analytics | Done |
+| 4. Match day | Matches as home base, with dates and a match to rejoin; the curriculum map from any screen; halftime and full-time scouting reports with a radar; asking rules for stoppages and the whistle; Preferences | In review |
 
 Work in progress lives on milestone branches and is merged to `main` when each milestone is complete. 2c, 2d and then 2e were built before 2b, while Azure wasn't set up yet.
 
@@ -102,7 +103,17 @@ cd ../backend
 uv run btl serve      # then open http://127.0.0.1:8000
 ```
 
-Press Start, then pick a team to support, or let the page pick one for you. Your three matches are that club's fixtures. Before each match, "Who's playing" shows both elevens, your team first. There is no sign-in: the page gives you a random id and keeps it in this browser, so a reload, or a visit another day, carries on from the question you were on. "Start over" forgets it, after asking. Your answers are saved in the same kind of record `btl learn` writes.
+The first screen says what the questions cover. Press Continue, then pick a team to support, or let the page pick one for you. Your three matches are that club's fixtures, and **Matches** is home base: the next match with its date, a match you left part-way through to rejoin, your level on each concept in words, and the reports of matches you've finished. Before each match, "Who's playing" shows both elevens, your team first. There is no sign-in: the page gives you a random id and keeps it in this browser, so a reload, or a visit another day, brings you back to Matches. "Start over" forgets it, after asking. Your answers are saved in the same kind of record `btl learn` writes.
+
+<p>
+  <img src="docs/milestone-4/screenshots/matches-phone.png" alt="Matches on a phone: a match part-way through at 0–0, with Rejoin, and the five concepts asked now with a level word each" width="260">
+  <img src="docs/milestone-4/screenshots/map-phone.png" alt="Your pitch, the curriculum map: twenty concepts by strand and tier, the five asked now ringed with the viewer's progress, the rest dashed as coming later" width="260">
+  <img src="docs/milestone-4/screenshots/report-phone.png" alt="The full-time scouting report: the score and goals, and a radar of the four strands with Chances marked Not yet" width="260">
+</p>
+<p>
+  <img src="docs/milestone-4/screenshots/preferences-phone-light.png" alt="Preferences in the light theme: questions set to Rarely, the viewer's team with Change, and the theme choice" width="260">
+  <img src="docs/milestone-4/screenshots/matches-desktop.png" alt="Matches on a desktop, in the side panel beside the viewer's own match" width="520">
+</p>
 
 <p>
   <img src="docs/milestone-2e/screenshots/pick-team-phone.png" alt="Pick your team on a phone: ten fictional clubs, each with its crest, name and code, one of them picked" width="260">
@@ -119,7 +130,12 @@ Press Start, then pick a team to support, or let the page pick one for you. Your
 - **The team sheet grows with you.** A beginner sees each player's shirt number, name and position in plain words ("Left back: defends the left side, and joins attacks down it"). Get to level 2 in any concept and it adds the formation and where everyone stood at kick-off; at level 3 it adds each player's passes, line-breaking passes and threat added, counted only from matches you have finished, so it never hints at what you'll be asked. Your team is marked on the pitch with a dashed ring and on every screen with "You", never by colour alone.
 - **Questions in settled play** are asked straight away ("Your read"), and so are restarts and fouls, in the stoppage they cause. Moments from a transition wait for the next stoppage or the break, which the page says when it asks. A throw-in question marks where the ball went out, and an offside reveal draws the offside line.
 - **Lock in, then the reveal.** The real pass is drawn on the pitch, then the verdict and the explanation appear. Every number on the page comes from the match's evidence. The browser computes nothing itself, and it is never sent the answer before you lock in.
-- **Keyboard:** 1, 2 and 3 (or the arrow keys) pick an answer and Enter locks it in. Light or dark follows your system setting, and reduced motion is respected.
+- **The map from anywhere.** The map button in every header opens "Your pitch": all 20 concepts by strand and tier, the five asked now with your level, the rest coming later. Choose one to see what it builds on. Back (or Esc) returns you to the same screen and scroll position, with a half-answered question just as you left it.
+- **Scouting reports** come at halftime and full time: the score and goals, a radar of the four strands from kick-off to now (Chances says "Not yet" rather than zero), a scout's note in words, and the questions you answered. Finished matches keep their report on Matches.
+- **Asking rules.** One question per stoppage: a restart's own question wins and a saved one waits. Nothing is asked in the last 30 seconds of a half; a settled moment there waits for the break. After you answer, the next step says what happened while you were answering.
+- **Preferences** (the ⚙ in the header): questions normal, rarely or off (a change made during a match starts with the next one), your team while it can still change, and light, dark or your device's theme.
+- **Keyboard:** 1, 2 and 3 (or the arrow keys) pick an answer and Enter locks it in. Reduced motion is respected.
+- **"Done for this match"** goes back to Matches at any step; Rejoin carries on at the same question.
 - **For development,** run `uv run btl serve` in `backend/` and `npm run dev` in `frontend/`; the page reloads as you edit, and `/api` is passed to the server.
 
 ## Try the AI Tutor
@@ -253,7 +269,8 @@ ContainerAppConsoleLogs
 - **The Verifier checks the model's facts, not its football.** It can tell that every number and name came from the evidence, and that nothing gives the answer away. It can't tell whether an explanation of the Laws is true, or pitched at the right level. A hand review of twenty samples found them accurate enough for a prototype, but some wording is clumsy ("For how many defensive lines did that pass go through"), and so are some of the remarks about your recent answers.
 - **About one explanation in eight falls back to the template,** most often for fouls, whose facts are whole sentences the model tends to fold into its own. The numbers vary by a few points from run to run.
 - **The AI Tutor needs Azure.** Without it, the templates word everything, as they always did.
-- **The web page steps from question to question;** it doesn't play the match. Each question says when it is asked and why, and the page is built so a played-back match can replace the step later.
+- **The web page steps from question to question;** it doesn't play the match. Each question says when it is asked and why, and the page is built so a played-back match can replace the step later. So the design's companion features wait for a live clock: following your TV's clock with a ±10 s sync, saving a question for the break, and a "live now" match on Matches.
+- **The explanation level can't be chosen yet,** and there is no Simpler / Deeper on the reveal: the explanation follows your level on each concept.
 - **No accounts.** The web page knows you only by a random id kept in your browser. Nobody can guess it, but your progress lives in that one browser: another device, or cleared site data, starts afresh.
 - **The online demo's model has a small ceiling.** Its deployment allows 30,000 tokens and 30 requests a minute, about two or three people playing at once; past that, and past each viewer's 60 wordings a day or everyone's 1,000, the template words it instead. The daily counts are kept in memory, so a restart starts them again.
 - **The online demo sleeps.** It scales to zero when idle, so the first visit after a quiet spell waits about 30 seconds. While judges are likely to visit, one replica is kept warm.
@@ -346,3 +363,4 @@ uv run btl simulate --seed 7 --plant line_breaking_pass:1,2,3 --plant counter_pr
 - [docs/milestone-2e/plan.md](docs/milestone-2e/plan.md): what Milestone 2e set out to build, [implementation-notes.md](docs/milestone-2e/implementation-notes.md): what changed along the way, and [design/](docs/milestone-2e/design/) and [crests/](docs/milestone-2e/crests/): the team sheet, picker and crest designs.
 - [docs/milestone-2b/plan.md](docs/milestone-2b/plan.md): what Milestone 2b set out to build, [implementation-notes.md](docs/milestone-2b/implementation-notes.md): what changed along the way, [verifier.md](docs/milestone-2b/verifier.md): each of the Verifier's checks, and [tutor-evaluation.md](docs/milestone-2b/tutor-evaluation.md) with [tutor-review.md](docs/milestone-2b/tutor-review.md): how well the model does.
 - [docs/milestone-3/plan.md](docs/milestone-3/plan.md): what Milestone 3 set out to build, and [implementation-notes.md](docs/milestone-3/implementation-notes.md): what changed along the way.
+- [docs/milestone-4/plan.md](docs/milestone-4/plan.md): what Milestone 4 set out to build, [implementation-notes.md](docs/milestone-4/implementation-notes.md): what changed along the way, and [design/](docs/milestone-4/design/): the user flow, Matches, reports and Preferences designs.

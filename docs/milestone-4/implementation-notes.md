@@ -1,5 +1,29 @@
 # Milestone 4 — Implementation notes
 
+## Summary
+
+**Biggest changes:**
+- **Matches is home base.** Every visit after the first lands there, and "Done for this match" returns there.
+- **The curriculum map opens over any screen** without losing a pick in progress.
+- **Halftime and full-time scouting reports** have a radar, built on the server from the attempt log.
+- **Each attempt records the period its question was asked in** (record version 3), so a halftime report counts
+  exactly the first half.
+- **Two selector rules hold by construction:** one question per stoppage, and nothing in the last 30 s of a half.
+- **Each question carries the score and a catch-up line.**
+- **Preferences** set how often questions come, from the next match if one is under way.
+
+**Cut:**
+- the explanation level in Preferences (it would reach the Tutor, Verifier and word cache);
+- the whole-window desktop halftime;
+- the report's team stats and replay cards;
+- the 40/70 level ticks on bars.
+
+**Carries over:**
+- **A live match clock**, for the design's companion features: TV sync, saved questions for the break, and "Live now".
+- **Simpler / Deeper** and the three-level views (S5), with the explanation-level preference.
+- **The updated CM-A board**, if Claude Design exports one.
+- **Lily's hand check** in both themes at phone and desktop width, then the `--no-ff` merge.
+
 ## T1 — Matches and calendar (2026-10-23)
 
 **Plan said:** each match gives its state, plus the score and question count when finished.

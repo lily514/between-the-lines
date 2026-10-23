@@ -1,26 +1,28 @@
-import { useEffect, useId, useRef, useState, type RefObject, type SyntheticEvent } from 'react'
+import { useEffect, useId, useRef, type RefObject } from 'react'
 import type { Status } from '../../api/client.ts'
 import Crest from '../Shared/Crest.tsx'
 import ProgressBar from '../Shared/ProgressBar.tsx'
+import StartOver from '../Shared/StartOver.tsx'
 import { percent } from '../Shared/ProgressBar.support.ts'
 import './index.css'
 
 export interface WelcomeProps {
-	/** The viewer's record once found, or null while they type their name. */
+	/** The viewer's record once found, or null before they start. */
 	status: Status | null
-	/** Why the last name was refused, as the API said it. */
+	/** Why starting failed, as the API said it. */
 	error: string | null
-	/** The name to start with: the one this browser remembers, if any. */
-	defaultName: string
-	onStart: (name: string) => void
+	onStart: () => void
 	onWatch: () => void
-	onChangeName: () => void
+	/** Forget this viewer and start a new one; asked first, since the old record can't be found again. */
+	onStartOver: () => void
 	/** Go back to the club picker; only offered while the viewer can still change their team. */
 	onChangeTeam: () => void
 }
 
-/** The start: a name, then where the viewer stands (which match is next, and each concept's bar). */
-const Welcome = ({ status, error, defaultName, onStart, onWatch, onChangeName, onChangeTeam }: WelcomeProps) => {
+/** The start: one button, then where the viewer stands (which match is next, and each concept's bar).
+ *
+ * There is no sign-in: the page makes the viewer a random id and keeps it in this browser. */
+const Welcome = ({ status, error, onStart, onWatch, onStartOver, onChangeTeam }: WelcomeProps) => {
 	const heading = useRef<HTMLHeadingElement>(null)
 	const headingId = useId()
 
@@ -31,19 +33,11 @@ const Welcome = ({ status, error, defaultName, onStart, onWatch, onChangeName, o
 	return (
 		<section className="welcome" aria-labelledby={headingId}>
 			{status === null ? (
-				<NameForm
-					headingId={headingId}
-					heading={heading}
-					error={error}
-					defaultName={defaultName}
-					onStart={onStart}
-				/>
+				<Start headingId={headingId} heading={heading} error={error} onStart={onStart} />
 			) : (
 				<>
 					<h2 id={headingId} ref={heading} tabIndex={-1} className="welcome__heading screen-heading">
-						{status.finished
-							? `All three matches watched, ${status.viewer_id}`
-							: `Welcome, ${status.viewer_id}`}
+						{status.finished ? 'All three matches watched' : 'Welcome'}
 					</h2>
 					{status.club !== null && (
 						<p className="welcome__team">
@@ -86,77 +80,44 @@ const Welcome = ({ status, error, defaultName, onStart, onWatch, onChangeName, o
 							Watch match {status.match_number}
 						</button>
 					)}
-					<button type="button" className="text-button welcome__change" onClick={onChangeName}>
-						{status.finished
-							? 'Start again with another name'
-							: `Not ${status.viewer_id}? Use another name`}
-					</button>
+					<div className="welcome__change">
+						<StartOver
+							label={status.finished ? 'Start again with new matches' : 'Start over'}
+							onConfirm={onStartOver}
+						/>
+					</div>
 				</>
 			)}
 		</section>
 	)
 }
 
-interface NameFormProps {
+interface StartProps {
 	headingId: string
 	heading: RefObject<HTMLHeadingElement | null>
 	error: string | null
-	defaultName: string
-	onStart: (name: string) => void
+	onStart: () => void
 }
 
-const NameForm = ({ headingId, heading, error, defaultName, onStart }: NameFormProps) => {
-	const [name, setName] = useState(defaultName)
-	const inputId = useId()
-	const hintId = useId()
-	const errorId = useId()
-
-	const onSubmit = (event: SyntheticEvent<HTMLFormElement>) => {
-		event.preventDefault()
-		const trimmed = name.trim()
-		if (trimmed !== '') {
-			onStart(trimmed)
-		}
-	}
-
-	return (
-		<form className="welcome__form" onSubmit={onSubmit} noValidate>
-			<h2 id={headingId} ref={heading} tabIndex={-1} className="welcome__heading screen-heading">
-				Watch three matches, one question at a time
-			</h2>
-			<p className="welcome__intro">
-				Now and then, when play allows, you get a question about what just happened on the pitch. Your answers
-				shape the questions that follow.
+const Start = ({ headingId, heading, error, onStart }: StartProps) => (
+	<div className="welcome__start">
+		<h2 id={headingId} ref={heading} tabIndex={-1} className="welcome__heading screen-heading">
+			Watch three matches, one question at a time
+		</h2>
+		<p className="welcome__intro">
+			Now and then, when play allows, you get a question about what just happened on the pitch. Your answers shape
+			the questions that follow.
+		</p>
+		<p className="welcome__hint">No sign-in: this browser keeps your place, so you can come back to it.</p>
+		{error !== null && (
+			<p className="welcome__error" role="alert">
+				{error}
 			</p>
-			<label htmlFor={inputId} className="welcome__label">
-				Your name
-			</label>
-			<input
-				id={inputId}
-				className="welcome__input"
-				value={name}
-				onChange={event => {
-					setName(event.target.value.toLowerCase())
-				}}
-				autoComplete="nickname"
-				autoCapitalize="none"
-				spellCheck={false}
-				aria-describedby={error === null ? hintId : `${hintId} ${errorId}`}
-				aria-invalid={error !== null}
-			/>
-			<p id={hintId} className="welcome__hint">
-				Lower-case letters and digits; it keeps your place between visits.
-			</p>
-			{error !== null && (
-				<p id={errorId} className="welcome__error" role="alert">
-					{error}
-				</p>
-			)}
-			<button type="submit" className="primary-button" aria-disabled={name.trim() === ''}>
-				Start
-			</button>
-		</form>
-	)
-}
+		)}
+		<button type="button" className="primary-button" onClick={onStart}>
+			Start
+		</button>
+	</div>
+)
 
 export default Welcome

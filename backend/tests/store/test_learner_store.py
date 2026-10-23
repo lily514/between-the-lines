@@ -94,6 +94,19 @@ def test_viewer_ids_are_kept_plain(viewer_id: str) -> None:
         check_viewer_id(viewer_id)
 
 
+@pytest.mark.parametrize(
+    "viewer_id",
+    [
+        "0123456789abcdef0123456789abcdef",
+        "ffffffffffffffffffffffffffffffff",
+        "9f86d081884c7d659a2feaa0c55ad015",
+    ],
+)
+def test_a_browser_s_random_id_is_a_valid_viewer_id(viewer_id: str) -> None:
+    # The page makes 128 random bits as 32 lower-case hex characters (`newViewerId`).
+    check_viewer_id(viewer_id)
+
+
 def test_the_document_is_shaped_like_a_cosmos_item_and_round_trips() -> None:
     state = LearnerState("lily", seed=7, match_number=2).answered(ANSWER)
 

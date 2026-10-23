@@ -1,13 +1,25 @@
 import { identifyFeedback, identifyQuestion, predictQuestion } from '../test-fixtures/index.ts'
 import { fullTime, startStatus } from '../test-fixtures/summaries.ts'
-import { initialState, matchHeader, momentOf, reducer, type AppState } from './App.support.ts'
+import { initialState, matchHeader, momentOf, newViewerId, reducer, type AppState } from './App.support.ts'
 
 const fresh = initialState(null)
 const watching = (state: AppState = reducer(fresh, { type: 'started', status: startStatus })) => state
 
-test('a new visitor starts at the name form', () => {
+test('a new visitor starts at the welcome', () => {
 	expect(fresh.viewer).toBeNull()
-	expect(fresh.screen).toEqual({ kind: 'welcome', status: null, error: null, name: '' })
+	expect(fresh.screen).toEqual({ kind: 'welcome', status: null, error: null })
+})
+
+// The API's viewer id rule (`check_viewer_id` in backend/src/btl/store/base.py).
+const VIEWER_ID_RULE = /^[a-z0-9][a-z0-9_-]{0,63}$/
+
+test('a new viewer id is one the API accepts, and never the same twice', () => {
+	const ids = Array.from({ length: 100 }, newViewerId)
+	for (const id of ids) {
+		expect(id).toMatch(VIEWER_ID_RULE)
+		expect(id).toMatch(/^[0-9a-f]{32}$/)
+	}
+	expect(new Set(ids).size).toBe(ids.length)
 })
 
 test('a remembered viewer starts by loading, since the page resumes them at once', () => {
@@ -22,9 +34,10 @@ test('starting shows the viewer where they stand', () => {
 	expect(state.screen).toMatchObject({ kind: 'welcome', status: startStatus })
 })
 
-test('a refused name returns to the form with the reason and the name tried', () => {
-	const state = reducer(fresh, { type: 'rejected', message: 'not a valid name', name: 'Lily!' })
-	expect(state.screen).toEqual({ kind: 'welcome', status: null, error: 'not a valid name', name: 'Lily!' })
+test('a refused id returns to the welcome with the reason', () => {
+	const state = reducer(fresh, { type: 'rejected', message: 'not a valid viewer id' })
+	expect(state.viewer).toBeNull()
+	expect(state.screen).toEqual({ kind: 'welcome', status: null, error: 'not a valid viewer id' })
 })
 
 test('a question arrives as a step from kick-off, then opens as the question sheet', () => {
@@ -76,10 +89,10 @@ test('a failure keeps what to retry', () => {
 	expect(failed.viewer).toBe('lily')
 })
 
-test('forgetting the viewer goes back to an empty name form', () => {
+test('forgetting the viewer goes back to the welcome', () => {
 	const state = reducer(watching(), { type: 'forget', message: 'That record has gone.' })
 	expect(state.viewer).toBeNull()
-	expect(state.screen).toEqual({ kind: 'welcome', status: null, error: 'That record has gone.', name: '' })
+	expect(state.screen).toEqual({ kind: 'welcome', status: null, error: 'That record has gone.' })
 })
 
 test('the wide-screen header names the match being watched', () => {

@@ -21,6 +21,7 @@ import {
 	LOADING_START,
 	matchHeader,
 	needsClub,
+	newViewerId,
 	reducer,
 	rememberedViewer,
 	rememberViewer,
@@ -32,13 +33,14 @@ import FullTime from './FullTime/index.tsx'
 import MatchStep from './MatchStep/index.tsx'
 import PickTeam from './PickTeam/index.tsx'
 import QuestionSheet from './QuestionSheet/index.tsx'
+import StartOver from './Shared/StartOver.tsx'
 import TeamSheet from './TeamSheet/index.tsx'
 import Welcome from './Welcome/index.tsx'
 
 const messageOf = (error: unknown) =>
 	error instanceof Error ? error.message : 'The server could not be reached. Check it is running, then try again.'
 
-/** The learning loop in the browser: a name, then each match as a run of questions, feedback and a full-time summary.
+/** The learning loop in the browser: a start, then each match as a run of questions, feedback and a full-time summary.
  *
  * On a wide screen the companion sits in a side panel beside the viewer's own stream, and never covers it. */
 const App = () => {
@@ -49,7 +51,7 @@ const App = () => {
 	const fail = useCallback((error: unknown, retry: Retry) => {
 		if (error instanceof ApiError && error.status === 404) {
 			forgetViewer()
-			dispatch({ type: 'forget', message: 'That record has gone. Start again with your name.' })
+			dispatch({ type: 'forget', message: 'That record has gone, so you are starting afresh.' })
 			return
 		}
 		dispatch({ type: 'failed', message: messageOf(error), retry })
@@ -121,10 +123,10 @@ const App = () => {
 	)
 
 	const start = useCallback(
-		async (name: string, resume: boolean) => {
+		async (id: string, resume: boolean) => {
 			dispatch({ type: 'loading', message: LOADING_START })
 			try {
-				const status = await startViewer(name)
+				const status = await startViewer(id)
 				rememberViewer(status.viewer_id)
 				if (needsClub(status)) {
 					await loadPick(status)
@@ -134,11 +136,12 @@ const App = () => {
 					dispatch({ type: 'started', status })
 				}
 			} catch (error) {
+				// 422: the id kept in this browser isn't one the API accepts (edited by hand, say), so start afresh.
 				if (error instanceof ApiError && error.status === 422) {
 					forgetViewer()
-					dispatch({ type: 'rejected', message: error.message, name })
+					dispatch({ type: 'rejected', message: error.message })
 				} else {
-					fail(error, { kind: 'start', name })
+					fail(error, { kind: 'start', viewer: id })
 				}
 			}
 		},
@@ -173,7 +176,7 @@ const App = () => {
 
 	const retry = (what: Retry) => {
 		if (what.kind === 'start') {
-			void start(what.name, false)
+			void start(what.viewer, false)
 		} else if (viewer !== null) {
 			if (what.kind === 'next') void loadNext(viewer)
 			else if (what.kind === 'status') void loadStatus(viewer)
@@ -184,7 +187,7 @@ const App = () => {
 		}
 	}
 
-	const changeName = () => {
+	const startOver = () => {
 		forgetViewer()
 		dispatch({ type: 'forget' })
 	}
@@ -214,23 +217,18 @@ const App = () => {
 					<h1 className="layout__name">
 						Between <span className="layout__the">the</span> Lines
 					</h1>
-					{viewer !== null && screen.kind !== 'welcome' && (
-						<button type="button" className="text-button" onClick={changeName}>
-							Not {viewer}?
-						</button>
-					)}
+					{viewer !== null && screen.kind !== 'welcome' && <StartOver onConfirm={startOver} />}
 				</header>
 				<div className="layout__body">
 					{screen.kind === 'welcome' && (
 						<Welcome
 							status={screen.status}
 							error={screen.error}
-							defaultName={screen.name}
-							onStart={name => void start(name, false)}
+							onStart={() => void start(newViewerId(), false)}
 							onWatch={() => {
 								if (viewer !== null) void loadSheet(viewer, screen.status)
 							}}
-							onChangeName={changeName}
+							onStartOver={startOver}
 							onChangeTeam={() => {
 								if (screen.status !== null) void loadPick(screen.status)
 							}}

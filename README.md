@@ -93,7 +93,7 @@ cd ../backend
 uv run btl serve      # then open http://127.0.0.1:8000
 ```
 
-Type a name, then pick a team to support, or let the page pick one for you. Your three matches are that club's fixtures. Before each match, "Who's playing" shows both elevens, your team first. Your answers are saved in the same records as `btl learn`, so you can start in the terminal and carry on in the browser. A reload carries on from the question you were on.
+Press Start, then pick a team to support, or let the page pick one for you. Your three matches are that club's fixtures. Before each match, "Who's playing" shows both elevens, your team first. There is no sign-in: the page gives you a random id and keeps it in this browser, so a reload, or a visit another day, carries on from the question you were on. "Start over" forgets it, after asking. Your answers are saved in the same kind of record `btl learn` writes.
 
 <p>
   <img src="docs/milestone-2e/screenshots/pick-team-phone.png" alt="Pick your team on a phone: ten fictional clubs, each with its crest, name and code, one of them picked" width="260">
@@ -157,7 +157,7 @@ uv run btl tutor-eval --seeds 3 --per-kind 2         # measure it (about 230 cal
 - **About one explanation in eight falls back to the template,** most often for fouls, whose facts are whole sentences the model tends to fold into its own. The numbers vary by a few points from run to run.
 - **The AI Tutor needs Azure.** Without it, the templates word everything, as they always did.
 - **The web page steps from question to question;** it doesn't play the match. Each question says when it is asked and why, and the page is built so a played-back match can replace the step later.
-- **No accounts.** The web page knows you only by the name you type, which is fine for a demo on your own machine and nothing more.
+- **No accounts.** The web page knows you only by a random id kept in your browser. Nobody can guess it, but your progress lives in that one browser: another device, or cleared site data, starts afresh.
 - **Every club plays 4-4-2,** so the team sheet's formation never changes. Giving clubs their own shape would change every match, and the simulator's realism checks with it.
 - **Line-breaking passes are counted generously on the team sheet.** The simulator's flat midfield lines let short passes between level players count, so a central midfielder makes about 17–19 a match. Questions only use the clearer ones.
 - **The learner model's numbers are set by hand,** per tier of the curriculum, not fitted to real learners' answers, and five concepts are askable so far.

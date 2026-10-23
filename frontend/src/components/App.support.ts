@@ -10,7 +10,7 @@ export interface Moment {
 
 /** What a failed request should do when the viewer asks to try again. */
 export type Retry =
-	| { kind: 'start'; name: string }
+	| { kind: 'start'; viewer: string }
 	| { kind: 'next' }
 	| { kind: 'status' }
 	| { kind: 'pick'; status: Status }
@@ -19,7 +19,7 @@ export type Retry =
 	| { kind: 'answer'; question: Question; key: string }
 
 export type Screen =
-	| { kind: 'welcome'; status: Status | null; error: string | null; name: string }
+	| { kind: 'welcome'; status: Status | null; error: string | null }
 	| { kind: 'pick'; status: Status; clubs: Club[]; busy: boolean }
 	| { kind: 'sheet'; sheet: TeamSheet; status: Status | null }
 	| { kind: 'loading'; message: string }
@@ -42,7 +42,7 @@ export type Action =
 	| { type: 'picking'; status: Status; clubs: Club[] }
 	| { type: 'choosing' }
 	| { type: 'sheet'; sheet: TeamSheet; status: Status | null }
-	| { type: 'rejected'; message: string; name: string }
+	| { type: 'rejected'; message: string }
 	| { type: 'forget'; message?: string }
 	| { type: 'arrived'; step: NextStep }
 	| { type: 'open' }
@@ -58,12 +58,7 @@ export const LOADING_SHEET = 'Finding the line-ups…'
 /** A viewer who hasn't picked a team yet, and still can: they are asked before anything else. */
 export const needsClub = (status: Status) => status.club === null && status.can_choose_club && !status.finished
 
-export const welcome = (error: string | null = null, name = ''): Screen => ({
-	kind: 'welcome',
-	status: null,
-	error,
-	name
-})
+export const welcome = (error: string | null = null): Screen => ({ kind: 'welcome', status: null, error })
 
 /** The first state: straight to loading when a viewer is remembered, since the page resumes them at once. */
 export const initialState = (remembered: string | null): AppState =>
@@ -78,7 +73,7 @@ export const reducer = (state: AppState, action: Action): AppState => {
 		case 'started':
 			return {
 				viewer: action.status.viewer_id,
-				screen: { kind: 'welcome', status: action.status, error: null, name: action.status.viewer_id },
+				screen: { kind: 'welcome', status: action.status, error: null },
 				last: null
 			}
 		case 'picking':
@@ -92,7 +87,7 @@ export const reducer = (state: AppState, action: Action): AppState => {
 		case 'choosing':
 			return state.screen.kind === 'pick' ? { ...state, screen: { ...state.screen, busy: true } } : state
 		case 'rejected':
-			return { viewer: null, screen: welcome(action.message, action.name), last: null }
+			return { viewer: null, screen: welcome(action.message), last: null }
 		case 'forget':
 			return { viewer: null, screen: welcome(action.message ?? null), last: null }
 		case 'arrived':
@@ -165,8 +160,15 @@ export const matchHeader = (screen: Screen): { title: string; clock: string | nu
 
 const VIEWER_KEY = 'btl.viewer'
 
-// Remembering the name is a convenience for this browser only; storage can be missing or blocked, so every access is
-// guarded and the page works without it.
+/** A new viewer's id: 128 random bits as lower-case hex, which the API's viewer id rule accepts.
+ *
+ * Nobody can guess it, so it stands in for a sign-in. `getRandomValues` works on any page; `randomUUID` would need
+ * HTTPS or localhost. */
+export const newViewerId = () =>
+	Array.from(crypto.getRandomValues(new Uint8Array(16)), byte => byte.toString(16).padStart(2, '0')).join('')
+
+// The id is kept in this browser only: it is how a viewer keeps their place between visits. Storage can be missing or
+// blocked, so every access is guarded; without it the page still works, and a reload starts a new viewer.
 export const rememberedViewer = (): string | null => {
 	try {
 		return localStorage.getItem(VIEWER_KEY)
@@ -179,7 +181,7 @@ export const rememberViewer = (viewer: string) => {
 	try {
 		localStorage.setItem(VIEWER_KEY, viewer)
 	} catch {
-		// Not remembered: the viewer types their name again next time.
+		// Not remembered: the next visit starts a new viewer.
 	}
 }
 

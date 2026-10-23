@@ -1,7 +1,7 @@
-/* The start: the viewer's name, then where they stand. */
+/* The start: one button, then where the viewer stands. */
 
 .welcome,
-.welcome__form {
+.welcome__start {
 	display: flex;
 	flex-direction: column;
 	gap: var(--s-3);
@@ -31,28 +31,6 @@
 
 .welcome__number {
 	font-family: var(--font-data);
-}
-
-.welcome__label {
-	margin-top: var(--s-2);
-	font-size: var(--fs-label);
-	font-weight: 700;
-	letter-spacing: 0.08em;
-	text-transform: uppercase;
-	color: var(--text-2);
-}
-
-.welcome__input {
-	height: var(--btn-h);
-	padding: 0 var(--s-4);
-	border: 1px solid var(--border-strong);
-	border-radius: var(--r-tile);
-	background: var(--surface);
-	font-size: var(--fs-body-l);
-}
-
-.welcome__input[aria-invalid='true'] {
-	border: 2px dashed var(--incorrect);
 }
 
 .welcome__hint {

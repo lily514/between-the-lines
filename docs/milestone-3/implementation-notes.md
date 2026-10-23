@@ -17,3 +17,14 @@ Where implementation diverged from [plan.md](plan.md), or something surprising w
 **Checked:** with the old single lock put back temporarily, the new test where one viewer's slow question shouldn't hold up another fails; with a lock per viewer it passes.
 **Why:** the plan left these details open.
 **Affects:** T3 (the container sets `BTL_HOST=0.0.0.0` and the other variables); T5 (the probes use `/api/health`).
+
+## T2 — A random viewer id (2026-10-22)
+**Plan said:** the page makes `crypto.randomUUID()` and keeps it as `btl.viewer`; no name field; "Not lily?" becomes "Start over", which makes a new id; the API is unchanged; a UUID passes `check_viewer_id`.
+**We did:** as planned, with three changes:
+- **The id is 128 random bits from `crypto.getRandomValues`,** written as 32 lower-case hex characters, not `crypto.randomUUID()`. `randomUUID` only exists on secure pages (HTTPS or localhost), so the page would break if opened by a network address over plain HTTP. `getRandomValues` works everywhere, and the id is just as unguessable. It fits the API's viewer id rule; a frontend test checks 100 ids against the rule, and a backend test checks examples of the format with `check_viewer_id`.
+- **"Start over" asks first** ("Start over? Your progress here can't be found again." with "Yes, start over" and "Keep going", focus on "Keep going"). With a typed name, a viewer could always type it again; a forgotten random id is gone for good, so one click shouldn't lose a viewer's progress. It is one shared component (`Shared/StartOver.tsx`), used in the header and on the welcome screen.
+- **The page never shows the id:** the welcome says "Welcome" rather than "Welcome, lily". An id kept in this browser that the API refuses (one edited by hand, say) is forgotten, and the reason is shown above Start.
+
+**Learned:** a viewer can no longer carry on in the browser from `btl learn` (or the other way round), since nobody types the id. The records are still the same kind; the README says so.
+**Why:** `randomUUID`'s secure-page rule, and a click that can't be undone.
+**Affects:** nothing in the API: its schema and the page's generated types are unchanged.

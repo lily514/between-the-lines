@@ -4,8 +4,8 @@
 - GitHub remote, no PRs. One branch per milestone, named after the milestone (M1 "The Data Engine": `feature/data-engine`;
   M2a "The loop in the terminal": `feature/learning-loop`; M2c "The web page": `feature/web-page`;
   M2d "The basics": `feature/the-basics`; M2e "Getting started": `feature/getting-started`;
-  M2b "The AI Tutor": `feature/ai-tutor`; M3 "Deploy it properly": `feature/deploy`). 2c, 2d and then 2e were
-  built before 2b, while Azure wasn't set up yet.
+  M2b "The AI Tutor": `feature/ai-tutor`; M3 "Deploy it properly": `feature/deploy`; M4 "Match day":
+  `feature/match-day`). 2c, 2d and then 2e were built before 2b, while Azure wasn't set up yet.
 - Each plan task is one commit on the milestone branch, made after Lily reviews the diff.
 - When a milestone is done, merge it into main with `git merge --no-ff`, so each milestone shows up as one merge in the graph.
 - Claude commits locally only; Lily pushes when ready. CI runs on every push, to any branch.
@@ -22,6 +22,8 @@ Milestone 2b adds the AI Tutor: model-worded questions and feedback, checked by 
 terminal and on the page.
 Milestone 3 deploys the page and API: one `azd up` builds the container and creates every Azure
 resource from Bicep, serving a public demo URL, with managed identity and no secrets.
+Milestone 4 gives the page a home base: a Matches screen, the curriculum map from any screen,
+halftime and full-time scouting reports, and preferences. Matches still step from moment to moment.
 
 ## Learning design rules
 - The match never depends on the viewer. Adaptation lives in which moments we ask about, when, and
@@ -30,7 +32,10 @@ resource from Bicep, serving a public demo URL, with managed identity and no sec
 - Never prompt during a transition. Delivery is decided by phase of play, computed from match events
   only (`concepts/phase.py`). Deferred questions are review questions, never predict.
   A question about a restart or a foul is asked at its own stoppage or not at all; these are the
-  only live questions asked in a dead ball.
+  only live questions asked in a dead ball. One question per stoppage: the live one wins and a saved
+  review waits. No live question in the last 30 s of a half; it becomes a report replay.
+- Reports and the curriculum map are built on the server from the attempt log; level words
+  (Getting there, Solid, Sharp, Mastered) come from the API, never from the browser.
 - The viewer's team chooses which matches they watch and how they are shown, never which moments
   are asked about. The team sheet uses only matches the viewer has finished.
 - The curriculum is `btl/learn/concept_map.yaml`; only `learn/concept_map.py` reads it.
@@ -169,4 +174,5 @@ cli, api, plus `replay.py`. `api` holds the HTTP routes the page calls; the page
   (its main component is `index.tsx`, with `index.css`, `index.support.ts` and tests beside it), and pieces
   used by more than one screen go in `src/components/Shared/`. `App.tsx` sits at the top of `components/`.
 - Design reference: `docs/milestone-2c/design/`, plus `docs/milestone-2e/design/` and `crests/` for the picker, team
-  sheet and crests. It guides the look; the repo decides behaviour and data.
+  sheet and crests, and `docs/milestone-4/design/` for Matches, the map, reports and preferences. It guides the
+  look; the repo decides behaviour and data.

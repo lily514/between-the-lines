@@ -14,6 +14,8 @@ Routes:
   started watching (`ClubIn` → `StatusOut`).
 - ``GET /api/viewers/{viewer_id}/team-sheet``: who's playing in the viewer's next match
   (`TeamSheetOut`).
+- ``GET /api/viewers/{viewer_id}/concept-map``: the whole curriculum, with the viewer's level
+  on each concept asked about now (`ConceptMapOut`).
 - ``GET /api/viewers/{viewer_id}/matches``: the viewer's matches, upcoming, in progress and
   finished, with their dates (`MatchOut`).
 - ``POST /api/viewers/{viewer_id}/next``: the pending question, or the full-time summary when
@@ -42,6 +44,7 @@ from btl.api.models import (
     AnswerIn,
     ClubIn,
     ClubOut,
+    ConceptMapOut,
     FeedbackOut,
     Fixture,
     FullTimeOut,
@@ -54,6 +57,7 @@ from btl.api.models import (
 from btl.api.payloads import (
     bars,
     club_payload,
+    concept_map_payload,
     feedback_payload,
     match_payload,
     movements,
@@ -71,6 +75,7 @@ from btl.api.viewer import (
     QuestionPendingError,
     WebViewer,
 )
+from btl.learn.curriculum import curriculum
 from btl.learn.learner import MATCHES_PER_SESSION, LearnerState
 from btl.learn.matches import viewer_matches
 from btl.learn.session import (
@@ -188,7 +193,7 @@ def create_app(
             club=None if state.club is None else club_payload(league.club(state.club)),
             can_choose_club=state.can_choose_club,
             suggested_club=league.clubs[state.seed % len(league.clubs)].team_id,
-            concepts=bars(course().bars(state)),
+            concepts=bars(course().bars(state), course().model.thresholds),
             thresholds=thresholds_payload(course().model.thresholds),
         )
 
@@ -236,6 +241,13 @@ def create_app(
         with serving(viewer_id):
             state = _watching(stored(viewer_id))
             return team_sheet_payload(viewer_sheet(course(), state, prepare))
+
+    @app.get("/api/viewers/{viewer_id}/concept-map")
+    def get_concept_map(viewer_id: str) -> ConceptMapOut:
+        """Every concept by strand and tier, and the viewer's level on those asked about now."""
+        with serving(viewer_id):
+            state = stored(viewer_id).state
+            return concept_map_payload(curriculum(course(), state), course().model.thresholds)
 
     @app.get("/api/viewers/{viewer_id}/matches")
     def get_matches(viewer_id: str) -> list[MatchOut]:

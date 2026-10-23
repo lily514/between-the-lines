@@ -21,8 +21,12 @@
         "type": "object"
       },
       "Bar": {
-        "description": "One concept's mastery, from 0 to 1.",
+        "description": "One concept's mastery, from 0 to 1, and the level word for it (\"Solid\").",
         "properties": {
+          "level": {
+            "title": "Level",
+            "type": "string"
+          },
           "name": {
             "title": "Name",
             "type": "string"
@@ -34,7 +38,8 @@
         },
         "required": [
           "name",
-          "value"
+          "value",
+          "level"
         ],
         "title": "Bar",
         "type": "object"
@@ -75,6 +80,43 @@
           "code"
         ],
         "title": "ClubOut",
+        "type": "object"
+      },
+      "ConceptMapOut": {
+        "description": "The whole curriculum, with the viewer's level on each concept asked about now.\n\n``tiers`` names the tiers in order, from tier 0.",
+        "properties": {
+          "concepts": {
+            "items": {
+              "$ref": "#/components/schemas/MapConceptOut"
+            },
+            "title": "Concepts",
+            "type": "array"
+          },
+          "strands": {
+            "items": {
+              "$ref": "#/components/schemas/StrandOut"
+            },
+            "title": "Strands",
+            "type": "array"
+          },
+          "thresholds": {
+            "$ref": "#/components/schemas/ThresholdsOut"
+          },
+          "tiers": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tiers",
+            "type": "array"
+          }
+        },
+        "required": [
+          "strands",
+          "tiers",
+          "concepts",
+          "thresholds"
+        ],
+        "title": "ConceptMapOut",
         "type": "object"
       },
       "DeliveredTime": {
@@ -561,6 +603,77 @@
           }
         },
         "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "MapConceptOut": {
+        "description": "A concept on the map. ``mastery`` and ``level`` are null for one coming later.",
+        "properties": {
+          "askable": {
+            "title": "Askable",
+            "type": "boolean"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Level"
+          },
+          "mastery": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mastery"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "objective": {
+            "title": "Objective",
+            "type": "string"
+          },
+          "prerequisites": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Prerequisites",
+            "type": "array"
+          },
+          "strand": {
+            "title": "Strand",
+            "type": "string"
+          },
+          "tier": {
+            "title": "Tier",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "key",
+          "name",
+          "strand",
+          "tier",
+          "objective",
+          "prerequisites",
+          "askable",
+          "mastery",
+          "level"
+        ],
+        "title": "MapConceptOut",
         "type": "object"
       },
       "MarkerOut": {
@@ -1340,6 +1453,30 @@
         "title": "StatusOut",
         "type": "object"
       },
+      "StrandOut": {
+        "description": "A strand of the curriculum.",
+        "properties": {
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "name",
+          "description"
+        ],
+        "title": "StrandOut",
+        "type": "object"
+      },
       "TeamSheetOut": {
         "description": "Who's playing in the viewer's next match: their team first, or the home team.\n\n``next_stage`` says what opens more of the sheet; null at the last stage.",
         "properties": {
@@ -1646,6 +1783,46 @@
           }
         },
         "summary": "Put Club"
+      }
+    },
+    "/api/viewers/{viewer_id}/concept-map": {
+      "get": {
+        "description": "Every concept by strand and tier, and the viewer's level on those asked about now.",
+        "operationId": "get_concept_map_api_viewers__viewer_id__concept_map_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "viewer_id",
+            "required": true,
+            "schema": {
+              "title": "Viewer Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConceptMapOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Concept Map"
       }
     },
     "/api/viewers/{viewer_id}/matches": {

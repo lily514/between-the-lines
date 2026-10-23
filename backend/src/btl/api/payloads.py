@@ -11,10 +11,12 @@ from typing import Literal
 from btl.api.models import (
     Bar,
     ClubOut,
+    ConceptMapOut,
     DeliveredTime,
     FactOut,
     FeedbackOption,
     FeedbackOut,
+    MapConceptOut,
     MarkerOut,
     MatchOut,
     MomentTime,
@@ -27,6 +29,7 @@ from btl.api.models import (
     ScoreOut,
     SheetPlayerOut,
     SheetTeamOut,
+    StrandOut,
     TeamSheetOut,
     ThresholdsOut,
     YourTeam,
@@ -34,8 +37,10 @@ from btl.api.models import (
 from btl.concepts.phase import PhaseOfPlay
 from btl.league.league import Club, League
 from btl.learn.concept_map import Thresholds
+from btl.learn.curriculum import Curriculum
 from btl.learn.evidence import Fact, Picture, percent_points
 from btl.learn.knowledge import Delivery
+from btl.learn.levels import level_word
 from btl.learn.matches import MatchState, ViewerMatch
 from btl.learn.questions import Form
 from btl.learn.session import Asked, Told
@@ -234,9 +239,38 @@ def movements(before: Mapping[str, float], after: Mapping[str, float]) -> list[M
     return [Movement(name=name, before=before[name], after=value) for name, value in after.items()]
 
 
-def bars(mastery: Mapping[str, float]) -> list[Bar]:
-    """Each concept's mastery now."""
-    return [Bar(name=name, value=value) for name, value in mastery.items()]
+def bars(mastery: Mapping[str, float], thresholds: Thresholds) -> list[Bar]:
+    """Each concept's mastery now, with its level word."""
+    return [
+        Bar(name=name, value=value, level=level_word(value, thresholds))
+        for name, value in mastery.items()
+    ]
+
+
+def concept_map_payload(whole: Curriculum, thresholds: Thresholds) -> ConceptMapOut:
+    """The viewer's map of the curriculum."""
+    return ConceptMapOut(
+        strands=[
+            StrandOut(key=strand.key, name=strand.name, description=strand.description)
+            for strand in whole.strands
+        ],
+        tiers=list(whole.tiers),
+        concepts=[
+            MapConceptOut(
+                key=c.key,
+                name=c.name,
+                strand=c.strand,
+                tier=c.tier,
+                objective=c.objective,
+                prerequisites=list(c.prerequisites),
+                askable=c.askable,
+                mastery=c.mastery,
+                level=c.level,
+            )
+            for c in whole.concepts
+        ],
+        thresholds=thresholds_payload(thresholds),
+    )
 
 
 def thresholds_payload(thresholds: Thresholds) -> ThresholdsOut:

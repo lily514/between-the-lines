@@ -104,6 +104,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/viewers/{viewer_id}/concept-map": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Concept Map
+         * @description Every concept by strand and tier, and the viewer's level on those asked about now.
+         */
+        get: operations["get_concept_map_api_viewers__viewer_id__concept_map_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/viewers/{viewer_id}/matches": {
         parameters: {
             query?: never;
@@ -180,9 +200,11 @@ export interface components {
         };
         /**
          * Bar
-         * @description One concept's mastery, from 0 to 1.
+         * @description One concept's mastery, from 0 to 1, and the level word for it ("Solid").
          */
         Bar: {
+            /** Level */
+            level: string;
             /** Name */
             name: string;
             /** Value */
@@ -207,6 +229,21 @@ export interface components {
             name: string;
             /** Team Id */
             team_id: number;
+        };
+        /**
+         * ConceptMapOut
+         * @description The whole curriculum, with the viewer's level on each concept asked about now.
+         *
+         *     ``tiers`` names the tiers in order, from tier 0.
+         */
+        ConceptMapOut: {
+            /** Concepts */
+            concepts: components["schemas"]["MapConceptOut"][];
+            /** Strands */
+            strands: components["schemas"]["StrandOut"][];
+            thresholds: components["schemas"]["ThresholdsOut"];
+            /** Tiers */
+            tiers: string[];
         };
         /**
          * DeliveredTime
@@ -383,6 +420,30 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /**
+         * MapConceptOut
+         * @description A concept on the map. ``mastery`` and ``level`` are null for one coming later.
+         */
+        MapConceptOut: {
+            /** Askable */
+            askable: boolean;
+            /** Key */
+            key: string;
+            /** Level */
+            level: string | null;
+            /** Mastery */
+            mastery: number | null;
+            /** Name */
+            name: string;
+            /** Objective */
+            objective: string;
+            /** Prerequisites */
+            prerequisites: string[];
+            /** Strand */
+            strand: string;
+            /** Tier */
+            tier: number;
         };
         /**
          * MarkerOut
@@ -691,6 +752,18 @@ export interface components {
             viewer_id: string;
         };
         /**
+         * StrandOut
+         * @description A strand of the curriculum.
+         */
+        StrandOut: {
+            /** Description */
+            description: string;
+            /** Key */
+            key: string;
+            /** Name */
+            name: string;
+        };
+        /**
          * TeamSheetOut
          * @description Who's playing in the viewer's next match: their team first, or the home team.
          *
@@ -879,6 +952,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StatusOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_concept_map_api_viewers__viewer_id__concept_map_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                viewer_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConceptMapOut"];
                 };
             };
             /** @description Validation Error */

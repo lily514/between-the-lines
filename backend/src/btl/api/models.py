@@ -94,10 +94,11 @@ class QuestionOut(BaseModel):
 
 
 class Bar(BaseModel):
-    """One concept's mastery, from 0 to 1."""
+    """One concept's mastery, from 0 to 1, and the level word for it ("Solid")."""
 
     name: str
     value: float
+    level: str
 
 
 class Movement(BaseModel):
@@ -328,6 +329,40 @@ class MatchOut(BaseModel):
     score: ScoreOut | None
     your_result: Literal["won", "drew", "lost"] | None
     questions: int
+
+
+class StrandOut(BaseModel):
+    """A strand of the curriculum."""
+
+    key: str
+    name: str
+    description: str
+
+
+class MapConceptOut(BaseModel):
+    """A concept on the map. ``mastery`` and ``level`` are null for one coming later."""
+
+    key: str
+    name: str
+    strand: str
+    tier: int
+    objective: str
+    prerequisites: list[str]
+    askable: bool
+    mastery: float | None
+    level: str | None
+
+
+class ConceptMapOut(BaseModel):
+    """The whole curriculum, with the viewer's level on each concept asked about now.
+
+    ``tiers`` names the tiers in order, from tier 0.
+    """
+
+    strands: list[StrandOut]
+    tiers: list[str]
+    concepts: list[MapConceptOut]
+    thresholds: ThresholdsOut
 
 
 class AnswerIn(BaseModel):

@@ -2,6 +2,49 @@
 
 How the public demo runs in Azure, and how to change it. `docs/setup.md` has the one-time setup (the tools, `azd auth login`, `azd env new`); this page is the reference for what is deployed. Values in angle brackets are your own, kept in the azd environment (`.azure/<env>/.env`, gitignored) or your shell, never in the repo.
 
+## How it fits together
+
+```mermaid
+flowchart LR
+    browser(["Visitor's browser<br/>random viewer id"]) -- HTTPS --> app
+
+    subgraph group["Resource group rg-btl-demo: created by azd from infra/"]
+        app["Container app ca-web-…<br/>page + API + learning engine<br/>0 or 1 replica, never 2"]
+        identity["User-assigned identity id-…"]
+        registry["Container Registry cr…"]
+        storage["Storage account st…<br/>container learners"]
+        environment["Container Apps environment cae-…"]
+        workspace["Log Analytics log-…"]
+        demoBudget["Budget $10"]
+        app -- runs in --> environment
+        environment -- "diagnostic setting, no key" --> workspace
+    end
+
+    subgraph foundry["Your existing Foundry resource: two az commands"]
+        model["Deployment gpt-5.4-nano-demo<br/>30K tokens, 30 requests a minute"]
+    end
+
+    creditBudget["Budget $150<br/>the whole subscription"]
+
+    app -- signs in as --> identity
+    identity -. AcrPull .-> registry
+    identity -. Storage Blob Data Contributor .-> storage
+    identity -. Cognitive Services OpenAI User .-> model
+    app -- pulls its image --> registry
+    app -- "one blob per viewer, If-Match" --> storage
+    app -- "words questions and feedback" --> model
+    azd(["azd up / azd deploy"]) -- "remote build" --> registry
+```
+
+- **No keys anywhere.** Every arrow from the app signs in with Microsoft Entra ID as the identity; each dotted line is the one role that allows it, on that one resource. The registry's admin user, the storage account's shared keys, the workspace's keys and the Foundry resource's keys are all switched off.
+- **One replica at most,** because the wording cache and the daily limits live in the app's memory. Learner records live in storage, so they survive anything that happens to the app.
+
+## From nothing to a public URL
+
+1. `docs/setup.md`, "Optional: the public demo's infrastructure": install azd and Bicep, `azd auth login --tenant-id …`, `azd env new …`, `azd env set ALERT_EMAIL …`.
+2. `azd provision --preview`, then `azd up`: about 20 minutes the first time, most of it the Container Apps environment. The page works at once, worded by the template.
+3. The two commands below (the model deployment and the app's role on it), then `azd env set TUTOR foundry` with the endpoint and deployment, and `azd up` again: the model words the questions.
+
 ## What is deployed
 
 One `azd up` builds the app's image in Azure and creates everything in `infra/` (Bicep), in the resource group `rg-<env>` in eastus2:
@@ -84,9 +127,37 @@ The counts are in memory and start again when the app restarts; the deployment's
 
 The subscription's spending limit is the hard stop; the budgets only email.
 
+## Changing it
+
+Preview first, every time (`azd provision --preview`): it changes nothing.
+
+| To change | Run | What happens |
+|---|---|---|
+| The code (backend or page) | `azd deploy` | The image is built again in the registry, and a new revision takes over once it is healthy. About 3 minutes |
+| The infrastructure (`infra/`) or an `azd env set` value | `azd provision` | Bicep brings Azure into line with the code; the running image is kept (see "The first deploy" below) |
+| Both | `azd up` | Provision, then deploy |
+
+**Before judges visit,** keep one replica warm, so nobody waits for a cold start; afterwards set it back to 0. A warm replica costs about $2–3 a week.
+```sh
+azd env set MIN_REPLICAS 1
+azd provision --preview
+azd provision
+```
+
+**Cold starts.** At minimum 0 the app scales to zero after a few idle minutes, and the next visitor waits about 30 seconds while Azure places a replica and pulls the image (measured: 26.6 s). After that, requests take about 0.15 s.
+
+**The first deploy.** Before azd has built the app's image, the container app runs a public placeholder, which fails its health probes because it doesn't serve the app. A request in the minute between provision and deploy can hang and fail. After the first deploy, a hook in `azure.yaml` sets `SERVICE_WEB_RESOURCE_EXISTS=true`, so later provisions keep the running image (`infra/modules/app-image.bicep`).
+
+**Watching it.** The README's "Watching the demo" has four KQL queries over the app's events; they reach Log Analytics a few minutes after they happen. To see the console as it happens:
+```sh
+az containerapp logs show --subscription <subscription-id> --resource-group rg-<env> \
+  --name <container-app> --type console --follow
+```
+The platform's own log (revisions, probes, replicas) is `ContainerAppSystemLogs`.
+
 ## Taking it down
 
-`azd down --purge` deletes the resource group and everything in it, and a hook resets `SERVICE_WEB_RESOURCE_EXISTS`. The subscription budget stays, on purpose. Then remove the two pieces outside Bicep:
+`azd down --purge` deletes the resource group and everything in it, including every learner record, and a hook resets `SERVICE_WEB_RESOURCE_EXISTS`. The subscription budget stays, on purpose. `azd up` afterwards builds it all again from the code, with the same names; only the public address's environment part may change. Then remove the two pieces outside Bicep:
 ```sh
 az role assignment delete --subscription <subscription-id> \
   --assignee <identity-principal-id> --role "Cognitive Services OpenAI User" \

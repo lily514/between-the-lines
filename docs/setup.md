@@ -141,6 +141,7 @@ The public demo is described in Bicep (`infra/`) and deployed with the Azure Dev
    azd up
    ```
    The registry costs about $5 a month from then on; everything else costs nothing while the app is idle. After the first deploy, a hook sets `SERVICE_WEB_RESOURCE_EXISTS=true`, so later provisions keep the deployed image instead of the placeholder. `azd deploy` alone rebuilds and redeploys the app.
+7. To have the model word the questions, and for everything else about the running demo (the two commands outside Bicep, changing it, costs, taking it down), see [docs/deployment.md](deployment.md).
 
 ## Optional: check generated names against real ones
 

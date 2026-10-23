@@ -18,8 +18,17 @@ Built for the "Inside the Game" hackathon.
 | 2c. The web page | The same loop in a browser: a React page over a small FastAPI layer, for phone and desktop, in light and dark | Done |
 | 2d. The basics | Restarts, offside, and fouls and cards as newcomer concepts, asked at the stoppage they cause; a simulator whose blocks, offside pictures and bookings agree with the Laws | Done |
 | 2e. Getting started | Pick a team to support, with club crests; a team sheet before each match that grows with you: names and positions in plain words, then the formation and kick-off shape, then players' numbers from matches you've watched | Done |
+| 3. Deploy it properly | A public demo on Azure Container Apps: one `azd up` builds the container and creates every resource from Bicep; managed identity and no keys anywhere; progress kept in Blob Storage; daily limits on the model; events and queries in Log Analytics | Done |
 
 Work in progress lives on milestone branches and is merged to `main` when each milestone is complete. 2c, 2d and then 2e were built before 2b, while Azure wasn't set up yet.
+
+## Try it online
+
+**<https://ca-web-oeafow3mvh7xi.whitesky-8ac56dd8.eastus2.azurecontainerapps.io/>**
+
+Press Start, pick a team, and watch your first match. There is nothing to sign up for: the page gives you a random id and keeps it in this browser, so you can come back later and carry on. A model in Azure AI Foundry words the questions and feedback, checked by the Verifier; the source line under each piece of feedback says who wrote it. If the page takes half a minute to appear, it was asleep: it scales to zero when nobody is using it.
+
+How it is deployed, and how to deploy your own: [docs/deployment.md](docs/deployment.md).
 
 ## Quickstart
 
@@ -246,6 +255,8 @@ ContainerAppConsoleLogs
 - **The AI Tutor needs Azure.** Without it, the templates word everything, as they always did.
 - **The web page steps from question to question;** it doesn't play the match. Each question says when it is asked and why, and the page is built so a played-back match can replace the step later.
 - **No accounts.** The web page knows you only by a random id kept in your browser. Nobody can guess it, but your progress lives in that one browser: another device, or cleared site data, starts afresh.
+- **The online demo's model has a small ceiling.** Its deployment allows 30,000 tokens and 30 requests a minute, about two or three people playing at once; past that, and past each viewer's 60 wordings a day or everyone's 1,000, the template words it instead. The daily counts are kept in memory, so a restart starts them again.
+- **The online demo sleeps.** It scales to zero when idle, so the first visit after a quiet spell waits about 30 seconds. While judges are likely to visit, one replica is kept warm.
 - **Every club plays 4-4-2,** so the team sheet's formation never changes. Giving clubs their own shape would change every match, and the simulator's realism checks with it.
 - **Line-breaking passes are counted generously on the team sheet.** The simulator's flat midfield lines let short passes between level players count, so a central midfielder makes about 17–19 a match. Questions only use the clearer ones.
 - **The learner model's numbers are set by hand,** per tier of the curriculum, not fitted to real learners' answers, and five concepts are askable so far.
@@ -325,6 +336,7 @@ uv run btl simulate --seed 7 --plant line_breaking_pass:1,2,3 --plant counter_pr
 ## Docs
 
 - [docs/setup.md](docs/setup.md): setting up from a clean machine.
+- [docs/deployment.md](docs/deployment.md): the online demo in Azure: what is deployed, how it fits together, changing it, costs, and taking it down.
 - [docs/event-schema.md](docs/event-schema.md): the events, possessions, and player positions a match is made of.
 - [docs/concept-map.md](docs/concept-map.md): the curriculum, and how a concept becomes askable.
 - [docs/milestone-1/plan.md](docs/milestone-1/plan.md): what Milestone 1 set out to build, and [implementation-notes.md](docs/milestone-1/implementation-notes.md): what changed along the way.
@@ -333,3 +345,4 @@ uv run btl simulate --seed 7 --plant line_breaking_pass:1,2,3 --plant counter_pr
 - [docs/milestone-2d/plan.md](docs/milestone-2d/plan.md): what Milestone 2d set out to build, and [implementation-notes.md](docs/milestone-2d/implementation-notes.md): what changed along the way.
 - [docs/milestone-2e/plan.md](docs/milestone-2e/plan.md): what Milestone 2e set out to build, [implementation-notes.md](docs/milestone-2e/implementation-notes.md): what changed along the way, and [design/](docs/milestone-2e/design/) and [crests/](docs/milestone-2e/crests/): the team sheet, picker and crest designs.
 - [docs/milestone-2b/plan.md](docs/milestone-2b/plan.md): what Milestone 2b set out to build, [implementation-notes.md](docs/milestone-2b/implementation-notes.md): what changed along the way, [verifier.md](docs/milestone-2b/verifier.md): each of the Verifier's checks, and [tutor-evaluation.md](docs/milestone-2b/tutor-evaluation.md) with [tutor-review.md](docs/milestone-2b/tutor-review.md): how well the model does.
+- [docs/milestone-3/plan.md](docs/milestone-3/plan.md): what Milestone 3 set out to build, and [implementation-notes.md](docs/milestone-3/implementation-notes.md): what changed along the way.

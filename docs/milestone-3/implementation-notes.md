@@ -211,3 +211,23 @@ Around the module:
 
 **Why:** the plan left the events' sources open; the access log was redundant with the platform's own.
 **Affects:** T10 (the README's honest limits mention the cap under load).
+
+## T10 — Docs (2026-10-23)
+**Plan said:** `docs/deployment.md` as a living reference (the architecture in Mermaid, `azd up`, the two `az` commands, the minimum-replicas switch for judging, teardown, costs, what each role allows); the README gets "Try it online", the URL, the queries and honest limits.
+**We did:** as planned. Most of `deployment.md` was written as the work happened (T6, T8, T9). T10 adds:
+- the architecture diagram, which shows every resource, every sign-in and the one role that allows each;
+- "From nothing to a public URL", in order;
+- "Changing it": code against infrastructure, the minimum-replicas switch, cold starts, the first deploy's placeholder, watching the logs live;
+- a note that teardown deletes every learner record.
+
+The README gains:
+- a status row for Milestone 3;
+- "Try it online", with the URL;
+- two honest limits: the model's small ceiling, and the demo sleeping;
+- links to `deployment.md` and the Milestone 3 docs.
+
+`setup.md` ends its azd steps with a pointer to `deployment.md`.
+
+**Checked:** the diagram renders with Mermaid's own renderer (mermaid-cli 11.4.2). Its subgraph title names `rg-btl-demo`, since Mermaid doesn't decode `&lt;` in labels.
+**Why:** the plan's design held.
+**Affects:** T11 (the live checklist follows `deployment.md`).

@@ -41,12 +41,11 @@ export type Screen =
 	| { kind: 'report'; report: Report; then: Question | null }
 	| { kind: 'error'; message: string; retry: Retry }
 
-/** A sheet over the current screen, which stays as it was underneath: the curriculum map, opened from any header. */
-export interface Overlay {
-	kind: 'map'
-	map: ConceptMap | null
-	error: string | null
-}
+/** A sheet over the current screen, which stays as it was underneath: the curriculum map or Preferences, opened from
+ * any header. */
+export type Overlay =
+	| { kind: 'map'; map: ConceptMap | null; error: string | null }
+	| { kind: 'preferences'; status: Status | null; busy: boolean }
 
 export interface AppState {
 	viewer: string | null
@@ -73,6 +72,7 @@ export type Action =
 	| { type: 'answered'; feedback: Feedback }
 	| { type: 'failed'; message: string; retry: Retry }
 	| { type: 'map'; map: ConceptMap | null; error?: string }
+	| { type: 'preferences'; status: Status | null; busy?: boolean }
 	| { type: 'close' }
 
 export const LOADING_NEXT = 'The match moves on…'
@@ -152,12 +152,14 @@ export const reducer = (state: AppState, action: Action): AppState => {
 			return { ...state, screen: { kind: 'error', message: action.message, retry: action.retry } }
 		case 'map':
 			return { ...state, overlay: { kind: 'map', map: action.map, error: action.error ?? null } }
+		case 'preferences':
+			return { ...state, overlay: { kind: 'preferences', status: action.status, busy: action.busy ?? false } }
 		case 'close':
 			return { ...state, overlay: null }
 	}
 }
 
-/** Whether the header offers the map: on every screen after the viewer has started and picked a team. */
+/** Whether the header offers the map and Preferences: on every screen after the viewer has started and picked a team. */
 export const offersMap = (state: AppState) =>
 	state.viewer !== null && state.screen.kind !== 'welcome' && state.screen.kind !== 'pick'
 

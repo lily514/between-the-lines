@@ -2,6 +2,7 @@ from btl.learn.bkt import BktModel
 from btl.learn.concept_map import load_concept_map
 from btl.learn.knowledge import Delivery
 from btl.learn.learner import MATCHES_PER_SESSION, Attempt, LearnerState
+from btl.learn.pace import Pace
 from btl.learn.questions import Asks, Form
 from tests.fixtures.learning import ACTIVE, COUNTER_PRESS, LINE_BREAKING
 
@@ -55,3 +56,18 @@ def test_a_session_is_three_matches_and_remembers_what_was_asked() -> None:
         assert not state.finished
         state = state.next_match()
     assert state.finished and state.match_number == 4
+
+
+def test_a_pace_set_before_any_answer_applies_at_once() -> None:
+    state = LearnerState("lily", 7).with_pace(Pace.RARELY)
+
+    assert (state.pace, state.pace_next) == (Pace.RARELY, None)
+
+
+def test_a_pace_set_part_way_through_a_match_waits_for_the_next_one() -> None:
+    state = LearnerState("lily", 7).answered(attempt(True)).with_pace(Pace.OFF)
+
+    assert (state.pace, state.pace_next) == (Pace.NORMAL, Pace.OFF)
+    after = state.next_match()
+    assert (after.pace, after.pace_next) == (Pace.OFF, None)
+    assert state.with_pace(Pace.NORMAL).pace_next is None

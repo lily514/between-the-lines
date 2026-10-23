@@ -12,6 +12,8 @@ Routes:
 - ``GET /api/viewers/{viewer_id}``: where a viewer stands (`StatusOut`).
 - ``PUT /api/viewers/{viewer_id}/club``: choose the team to support, until the viewer has
   started watching (`ClubIn` → `StatusOut`).
+- ``PUT /api/viewers/{viewer_id}/pace``: how often questions come, now or from the next match
+  (`PaceIn` → `StatusOut`).
 - ``GET /api/viewers/{viewer_id}/team-sheet``: who's playing in the viewer's next match
   (`TeamSheetOut`).
 - ``GET /api/concept-map``: the whole curriculum, before there is a viewer (`ConceptMapOut`).
@@ -53,6 +55,7 @@ from btl.api.models import (
     FullTimeOut,
     MatchOut,
     NextOut,
+    PaceIn,
     ReportOut,
     StartIn,
     StatusOut,
@@ -91,6 +94,7 @@ from btl.learn.session import (
     Course,
     PreparedMatch,
     choose_club,
+    choose_pace,
     prepare_match,
     seed_for_viewer,
     start_session,
@@ -203,6 +207,8 @@ def create_app(
             suggested_club=league.clubs[state.seed % len(league.clubs)].team_id,
             concepts=bars(course().bars(state), course().model.thresholds),
             thresholds=thresholds_payload(course().model.thresholds),
+            pace=state.pace,
+            pace_next=state.pace_next,
         )
 
     def chosen(viewer_id: str, club: int) -> Stored:
@@ -242,6 +248,16 @@ def create_app(
         with serving(viewer_id):
             stored(viewer_id)
             return status(chosen(viewer_id, body.club))
+
+    @app.put("/api/viewers/{viewer_id}/pace")
+    def put_pace(viewer_id: str, body: PaceIn) -> StatusOut:
+        """Set how often questions come; during a match, from the next one."""
+        with serving(viewer_id):
+            stored(viewer_id)
+            try:
+                return status(choose_pace(store, viewer_id, body.pace))
+            except StaleWriteError:
+                raise HTTPException(409, "the record changed; try again") from None
 
     @app.get("/api/viewers/{viewer_id}/team-sheet")
     def get_team_sheet(viewer_id: str) -> TeamSheetOut:

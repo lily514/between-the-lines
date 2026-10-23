@@ -10,6 +10,7 @@ from btl.learn.bkt import BktModel
 from btl.learn.candidates import AskedWhen, Candidate
 from btl.learn.concept_map import ConceptKey, Thresholds, load_concept_map
 from btl.learn.knowledge import Delivery
+from btl.learn.pace import Pace
 from btl.learn.questions import active_concepts
 from btl.learn.selector import (
     BREAK_CAP,
@@ -65,6 +66,7 @@ class Scenario:
         }
     )
     asked: list[Prompt] = field(default_factory=list[Prompt])
+    pace: Pace = Pace.NORMAL
 
     def moment(
         self,
@@ -121,6 +123,7 @@ class Scenario:
             THRESHOLDS,
             lambda concept: self.mastery[concept],
             record,
+            self.pace,
         )
         return self.asked
 
@@ -439,3 +442,20 @@ def test_a_review_waits_for_the_break_rather_than_a_dead_ball_near_the_whistle()
     (prompt,) = scene.run()
 
     assert prompt.delivered.phase is PhaseOfPlay.HALF_TIME
+
+
+def test_rarely_asks_at_most_one_question_while_the_match_is_on() -> None:
+    scene = Scenario(pace=Pace.RARELY)
+    for minute in range(5, 90, 9):
+        scene.moment(minute, difficulty=0.2)
+
+    assert len(scene.run()) == 1
+
+
+def test_off_asks_nothing_at_all_not_even_at_the_breaks() -> None:
+    scene = Scenario(pace=Pace.OFF)
+    scene.moment(10, difficulty=0.2)
+    scene.moment(20, 0.2, TRANSITION, COUNTER_PRESS)
+    scene.breaks()
+
+    assert scene.run() == []

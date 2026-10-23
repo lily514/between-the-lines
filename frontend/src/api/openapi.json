@@ -1044,6 +1044,29 @@
         "title": "OptionOut",
         "type": "object"
       },
+      "Pace": {
+        "description": "How often questions come.",
+        "enum": [
+          "normal",
+          "rarely",
+          "off"
+        ],
+        "title": "Pace",
+        "type": "string"
+      },
+      "PaceIn": {
+        "description": "How often questions should come.",
+        "properties": {
+          "pace": {
+            "$ref": "#/components/schemas/Pace"
+          }
+        },
+        "required": [
+          "pace"
+        ],
+        "title": "PaceIn",
+        "type": "object"
+      },
       "PictureOut": {
         "description": "The players and the ball at the moment, and the play's path when the form shows it.\n\n``mark`` is a spot the question is about, such as where the ball went out for a throw-in.",
         "properties": {
@@ -1639,7 +1662,7 @@
         "type": "object"
       },
       "StatusOut": {
-        "description": "Where a viewer stands: which match is next, and their mastery of each concept.\n\n``club`` is the team they support. They can choose or change it while\n``can_choose_club``; ``suggested_club`` is the one \"Pick one for me\" starts from.",
+        "description": "Where a viewer stands: which match is next, and their mastery of each concept.\n\n``club`` is the team they support. They can choose or change it while\n``can_choose_club``; ``suggested_club`` is the one \"Pick one for me\" starts from.\n``pace`` is how often questions come; ``pace_next`` is a change waiting for the next match.",
         "properties": {
           "can_choose_club": {
             "title": "Can Choose Club",
@@ -1684,6 +1707,19 @@
             "title": "Matches",
             "type": "integer"
           },
+          "pace": {
+            "$ref": "#/components/schemas/Pace"
+          },
+          "pace_next": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Pace"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "suggested_club": {
             "title": "Suggested Club",
             "type": "integer"
@@ -1706,7 +1742,9 @@
           "can_choose_club",
           "suggested_club",
           "concepts",
-          "thresholds"
+          "thresholds",
+          "pace",
+          "pace_next"
         ],
         "title": "StatusOut",
         "type": "object"
@@ -2304,6 +2342,56 @@
           }
         },
         "summary": "Next Step"
+      }
+    },
+    "/api/viewers/{viewer_id}/pace": {
+      "put": {
+        "description": "Set how often questions come; during a match, from the next one.",
+        "operationId": "put_pace_api_viewers__viewer_id__pace_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "viewer_id",
+            "required": true,
+            "schema": {
+              "title": "Viewer Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaceIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Pace"
       }
     },
     "/api/viewers/{viewer_id}/team-sheet": {

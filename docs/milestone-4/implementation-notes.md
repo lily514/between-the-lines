@@ -132,3 +132,24 @@ window.
 **Why:** a whole-window halftime would fight the stream placeholder for a report that reads fine in the panel; the
 browser must not work out level floors.
 **Affects:** T10 hand check.
+
+## T9 — Preferences (2026-10-23)
+
+**Plan said:** questions off / rarely / normal in the learner record as selector caps; explanation level
+Auto/Newcomer/Fan/Analyst overriding the feedback level; theme; "Your team · Change".
+**We did:**
+- **Questions.** Off / Rarely / Normal (`learn/pace.py`, `PACE_CAPS` in the selector): Rarely asks at most 1 in play
+  with the usual breaks; Off asks nothing, and the reports still come.
+- **A change waits for the next match** (`pace_next`) when the viewer has already answered something in the match
+  being watched.
+- **Theme** (Match device / Dark / Light) is kept in this browser and sets `data-theme`.
+- **Your team · Change** is offered while the team can still change, as before.
+- **The ⚙ button** sits beside the map button and opens Preferences over the screen, like the map.
+- **Explanation level is cut.** The words come from the Tutor, through the Verifier and the word cache, and an
+  override would reach all three; it carries over with Simpler/Deeper (S5).
+- **Record version.** `pace` and `pace_next` join the record without another version bump: version 3 is new in this
+  milestone and hasn't been deployed, and a record without them reads as Normal.
+
+**Why:** a match part-way through is rebuilt by replaying the selector over the answers given, so changing its caps
+mid-match would replay different questions against those answers.
+**Affects:** T10.

@@ -280,3 +280,24 @@ test('the first question of the second half comes after the halftime report', as
 	await user.click(screen.getByRole('button', { name: 'Ready for the second half' }))
 	expect(await screen.findByRole('heading', { name: /Settled possession/ })).toBeInTheDocument()
 })
+
+test('Preferences open from the header over Matches, and a change of pace is saved', async () => {
+	localStorage.setItem('btl.viewer', 'lily')
+	const spy = serve({
+		'/api/viewers': [reply(200, startStatus)],
+		'/api/viewers/lily': [reply(200, startStatus), reply(200, startStatus)],
+		'/matches': [reply(200, upcoming)],
+		'/pace': [reply(200, { ...startStatus, pace: 'rarely' })]
+	})
+	const user = userEvent.setup()
+	render(<App />)
+	await screen.findByRole('heading', { name: 'Matches' })
+	await user.click(screen.getByRole('button', { name: 'Preferences' }))
+	await user.click(await screen.findByRole('radio', { name: 'Rarely' }))
+	expect(await screen.findByRole('radio', { name: 'Rarely' })).toBeChecked()
+	const put = spy.mock.calls.find(([input]) => typeof input === 'string' && input.endsWith('/pace'))
+	expect(put?.[1]).toMatchObject({ method: 'PUT', body: JSON.stringify({ pace: 'rarely' }) })
+	await user.keyboard('{Escape}')
+	expect(screen.getByRole('heading', { name: 'Matches' })).toBeInTheDocument()
+	expect(screen.getByRole('button', { name: 'Preferences' })).toHaveFocus()
+})

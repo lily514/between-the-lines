@@ -9,6 +9,8 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field
 
+from btl.learn.pace import Pace
+
 Point = tuple[float, float]
 # Which side of a match is the viewer's team, if either.
 YourTeam = Literal["home", "away"] | None
@@ -221,6 +223,7 @@ class StatusOut(BaseModel):
 
     ``club`` is the team they support. They can choose or change it while
     ``can_choose_club``; ``suggested_club`` is the one "Pick one for me" starts from.
+    ``pace`` is how often questions come; ``pace_next`` is a change waiting for the next match.
     """
 
     viewer_id: str
@@ -233,6 +236,8 @@ class StatusOut(BaseModel):
     suggested_club: int
     concepts: list[Bar]
     thresholds: ThresholdsOut
+    pace: Pace
+    pace_next: Pace | None
 
 
 class StartIn(BaseModel):
@@ -245,6 +250,12 @@ class StartIn(BaseModel):
     viewer_id: str
     seed: int | None = None
     club: int | None = None
+
+
+class PaceIn(BaseModel):
+    """How often questions should come."""
+
+    pace: Pace
 
 
 class ClubIn(BaseModel):

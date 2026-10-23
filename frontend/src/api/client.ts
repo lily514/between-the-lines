@@ -47,6 +47,12 @@ export const chooseClub = (viewerId: string, club: number) => {
 	return request<Status>(`${viewerPath(viewerId)}/club`, body, 'PUT')
 }
 
+/** How often questions come: now, or from the next match if one is under way. */
+export const setPace = (viewerId: string, pace: Status['pace']) => {
+	const body: Schemas['PaceIn'] = { pace }
+	return request<Status>(`${viewerPath(viewerId)}/pace`, body, 'PUT')
+}
+
 export const getMatches = (viewerId: string) => request<MatchSummary[]>(`${viewerPath(viewerId)}/matches`)
 
 /** The whole curriculum: with a viewer, their level on each concept asked about now; without one, the map alone. */

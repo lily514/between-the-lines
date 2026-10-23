@@ -13,6 +13,7 @@ import pytest
 
 from btl.learn.knowledge import Delivery
 from btl.learn.learner import LEARNER_VERSION, Attempt, LearnerState
+from btl.learn.pace import Pace
 from btl.learn.questions import Asks, Form
 from btl.schema.ids import TeamId
 from btl.store.base import (
@@ -187,3 +188,12 @@ def test_the_json_store_writes_one_readable_file_per_learner(tmp_path: Path) -> 
 
     assert files == ["lily.json"]
     assert saved["attempts"][0]["concept"] == "line_breaking_pass"
+
+
+def test_the_pace_round_trips_and_a_record_without_one_reads_as_normal() -> None:
+    state = LearnerState("lily", seed=7, pace=Pace.RARELY, pace_next=Pace.OFF)
+    document = to_document(state)
+
+    assert from_document(json.loads(json.dumps(document))) == state
+    del document["pace"], document["pace_next"]
+    assert from_document(document).pace is Pace.NORMAL

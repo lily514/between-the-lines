@@ -204,6 +204,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/viewers/{viewer_id}/pace": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Put Pace
+         * @description Set how often questions come; during a match, from the next one.
+         */
+        put: operations["put_pace_api_viewers__viewer_id__pace_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/viewers/{viewer_id}/team-sheet": {
         parameters: {
             query?: never;
@@ -646,6 +666,19 @@ export interface components {
             ] | null;
         };
         /**
+         * Pace
+         * @description How often questions come.
+         * @enum {string}
+         */
+        Pace: "normal" | "rarely" | "off";
+        /**
+         * PaceIn
+         * @description How often questions should come.
+         */
+        PaceIn: {
+            pace: components["schemas"]["Pace"];
+        };
+        /**
          * PictureOut
          * @description The players and the ball at the moment, and the play's path when the form shows it.
          *
@@ -877,6 +910,7 @@ export interface components {
          *
          *     ``club`` is the team they support. They can choose or change it while
          *     ``can_choose_club``; ``suggested_club`` is the one "Pick one for me" starts from.
+         *     ``pace`` is how often questions come; ``pace_next`` is a change waiting for the next match.
          */
         StatusOut: {
             /** Can Choose Club */
@@ -891,6 +925,8 @@ export interface components {
             match_number: number;
             /** Matches */
             matches: number;
+            pace: components["schemas"]["Pace"];
+            pace_next: components["schemas"]["Pace"] | null;
             /** Suggested Club */
             suggested_club: number;
             thresholds: components["schemas"]["ThresholdsOut"];
@@ -1261,6 +1297,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["QuestionOut"] | components["schemas"]["FullTimeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_pace_api_viewers__viewer_id__pace_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                viewer_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PaceIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatusOut"];
                 };
             };
             /** @description Validation Error */

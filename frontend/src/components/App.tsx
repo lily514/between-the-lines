@@ -10,6 +10,7 @@ import {
 	getStatus,
 	getTeamSheet,
 	nextStep,
+	setPace,
 	startViewer,
 	type ConceptMap,
 	type Question,
@@ -42,6 +43,8 @@ import PanelHandle from './Shared/PanelHandle.tsx'
 import { PANEL_DEFAULT, rememberedPanelWidth, rememberPanelWidth } from './Shared/PanelHandle.support.ts'
 import Feedback from './Feedback/index.tsx'
 import Matches from './Matches/index.tsx'
+import Preferences from './Preferences/index.tsx'
+import { applyTheme, rememberedTheme, rememberTheme, type Theme } from './Preferences/index.support.ts'
 import MatchStep from './MatchStep/index.tsx'
 import PickTeam from './PickTeam/index.tsx'
 import QuestionSheet from './QuestionSheet/index.tsx'
@@ -68,8 +71,12 @@ const App = () => {
 	}, [state])
 	const [panelWidth, setPanelWidth] = useState(rememberedPanelWidth)
 	const [curriculum, setCurriculum] = useState<ConceptMap | null>(null)
+	const [theme, setTheme] = useState<Theme>(rememberedTheme)
 	const panel = useRef<HTMLElement>(null)
 	const mapButton = useRef<HTMLButtonElement>(null)
+	const preferencesButton = useRef<HTMLButtonElement>(null)
+	// Which header button opened the sheet over the screen, so focus can go back to it.
+	const opener = useRef<HTMLButtonElement | null>(null)
 	// Where the screen under the map was scrolled to, so closing the map puts the viewer back exactly there.
 	const scrolled = useRef<{ page: number; panel: number } | null>(null)
 
@@ -230,8 +237,42 @@ const App = () => {
 		}
 	}, [onWelcome, curriculum])
 
-	const openMap = async () => {
-		scrolled.current = { page: window.scrollY, panel: panel.current?.scrollTop ?? 0 }
+	useEffect(() => {
+		applyTheme(theme)
+	}, [theme])
+
+	// The first sheet over a screen remembers where it was; another sheet opened over it keeps that.
+	const cover = (from: HTMLButtonElement | null) => {
+		if (latest.current.overlay === null) {
+			scrolled.current = { page: window.scrollY, panel: panel.current?.scrollTop ?? 0 }
+		}
+		opener.current = from
+	}
+
+	const openPreferences = async () => {
+		cover(preferencesButton.current)
+		dispatch({ type: 'preferences', status: null })
+		if (viewer === null) return
+		try {
+			dispatch({ type: 'preferences', status: await getStatus(viewer) })
+		} catch (error) {
+			dispatch({ type: 'close' })
+			fail(error, { kind: 'matches' })
+		}
+	}
+
+	const choosePace = async (pace: Status['pace'], status: Status) => {
+		if (viewer === null) return
+		dispatch({ type: 'preferences', status, busy: true })
+		try {
+			dispatch({ type: 'preferences', status: await setPace(viewer, pace) })
+		} catch {
+			dispatch({ type: 'preferences', status })
+		}
+	}
+
+	const openMap = async (from: HTMLButtonElement | null = null) => {
+		cover(from)
 		dispatch({ type: 'map', map: null })
 		try {
 			dispatch({ type: 'map', map: await getConceptMap(viewer) })
@@ -251,7 +292,7 @@ const App = () => {
 		window.scrollTo(0, scrolled.current.page)
 		if (panel.current !== null) panel.current.scrollTop = scrolled.current.panel
 		scrolled.current = null
-		mapButton.current?.focus()
+		opener.current?.focus()
 	}, [mapOpen])
 
 	const retry = (what: Retry) => {
@@ -309,16 +350,56 @@ const App = () => {
 			<main ref={panel} className="layout__panel">
 				<Header
 					showMap={offersMap(state)}
-					mapOpen={mapOpen}
+					mapOpen={state.overlay?.kind === 'map'}
 					mapButton={mapButton}
 					onMap={() => {
-						if (mapOpen) closeMap()
-						else void openMap()
-					}}
-				/>
+						if (state.overlay?.kind === 'map') closeMap()
+						else void openMap(mapButton.current)
+					}}>
+					{offersMap(state) && (
+						<button
+							ref={preferencesButton}
+							type="button"
+							className="icon-button"
+							aria-label="Preferences"
+							aria-pressed={state.overlay?.kind === 'preferences'}
+							onClick={() => {
+								if (state.overlay?.kind === 'preferences') closeMap()
+								else void openPreferences()
+							}}>
+							<SettingsIcon />
+						</button>
+					)}
+				</Header>
 				{state.overlay?.kind === 'map' && (
 					<div className="layout__body">
 						<CurriculumMap map={state.overlay.map} error={state.overlay.error} onBack={closeMap} />
+					</div>
+				)}
+				{state.overlay?.kind === 'preferences' && (
+					<div className="layout__body">
+						<Preferences
+							status={state.overlay.status}
+							theme={theme}
+							busy={state.overlay.busy}
+							onPace={pace => {
+								if (state.overlay?.kind === 'preferences' && state.overlay.status !== null) {
+									void choosePace(pace, state.overlay.status)
+								}
+							}}
+							onTheme={chosen => {
+								setTheme(chosen)
+								rememberTheme(chosen)
+							}}
+							onChangeTeam={() => {
+								if (state.overlay?.kind === 'preferences' && state.overlay.status !== null) {
+									const status = state.overlay.status
+									closeMap()
+									void loadPick(status)
+								}
+							}}
+							onBack={closeMap}
+						/>
 					</div>
 				)}
 				<div className="layout__body" hidden={mapOpen}>
@@ -432,6 +513,14 @@ const App = () => {
 		</div>
 	)
 }
+
+const SettingsIcon = () => (
+	<svg className="icon-button__icon" viewBox="0 0 24 24" aria-hidden="true">
+		<path d="M4 7h10M18 7h2M4 17h4M12 17h8" />
+		<circle cx="16" cy="7" r="2" />
+		<circle cx="10" cy="17" r="2" />
+	</svg>
+)
 
 const StreamIcon = () => (
 	<svg className="layout__screen-icon" viewBox="0 0 24 24" aria-hidden="true">

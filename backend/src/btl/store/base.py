@@ -8,13 +8,14 @@ from typing import Protocol, cast
 from btl.learn.concept_map import ConceptKey
 from btl.learn.knowledge import Delivery
 from btl.learn.learner import LEARNER_VERSION, Attempt, LearnerState
+from btl.learn.pace import Pace
 from btl.learn.questions import Asks, Form
 from btl.schema.ids import TeamId
 
 # Viewer ids become file names and document ids, so they are kept plain.
 VIEWER_ID = re.compile(r"[a-z0-9][a-z0-9_-]{0,63}")
 # Version 1 records have no club; they read as a viewer who hasn't chosen one. Version 2
-# attempts don't say which period they were asked in.
+# attempts don't say which period they were asked in. Records without a pace read as normal.
 READABLE_VERSIONS = (1, 2, LEARNER_VERSION)
 
 
@@ -83,6 +84,8 @@ def to_document(state: LearnerState) -> dict[str, object]:
         "version": state.version,
         "seed": state.seed,
         "club": state.club,
+        "pace": state.pace.value,
+        "pace_next": None if state.pace_next is None else state.pace_next.value,
         "match_number": state.match_number,
         "attempts": [asdict(attempt) for attempt in state.attempts],
     }
@@ -101,12 +104,15 @@ def from_document(document: Mapping[str, object]) -> LearnerState:
         )
     attempts = cast(list[dict[str, object]], document["attempts"])
     club = document.get("club")
+    pace_next = document.get("pace_next")
     return LearnerState(
         viewer_id=str(document["viewer_id"]),
         seed=cast(int, document["seed"]),
         match_number=cast(int, document["match_number"]),
         attempts=tuple(_attempt(a) for a in attempts),
         club=None if club is None else TeamId(cast(int, club)),
+        pace=Pace(document.get("pace", Pace.NORMAL)),
+        pace_next=None if pace_next is None else Pace(pace_next),
     )
 
 

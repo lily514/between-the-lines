@@ -38,6 +38,7 @@ from btl.learn.candidates import AskedWhen, Candidate
 from btl.learn.concept_map import ConceptKey, ConceptMap, Thresholds
 from btl.learn.evidence import Delivered
 from btl.learn.knowledge import Delivery
+from btl.learn.pace import Caps, Pace
 from btl.schema.event import Event
 from btl.schema.ids import ActionId
 from btl.schema.scoreboard import PERIOD_MINUTES
@@ -55,6 +56,12 @@ REVIEW_CAP = 1
 TIER0_CAP = 2
 TIER0_MATCH_CAP = 3
 WHISTLE_MARGIN = 30.0
+# The viewer's Preferences setting scales the caps; off asks nothing at all.
+PACE_CAPS: Mapping[Pace, Caps] = {
+    Pace.NORMAL: Caps(IN_PLAY_CAP, BREAK_CAP, MINIMUM_PER_MATCH),
+    Pace.RARELY: Caps(1, BREAK_CAP, MINIMUM_PER_MATCH),
+    Pace.OFF: Caps(0, 0, 0),
+}
 RESTART_NAMES: Mapping[ActionType, str] = {
     ActionType.THROW_IN: "throw-in",
     ActionType.GOALKICK: "goal kick",
@@ -110,6 +117,7 @@ def run_match(
     thresholds: Thresholds,
     mastery: Callable[[ConceptKey], float],
     ask: Callable[[Prompt], bool],
+    pace: Pace = Pace.NORMAL,
 ) -> tuple[Prompt, ...]:
     """Walk through a match, asking about moments as they come.
 
@@ -123,10 +131,12 @@ def run_match(
         mastery: The viewer's current mastery of a concept; read afresh at every decision.
         ask: Asks the viewer one question, and returns whether it was asked. A question
             that can't be built returns False and doesn't count.
+        pace: How often the viewer wants questions; it sets the caps.
 
     Returns:
         Every question asked, in order.
     """
+    caps = PACE_CAPS[pace]
     walk = _Walk()
     period_ends = _period_ends(timeline)
     queue: list[Candidate] = []
@@ -170,7 +180,8 @@ def run_match(
         return walk.last_asked is None or now - walk.last_asked >= SPACING
 
     def room_in_play() -> bool:
-        return walk.in_play < (REVIEW_CAP if reviewing() else IN_PLAY_CAP)
+        cap = min(REVIEW_CAP, caps.in_play) if reviewing() else caps.in_play
+        return walk.in_play < cap
 
     def near_the_whistle(period_id: int, seconds: float) -> bool:
         return seconds > period_ends.get(period_id, math.inf) - WHISTLE_MARGIN
@@ -225,9 +236,9 @@ def run_match(
 
         when = Delivered(Delivery.DEFERRED, period_id, seconds, item.phase)
         delivered = _deliver_queued(
-            queue, when, wanted, level_now, deliver, limit=BREAK_CAP, in_play=False
+            queue, when, wanted, level_now, deliver, limit=caps.per_break, in_play=False
         )
-        while delivered < BREAK_CAP and walk.asked < MINIMUM_PER_MATCH:
+        while delivered < caps.per_break and walk.asked < caps.minimum:
             best = _best_passed(passed, used, wanted, level_now)
             if best is None or not deliver(
                 Prompt(best, level_now(best.concept), when), in_play=False

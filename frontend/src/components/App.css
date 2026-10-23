@@ -1,5 +1,5 @@
-/* The page's frame. On a phone the companion fills the screen. From 900 px it is a side panel (--panel-w) beside an
-   area that stands for the viewer's own stream, and never covers it. */
+/* The page's frame. On a phone the companion fills the screen. From 900 px it is a side panel (--panel-w, which the
+   viewer can drag wider) beside an area that stands for the viewer's own stream, and never covers it. */
 
 .layout__stream {
 	display: none;
@@ -127,7 +127,8 @@
 	.layout__panel {
 		flex: 0 0 var(--panel-w);
 		width: var(--panel-w);
-		max-width: none;
+		/* A dragged width (PanelHandle) gives way when the window narrows, so the stream area keeps its STREAM_MIN. */
+		max-width: calc(100vw - 320px);
 		height: 100dvh;
 		margin: 0;
 		position: sticky;

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
+import { useCallback, useEffect, useReducer, useRef, useState, type CSSProperties } from 'react'
 import {
 	answer,
 	ApiError,
@@ -27,6 +27,8 @@ import {
 	type Retry
 } from './App.support.ts'
 import ErrorPanel from './Shared/ErrorPanel.tsx'
+import PanelHandle from './Shared/PanelHandle.tsx'
+import { PANEL_DEFAULT, rememberedPanelWidth, rememberPanelWidth } from './Shared/PanelHandle.support.ts'
 import Feedback from './Feedback/index.tsx'
 import FullTime from './FullTime/index.tsx'
 import MatchStep from './MatchStep/index.tsx'
@@ -40,11 +42,13 @@ const messageOf = (error: unknown) =>
 
 /** The learning loop in the browser: a name, then each match as a run of questions, feedback and a full-time summary.
  *
- * On a wide screen the companion sits in a side panel beside the viewer's own stream, and never covers it. */
+ * On a wide screen the companion sits in a side panel beside the viewer's own stream, and never covers it. The viewer
+ * can drag the panel wider; null keeps the usual width from tokens.css. */
 const App = () => {
 	const [remembered] = useState(rememberedViewer)
 	const [state, dispatch] = useReducer(reducer, remembered, initialState)
 	const viewer = state.viewer
+	const [panelWidth, setPanelWidth] = useState(rememberedPanelWidth)
 
 	const fail = useCallback((error: unknown, retry: Retry) => {
 		if (error instanceof ApiError && error.status === 404) {
@@ -189,10 +193,16 @@ const App = () => {
 		dispatch({ type: 'forget' })
 	}
 
+	const settlePanel = (width: number | null) => {
+		setPanelWidth(width)
+		rememberPanelWidth(width)
+	}
+
 	const screen = state.screen
 	const header = matchHeader(screen)
+	const layoutStyle = panelWidth === null ? undefined : ({ '--panel-w': `${String(panelWidth)}px` } as CSSProperties)
 	return (
-		<div className="layout">
+		<div className="layout" style={layoutStyle}>
 			{/* Stands in for the viewer's own stream on a wide screen; the panel repeats everything in it. */}
 			<div className="layout__stream" aria-hidden="true">
 				<div className="layout__match">
@@ -209,6 +219,14 @@ const App = () => {
 					<p>Between the Lines never covers it. The panel sits beside it.</p>
 				</div>
 			</div>
+			<PanelHandle
+				width={panelWidth ?? PANEL_DEFAULT}
+				onResize={setPanelWidth}
+				onSettle={settlePanel}
+				onReset={() => {
+					settlePanel(null)
+				}}
+			/>
 			<main className="layout__panel">
 				<header className="layout__brand">
 					<h1 className="layout__name">

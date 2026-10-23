@@ -1,0 +1,41 @@
+/* Only shown beside the side panel, from 900 px. It straddles the panel's left border, wider than the line it shows so
+   it is easy to grab. */
+
+.panel-handle {
+	display: none;
+}
+
+@media (min-width: 900px) {
+	.panel-handle {
+		display: block;
+		flex: 0 0 auto;
+		position: sticky;
+		top: 0;
+		z-index: 1;
+		width: 12px;
+		height: 100dvh;
+		margin: 0 -6px;
+		cursor: col-resize;
+		touch-action: none;
+	}
+
+	.panel-handle::after {
+		content: '';
+		position: absolute;
+		inset: 0 4px;
+		border-radius: var(--r-pill);
+		background: var(--act);
+		opacity: 0;
+		transition: opacity var(--t-hover) linear;
+	}
+
+	.panel-handle:hover::after,
+	.panel-handle--dragging::after,
+	.panel-handle:focus-visible::after {
+		opacity: 1;
+	}
+
+	.panel-handle:focus-visible {
+		outline: none;
+	}
+}

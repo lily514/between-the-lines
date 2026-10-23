@@ -6,6 +6,7 @@ import {
 	getClubs,
 	getConceptMap,
 	getMatches,
+	getReport,
 	getStatus,
 	getTeamSheet,
 	nextStep,
@@ -21,9 +22,11 @@ import {
 	LOADING_CLUBS,
 	LOADING_MATCHES,
 	LOADING_NEXT,
+	LOADING_REPORT,
 	LOADING_SHEET,
 	LOADING_START,
 	matchHeader,
+	needsHalftime,
 	needsClub,
 	newViewerId,
 	offersMap,
@@ -38,11 +41,11 @@ import Header from './Shared/Header.tsx'
 import PanelHandle from './Shared/PanelHandle.tsx'
 import { PANEL_DEFAULT, rememberedPanelWidth, rememberPanelWidth } from './Shared/PanelHandle.support.ts'
 import Feedback from './Feedback/index.tsx'
-import FullTime from './FullTime/index.tsx'
 import Matches from './Matches/index.tsx'
 import MatchStep from './MatchStep/index.tsx'
 import PickTeam from './PickTeam/index.tsx'
 import QuestionSheet from './QuestionSheet/index.tsx'
+import Report from './Report/index.tsx'
 import TeamSheet from './TeamSheet/index.tsx'
 import Welcome from './Welcome/index.tsx'
 
@@ -58,6 +61,11 @@ const App = () => {
 	const [remembered] = useState(rememberedViewer)
 	const [state, dispatch] = useReducer(reducer, remembered, initialState)
 	const viewer = state.viewer
+	// The latest state, for a request that decides what to show once its reply arrives.
+	const latest = useRef(state)
+	useEffect(() => {
+		latest.current = state
+	}, [state])
 	const [panelWidth, setPanelWidth] = useState(rememberedPanelWidth)
 	const [curriculum, setCurriculum] = useState<ConceptMap | null>(null)
 	const panel = useRef<HTMLElement>(null)
@@ -78,7 +86,18 @@ const App = () => {
 		async (id: string) => {
 			dispatch({ type: 'loading', message: LOADING_NEXT })
 			try {
-				dispatch({ type: 'arrived', step: await nextStep(id) })
+				const step = await nextStep(id)
+				if (step.kind === 'full_time') {
+					dispatch({
+						type: 'report',
+						report: await getReport(id, step.match_number, 'full_time'),
+						then: null
+					})
+				} else if (needsHalftime(latest.current, step)) {
+					dispatch({ type: 'report', report: await getReport(id, step.match_number, 'halftime'), then: step })
+				} else {
+					dispatch({ type: 'arrived', step })
+				}
 			} catch (error) {
 				fail(error, { kind: 'next' })
 			}
@@ -92,6 +111,18 @@ const App = () => {
 			try {
 				const [status, matches] = await Promise.all([getStatus(id), getMatches(id)])
 				dispatch({ type: 'matches', status, matches })
+			} catch (error) {
+				fail(error, { kind: 'matches' })
+			}
+		},
+		[fail]
+	)
+
+	const loadReport = useCallback(
+		async (id: string, matchNumber: number) => {
+			dispatch({ type: 'loading', message: LOADING_REPORT })
+			try {
+				dispatch({ type: 'report', report: await getReport(id, matchNumber, 'full_time'), then: null })
 			} catch (error) {
 				fail(error, { kind: 'matches' })
 			}
@@ -307,6 +338,7 @@ const App = () => {
 							onRejoin={() => void loadNext(viewer)}
 							onChangeTeam={() => void loadPick(screen.status)}
 							onMap={() => void openMap()}
+							onReport={matchNumber => void loadReport(viewer, matchNumber)}
 							onStartOver={startOver}
 						/>
 					)}
@@ -377,8 +409,15 @@ const App = () => {
 							onContinue={() => void loadNext(viewer)}
 						/>
 					)}
-					{screen.kind === 'full_time' && viewer !== null && (
-						<FullTime summary={screen.summary} onNext={() => void loadMatches(viewer)} />
+					{screen.kind === 'report' && viewer !== null && (
+						<Report
+							report={screen.report}
+							onMap={() => void openMap()}
+							onContinue={() => {
+								if (screen.then === null) void loadMatches(viewer)
+								else dispatch({ type: 'arrived', step: screen.then })
+							}}
+						/>
 					)}
 					{screen.kind === 'error' && (
 						<ErrorPanel

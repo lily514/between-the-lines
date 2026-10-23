@@ -3,10 +3,21 @@ import {
 	identifyFeedback,
 	identifyQuestion,
 	matchesInProgress,
-	predictQuestion
+	predictQuestion,
+	reportFullTime,
+	reportHalftime
 } from '../test-fixtures/index.ts'
-import { fullTime, startStatus } from '../test-fixtures/summaries.ts'
-import { initialState, matchHeader, momentOf, newViewerId, offersMap, reducer, type AppState } from './App.support.ts'
+import { startStatus } from '../test-fixtures/summaries.ts'
+import {
+	initialState,
+	matchHeader,
+	momentOf,
+	needsHalftime,
+	newViewerId,
+	offersMap,
+	reducer,
+	type AppState
+} from './App.support.ts'
 
 const fresh = initialState(null)
 const watching = (
@@ -83,11 +94,23 @@ test('an answer that arrives when no question is open is ignored', () => {
 	expect(reducer(state, { type: 'open' })).toBe(state)
 })
 
-test('full time shows the summary and forgets where the last question was', () => {
+test('the full-time report forgets where the last question was, and goes back to Matches after', () => {
 	const first = reducer(watching(), { type: 'arrived', step: identifyQuestion })
-	const end = reducer(first, { type: 'arrived', step: fullTime })
-	expect(end.screen).toEqual({ kind: 'full_time', summary: fullTime })
+	const end = reducer(first, { type: 'report', report: reportFullTime, then: null })
+	expect(end.screen).toEqual({ kind: 'report', report: reportFullTime, then: null })
 	expect(end.last).toBeNull()
+})
+
+test('the halftime report shows once per match, before the first second-half question', () => {
+	const second = { ...predictQuestion, match_number: 1, delivered: { ...predictQuestion.delivered, period: 2 } }
+	const first = reducer(watching(), { type: 'arrived', step: { ...identifyQuestion, match_number: 1 } })
+	expect(needsHalftime(first, second)).toBe(true)
+	expect(needsHalftime(first, { ...identifyQuestion, match_number: 1 })).toBe(false)
+	const shown = reducer(first, { type: 'report', report: reportHalftime, then: second })
+	expect(shown.screen).toMatchObject({ kind: 'report', then: second })
+	expect(shown.halftimes).toEqual([1])
+	expect(needsHalftime(shown, second)).toBe(false)
+	expect(needsHalftime(reducer(first, { type: 'arrived', step: second }), second)).toBe(false)
 })
 
 test('a failure keeps what to retry', () => {
@@ -109,8 +132,8 @@ test('the wide-screen header names the match being watched', () => {
 		title: 'Ripon Wardens v Ludlow Ferrymen',
 		clock: '13:59'
 	})
-	expect(matchHeader({ kind: 'full_time', summary: fullTime })).toEqual({
-		title: 'Ripon Wardens 2–1 Ludlow Ferrymen',
+	expect(matchHeader({ kind: 'report', report: reportFullTime, then: null })).toEqual({
+		title: 'Ripon Wardens 1–0 Truro Otters',
 		clock: 'Full time'
 	})
 	expect(matchHeader({ kind: 'loading', message: '…' })).toBeNull()

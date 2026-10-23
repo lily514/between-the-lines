@@ -2,10 +2,10 @@ import type {
 	Club,
 	ConceptMap,
 	Feedback,
-	FullTime,
 	MatchSummary,
 	NextStep,
 	Question,
+	Report,
 	Status,
 	TeamSheet
 } from '../api/client.ts'
@@ -37,7 +37,8 @@ export type Screen =
 	| { kind: 'step'; question: Question; from: Moment | null }
 	| { kind: 'question'; question: Question; busy: boolean }
 	| { kind: 'feedback'; question: Question; feedback: Feedback }
-	| { kind: 'full_time'; summary: FullTime }
+	/** A scouting report; `then` is the question to go on to after halftime, or null to go back to Matches. */
+	| { kind: 'report'; report: Report; then: Question | null }
 	| { kind: 'error'; message: string; retry: Retry }
 
 /** A sheet over the current screen, which stays as it was underneath: the curriculum map, opened from any header. */
@@ -53,6 +54,8 @@ export interface AppState {
 	/** When the last question was asked, in the match being watched. */
 	last: Moment | null
 	overlay: Overlay | null
+	/** The matches whose halftime report has been shown, so each shows once. */
+	halftimes: number[]
 }
 
 export type Action =
@@ -63,7 +66,8 @@ export type Action =
 	| { type: 'sheet'; sheet: TeamSheet; status: Status | null }
 	| { type: 'rejected'; message: string }
 	| { type: 'forget'; message?: string }
-	| { type: 'arrived'; step: NextStep }
+	| { type: 'arrived'; step: Question }
+	| { type: 'report'; report: Report; then: Question | null }
 	| { type: 'open' }
 	| { type: 'sending' }
 	| { type: 'answered'; feedback: Feedback }
@@ -76,6 +80,7 @@ export const LOADING_START = 'Finding your place…'
 export const LOADING_MATCHES = 'Finding your matches…'
 export const LOADING_CLUBS = 'Finding the clubs…'
 export const LOADING_SHEET = 'Finding the line-ups…'
+export const LOADING_REPORT = 'Writing the report…'
 
 /** A viewer who hasn't picked a team yet, and still can: they are asked before anything else. */
 export const needsClub = (status: Status) => status.club === null && status.can_choose_club && !status.finished
@@ -85,8 +90,14 @@ export const welcome = (error: string | null = null): Screen => ({ kind: 'welcom
 /** The first state: straight to loading when a viewer is remembered, since the page resumes them at once. */
 export const initialState = (remembered: string | null): AppState =>
 	remembered === null
-		? { viewer: null, screen: welcome(), last: null, overlay: null }
-		: { viewer: remembered, screen: { kind: 'loading', message: LOADING_START }, last: null, overlay: null }
+		? { viewer: null, screen: welcome(), last: null, overlay: null, halftimes: [] }
+		: {
+				viewer: remembered,
+				screen: { kind: 'loading', message: LOADING_START },
+				last: null,
+				overlay: null,
+				halftimes: []
+			}
 
 export const reducer = (state: AppState, action: Action): AppState => {
 	switch (action.type) {
@@ -111,11 +122,19 @@ export const reducer = (state: AppState, action: Action): AppState => {
 		case 'choosing':
 			return state.screen.kind === 'pick' ? { ...state, screen: { ...state.screen, busy: true } } : state
 		case 'rejected':
-			return { viewer: null, screen: welcome(action.message), last: null, overlay: null }
+			return { viewer: null, screen: welcome(action.message), last: null, overlay: null, halftimes: [] }
 		case 'forget':
-			return { viewer: null, screen: welcome(action.message ?? null), last: null, overlay: null }
+			return { viewer: null, screen: welcome(action.message ?? null), last: null, overlay: null, halftimes: [] }
 		case 'arrived':
 			return arrived(state, action.step)
+		case 'report':
+			return {
+				...state,
+				screen: { kind: 'report', report: action.report, then: action.then },
+				last: action.report.at === 'full_time' ? null : state.last,
+				halftimes:
+					action.report.at === 'halftime' ? [...state.halftimes, action.report.match_number] : state.halftimes
+			}
 		case 'open':
 			return state.screen.kind === 'step'
 				? { ...state, screen: { kind: 'question', question: state.screen.question, busy: false } }
@@ -142,13 +161,17 @@ export const reducer = (state: AppState, action: Action): AppState => {
 export const offersMap = (state: AppState) =>
 	state.viewer !== null && state.screen.kind !== 'welcome' && state.screen.kind !== 'pick'
 
-const arrived = (state: AppState, step: NextStep): AppState => {
-	if (step.kind === 'full_time') {
-		return { ...state, screen: { kind: 'full_time', summary: step }, last: null }
-	}
+const arrived = (state: AppState, step: Question): AppState => {
 	const from = state.last?.matchNumber === step.match_number ? state.last : null
 	return { ...state, screen: { kind: 'step', question: step, from }, last: momentOf(step) }
 }
+
+/** Whether a step needs the halftime report first: it is in the second half, and the viewer hasn't had it yet. */
+export const needsHalftime = (state: AppState, step: NextStep): boolean =>
+	step.kind === 'question' &&
+	step.delivered.period > 1 &&
+	!state.halftimes.includes(step.match_number) &&
+	!(state.last?.matchNumber === step.match_number && state.last.period > 1)
 
 export const momentOf = (question: Question): Moment => ({
 	matchNumber: question.match_number,
@@ -167,10 +190,10 @@ export const matchHeader = (screen: Screen): { title: string; clock: string | nu
 				title: `${screen.question.home} v ${screen.question.away}`,
 				clock: screen.question.delivered.clock
 			}
-		case 'full_time':
+		case 'report':
 			return {
-				title: `${screen.summary.home} ${String(screen.summary.home_goals)}–${String(screen.summary.away_goals)} ${screen.summary.away}`,
-				clock: 'Full time'
+				title: `${screen.report.home} ${String(screen.report.home_goals)}–${String(screen.report.away_goals)} ${screen.report.away}`,
+				clock: screen.report.at === 'halftime' ? 'Halftime' : 'Full time'
 			}
 		case 'matches':
 			return screen.status.fixture

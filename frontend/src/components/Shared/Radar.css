@@ -1,0 +1,94 @@
+/* The scouting report's radar: rings at 25/50/75/100, kick-off dashed, now solid in the knowledge colour. */
+
+.radar {
+	margin: 0;
+}
+
+.radar__svg {
+	display: block;
+	width: 100%;
+	max-width: 340px;
+	margin: 0 auto;
+	overflow: visible;
+}
+
+.radar__ring {
+	fill: none;
+	stroke: var(--border);
+	stroke-width: 0.4;
+}
+
+.radar__axis {
+	stroke: var(--border-strong);
+	stroke-width: 0.4;
+}
+
+.radar__axis--empty {
+	stroke-dasharray: 1.4 1.2;
+}
+
+.radar__kickoff {
+	fill: none;
+	stroke: var(--text-muted);
+	stroke-width: 0.6;
+	stroke-dasharray: 1.6 1.2;
+}
+
+.radar__now {
+	fill: var(--know);
+	fill-opacity: 0.17;
+	stroke: var(--know);
+	stroke-width: 1;
+	stroke-linejoin: round;
+}
+
+.radar__node {
+	fill: var(--know);
+}
+
+.radar__label {
+	font-family: var(--font-display);
+	font-size: 5.2px;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	fill: var(--text-2);
+}
+
+.radar__value {
+	font-family: var(--font-data);
+	font-weight: 400;
+	letter-spacing: 0;
+	fill: var(--know);
+}
+
+.radar__empty {
+	font-family: var(--font-body);
+	font-weight: 600;
+	letter-spacing: 0;
+	fill: var(--text-muted);
+}
+
+.radar__key {
+	display: flex;
+	justify-content: center;
+	gap: var(--s-4);
+	margin-top: var(--s-2);
+	font-size: var(--fs-caption);
+	color: var(--text-2);
+}
+
+.radar__key > span {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.radar__swatch {
+	width: 18px;
+	height: 0;
+	border-top: 3px solid var(--know);
+}
+
+.radar__swatch--kickoff {
+	border-top: 2px dashed var(--text-muted);
+}

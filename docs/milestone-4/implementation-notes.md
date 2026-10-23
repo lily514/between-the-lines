@@ -109,3 +109,26 @@ fallback for screen readers.
 
 **Why:** no updated board to copy, and a pitch with every arrow drawn is unreadable at phone width.
 **Affects:** nothing.
+
+## T8 — Scouting reports (2026-10-23)
+
+**Plan said:** `Shared/Radar`; halftime and full-time screens replace `FullTime/`; desktop halftime takes the whole
+window.
+**We did:**
+- **One `Report` screen for both breaks,** with the radar (hidden table alongside), the scout's note, the concepts
+  asked now by strand with level words and bars, and the questions answered.
+- **When halftime shows.** The halftime report comes once per match, before the first question asked in the second
+  half; break questions come before it, as before. A match with no second-half question goes straight to the
+  full-time report.
+- **Full time** fetches the report; "Done for this match" goes back to Matches, where Earlier gives each finished
+  match's report.
+- **Left as they were:**
+  - The desktop halftime still sits in the side panel.
+  - The bars keep their 80 (unlock) and 95 (mastered) ticks rather than §16's 40/70 level steps: the API sends only
+    those two thresholds, and the level word beside each bar already says the step.
+  - The board's shots, passes and replay cards ("Two from the first half") aren't there: the report has no team
+    stats, and replays are the break questions themselves.
+
+**Why:** a whole-window halftime would fight the stream placeholder for a report that reads fine in the panel; the
+browser must not work out level floors.
+**Affects:** T10 hand check.

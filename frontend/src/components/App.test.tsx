@@ -8,6 +8,9 @@ import {
 	identifyQuestion,
 	matchesAfterOne,
 	matchesInProgress,
+	predictQuestion,
+	reportFullTime,
+	reportHalftime,
 	sheetStage1
 } from '../test-fixtures/index.ts'
 import { clubs, fullTime, newStatus, startStatus } from '../test-fixtures/summaries.ts'
@@ -43,7 +46,8 @@ test('a new viewer gets a random id, lands on Matches, and plays a question thro
 		'/matches': [reply(200, upcoming), reply(200, matchesAfterOne)],
 		'/next': [reply(200, identifyQuestion), reply(200, fullTime)],
 		'/answers': [reply(200, identifyFeedback)],
-		'/team-sheet': [reply(200, sheetStage1)]
+		'/team-sheet': [reply(200, sheetStage1)],
+		'/report': [reply(200, reportFullTime)]
 	})
 	const user = userEvent.setup()
 	render(<App />)
@@ -65,9 +69,10 @@ test('a new viewer gets a random id, lands on Matches, and plays a question thro
 	expect(await screen.findByRole('heading', { name: 'Right read.' })).toHaveFocus()
 	await user.click(screen.getByRole('button', { name: 'Back to the match' }))
 
-	expect(await screen.findByRole('heading', { name: /Ripon Wardens 2–1 Ludlow Ferrymen/ })).toHaveFocus()
+	expect(await screen.findByRole('heading', { name: /Ripon Wardens 1–0 Truro Otters/ })).toHaveFocus()
+	expect(screen.getByText('Your team, Ripon Wardens, won 1–0.')).toBeInTheDocument()
 	expect(localStorage.getItem('btl.viewer')).toBe('lily')
-	await user.click(screen.getByRole('button', { name: 'On to match 2' }))
+	await user.click(screen.getByRole('button', { name: 'Done for this match' }))
 	expect(await screen.findByRole('heading', { name: 'Matches' })).toBeInTheDocument()
 })
 
@@ -252,4 +257,26 @@ test('a team refused because watching has started shows Matches with the team se
 	await user.click(screen.getByRole('button', { name: 'Continue with Hexham Anchors' }))
 	expect(await screen.findByRole('heading', { name: 'Matches' })).toBeInTheDocument()
 	expect(screen.queryByRole('button', { name: 'Change' })).toBeNull()
+})
+
+test('the first question of the second half comes after the halftime report', async () => {
+	localStorage.setItem('btl.viewer', 'lily')
+	const second = { ...predictQuestion, match_number: 1, delivered: { ...predictQuestion.delivered, period: 2 } }
+	const spy = serve({
+		'/api/viewers': [reply(200, startStatus)],
+		'/api/viewers/lily': [reply(200, startStatus)],
+		'/matches': [reply(200, matchesInProgress)],
+		'/next': [reply(200, second)],
+		'/report': [reply(200, reportHalftime)]
+	})
+	const user = userEvent.setup()
+	render(<App />)
+	await user.click(await screen.findByRole('button', { name: 'Rejoin the match' }))
+	expect(await screen.findByText('Half-time')).toBeInTheDocument()
+	const asked = spy.mock.calls
+		.map(([input]) => (typeof input === 'string' ? input : ''))
+		.find(path => path.includes('/report'))
+	expect(asked).toBe('/api/viewers/lily/matches/1/report?at=halftime')
+	await user.click(screen.getByRole('button', { name: 'Ready for the second half' }))
+	expect(await screen.findByRole('heading', { name: /Settled possession/ })).toBeInTheDocument()
 })

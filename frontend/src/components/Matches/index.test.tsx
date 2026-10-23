@@ -12,6 +12,7 @@ const show = (matches: MatchSummary[], status: Status = startStatus) => {
 		onRejoin: vi.fn(),
 		onChangeTeam: vi.fn(),
 		onMap: vi.fn(),
+		onReport: vi.fn(),
 		onStartOver: vi.fn()
 	}
 	render(<Matches status={status} matches={matches} {...handlers} />)
@@ -29,7 +30,7 @@ test('a match part-way through leads, with the score at the last answer and Rejo
 })
 
 test('after a match, the next one leads with its date, and the finished one is listed earlier', async () => {
-	const { onWatch } = show(matchesAfterOne)
+	const { onWatch, onReport } = show(matchesAfterOne)
 	const next = screen.getByRole('region', { name: 'Next match' })
 	expect(within(next).getByText(/Next match · Matchday 2/)).toBeInTheDocument()
 	expect(within(next).getByText('Sat 31 Oct · kick-off')).toBeInTheDocument()
@@ -37,6 +38,8 @@ test('after a match, the next one leads with its date, and the finished one is l
 	expect(onWatch).toHaveBeenCalledOnce()
 	const earlier = screen.getByRole('region', { name: 'Earlier' })
 	expect(within(earlier).getByText('Ripon Wardens 1–0 Truro Otters')).toBeInTheDocument()
+	await userEvent.click(within(earlier).getByRole('button', { name: 'Report, matchday 1' }))
+	expect(onReport).toHaveBeenCalledWith(1)
 })
 
 test('progress shows each concept asked now with its level in words, and opens the map', async () => {

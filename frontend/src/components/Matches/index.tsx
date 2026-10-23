@@ -16,11 +16,13 @@ export interface MatchesProps {
 	onChangeTeam: () => void
 	/** Open the curriculum map. */
 	onMap: () => void
+	/** Open a finished match's full-time report. */
+	onReport: (matchNumber: number) => void
 	onStartOver: () => void
 }
 
 /** Home base: the match to rejoin or watch next, the viewer's progress on what is asked now, and earlier matches. */
-const Matches = ({ status, matches, onWatch, onRejoin, onChangeTeam, onMap, onStartOver }: MatchesProps) => {
+const Matches = ({ status, matches, onWatch, onRejoin, onChangeTeam, onMap, onReport, onStartOver }: MatchesProps) => {
 	const heading = useRef<HTMLHeadingElement>(null)
 	const headingId = useId()
 	const progressId = useId()
@@ -120,6 +122,15 @@ const Matches = ({ status, matches, onWatch, onRejoin, onChangeTeam, onMap, onSt
 								<span className="matches__result">
 									{match.home} {match.score === null ? 'v' : scoreLine(match.score)} {match.away}
 								</span>
+								<button
+									type="button"
+									className="text-button matches__report"
+									aria-label={`Report, matchday ${String(match.matchday)}`}
+									onClick={() => {
+										onReport(match.match_number)
+									}}>
+									Report
+								</button>
 							</li>
 						))}
 					</ul>

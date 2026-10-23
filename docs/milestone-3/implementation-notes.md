@@ -123,3 +123,27 @@ Around the module:
 
 **Why:** counting calls exactly per viewer would need the viewer inside the Tutor chain, which the design keeps out.
 **Affects:** T9 (a `limit_reached` event from `LimitedTutor`); T10 (the docs build on `deployment.md`).
+
+## T7 — The Blob store (2026-10-23)
+**Plan said:** `store/blob.py`; the contract suite passes against Azurite under `-m blob`; the network-import test allows `store/blob.py` to import `azure`; `azure-storage-blob` added; `btl serve --store blob`; `docs/setup.md` covers Azurite and `BTL_AZURITE_KEY`.
+**We did:** as planned:
+- **`BlobLearnerStore(container)`** keeps `<viewer id>.json`, the JSON store's own document, typed `application/json`.
+  - `create` uploads without overwriting, which the SDK sends as `If-None-Match: *` (exists → `LearnerExistsError`).
+  - `put` uploads with `If-Match: <etag>` (412 → `StaleWriteError`; a missing blob → `KeyError`).
+  - The etag is the blob's own ETag.
+- **`blob_container(account_url, container, client_id, tenant)`** signs in with the managed identity when there is a client id, otherwise with `az login` in `BTL_FOUNDRY_TENANT`. It sits in `store/blob.py` because only that module and `tutor/azure.py` may import an Azure SDK; the four lines of credential choice are therefore written twice.
+- **`btl serve --store blob`** takes `--blob-account-url` (`BTL_BLOB_ACCOUNT_URL`) and `--blob-container` (`BTL_BLOB_CONTAINER`, default `learners`), and stops with a message if the URL is missing.
+- **The contract suite is unchanged.** `STORES` gains `blob`, and the fixture marks it `blob`, so it runs only with `-m blob`.
+  - Each test gets a fresh Azurite container.
+  - The fixture skips with the reason when `BTL_AZURITE_KEY` is unset or Azurite doesn't answer, with no retries and a 2 s timeout, so a missing emulator never hangs the run.
+- **Three Blob-only tests** (`tests/store/test_blob.py`) cover what the contract doesn't: `put` for a learner who isn't stored, a write after another server changed the blob, and the blob's document and content type.
+- **The network-import test** now expects exactly `btl.store.blob` and `btl.tutor.azure`.
+
+**Checked:** with Azurite 3.35.0 in Docker, all nine Blob tests pass (the six contract tests and the three of its own); without the key they skip with the reason, and the default run deselects them. The default run passes, with ruff and strict pyright.
+**Learned:**
+- **Azurite needs `--skipApiVersionCheck`** for the current SDK (12.31).
+- **The SDK types one parameter of `create_container` as a bare `dict`,** so the test fixture ignores that one pyright rule on that line, with a comment.
+- **`btl serve --store blob` can't be tried against Azurite:** the server signs in with Entra ID tokens, which Azurite doesn't take over plain HTTP. T8 tries it against the real account.
+
+**Why:** the plan left these details open.
+**Affects:** T8 (Bicep sets `BTL_STORE=blob` and `BTL_BLOB_ACCOUNT_URL`, and grants the identity Storage Blob Data Contributor on the `learners` container).

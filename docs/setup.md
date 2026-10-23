@@ -86,6 +86,28 @@ The public demo runs as one container: the built page, the API and the learning 
 
 On Apple Silicon, Docker builds an arm64 image. Azure runs amd64, which is fine, because azd builds the deployed image in Azure's registry.
 
+## Optional: the Blob learner store (Azurite)
+
+In Azure, learner records are blobs in Azure Blob Storage (`--store blob`). Its tests run against [Azurite](https://learn.microsoft.com/azure/storage/common/storage-use-azurite), Microsoft's storage emulator, in Docker Desktop. They are opt-in, so the default `pytest` run needs neither.
+
+1. Start Azurite (blobs only, kept in memory, so nothing outlives it):
+   ```sh
+   docker run -d --rm --name btl-azurite -p 127.0.0.1:10000:10000 \
+     mcr.microsoft.com/azure-storage/azurite:3.35.0 \
+     azurite-blob --blobHost 0.0.0.0 --inMemoryPersistence --skipApiVersionCheck
+   ```
+   `--skipApiVersionCheck` lets the current Python SDK talk to it.
+2. Set `BTL_AZURITE_KEY` to Azurite's account key. Every copy of Azurite uses the same key, which Microsoft publishes on the page above ("Well-known storage account and key"); it opens only a local emulator. It is the one key this project uses, read from the environment by these tests only and never written into the repo.
+   ```sh
+   export BTL_AZURITE_KEY='<the published key>'
+   ```
+3. From `backend/`, run the Blob store through the learner store contract, plus its own cases:
+   ```sh
+   uv run pytest -m blob
+   ```
+   Without the key, or without Azurite running, these tests skip and say why.
+4. Stop Azurite with `docker stop btl-azurite`.
+
 ## Optional: the public demo's infrastructure (Bicep and azd)
 
 The public demo is described in Bicep (`infra/`) and deployed with the Azure Developer CLI (azd), which reads `azure.yaml`. Writing and checking the Bicep needs only the first two steps, and creates nothing in Azure.

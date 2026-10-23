@@ -10,6 +10,7 @@ from typer.testing import CliRunner
 from btl.cli import app as cli
 from btl.cli.app import app
 from btl.io import save_threat_model
+from btl.store.memory import MemoryLearnerStore
 from btl.tutor.azure import FoundrySettings
 from tests.fixtures.learning import threat_model
 from tests.fixtures.tutor import ByKind
@@ -190,3 +191,59 @@ def test_serve_reads_its_options_from_the_environment(
     page = TestClient(api)
     assert page.post("/api/viewers", json={"viewer_id": "lily", "seed": 7}).status_code == 200
     assert not (tmp_path / "learners").exists()  # the memory store writes no files
+
+
+def test_serve_with_the_blob_store_needs_its_account(tmp_path: Path) -> None:
+    model = tmp_path / "model.json"
+    save_threat_model(threat_model(), model)
+
+    result = runner.invoke(
+        app,
+        ["serve", "--model", str(model), "--store", "blob"],
+        env={**WIDE, "BTL_BLOB_ACCOUNT_URL": None},
+    )
+
+    assert result.exit_code == 1
+    assert "--blob-account-url" in result.output
+
+
+def test_serve_in_azure_keeps_learners_in_blobs_signed_in_as_the_app(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    model = tmp_path / "model.json"
+    save_threat_model(threat_model(), model)
+    opened: list[tuple[str, str, str | None]] = []
+
+    def fake_container(
+        account_url: str, container: str, client_id: str | None, tenant: str
+    ) -> object:
+        opened.append((account_url, container, client_id))
+        return object()
+
+    def run(api: FastAPI, host: str, port: int, log_level: str) -> None:
+        pass
+
+    monkeypatch.setattr(uvicorn, "run", run)
+    monkeypatch.setattr(cli, "blob_container", fake_container)
+
+    def store(container: object) -> MemoryLearnerStore:
+        return MemoryLearnerStore()
+
+    monkeypatch.setattr(cli, "BlobLearnerStore", store)
+    env = {
+        **WIDE,
+        "BTL_STORE": "blob",
+        "BTL_BLOB_ACCOUNT_URL": "https://example.blob.core.windows.net",
+        "AZURE_CLIENT_ID": "00000000-0000-0000-0000-00000000c11d",
+    }
+
+    result = runner.invoke(app, ["serve", "--model", str(model)], env=env)
+
+    assert result.exit_code == 0, result.output
+    assert opened == [
+        (
+            "https://example.blob.core.windows.net",
+            "learners",
+            "00000000-0000-0000-0000-00000000c11d",
+        )
+    ]

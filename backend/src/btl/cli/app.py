@@ -83,6 +83,7 @@ from btl.schema.vocab import ConceptId
 from btl.sim.engine import simulate_match
 from btl.sim.shape import FOUR_FOUR_TWO
 from btl.store.base import LearnerStore, Stored, check_viewer_id
+from btl.store.blob import BlobLearnerStore, blob_container
 from btl.store.json_files import JsonLearnerStore
 from btl.store.memory import MemoryLearnerStore
 from btl.tutor.azure import AzureClient, FoundrySettings
@@ -143,6 +144,7 @@ class StoreChoice(StrEnum):
 
     MEMORY = "memory"
     JSON = "json"
+    BLOB = "blob"
 
 
 TutorOption = Annotated[
@@ -633,10 +635,23 @@ def serve(
         StoreChoice,
         typer.Option(
             help="json: files in --learners, shared with `btl learn`. memory: forgotten when "
-            "the server stops.",
+            "the server stops. blob: Azure Blob Storage (--blob-account-url).",
             envvar="BTL_STORE",
         ),
     ] = StoreChoice.JSON,
+    blob_account_url: Annotated[
+        str | None,
+        typer.Option(
+            help="With --store blob: the storage account, https://<account>.blob.core.windows.net.",
+            envvar="BTL_BLOB_ACCOUNT_URL",
+        ),
+    ] = None,
+    blob_container: Annotated[
+        str,
+        typer.Option(
+            help="With --store blob: the container of learner blobs.", envvar="BTL_BLOB_CONTAINER"
+        ),
+    ] = "learners",
     learners: Annotated[
         Path, typer.Option(help="Folder for learner records.", envvar="BTL_LEARNERS")
     ] = DEFAULT_LEARNERS,
@@ -694,9 +709,7 @@ def serve(
     """
     allowance = Allowance(wordings_per_viewer, wordings_per_day, lambda: datetime.now(UTC).date())
     course = Course(_threat_model_or_fit(model), _server_tutor(tutor, tutor_log, allowance))
-    records: LearnerStore = (
-        MemoryLearnerStore() if store is StoreChoice.MEMORY else JsonLearnerStore(learners)
-    )
+    records = _records(store, learners, blob_account_url, blob_container)
     page = frontend if (frontend / "index.html").is_file() else None
     if page is None:
         console.print(
@@ -706,6 +719,22 @@ def serve(
     api = create_app(lambda: course, records, _now, page)
     console.print(f"Serving on http://{host}:{port} (API under /api). Ctrl+C stops it.")
     uvicorn.run(api, host=host, port=port, log_level="warning")
+
+
+def _records(
+    store: StoreChoice, learners: Path, account_url: str | None, container: str
+) -> LearnerStore:
+    if store is StoreChoice.MEMORY:
+        return MemoryLearnerStore()
+    if store is StoreChoice.JSON:
+        return JsonLearnerStore(learners)
+    if not account_url:
+        console.print("Set --blob-account-url (or BTL_BLOB_ACCOUNT_URL) to use --store blob.")
+        raise typer.Exit(1)
+    # In Azure the app's managed identity signs in; locally, `az login` in the Tutor's tenant.
+    client_id = os.environ.get("AZURE_CLIENT_ID") or None
+    tenant = os.environ.get("BTL_FOUNDRY_TENANT", "")
+    return BlobLearnerStore(blob_container(account_url, container, client_id, tenant))
 
 
 # Where the AI Tutor's model is; docs/setup.md says how to find each value.

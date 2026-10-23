@@ -1,4 +1,7 @@
-"""The contract every learner store keeps. Milestone 3's Cosmos DB store joins STORES."""
+"""The contract every learner store keeps, run against each store in STORES.
+
+The Blob store's run needs the Azurite emulator, so it is opt-in: ``uv run pytest -m blob``.
+"""
 
 import json
 from collections.abc import Callable
@@ -18,14 +21,19 @@ from btl.store.base import (
     from_document,
     to_document,
 )
+from btl.store.blob import BlobLearnerStore
 from btl.store.json_files import JsonLearnerStore
 from btl.store.memory import MemoryLearnerStore
+from tests.fixtures.azurite import azurite_container
 from tests.fixtures.learning import LINE_BREAKING
 
 STORES: dict[str, Callable[[Path], LearnerStore]] = {
     "memory": lambda _: MemoryLearnerStore(),
     "json files": lambda folder: JsonLearnerStore(folder / "learners"),
+    "blob": lambda _: BlobLearnerStore(azurite_container()),
 }
+# Stores that need something running beside the tests, and the marker that opts in to them.
+OPT_IN = {"blob": pytest.mark.blob}
 ANSWER = Attempt(
     match_number=1,
     action_id=412,
@@ -43,7 +51,12 @@ ANSWER = Attempt(
 )
 
 
-@pytest.fixture(params=sorted(STORES))
+@pytest.fixture(
+    params=[
+        pytest.param(name, marks=[OPT_IN[name]] if name in OPT_IN else [])
+        for name in sorted(STORES)
+    ]
+)
 def store(request: pytest.FixtureRequest, tmp_path: Path) -> LearnerStore:
     name: str = request.param
     return STORES[name](tmp_path)

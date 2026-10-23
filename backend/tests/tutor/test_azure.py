@@ -189,7 +189,7 @@ def test_a_developer_signs_in_with_the_azure_cli_and_the_app_with_its_managed_id
     assert isinstance(default_credential(in_azure), ManagedIdentityCredential)
 
 
-def test_only_the_azure_client_imports_network_libraries() -> None:
+def test_only_the_azure_client_and_the_blob_store_import_network_libraries() -> None:
     network = ("openai", "azure", "httpx2")
     importers = [
         f"{package.__name__}.{module}"
@@ -198,7 +198,7 @@ def test_only_the_azure_client_imports_network_libraries() -> None:
         if any(name == lib or name.startswith(f"{lib}.") for name in imported for lib in network)
     ]
 
-    assert importers == ["btl.tutor.azure.py"]
+    assert sorted(importers) == ["btl.store.blob.py", "btl.tutor.azure.py"]
 
 
 def _packages() -> list[ModuleType]:

@@ -1,3 +1,4 @@
+import threading
 from dataclasses import dataclass, field
 
 from btl.learn.evidence import EvidencePack, QuestionView, question_view
@@ -73,3 +74,35 @@ def test_feedback_after_a_different_history_is_worded_again() -> None:
     again = cached.feedback(PACK, pick, History((True, True)))
 
     assert plain != after_two_right == again and len(inner.calls) == 2
+
+
+@dataclass
+class Gated(Counting):
+    """A `Counting` Tutor whose first wording waits until the test lets it go."""
+
+    stalled: threading.Event = field(default_factory=threading.Event)
+    go_on: threading.Event = field(default_factory=threading.Event)
+
+    def question(self, view: QuestionView) -> TutorQuestion:
+        worded = super().question(view)
+        if len(self.calls) == 1:
+            self.stalled.set()
+            assert self.go_on.wait(10)
+        return worded
+
+
+def test_viewers_asking_for_the_same_words_at_once_all_get_the_words_kept() -> None:
+    inner = Gated()
+    cached = CachedTutor(inner)
+    view = question_view(PACK)
+    slow: list[TutorQuestion] = []
+    first = threading.Thread(target=lambda: slow.append(cached.question(view)))
+    first.start()
+    assert inner.stalled.wait(10)
+
+    meanwhile = cached.question(view)  # not held up by the first wording
+    inner.go_on.set()
+    first.join(10)
+
+    assert meanwhile == TutorQuestion("question 2")
+    assert slow == [meanwhile] and cached.question(view) == meanwhile

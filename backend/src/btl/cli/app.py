@@ -1,7 +1,9 @@
 """The `btl` command and its subcommands."""
 
 import json
+import logging
 import os
+import sys
 import time
 from collections import Counter
 from collections.abc import Sequence
@@ -20,6 +22,9 @@ from rich.rule import Rule
 from rich.text import Text
 
 from btl.api.app import create_app
+from btl.api.events import LOGGER as EVENTS_LOGGER
+from btl.api.events import emit
+from btl.api.limits import WORDINGS_PER_DAY, WORDINGS_PER_VIEWER, Allowance, LimitedTutor
 from btl.cli.render import (
     counted,
     events_table,
@@ -81,7 +86,8 @@ from btl.schema.moment import PlantedMoment
 from btl.schema.vocab import ConceptId
 from btl.sim.engine import simulate_match
 from btl.sim.shape import FOUR_FOUR_TWO
-from btl.store.base import Stored, check_viewer_id
+from btl.store.base import LearnerStore, Stored, check_viewer_id
+from btl.store.blob import BlobLearnerStore, blob_container
 from btl.store.json_files import JsonLearnerStore
 from btl.store.memory import MemoryLearnerStore
 from btl.tutor.azure import AzureClient, FoundrySettings
@@ -92,7 +98,7 @@ from btl.tutor.foundry import FoundryTutor
 from btl.tutor.model import ModelClient, ModelError, ModelRequest, RecordingClient, ReplayClient
 from btl.tutor.prompts import PROMPT_VERSION
 from btl.tutor.templates import TemplateTutor
-from btl.tutor.verified import CheckRecord, VerifiedTutor
+from btl.tutor.verified import CheckRecord, Fallback, VerifiedTutor
 from btl.value.xt import ThreatModel, fit_on_simulated_matches, rate_match
 
 EXAMPLES = (
@@ -135,6 +141,14 @@ class TutorChoice(StrEnum):
 
     TEMPLATE = "template"
     FOUNDRY = "foundry"
+
+
+class StoreChoice(StrEnum):
+    """Where `btl serve` keeps learner records."""
+
+    MEMORY = "memory"
+    JSON = "json"
+    BLOB = "blob"
 
 
 TutorOption = Annotated[
@@ -613,32 +627,128 @@ def demo_viewer(
     console.print(progress_bars(viewer.seen[-1].mastery))
 
 
+# `btl serve` reads its options from these variables too, so a container is configured by its
+# environment; an option given on the command line wins.
 @app.command()
 def serve(
-    host: Annotated[str, typer.Option(help="Address to listen on.")] = "127.0.0.1",
-    port: Annotated[int, typer.Option(help="Port to listen on.")] = DEFAULT_PORT,
-    learners: Annotated[Path, typer.Option(help="Folder for learner records.")] = DEFAULT_LEARNERS,
-    model: ModelPath = DEFAULT_MODEL,
+    host: Annotated[
+        str, typer.Option(help="Address to listen on.", envvar="BTL_HOST")
+    ] = "127.0.0.1",
+    port: Annotated[int, typer.Option(help="Port to listen on.", envvar="BTL_PORT")] = DEFAULT_PORT,
+    store: Annotated[
+        StoreChoice,
+        typer.Option(
+            help="json: files in --learners, shared with `btl learn`. memory: forgotten when "
+            "the server stops. blob: Azure Blob Storage (--blob-account-url).",
+            envvar="BTL_STORE",
+        ),
+    ] = StoreChoice.JSON,
+    blob_account_url: Annotated[
+        str | None,
+        typer.Option(
+            help="With --store blob: the storage account, https://<account>.blob.core.windows.net.",
+            envvar="BTL_BLOB_ACCOUNT_URL",
+        ),
+    ] = None,
+    blob_container: Annotated[
+        str,
+        typer.Option(
+            help="With --store blob: the container of learner blobs.", envvar="BTL_BLOB_CONTAINER"
+        ),
+    ] = "learners",
+    learners: Annotated[
+        Path, typer.Option(help="Folder for learner records.", envvar="BTL_LEARNERS")
+    ] = DEFAULT_LEARNERS,
+    model: Annotated[
+        Path,
+        typer.Option(
+            help="The threat model file; fitted on 200 simulated matches and saved if missing.",
+            envvar="BTL_MODEL",
+        ),
+    ] = DEFAULT_MODEL,
     frontend: Annotated[
-        Path, typer.Option(help="The built web page, served outside /api if it exists.")
+        Path,
+        typer.Option(
+            help="The built web page, served outside /api if it exists.", envvar="BTL_FRONTEND"
+        ),
     ] = DEFAULT_FRONTEND,
-    tutor: TutorOption = TutorChoice.TEMPLATE,
-    tutor_log: TutorLogPath = DEFAULT_TUTOR_LOG,
+    tutor: Annotated[
+        TutorChoice,
+        typer.Option(
+            "--tutor",
+            help="template: wording written in code. foundry: a model in Azure AI Foundry, "
+            "checked by the Verifier, with the template as fallback (see docs/setup.md).",
+            envvar="BTL_TUTOR",
+        ),
+    ] = TutorChoice.TEMPLATE,
+    tutor_log: Annotated[
+        Path,
+        typer.Option(
+            "--tutor-log",
+            help="Where --tutor foundry logs every model call.",
+            envvar="BTL_TUTOR_LOG",
+        ),
+    ] = DEFAULT_TUTOR_LOG,
+    wordings_per_viewer: Annotated[
+        int,
+        typer.Option(
+            min=0,
+            help="With --tutor foundry: model wordings per viewer a day, then the template's.",
+            envvar="BTL_WORDINGS_PER_VIEWER",
+        ),
+    ] = WORDINGS_PER_VIEWER,
+    wordings_per_day: Annotated[
+        int,
+        typer.Option(
+            min=0,
+            help="With --tutor foundry: model wordings a day for everyone, then the template's.",
+            envvar="BTL_WORDINGS_PER_DAY",
+        ),
+    ] = WORDINGS_PER_DAY,
 ) -> None:
     """Serve the learning loop to the web page: the API, and the built page if there is one.
 
-    Learner records are the same files `btl learn` uses, so a viewer can carry on in either.
+    With the JSON store, learner records are the same files `btl learn` uses, so a viewer can
+    carry on in either.
     """
-    course = Course(_threat_model_or_fit(model), _server_tutor(tutor, tutor_log))
+    allowance = Allowance(wordings_per_viewer, wordings_per_day, lambda: datetime.now(UTC).date())
+    course = Course(_threat_model_or_fit(model), _server_tutor(tutor, tutor_log, allowance))
+    records = _records(store, learners, blob_account_url, blob_container)
     page = frontend if (frontend / "index.html").is_file() else None
     if page is None:
         console.print(
             f"No built page in {frontend}: serving the API only. "
             "Build it with `npm run build` in frontend/, or use `npm run dev` there."
         )
-    api = create_app(lambda: course, JsonLearnerStore(learners), _now, page)
+    api = create_app(lambda: course, records, _now, page)
+    _events_to_stdout()
     console.print(f"Serving on http://{host}:{port} (API under /api). Ctrl+C stops it.")
     uvicorn.run(api, host=host, port=port, log_level="warning")
+
+
+def _events_to_stdout() -> None:
+    # One JSON object per line, which Container Apps sends on to Log Analytics.
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(logging.Formatter("%(message)s"))
+    events = logging.getLogger(EVENTS_LOGGER)
+    events.handlers = [handler]
+    events.setLevel(logging.INFO)
+
+
+def _records(
+    store: StoreChoice, learners: Path, account_url: str | None, container: str
+) -> LearnerStore:
+    if store is StoreChoice.MEMORY:
+        return MemoryLearnerStore()
+    if store is StoreChoice.JSON:
+        return JsonLearnerStore(learners)
+    if not account_url:
+        console.print("Set --blob-account-url (or BTL_BLOB_ACCOUNT_URL) to use --store blob.")
+        raise typer.Exit(1)
+    # In Azure the app's managed identity signs in; locally, `az login` in the Tutor's tenant.
+    client_id = os.environ.get("AZURE_CLIENT_ID") or None
+    tenant = os.environ.get("BTL_FOUNDRY_TENANT", "")
+    return BlobLearnerStore(blob_container(account_url, container, client_id, tenant))
 
 
 # Where the AI Tutor's model is; docs/setup.md says how to find each value.
@@ -657,14 +767,21 @@ PING = ModelRequest(
 
 
 def _foundry_settings() -> FoundrySettings:
-    missing = [name for name in FOUNDRY_VARIABLES if not os.environ.get(name)]
+    # In Azure, AZURE_CLIENT_ID names the app's managed identity, which needs no tenant.
+    client_id = os.environ.get("AZURE_CLIENT_ID") or None
+    needed = FOUNDRY_VARIABLES[:2] if client_id else FOUNDRY_VARIABLES
+    missing = [name for name in needed if not os.environ.get(name)]
     if missing:
         console.print(
             f"Set {', '.join(missing)} to use the AI Tutor; docs/setup.md says how to find them."
         )
         raise typer.Exit(1)
-    endpoint, deployment, tenant = (os.environ[name] for name in FOUNDRY_VARIABLES)
-    return FoundrySettings(endpoint, deployment, tenant)
+    return FoundrySettings(
+        os.environ["BTL_FOUNDRY_ENDPOINT"],
+        os.environ["BTL_FOUNDRY_DEPLOYMENT"],
+        os.environ.get("BTL_FOUNDRY_TENANT", ""),
+        client_id,
+    )
 
 
 def _tutor(choice: TutorChoice, log: Path) -> Tutor:
@@ -673,11 +790,12 @@ def _tutor(choice: TutorChoice, log: Path) -> Tutor:
     return WaitingTutor(_verified_tutor(log), console)
 
 
-def _server_tutor(choice: TutorChoice, log: Path) -> Tutor:
-    # Each request replays the match, so the server remembers the words it has already shown.
+def _server_tutor(choice: TutorChoice, log: Path, allowance: Allowance) -> Tutor:
+    # Each request replays the match, so the server remembers the words it has already shown; and
+    # a public server limits how much the model words each day.
     if choice is TutorChoice.TEMPLATE:
         return TemplateTutor()
-    return CachedTutor(_verified_tutor(log))
+    return LimitedTutor(CachedTutor(_verified_tutor(log)), TemplateTutor(), allowance)
 
 
 def _verified_tutor(log: Path) -> VerifiedTutor:
@@ -685,8 +803,12 @@ def _verified_tutor(log: Path) -> VerifiedTutor:
 
     def record(check: CheckRecord) -> None:
         append_json_line(log, {"logged_at": _now(), **asdict(check)})
+        emit("model_call", **asdict(check))
 
-    return VerifiedTutor(FoundryTutor(client), TemplateTutor(), record)
+    def fell_back(fallback: Fallback) -> None:
+        emit("wording_fallback", **asdict(fallback))
+
+    return VerifiedTutor(FoundryTutor(client), TemplateTutor(), record, on_fallback=fell_back)
 
 
 @app.command(name="tutor-ping")

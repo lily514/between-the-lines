@@ -4,6 +4,7 @@ import importlib
 import json
 import pkgutil
 from collections.abc import Callable
+from dataclasses import replace
 from types import ModuleType
 from typing import Any
 
@@ -11,6 +12,7 @@ import httpx2
 import pytest
 from azure.core.credentials import AccessToken
 from azure.core.exceptions import ClientAuthenticationError
+from azure.identity import AzureCliCredential, ManagedIdentityCredential
 
 import btl
 from btl.tutor.azure import (
@@ -19,6 +21,7 @@ from btl.tutor.azure import (
     AzureClient,
     FoundrySettings,
     cli_credential,
+    default_credential,
 )
 from btl.tutor.model import ModelError, ModelRequest
 from tests.fixtures.imports import imports_by_module
@@ -179,7 +182,14 @@ def test_the_azure_cli_is_asked_for_tokens_from_the_named_tenant() -> None:
     assert cli_credential(SETTINGS.tenant).tenant_id == SETTINGS.tenant
 
 
-def test_only_the_azure_client_imports_network_libraries() -> None:
+def test_a_developer_signs_in_with_the_azure_cli_and_the_app_with_its_managed_identity() -> None:
+    in_azure = replace(SETTINGS, tenant="", client_id="00000000-0000-0000-0000-00000000c11d")
+
+    assert isinstance(default_credential(SETTINGS), AzureCliCredential)
+    assert isinstance(default_credential(in_azure), ManagedIdentityCredential)
+
+
+def test_only_the_azure_client_and_the_blob_store_import_network_libraries() -> None:
     network = ("openai", "azure", "httpx2")
     importers = [
         f"{package.__name__}.{module}"
@@ -188,7 +198,7 @@ def test_only_the_azure_client_imports_network_libraries() -> None:
         if any(name == lib or name.startswith(f"{lib}.") for name in imported for lib in network)
     ]
 
-    assert importers == ["btl.tutor.azure.py"]
+    assert sorted(importers) == ["btl.store.blob.py", "btl.tutor.azure.py"]
 
 
 def _packages() -> list[ModuleType]:

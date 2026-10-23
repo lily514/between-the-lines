@@ -1,0 +1,21 @@
+# The image needs only backend/ and frontend/ sources and their lockfiles. Everything else stays out, above all
+# anything private or generated: backend/private/ (the real-names list), backend/data/ and .azure/.
+.git
+.claude
+.azure
+.github
+.vscode
+docs
+infra
+**/node_modules
+**/.venv
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+backend/data
+backend/private
+backend/runs
+backend/tests
+backend/examples
+frontend/dist
+frontend/coverage

@@ -36,6 +36,8 @@ uv run btl serve
 uv run btl openapi --out ../frontend/src/api/openapi.json   # the schema the page's types are made from
 ```
 
+Each `btl serve` option can also come from an environment variable, which is how the container is configured: `BTL_HOST`, `BTL_PORT`, `BTL_STORE` (`json` or `memory`), `BTL_LEARNERS`, `BTL_MODEL`, `BTL_FRONTEND`, `BTL_TUTOR`, `BTL_TUTOR_LOG`, and with `--tutor foundry` the daily limits `BTL_WORDINGS_PER_VIEWER` and `BTL_WORDINGS_PER_DAY` (`docs/deployment.md`). An option given on the command line wins. `GET /api/health` answers `{"status": "ok"}` once the server is listening.
+
 ## The web page
 
 The page lives in `frontend/`: Vite, React and TypeScript, installed with npm.
@@ -65,6 +67,81 @@ cd backend && uv run btl openapi --out ../frontend/src/api/openapi.json
 cd ../frontend && npm run api-types
 ```
 A backend test fails if `openapi.json` is out of date, and a frontend test fails if `schema.d.ts` doesn't match it.
+
+## Optional: the container (Docker)
+
+The public demo runs as one container: the built page, the API and the learning engine, with the threat model fitted when the image is built. Building it locally needs [Docker Desktop](https://www.docker.com/products/docker-desktop/); deploying to Azure doesn't, since azd builds the image in Azure.
+
+1. Install Docker Desktop and start it.
+2. From the repo root, build and run the image:
+   ```sh
+   docker build -t btl .
+   docker run --rm -p 127.0.0.1:8000:8000 btl
+   ```
+   The page is at <http://127.0.0.1:8000>. By default the container uses the template Tutor and keeps learner records in memory, so they are gone when it stops. Its `BTL_*` variables (see "The web page's API") change that, for example `docker run -e BTL_TUTOR=foundry …`.
+3. The smoke test builds the image, starts it, checks its health, and plays one question through to its feedback. It is opt-in, because it needs Docker; from `backend/`:
+   ```sh
+   uv run pytest -m container
+   ```
+
+On Apple Silicon, Docker builds an arm64 image. Azure runs amd64, which is fine, because azd builds the deployed image in Azure's registry.
+
+## Optional: the Blob learner store (Azurite)
+
+In Azure, learner records are blobs in Azure Blob Storage (`--store blob`). Its tests run against [Azurite](https://learn.microsoft.com/azure/storage/common/storage-use-azurite), Microsoft's storage emulator, in Docker Desktop. They are opt-in, so the default `pytest` run needs neither.
+
+1. Start Azurite (blobs only, kept in memory, so nothing outlives it):
+   ```sh
+   docker run -d --rm --name btl-azurite -p 127.0.0.1:10000:10000 \
+     mcr.microsoft.com/azure-storage/azurite:3.35.0 \
+     azurite-blob --blobHost 0.0.0.0 --inMemoryPersistence --skipApiVersionCheck
+   ```
+   `--skipApiVersionCheck` lets the current Python SDK talk to it.
+2. Set `BTL_AZURITE_KEY` to Azurite's account key. Every copy of Azurite uses the same key, which Microsoft publishes on the page above ("Well-known storage account and key"); it opens only a local emulator. It is the one key this project uses, read from the environment by these tests only and never written into the repo.
+   ```sh
+   export BTL_AZURITE_KEY='<the published key>'
+   ```
+3. From `backend/`, run the Blob store through the learner store contract, plus its own cases:
+   ```sh
+   uv run pytest -m blob
+   ```
+   Without the key, or without Azurite running, these tests skip and say why.
+4. Stop Azurite with `docker stop btl-azurite`.
+
+## Optional: the public demo's infrastructure (Bicep and azd)
+
+The public demo is described in Bicep (`infra/`) and deployed with the Azure Developer CLI (azd), which reads `azure.yaml`. Writing and checking the Bicep needs only the first two steps, and creates nothing in Azure.
+
+1. Install the Bicep CLI (into the Azure CLI) and azd:
+   ```sh
+   az bicep install
+   brew tap azure/azd && brew install azd
+   ```
+2. In VS Code, install the **Bicep** extension (the workspace recommends it): completions, hover docs and lint as you type. Check the Bicep from the repo root, as CI does:
+   ```sh
+   az bicep build --file infra/main.bicep --stdout > /dev/null
+   az bicep lint --file infra/main.bicep
+   ```
+3. Sign azd in, **naming the tenant**. azd keeps its own sign-in, separate from `az login`, and has the same trap: without the tenant it may use your default one, and Azure refuses the token.
+   ```sh
+   azd auth login --tenant-id <tenant-id>
+   ```
+4. Create the azd environment, from the repo root. It lives in `.azure/btl-demo/` (gitignored): the resource group becomes `rg-btl-demo`, and the alert email reaches the budgets as a parameter, never the repo.
+   ```sh
+   azd env new btl-demo --subscription <subscription-id> --location eastus2
+   azd env set ALERT_EMAIL <your-email>
+   ```
+5. **Preview first**, every time; it changes nothing:
+   ```sh
+   azd provision --preview
+   ```
+   The summary lists only the main resource types. The identity, role assignments, diagnostic setting and budgets show in the full what-if: `az deployment sub what-if --subscription <subscription-id> --location eastus2 --template-file infra/main.bicep --parameters environmentName=btl-demo location=eastus2 alertEmail=<your-email>`. Lines marked `-`, which Azure fills in by default, are noise; so are values shown as `[reference(…)]`, which are only known during the deployment.
+6. Create everything and deploy, about 20 minutes the first time (most of it the Container Apps environment). It prints the public URL:
+   ```sh
+   azd up
+   ```
+   The registry costs about $5 a month from then on; everything else costs nothing while the app is idle. After the first deploy, a hook sets `SERVICE_WEB_RESOURCE_EXISTS=true`, so later provisions keep the deployed image instead of the placeholder. `azd deploy` alone rebuilds and redeploys the app.
+7. To have the model word the questions, and for everything else about the running demo (the two commands outside Bicep, changing it, costs, taking it down), see [docs/deployment.md](deployment.md).
 
 ## Optional: check generated names against real ones
 
@@ -122,7 +199,7 @@ The values below are placeholders: `<subscription>`, `<tenant-id>`, `<resource-g
    export BTL_FOUNDRY_DEPLOYMENT=gpt-5.4-nano
    export BTL_FOUNDRY_TENANT=<tenant-id>
    ```
-   The tenant is always named, because `az login` may default to a different one.
+   The tenant is always named, because `az login` may default to a different one. In Azure the app needs no tenant: it signs in as its managed identity, named by `AZURE_CLIENT_ID` (`docs/deployment.md`).
 7. Check the model answers, from `backend/`:
    ```sh
    uv run btl tutor-ping

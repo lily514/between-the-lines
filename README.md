@@ -18,8 +18,17 @@ Built for the "Inside the Game" hackathon.
 | 2c. The web page | The same loop in a browser: a React page over a small FastAPI layer, for phone and desktop, in light and dark | Done |
 | 2d. The basics | Restarts, offside, and fouls and cards as newcomer concepts, asked at the stoppage they cause; a simulator whose blocks, offside pictures and bookings agree with the Laws | Done |
 | 2e. Getting started | Pick a team to support, with club crests; a team sheet before each match that grows with you: names and positions in plain words, then the formation and kick-off shape, then players' numbers from matches you've watched | Done |
+| 3. Deploy it properly | A public demo on Azure Container Apps: one `azd up` builds the container and creates every resource from Bicep; managed identity and no keys anywhere; progress kept in Blob Storage; daily limits on the model; events and queries in Log Analytics | Done |
 
 Work in progress lives on milestone branches and is merged to `main` when each milestone is complete. 2c, 2d and then 2e were built before 2b, while Azure wasn't set up yet.
+
+## Try it online
+
+**<https://ca-web-oeafow3mvh7xi.whitesky-8ac56dd8.eastus2.azurecontainerapps.io/>**
+
+Press Start, pick a team, and watch your first match. There is nothing to sign up for: the page gives you a random id and keeps it in this browser, so you can come back later and carry on. A model in Azure AI Foundry words the questions and feedback, checked by the Verifier; the source line under each piece of feedback says who wrote it. If the page takes half a minute to appear, it was asleep: it scales to zero when nobody is using it.
+
+How it is deployed, and how to deploy your own: [docs/deployment.md](docs/deployment.md).
 
 ## Quickstart
 
@@ -93,7 +102,7 @@ cd ../backend
 uv run btl serve      # then open http://127.0.0.1:8000
 ```
 
-Type a name, then pick a team to support, or let the page pick one for you. Your three matches are that club's fixtures. Before each match, "Who's playing" shows both elevens, your team first. Your answers are saved in the same records as `btl learn`, so you can start in the terminal and carry on in the browser. A reload carries on from the question you were on.
+Press Start, then pick a team to support, or let the page pick one for you. Your three matches are that club's fixtures. Before each match, "Who's playing" shows both elevens, your team first. There is no sign-in: the page gives you a random id and keeps it in this browser, so a reload, or a visit another day, carries on from the question you were on. "Start over" forgets it, after asking. Your answers are saved in the same kind of record `btl learn` writes.
 
 <p>
   <img src="docs/milestone-2e/screenshots/pick-team-phone.png" alt="Pick your team on a phone: ten fictional clubs, each with its crest, name and code, one of them picked" width="260">
@@ -147,6 +156,94 @@ uv run btl tutor-eval --seeds 3 --per-kind 2         # measure it (about 230 cal
 
   Every call is logged to `data/tutor-log.jsonl`.
 
+## Watching the demo
+
+In Azure, the app writes one JSON line for each step of the loop (`backend/src/btl/api/events.py` lists them all): `question_asked`, `answer_graded`, `mastery_updated`, `full_time`, `model_call`, `wording_fallback` and `limit_reached`. Container Apps sends them to the Log Analytics workspace, where they arrive in the `ContainerAppConsoleLogs` table a few minutes later. The viewer id in them is the random id the browser made.
+
+Run these in the portal (the workspace `log-…` → **Logs**), or from the command line:
+```sh
+az monitor log-analytics query --subscription <subscription-id> \
+  --workspace "$(azd env get-value AZURE_LOG_ANALYTICS_CUSTOMER_ID)" --analytics-query '<query>'
+```
+
+**The funnel, by day:** who came, and how far they got. A reload asks a question again, so questions are counted once each.
+```kql
+ContainerAppConsoleLogs
+| where Log startswith '{"event"'
+| extend e = parse_json(Log)
+| extend Event = tostring(e.event), Viewer = tostring(e.viewer_id)
+| summarize
+    Visitors = dcountif(Viewer, Event == "question_asked"),
+    Questions = dcountif(strcat(Viewer, "/", tostring(e.pack_id)), Event == "question_asked"),
+    Answers = countif(Event == "answer_graded"),
+    RightAnswers = countif(Event == "answer_graded" and tobool(e.correct)),
+    MatchesFinished = countif(Event == "full_time")
+    by Day = startofday(TimeGenerated)
+| order by Day desc
+```
+
+**Who worded the feedback, by concept:** the model, the template after a failed check or a failed call (the next query says which), or the template past a daily limit.
+```kql
+ContainerAppConsoleLogs
+| where Log startswith '{"event"'
+| extend e = parse_json(Log)
+| where tostring(e.event) == "answer_graded"
+| extend Concept = tostring(e.concept), Source = tostring(e.source)
+| extend WordedBy = case(
+    Source startswith "template (fallback", "Template: fallback",
+    Source startswith "template (daily limit", "Template: daily limit",
+    Source == "template", "Template: model off",
+    "Model")
+| summarize Feedback = count() by Concept, WordedBy
+| as Counts
+| join kind=inner (Counts | summarize Total = sum(Feedback) by Concept) on Concept
+| project Concept, WordedBy, Feedback, Share = round(100.0 * Feedback / Total, 1)
+| order by Concept asc, Feedback desc
+```
+
+**The model, by day:** calls, how often the first try passes, failed calls, speed, tokens and an estimated cost (set the prices to the deployment's current ones, per million tokens).
+```kql
+let PriceIn = 0.20;
+let PriceOut = 1.25;
+ContainerAppConsoleLogs
+| where Log startswith '{"event"'
+| extend e = parse_json(Log)
+| extend Event = tostring(e.event)
+| where Event in ("model_call", "wording_fallback", "limit_reached")
+| extend Call = Event == "model_call", Failed = isnotempty(tostring(e.error))
+// Seconds only for calls that got a reply; percentiles skip the empty ones.
+| extend Seconds = iff(Call and not(Failed), todouble(e.seconds), real(null))
+| summarize
+    Calls = countif(Call),
+    // Of the first tries that got a reply: comparable with docs/milestone-2b/tutor-evaluation.md.
+    FirstTries = countif(Call and not(Failed) and toint(e.attempt) == 1),
+    FirstTriesPassed = countif(Call and toint(e.attempt) == 1 and tobool(e.passed)),
+    NoReply = countif(Call and Failed),
+    P50Seconds = round(percentile(Seconds, 50), 2),
+    P95Seconds = round(percentile(Seconds, 95), 2),
+    TokensIn = sumif(tolong(e.input_tokens), Call),
+    TokensOut = sumif(tolong(e.output_tokens), Call),
+    Fallbacks = countif(Event == "wording_fallback"),
+    LimitsReached = countif(Event == "limit_reached")
+    by Day = startofday(TimeGenerated)
+| extend FirstTryPassRate = round(100.0 * FirstTriesPassed / FirstTries, 1)
+| extend EstimatedCost = round((TokensIn * PriceIn + TokensOut * PriceOut) / 1e6, 3)
+| project Day, Calls, FirstTryPassRate, NoReply, P50Seconds, P95Seconds, TokensIn, TokensOut,
+    EstimatedCost, Fallbacks, LimitsReached
+| order by Day desc
+```
+
+**Why the template was used:** the Verifier's failed checks, or "no reply" when a call failed (a 429 from the deployment's token cap counts here).
+```kql
+ContainerAppConsoleLogs
+| where Log startswith '{"event"'
+| extend e = parse_json(Log)
+| where tostring(e.event) == "wording_fallback"
+| mv-expand Reason = e.reasons to typeof(string)
+| summarize Times = count() by Reason, Kind = tostring(e.kind)
+| order by Times desc
+```
+
 ## Honest limits
 
 - **Synthetic matches.** The simulator is calibrated against 40 real matches (see the implementation notes), but it isn't real football. It plays at a slower tempo, so more of its play counts as transition (54% of playing time against 49% in real matches), and it has about 80% of the real stoppages long enough for a question. Offside flags and bookings are drawn by chance, as they always were, and the players' positions are then drawn to agree with them: a flagged receiver stands past the offside line, and most bookings stop a promising attack.
@@ -157,7 +254,9 @@ uv run btl tutor-eval --seeds 3 --per-kind 2         # measure it (about 230 cal
 - **About one explanation in eight falls back to the template,** most often for fouls, whose facts are whole sentences the model tends to fold into its own. The numbers vary by a few points from run to run.
 - **The AI Tutor needs Azure.** Without it, the templates word everything, as they always did.
 - **The web page steps from question to question;** it doesn't play the match. Each question says when it is asked and why, and the page is built so a played-back match can replace the step later.
-- **No accounts.** The web page knows you only by the name you type, which is fine for a demo on your own machine and nothing more.
+- **No accounts.** The web page knows you only by a random id kept in your browser. Nobody can guess it, but your progress lives in that one browser: another device, or cleared site data, starts afresh.
+- **The online demo's model has a small ceiling.** Its deployment allows 30,000 tokens and 30 requests a minute, about two or three people playing at once; past that, and past each viewer's 60 wordings a day or everyone's 1,000, the template words it instead. The daily counts are kept in memory, so a restart starts them again.
+- **The online demo sleeps.** It scales to zero when idle, so the first visit after a quiet spell waits about 30 seconds. While judges are likely to visit, one replica is kept warm.
 - **Every club plays 4-4-2,** so the team sheet's formation never changes. Giving clubs their own shape would change every match, and the simulator's realism checks with it.
 - **Line-breaking passes are counted generously on the team sheet.** The simulator's flat midfield lines let short passes between level players count, so a central midfielder makes about 17–19 a match. Questions only use the clearer ones.
 - **The learner model's numbers are set by hand,** per tier of the curriculum, not fitted to real learners' answers, and five concepts are askable so far.
@@ -237,6 +336,7 @@ uv run btl simulate --seed 7 --plant line_breaking_pass:1,2,3 --plant counter_pr
 ## Docs
 
 - [docs/setup.md](docs/setup.md): setting up from a clean machine.
+- [docs/deployment.md](docs/deployment.md): the online demo in Azure: what is deployed, how it fits together, changing it, costs, and taking it down.
 - [docs/event-schema.md](docs/event-schema.md): the events, possessions, and player positions a match is made of.
 - [docs/concept-map.md](docs/concept-map.md): the curriculum, and how a concept becomes askable.
 - [docs/milestone-1/plan.md](docs/milestone-1/plan.md): what Milestone 1 set out to build, and [implementation-notes.md](docs/milestone-1/implementation-notes.md): what changed along the way.
@@ -245,3 +345,4 @@ uv run btl simulate --seed 7 --plant line_breaking_pass:1,2,3 --plant counter_pr
 - [docs/milestone-2d/plan.md](docs/milestone-2d/plan.md): what Milestone 2d set out to build, and [implementation-notes.md](docs/milestone-2d/implementation-notes.md): what changed along the way.
 - [docs/milestone-2e/plan.md](docs/milestone-2e/plan.md): what Milestone 2e set out to build, [implementation-notes.md](docs/milestone-2e/implementation-notes.md): what changed along the way, and [design/](docs/milestone-2e/design/) and [crests/](docs/milestone-2e/crests/): the team sheet, picker and crest designs.
 - [docs/milestone-2b/plan.md](docs/milestone-2b/plan.md): what Milestone 2b set out to build, [implementation-notes.md](docs/milestone-2b/implementation-notes.md): what changed along the way, [verifier.md](docs/milestone-2b/verifier.md): each of the Verifier's checks, and [tutor-evaluation.md](docs/milestone-2b/tutor-evaluation.md) with [tutor-review.md](docs/milestone-2b/tutor-review.md): how well the model does.
+- [docs/milestone-3/plan.md](docs/milestone-3/plan.md): what Milestone 3 set out to build, and [implementation-notes.md](docs/milestone-3/implementation-notes.md): what changed along the way.

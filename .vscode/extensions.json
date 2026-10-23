@@ -1,4 +1,9 @@
 {
-    "recommendations": ["ms-python.python", "ms-python.vscode-pylance", "charliermarsh.ruff"],
+    "recommendations": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "charliermarsh.ruff",
+        "ms-azuretools.vscode-bicep"
+    ],
     "unwantedRecommendations": ["ms-python.flake8", "ms-python.pylint", "ms-python.isort"]
 }

@@ -1,4 +1,7 @@
-"""The contract every learner store keeps. Milestone 3's Cosmos DB store joins STORES."""
+"""The contract every learner store keeps, run against each store in STORES.
+
+The Blob store's run needs the Azurite emulator, so it is opt-in: ``uv run pytest -m blob``.
+"""
 
 import json
 from collections.abc import Callable
@@ -18,14 +21,19 @@ from btl.store.base import (
     from_document,
     to_document,
 )
+from btl.store.blob import BlobLearnerStore
 from btl.store.json_files import JsonLearnerStore
 from btl.store.memory import MemoryLearnerStore
+from tests.fixtures.azurite import azurite_container
 from tests.fixtures.learning import LINE_BREAKING
 
 STORES: dict[str, Callable[[Path], LearnerStore]] = {
     "memory": lambda _: MemoryLearnerStore(),
     "json files": lambda folder: JsonLearnerStore(folder / "learners"),
+    "blob": lambda _: BlobLearnerStore(azurite_container()),
 }
+# Stores that need something running beside the tests, and the marker that opts in to them.
+OPT_IN = {"blob": pytest.mark.blob}
 ANSWER = Attempt(
     match_number=1,
     action_id=412,
@@ -43,7 +51,12 @@ ANSWER = Attempt(
 )
 
 
-@pytest.fixture(params=sorted(STORES))
+@pytest.fixture(
+    params=[
+        pytest.param(name, marks=[OPT_IN[name]] if name in OPT_IN else [])
+        for name in sorted(STORES)
+    ]
+)
 def store(request: pytest.FixtureRequest, tmp_path: Path) -> LearnerStore:
     name: str = request.param
     return STORES[name](tmp_path)
@@ -92,6 +105,19 @@ def test_a_write_from_an_old_version_is_refused(store: LearnerStore) -> None:
 def test_viewer_ids_are_kept_plain(viewer_id: str) -> None:
     with pytest.raises(ValueError, match="isn't a valid viewer id"):
         check_viewer_id(viewer_id)
+
+
+@pytest.mark.parametrize(
+    "viewer_id",
+    [
+        "0123456789abcdef0123456789abcdef",
+        "ffffffffffffffffffffffffffffffff",
+        "9f86d081884c7d659a2feaa0c55ad015",
+    ],
+)
+def test_a_browser_s_random_id_is_a_valid_viewer_id(viewer_id: str) -> None:
+    # The page makes 128 random bits as 32 lower-case hex characters (`newViewerId`).
+    check_viewer_id(viewer_id)
 
 
 def test_the_document_is_shaped_like_a_cosmos_item_and_round_trips() -> None:

@@ -4,7 +4,8 @@
 - GitHub remote, no PRs. One branch per milestone, named after the milestone (M1 "The Data Engine": `feature/data-engine`;
   M2a "The loop in the terminal": `feature/learning-loop`; M2c "The web page": `feature/web-page`;
   M2d "The basics": `feature/the-basics`; M2e "Getting started": `feature/getting-started`;
-  M2b "The AI Tutor": `feature/ai-tutor`). 2c, 2d and then 2e were built before 2b, while Azure wasn't set up yet.
+  M2b "The AI Tutor": `feature/ai-tutor`; M3 "Deploy it properly": `feature/deploy`). 2c, 2d and then 2e were
+  built before 2b, while Azure wasn't set up yet.
 - Each plan task is one commit on the milestone branch, made after Lily reviews the diff.
 - When a milestone is done, merge it into main with `git merge --no-ff`, so each milestone shows up as one merge in the graph.
 - Claude commits locally only; Lily pushes when ready. CI runs on every push, to any branch.
@@ -19,6 +20,8 @@ Milestone 2e adds getting started: picking a team to support, and a team sheet b
 that grows with the viewer.
 Milestone 2b adds the AI Tutor: model-worded questions and feedback, checked by the Verifier, in the
 terminal and on the page.
+Milestone 3 deploys the page and API: one `azd up` builds the container and creates every Azure
+resource from Bicep, serving a public demo URL, with managed identity and no secrets.
 
 ## Learning design rules
 - The match never depends on the viewer. Adaptation lives in which moments we ask about, when, and
@@ -42,6 +45,8 @@ terminal and on the page.
 - Model text reaches the viewer only through the Verifier; on any failure the template is used.
   Question prompts are built from the question view only. No viewer id, name or club goes in a prompt.
   A question is worded once: replays reuse the words the viewer saw.
+- Each visitor's viewer id is a random id made by the browser; there is no sign-in. Limits on model
+  calls fall back to the template, as any other model failure does.
 
 ## Hard rules
 - All data synthetic: fictional league/clubs/players only. No real league, club, or player names or marks.
@@ -50,10 +55,35 @@ terminal and on the page.
 - All code is new, written during the hackathon. Libraries are fine; copied code is not.
 - Every setup step goes in docs/setup.md in the same commit that needs it.
 
+## Azure and deployment
+- `azure.yaml`, `Dockerfile` and `.dockerignore` sit at the repo root; Bicep lives in `infra/` (`main.bicep` at
+  subscription scope, one hand-written module per concern in `infra/modules/`). No Azure Verified Modules.
+- Bicep is the source of truth for the deployed app's configuration. The app reads environment variables only
+  in `cli/` (`BTL_*`, plus `AZURE_CLIENT_ID`), as fallbacks for `btl serve`'s options.
+- The app runs as one replica: the prepared-match cache, the wording cache and the model-call limits live in
+  memory and rely on it.
+- Managed identity for everything: pulling images, calling the model, reading and writing blobs. No secrets,
+  keys or connection strings anywhere: not in the repo, not in files, not in app settings. The one exception
+  is Azurite's published key, read from `BTL_AZURITE_KEY` by opt-in tests only, never committed.
+- Lily's real values (subscription, tenant, Foundry endpoint, alert email) live in the azd environment
+  (`.azure/`, gitignored) or her shell. The repo uses placeholders.
+- Everything comes from code except two documented `az` commands: the demo model deployment on Lily's
+  existing Foundry resource, and the app's role on it (`docs/deployment.md`).
+- Everything stays within the subscription's $150 monthly credit. The spending limit stays on; the budgets
+  and the daily model-call cap stay in place.
+- **Command safety rules:**
+  - Ask before running any command that creates, changes or deletes Azure resources or could cost money,
+    including `azd up`, `azd provision`, `azd deploy`, `azd down`, `az … create/update/delete`, role
+    assignments and `docker push`.
+  - Preview infrastructure changes first (`azd provision --preview`) and summarise what will change.
+  - Never write secrets, keys or connection strings into files, the repo or app settings.
+  - Name the subscription in every `az` command (`--subscription`), since Lily's login defaults to another tenant.
+
 ## Docs
 - `docs/milestone-N/` holds what was written for that milestone: `plan.md` plus write-ups. Split
   milestones get their own folder (`docs/milestone-2a/`).
-- `docs/` root holds living references that every milestone updates (setup, event schema, concept map).
+- `docs/` root holds living references that every milestone updates (setup, event schema, concept map,
+  deployment).
 - Name documents in full words, never abbreviations (`expected-threat.md`, not `xt.md`).
 - `plan.md` is frozen once committed. Divergences go in `docs/milestone-N/implementation-notes.md`.
 - Whenever implementation differs from the plan, or something surprising is learned, add a note
@@ -71,6 +101,11 @@ terminal and on the page.
 - Web page: `uv run btl serve` (serves the API and the built page)
 - AI Tutor: add `--tutor foundry` to `btl learn`, `btl demo-viewer` or `btl serve` · `uv run btl tutor-ping` ·
   `uv run btl tutor-eval`
+- Opt-in tests: `uv run pytest -m blob` (needs Azurite in Docker and `BTL_AZURITE_KEY`) ·
+  `uv run pytest -m container` (builds and runs the image in Docker)
+
+## Commands (run from the repo root; each needs Lily's go-ahead except the preview)
+- `azd provision --preview` · `azd up` · `azd deploy` · `azd down --purge`
 
 ## Commands (run from frontend/)
 - Install: `npm ci` (Node 24, see `.nvmrc`)
@@ -98,6 +133,7 @@ cli, api, plus `replay.py`. `api` holds the HTTP routes the page calls; the page
 - pandas only in `schema/frames.py`, `io.py` (parquet files), `value/`, and `cli/`. Everything else uses typed dataclasses.
   pandas and socceraction are only partly typed, so only those edge modules may start with `# pyright: basic`; nowhere else.
 - Pure functions where possible; I/O only in `btl/io.py`, `btl/store/`, `btl/cli/`, `btl/api/` and `btl/tutor/azure.py`.
+  Only `btl/tutor/azure.py` and `btl/store/blob.py` import an Azure SDK.
 
 ## Naming
 - Modules/functions: snake_case; functions are verbs (`simulate_match`), data types are nouns (`Snapshot`).
@@ -117,6 +153,8 @@ cli, api, plus `replay.py`. `api` holds the HTTP routes the page calls; the page
 - Property tests for invariants (coords in bounds, time monotonic, SPADL schema valid).
 - Simulator realism is tested with *bands* over many seeds, never exact numbers.
 - No network, no files outside tmp_path. Model calls use `FakeClient` or `ReplayClient`. Slow tests marked `@pytest.mark.slow`.
+- Tests that need Docker are opt-in: `@pytest.mark.blob` (Azurite on localhost) and `@pytest.mark.container`.
+  The default run stays offline and fast, and needs neither Docker nor Azure.
 
 ## Commits
 - Short imperative subject line, no prefixes: `Add possession-chain simulator`, `Plant line-breaking moments`.

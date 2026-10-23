@@ -1,0 +1,167 @@
+# Deployment
+
+How the public demo runs in Azure, and how to change it. `docs/setup.md` has the one-time setup (the tools, `azd auth login`, `azd env new`); this page is the reference for what is deployed. Values in angle brackets are your own, kept in the azd environment (`.azure/<env>/.env`, gitignored) or your shell, never in the repo.
+
+## How it fits together
+
+```mermaid
+flowchart LR
+    browser(["Visitor's browser<br/>random viewer id"]) -- HTTPS --> app
+
+    subgraph group["Resource group rg-btl-demo: created by azd from infra/"]
+        app["Container app ca-web-…<br/>page + API + learning engine<br/>0 or 1 replica, never 2"]
+        identity["User-assigned identity id-…"]
+        registry["Container Registry cr…"]
+        storage["Storage account st…<br/>container learners"]
+        environment["Container Apps environment cae-…"]
+        workspace["Log Analytics log-…"]
+        demoBudget["Budget $10"]
+        app -- runs in --> environment
+        environment -- "diagnostic setting, no key" --> workspace
+    end
+
+    subgraph foundry["Your existing Foundry resource: two az commands"]
+        model["Deployment gpt-5.4-nano-demo<br/>30K tokens, 30 requests a minute"]
+    end
+
+    creditBudget["Budget $150<br/>the whole subscription"]
+
+    app -- signs in as --> identity
+    identity -. AcrPull .-> registry
+    identity -. Storage Blob Data Contributor .-> storage
+    identity -. Cognitive Services OpenAI User .-> model
+    app -- pulls its image --> registry
+    app -- "one blob per viewer, If-Match" --> storage
+    app -- "words questions and feedback" --> model
+    azd(["azd up / azd deploy"]) -- "remote build" --> registry
+```
+
+- **No keys anywhere.** Every arrow from the app signs in with Microsoft Entra ID as the identity; each dotted line is the one role that allows it, on that one resource. The registry's admin user, the storage account's shared keys, the workspace's keys and the Foundry resource's keys are all switched off.
+- **One replica at most,** because the wording cache and the daily limits live in the app's memory. Learner records live in storage, so they survive anything that happens to the app.
+
+## From nothing to a public URL
+
+1. `docs/setup.md`, "Optional: the public demo's infrastructure": install azd and Bicep, `azd auth login --tenant-id …`, `azd env new …`, `azd env set ALERT_EMAIL …`.
+2. `azd provision --preview`, then `azd up`: about 20 minutes the first time, most of it the Container Apps environment. The page works at once, worded by the template.
+3. The two commands below (the model deployment and the app's role on it), then `azd env set TUTOR foundry` with the endpoint and deployment, and `azd up` again: the model words the questions.
+
+## What is deployed
+
+One `azd up` builds the app's image in Azure and creates everything in `infra/` (Bicep), in the resource group `rg-<env>` in eastus2:
+
+| Resource | What it does |
+|---|---|
+| Container app `ca-web-…` | The one container: the page, the API and the learning engine. At most one replica; minimum 0 (or 1 while judges visit) |
+| Container Apps environment `cae-…` | Where the app runs; sends its logs to Azure Monitor |
+| Diagnostic setting `logs-to-workspace` | Carries the environment's logs to the workspace, with no key |
+| Log Analytics workspace `log-…` | The logs, queried with KQL; 30 days, capped at 0.15 GB a day |
+| Container Registry `cr…` (Basic) | The app's image, built here by azd |
+| User-assigned identity `id-…` | Who the app signs in as, for every Azure call |
+| Storage account `st…`, container `learners` | Learner records, one JSON blob per viewer. Shared keys are off; the app and you each hold Storage Blob Data Contributor on the `learners` container only |
+| Budgets | `budget-demo` ($10, this group) and `budget-monthly-credit` ($150, the whole subscription), emailing `ALERT_EMAIL` |
+
+The model is not in this group. The app calls a deployment on your existing Azure AI Foundry resource (`docs/setup.md`, "Optional: the AI Tutor"), set up by the two commands below.
+
+## The two commands outside Bicep
+
+These touch the Foundry resource's own resource group, which azd must never manage: `azd down` deletes whole resource groups. They are the only part of the demo not created from code. Run them once, after the first `azd up` (the second needs the identity it creates).
+
+1. **The demo's model deployment:** the same model as `btl tutor-ping` uses, with its own small cap. Capacity 30 allows 30,000 tokens and 30 requests a minute, enough for two or three people playing at once. Past either, Azure answers 429, which the app treats like any model failure: the template words it. The cap costs nothing in itself (you pay per token used), so raising it only lets more people be worded by the model at once; running the same command with another `--sku-capacity` changes it in place.
+   ```sh
+   az cognitiveservices account deployment create --subscription <subscription-id> \
+     --resource-group <foundry-resource-group> --name <foundry-resource> \
+     --deployment-name gpt-5.4-nano-demo --model-name gpt-5.4-nano --model-version 2026-03-17 \
+     --model-format OpenAI --sku-name GlobalStandard --sku-capacity 30
+   ```
+2. **The app's role on the Foundry resource.** "Cognitive Services OpenAI User" is a data-plane role: it allows calling the resource's deployments and nothing else, not changing them or reading keys. Azure can't scope it to one deployment; the app's configuration names only the demo's. The principal id is the identity's, from `azd env get-value AZURE_IDENTITY_PRINCIPAL_ID`. A new role takes a few minutes to work; until then the template words everything.
+   ```sh
+   az role assignment create --subscription <subscription-id> \
+     --role "Cognitive Services OpenAI User" \
+     --assignee-object-id <identity-principal-id> --assignee-principal-type ServicePrincipal \
+     --scope "$(az cognitiveservices account show --subscription <subscription-id> \
+       --resource-group <foundry-resource-group> --name <foundry-resource> --query id -o tsv)"
+   ```
+
+Then tell the app to use the model, and deploy:
+```sh
+azd env set TUTOR foundry
+azd env set FOUNDRY_ENDPOINT https://<foundry-resource>.openai.azure.com/
+azd env set FOUNDRY_DEPLOYMENT gpt-5.4-nano-demo
+azd provision --preview
+azd up
+```
+
+## Learner records
+
+Each viewer is a blob, `<viewer id>.json`, in the `learners` container, holding the same document `btl learn` writes to a file. Azure checks every write against the version the app read (the blob's ETag), so two revisions of the app, as during a deploy, can never overwrite each other. Records survive restarts, scaling to zero and deploys.
+
+To look at them, signed in as yourself (your role is on the container; there is no key to use):
+```sh
+az storage blob list --subscription <subscription-id> --account-name <storage-account> \
+  --container-name learners --auth-mode login -o table
+```
+In the portal, open the storage account, then **Containers → learners**; it signs in with Entra ID by default.
+
+## The model's limits
+
+A wording is one question or one feedback: at most two model calls (the first try and one repair). Words already in the server's cache are free and not counted.
+
+| Limit | Default | Past it |
+|---|---|---|
+| Per viewer, per UTC day | 60 wordings (`BTL_WORDINGS_PER_VIEWER`) | That viewer's feedback says "template (daily limit)" |
+| Everyone, per UTC day | 1,000 wordings, at most 2,000 calls, about $0.50 (`BTL_WORDINGS_PER_DAY`) | Everyone gets the template's words |
+| The deployment | 30,000 tokens and 30 requests a minute (capacity 30) | Azure answers 429; the template words it |
+
+The counts are in memory and start again when the app restarts; the deployment's cap holds regardless. Bicep sets the two variables from `wordingsPerViewer` and `wordingsPerDay` in `infra/main.bicep`.
+
+## Costs
+
+| | Idle | In use |
+|---|---|---|
+| Container Registry (Basic) | about $5 a month | |
+| Container app at minimum 0 | $0 | inside the monthly free grant |
+| Container app at minimum 1 | about $8–12 a month | |
+| Log Analytics | $0 (the daily cap keeps it inside the free 5 GB a month) | |
+| Storage account | under a cent a month | fractions of a cent per session |
+| The model | $0 | about 1–2¢ per three-match session; at most about $0.50 a day |
+
+The subscription's spending limit is the hard stop; the budgets only email.
+
+## Changing it
+
+Preview first, every time (`azd provision --preview`): it changes nothing.
+
+| To change | Run | What happens |
+|---|---|---|
+| The code (backend or page) | `azd deploy` | The image is built again in the registry, and a new revision takes over once it is healthy. About 3 minutes |
+| The infrastructure (`infra/`) or an `azd env set` value | `azd provision` | Bicep brings Azure into line with the code; the running image is kept (see "The first deploy" below) |
+| Both | `azd up` | Provision, then deploy |
+
+**Before judges visit,** keep one replica warm, so nobody waits for a cold start; afterwards set it back to 0. A warm replica costs about $2–3 a week.
+```sh
+azd env set MIN_REPLICAS 1
+azd provision --preview
+azd provision
+```
+
+**Cold starts.** At minimum 0 the app scales to zero after a few idle minutes, and the next visitor waits about 30 seconds while Azure places a replica and pulls the image (measured: 26.6 s). After that, requests take about 0.15 s.
+
+**The first deploy.** Before azd has built the app's image, the container app runs a public placeholder, which fails its health probes because it doesn't serve the app. A request in the minute between provision and deploy can hang and fail. After the first deploy, a hook in `azure.yaml` sets `SERVICE_WEB_RESOURCE_EXISTS=true`, so later provisions keep the running image (`infra/modules/app-image.bicep`).
+
+**Watching it.** The README's "Watching the demo" has four KQL queries over the app's events; they reach Log Analytics a few minutes after they happen. To see the console as it happens:
+```sh
+az containerapp logs show --subscription <subscription-id> --resource-group rg-<env> \
+  --name <container-app> --type console --follow
+```
+The platform's own log (revisions, probes, replicas) is `ContainerAppSystemLogs`.
+
+## Taking it down
+
+`azd down --purge` deletes the resource group and everything in it, including every learner record, and a hook resets `SERVICE_WEB_RESOURCE_EXISTS`. The subscription budget stays, on purpose. `azd up` afterwards builds it all again from the code, with the same names; only the public address's environment part may change. Then remove the two pieces outside Bicep:
+```sh
+az role assignment delete --subscription <subscription-id> \
+  --assignee <identity-principal-id> --role "Cognitive Services OpenAI User" \
+  --scope <foundry-resource-id>
+az cognitiveservices account deployment delete --subscription <subscription-id> \
+  --resource-group <foundry-resource-group> --name <foundry-resource> --deployment-name gpt-5.4-nano-demo
+```

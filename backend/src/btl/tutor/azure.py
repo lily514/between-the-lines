@@ -2,9 +2,10 @@
 
 It calls a model deployment through the Responses API, with the reply held to a JSON schema
 (structured output) and no reasoning, which keeps a nano model quick. It signs in with Microsoft
-Entra ID through the Azure CLI, never with a key: key access is switched off on the resource.
-The tenant is always named, because an `az login` can default to a different tenant from the
-one the resource is in, and Azure refuses that tenant's tokens.
+Entra ID, never with a key: key access is switched off on the resource. In Azure it signs in as
+the app's managed identity; on a developer's machine, through the Azure CLI. There the tenant is
+always named, because an `az login` can default to a different tenant from the one the resource
+is in, and Azure refuses that tenant's tokens.
 """
 
 import time
@@ -15,7 +16,7 @@ import httpx2
 import openai
 from azure.core.credentials import TokenCredential
 from azure.core.exceptions import AzureError
-from azure.identity import AzureCliCredential, get_bearer_token_provider
+from azure.identity import AzureCliCredential, ManagedIdentityCredential, get_bearer_token_provider
 from openai import AzureOpenAI
 
 from btl.tutor.model import ModelError, ModelReply, ModelRequest
@@ -28,16 +29,28 @@ REASONING_EFFORT = "none"
 
 @dataclass(frozen=True, slots=True)
 class FoundrySettings:
-    """Where the model is: the resource's endpoint, the deployment's name, and the tenant."""
+    """Where the model is, and who signs in to it.
+
+    ``client_id`` is the app's managed identity, in Azure; without one, the developer's
+    `az login` signs in, in ``tenant``.
+    """
 
     endpoint: str
     deployment: str
     tenant: str
+    client_id: str | None = None
 
 
 def cli_credential(tenant: str) -> AzureCliCredential:
     """The developer's `az login`, asked for tokens from ``tenant``."""
     return AzureCliCredential(tenant_id=tenant)
+
+
+def default_credential(settings: FoundrySettings) -> TokenCredential:
+    """The app's managed identity when the settings name one, else the developer's `az login`."""
+    if settings.client_id:
+        return ManagedIdentityCredential(client_id=settings.client_id)
+    return cli_credential(settings.tenant)
 
 
 class AzureClient:
@@ -54,11 +67,11 @@ class AzureClient:
 
         Args:
             settings: Where the model is.
-            credential: Where tokens come from; by default the Azure CLI, in the settings' tenant.
+            credential: Where tokens come from; by default `default_credential(settings)`.
             http_client: The HTTP client to send through; tests pass one with a mock transport.
         """
         token: Callable[[], str] = get_bearer_token_provider(
-            credential or cli_credential(settings.tenant), TOKEN_SCOPE
+            credential or default_credential(settings), TOKEN_SCOPE
         )
         self._deployment = settings.deployment
         # No retries: the Tutor has its own time budget, and falls back to the template.

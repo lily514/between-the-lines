@@ -1,0 +1,13 @@
+.start-over {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 0 var(--s-1);
+}
+
+.start-over__question {
+	margin: 0;
+	font-size: var(--fs-body-s);
+	color: var(--text-2);
+}

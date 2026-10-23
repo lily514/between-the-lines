@@ -20,8 +20,8 @@ beforeEach(() => {
 	localStorage.clear()
 })
 
-test('a viewer plays from their name through a question and its feedback to full time', async () => {
-	serve({
+test('a new viewer gets a random id, then plays through a question and its feedback to full time', async () => {
+	const spy = serve({
 		'/api/viewers': [reply(200, startStatus)],
 		'/next': [reply(200, identifyQuestion), reply(200, fullTime)],
 		'/answers': [reply(200, identifyFeedback)],
@@ -30,7 +30,10 @@ test('a viewer plays from their name through a question and its feedback to full
 	const user = userEvent.setup()
 	render(<App />)
 
-	await user.type(screen.getByLabelText('Your name'), 'lily{Enter}')
+	await user.click(screen.getByRole('button', { name: 'Start' }))
+	const [, init] = spy.mock.calls[0] ?? []
+	expect(typeof init?.body).toBe('string')
+	expect(JSON.parse(init?.body as string)).toEqual({ viewer_id: expect.stringMatching(/^[0-9a-f]{32}$/) as string })
 	await user.click(await screen.findByRole('button', { name: 'Watch match 1' }))
 	expect(await screen.findByRole('heading', { name: "Who's playing" })).toHaveFocus()
 	await user.click(screen.getByRole('button', { name: 'Kick off' }))
@@ -76,13 +79,13 @@ test('an answer to a question the server is no longer waiting on fetches the one
 	expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('The question the server is waiting on')
 })
 
-test('a refused name is shown on the form', async () => {
-	serve({ '/api/viewers': [reply(422, { detail: [{ msg: 'Use lower-case letters and digits' }] })] })
-	const user = userEvent.setup()
+test('a kept id the API refuses is forgotten, with the reason shown', async () => {
+	localStorage.setItem('btl.viewer', 'Edited By Hand')
+	serve({ '/api/viewers': [reply(422, { detail: [{ msg: "isn't a valid viewer id" }] })] })
 	render(<App />)
-	await user.type(screen.getByLabelText('Your name'), 'li ly{Enter}')
-	expect(await screen.findByRole('alert')).toHaveTextContent('Use lower-case letters and digits')
-	expect(screen.getByLabelText('Your name')).toHaveValue('li ly')
+	expect(await screen.findByRole('alert')).toHaveTextContent("isn't a valid viewer id")
+	expect(screen.getByRole('button', { name: 'Start' })).toBeInTheDocument()
+	expect(localStorage.getItem('btl.viewer')).toBeNull()
 })
 
 test('a failed request offers to try again, and trying again carries on', async () => {
@@ -98,7 +101,7 @@ test('a failed request offers to try again, and trying again carries on', async 
 	expect(await screen.findByRole('heading', { name: /Play has stopped for a free kick/ })).toBeInTheDocument()
 })
 
-test('a record that has gone sends the viewer back to the name form', async () => {
+test('a record that has gone sends the viewer back to the welcome', async () => {
 	localStorage.setItem('btl.viewer', 'lily')
 	serve({ '/api/viewers': [reply(200, startStatus)], '/next': [reply(404, { detail: 'no learner' })] })
 	render(<App />)
@@ -106,13 +109,15 @@ test('a record that has gone sends the viewer back to the name form', async () =
 	expect(localStorage.getItem('btl.viewer')).toBeNull()
 })
 
-test('the viewer can change their name', async () => {
+test('starting over asks first, then forgets the viewer', async () => {
 	localStorage.setItem('btl.viewer', 'lily')
 	serve({ '/api/viewers': [reply(200, startStatus)], '/next': [reply(200, identifyQuestion)] })
 	const user = userEvent.setup()
 	render(<App />)
-	await user.click(await screen.findByRole('button', { name: 'Not lily?' }))
-	expect(screen.getByLabelText('Your name')).toHaveValue('')
+	await user.click(await screen.findByRole('button', { name: 'Start over' }))
+	expect(localStorage.getItem('btl.viewer')).toBe('lily')
+	await user.click(screen.getByRole('button', { name: 'Yes, start over' }))
+	expect(screen.getByRole('button', { name: 'Start' })).toBeInTheDocument()
 	expect(localStorage.getItem('btl.viewer')).toBeNull()
 })
 
@@ -125,7 +130,7 @@ test('a new viewer picks a team before anything else, and can change it from the
 	const user = userEvent.setup()
 	render(<App />)
 
-	await user.type(screen.getByLabelText('Your name'), 'lily{Enter}')
+	await user.click(screen.getByRole('button', { name: 'Start' }))
 	await user.click(await screen.findByRole('radio', { name: /Hexham Anchors/ }))
 	await user.click(screen.getByRole('button', { name: 'Continue with Hexham Anchors' }))
 
@@ -153,9 +158,9 @@ test('a team refused because watching has started shows where the viewer stands'
 	})
 	const user = userEvent.setup()
 	render(<App />)
-	await user.type(screen.getByLabelText('Your name'), 'lily{Enter}')
+	await user.click(screen.getByRole('button', { name: 'Start' }))
 	await user.click(await screen.findByRole('button', { name: 'Pick one for me' }))
 	await user.click(screen.getByRole('button', { name: 'Continue with Hexham Anchors' }))
-	expect(await screen.findByRole('heading', { name: 'Welcome, lily' })).toBeInTheDocument()
+	expect(await screen.findByRole('heading', { name: 'Welcome' })).toBeInTheDocument()
 	expect(screen.queryByRole('button', { name: 'Change' })).toBeNull()
 })

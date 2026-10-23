@@ -12,6 +12,9 @@ backend/private/
 backend/data/
 backend/runs/
 
+# azd's environments: Lily's subscription, alert email and other real values, never committed
+.azure/
+
 # OS / editor
 .DS_Store
 .vscode/*

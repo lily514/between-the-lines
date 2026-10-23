@@ -7,6 +7,7 @@ license = "MIT"
 requires-python = ">=3.11,<3.12"
 dependencies = [
     "azure-identity>=1.26.0",
+    "azure-storage-blob>=12.31.0",
     "fastapi>=0.143.0",
     "numpy>=1.26.4",
     "openai>=3.36.1",
@@ -59,8 +60,12 @@ venv = ".venv"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = ["--strict-markers", "-m", "not slow"]
-markers = ["slow: long-running tests such as the batch Expected Threat fit"]
+addopts = ["--strict-markers", "-m", "not slow and not container and not blob"]
+markers = [
+    "slow: long-running tests such as the batch Expected Threat fit",
+    "container: builds and runs the Docker image (needs Docker); opt in with -m container",
+    "blob: runs the Blob store against the Azurite emulator (needs Docker); opt in with -m blob",
+]
 filterwarnings = ["error"]
 
 [tool.uv]

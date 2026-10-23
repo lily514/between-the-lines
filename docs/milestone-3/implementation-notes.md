@@ -2,6 +2,35 @@
 
 Where implementation diverged from [plan.md](plan.md), or something surprising was learned. One note per occurrence, added in the same commit as the change.
 
+## Summary (2026-10-23)
+
+Milestone 3 is done. The demo is public on Azure Container Apps, built and created from code by `azd up`. It signs in to everything as its managed identity, so no key exists anywhere. It keeps each visitor's progress in Blob Storage, words questions and feedback with the model within daily limits, and reports every step of the loop to Log Analytics. T1 to T10 are in, and Lily went through every command that changed Azure before it ran.
+
+**Biggest changes from the plan**
+- **The credential is chosen in `tutor/azure.py`, not `cli/`** (T6). The 2b code used the Azure CLI's sign-in, not `DefaultAzureCredential`, so a managed identity needed a small code change. Only `azure.py` and `store/blob.py` may import an Azure SDK.
+- **The limits count wordings, not calls** (60 per viewer and 1,000 a day, which bound the calls at the plan's 120 and 2,000). They sit in front of the wording cache, so cached words stay free (T6).
+- **Logs reach Log Analytics without a key,** through Azure Monitor and a diagnostic setting (Lily's choice in her module, T4). So the tables are `ContainerAppConsoleLogs` with `Log`, not the plan's `…_CL` with `Log_s`.
+- **azd doesn't keep `SERVICE_WEB_RESOURCE_EXISTS` for an app in our own Bicep.** Two hooks in `azure.yaml` do; without them, the second provision would have restored the placeholder image. The preview caught it (T5).
+- **Two more events:** `full_time`, for the funnel, and `wording_fallback` through a new callback on the Verifier. There's no access log, because the platform already records each request (T9).
+- **The demo deployment's capacity went from 10 to 30** (Lily's choice, T9). A capacity unit is 1,000 tokens *and one request* a minute, and capacity 10 throttled a single fast player.
+- **Random viewer ids come from `crypto.getRandomValues`, not `randomUUID`,** and "Start over" asks first (T2).
+
+**Measured**
+- **The image:** 755 MB, with the threat model fitted when it is built.
+- **Starting up:** healthy 1.9 s after the container starts locally. A cold start from zero replicas in Azure takes 26.6 s; a warm request takes about 0.15 s.
+- **The first `azd up`** took 21 minutes, 18 of them the Container Apps environment. Later ones take about 4 minutes.
+- **The model on the live demo:** 80% of first tries that got a reply passed, the 95th percentile of call time was 4.6 s, and the whole milestone's test traffic cost about $0.007 in tokens. The subscription has spent $0.57 of its $150 this month.
+
+**Cut:** nothing from the plan. CI/CD and Cosmos DB were out of scope from the start. The teardown test (`azd down --purge`, then `azd up`) wasn't run before the hackathon's close, because it would delete every learner record and might change the public address.
+
+**Carries over**
+- **One replica, because the wording cache and the limits live in memory.** More replicas would need both shared (Blob Storage or a cache service), and per-IP limits.
+- **Long-term storage:** one blob per attempt plus a head blob, or Cosmos DB with one item per attempt, if queries across viewers are wanted.
+- **The image is mostly the scientific stack;** a smaller one would make cold starts quicker.
+- **A visitor's progress lives in one browser's id;** real sign-in is the next step for identity.
+- **`httpx2` comes in through `openai`** and isn't declared directly.
+- **CI deploys nothing.** OpenID Connect from GitHub, with a separate deployer identity, is the plan's stretch idea.
+
 ## T1 — Server ready for a container (2026-10-22)
 **Plan said:** `/api/health`; a lock per viewer, with the wording cache and the prepared-match cache locked on their own; the prepared-match cache bounded, with a prepared match's memory measured; `btl serve` options with `BTL_*` fallbacks, including `--host`, `--port` and `--store memory|json`.
 **We did:** as planned, with these choices:
@@ -231,3 +260,20 @@ The README gains:
 **Checked:** the diagram renders with Mermaid's own renderer (mermaid-cli 11.4.2). Its subgraph title names `rg-btl-demo`, since Mermaid doesn't decode `&lt;` in labels.
 **Why:** the plan's design held.
 **Affects:** T11 (the live checklist follows `deployment.md`).
+
+## T11 — Wrap-up (2026-10-23)
+**Plan said:** the live checklist; the implementation-notes summary; the `--no-ff` merge; the teardown test if time allows.
+**We did:**
+- **The live checklist passed:**
+  - the page loads on a desktop and on a true 390 px phone viewport;
+  - a question round trip is worded by the model;
+  - the same viewer reads back unchanged after a reload;
+  - the events reach Log Analytics and the queries return rows;
+  - a property-level what-if shows `azd provision` would change nothing real;
+  - both budgets exist.
+- **The summary** is at the top of these notes.
+
+**Learned:** Chrome's plain `--headless --window-size=390,…` can't make a window that narrow, so its phone screenshot looked clipped. A real mobile viewport (puppeteer, 390 px) shows the page fits exactly, with no overflow.
+**Not done:** the teardown test, for the reasons in the summary.
+**Why:** the plan's checklist held.
+**Affects:** nothing.

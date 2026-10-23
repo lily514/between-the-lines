@@ -68,6 +68,24 @@ cd ../frontend && npm run api-types
 ```
 A backend test fails if `openapi.json` is out of date, and a frontend test fails if `schema.d.ts` doesn't match it.
 
+## Optional: the container (Docker)
+
+The public demo runs as one container: the built page, the API and the learning engine, with the threat model fitted when the image is built. Building it locally needs [Docker Desktop](https://www.docker.com/products/docker-desktop/); deploying to Azure doesn't, since azd builds the image in Azure.
+
+1. Install Docker Desktop and start it.
+2. From the repo root, build and run the image:
+   ```sh
+   docker build -t btl .
+   docker run --rm -p 127.0.0.1:8000:8000 btl
+   ```
+   The page is at <http://127.0.0.1:8000>. By default the container uses the template Tutor and keeps learner records in memory, so they are gone when it stops. Its `BTL_*` variables (see "The web page's API") change that, for example `docker run -e BTL_TUTOR=foundry …`.
+3. The smoke test builds the image, starts it, checks its health, and plays one question through to its feedback. It is opt-in, because it needs Docker; from `backend/`:
+   ```sh
+   uv run pytest -m container
+   ```
+
+On Apple Silicon, Docker builds an arm64 image. Azure runs amd64, which is fine, because azd builds the deployed image in Azure's registry.
+
 ## Optional: check generated names against real ones
 
 The committed repo contains no real club, player, place, or league names, not even as a list of names to avoid. To check that generated leagues never produce one, keep a private list at `backend/private/real-names.txt`. The whole `backend/private/` folder is gitignored, so the list is visible in your editor but never committed.

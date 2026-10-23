@@ -59,8 +59,11 @@ venv = ".venv"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = ["--strict-markers", "-m", "not slow"]
-markers = ["slow: long-running tests such as the batch Expected Threat fit"]
+addopts = ["--strict-markers", "-m", "not slow and not container"]
+markers = [
+    "slow: long-running tests such as the batch Expected Threat fit",
+    "container: builds and runs the Docker image (needs Docker); opt in with -m container",
+]
 filterwarnings = ["error"]
 
 [tool.uv]

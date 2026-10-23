@@ -28,3 +28,23 @@ Where implementation diverged from [plan.md](plan.md), or something surprising w
 **Learned:** a viewer can no longer carry on in the browser from `btl learn` (or the other way round), since nobody types the id. The records are still the same kind; the README says so.
 **Why:** `randomUUID`'s secure-page rule, and a click that can't be undone.
 **Affects:** nothing in the API: its schema and the page's generated types are unchanged.
+
+## T3 — The container (2026-10-22)
+**Plan said:** a multi-stage `Dockerfile` at the repo root (page, build, runtime): `python:3.11-slim` with a pinned uv, the image's own Python, `uv sync --locked --no-dev --no-editable`, `btl fit-xt` at build time; a non-root user, a `HEALTHCHECK`, `CMD btl serve`; an opt-in smoke test; measure the image's size, its cold start, and whether `httpx2` is there without dev dependencies.
+**We did:** as planned, with these choices:
+- **uv is pinned to 0.12.23,** the version that wrote `uv.lock`.
+- **Dependencies install before the source is copied** (`--no-install-project` first), so a code change doesn't reinstall them.
+- **The app's files belong to root,** and the app runs as uid 10001, so it can read its code, page and threat model but not change them. The smoke test checks both.
+- **The model's call log goes to `/tmp`** (`BTL_TUTOR_LOG=/tmp/tutor-log.jsonl`), the one place the app may write. Otherwise the first model call with `--tutor foundry` would fail to write the log in `/app/data`. T9 replaces the file with log lines.
+- **The image's defaults are the demo's:** the memory store and the template Tutor, listening on `0.0.0.0:8000`.
+- **`.dockerignore`** keeps out everything the image doesn't need, above all `backend/private/` (the real-names list), `backend/data/` and `.azure/`.
+- **The smoke test** (`tests/test_container.py`, `-m container`) builds the image and runs it on a free local port. It checks that the server answers, that Docker calls it healthy, that the threat model wasn't fitted at startup, the user it runs as, the page, and one question through to its feedback.
+
+**Measured** on Lily's Mac (arm64):
+- **The first build takes about a minute,** 11 s of it fitting the threat model; later builds take seconds while nothing changes.
+- **The container answers its health check 1.9 s after it starts.** That is the whole cold start, since the threat model is already in the image.
+- **The image is 755 MB.** Most of it is the scientific stack (numpy, pandas, scipy and pyarrow, which socceraction needs). That's well inside the registry's 10 GB, so trimming it isn't worth the time now.
+- **`httpx2` is there:** `openai` depends on it, so `tutor/azure.py`'s import works without dev dependencies. It is still only an indirect dependency; declaring it directly would guard against openai dropping it, and is left as a small follow-up.
+
+**Why:** the plan left these details open; the log path came from the read-only files.
+**Affects:** T5 (azd builds this `Dockerfile` remotely; the probes use `/api/health`); T6 (`BTL_TUTOR=foundry` works with the log in `/tmp`); T9 (the log file gives way to log lines).

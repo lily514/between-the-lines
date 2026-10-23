@@ -1,0 +1,130 @@
+{
+	"match_number": 1,
+	"at": "full_time",
+	"home": "Ripon Wardens",
+	"away": "Truro Otters",
+	"home_code": "RIP",
+	"away_code": "TRU",
+	"your_team": "home",
+	"home_goals": 1,
+	"away_goals": 0,
+	"your_result": "won",
+	"goals": [
+		{
+			"clock": "36:24",
+			"side": "home",
+			"scorer": "Agustín Valdera",
+			"own_goal": false
+		}
+	],
+	"strands": [
+		{
+			"key": "possession",
+			"name": "Possession",
+			"concepts": 1,
+			"kickoff": 0.15,
+			"now": 0.15
+		},
+		{
+			"key": "pressure",
+			"name": "Pressure",
+			"concepts": 1,
+			"kickoff": 0.15,
+			"now": 0.2346159837980994
+		},
+		{
+			"key": "chances",
+			"name": "Chances",
+			"concepts": 0,
+			"kickoff": null,
+			"now": null
+		},
+		{
+			"key": "game_flow",
+			"name": "Game flow",
+			"concepts": 3,
+			"kickoff": 0.3499999999999999,
+			"now": 0.28326520379130743
+		}
+	],
+	"concepts": [
+		{
+			"name": "Restarts",
+			"strand": "game_flow",
+			"before": 0.35,
+			"after": 0.2400091345055949,
+			"level_before": "Getting there",
+			"level": "Getting there",
+			"mastered": false
+		},
+		{
+			"name": "Offside",
+			"strand": "game_flow",
+			"before": 0.35,
+			"after": 0.35,
+			"level_before": "Getting there",
+			"level": "Getting there",
+			"mastered": false
+		},
+		{
+			"name": "Fouls and cards",
+			"strand": "game_flow",
+			"before": 0.35,
+			"after": 0.2597864768683274,
+			"level_before": "Getting there",
+			"level": "Getting there",
+			"mastered": false
+		},
+		{
+			"name": "Line-breaking passes",
+			"strand": "possession",
+			"before": 0.15,
+			"after": 0.15,
+			"level_before": "Getting there",
+			"level": "Getting there",
+			"mastered": false
+		},
+		{
+			"name": "Counter-pressing",
+			"strand": "pressure",
+			"before": 0.15,
+			"after": 0.2346159837980994,
+			"level_before": "Getting there",
+			"level": "Getting there",
+			"mastered": false
+		}
+	],
+	"answers": [
+		{
+			"clock": "00:08",
+			"concept": "Restarts",
+			"correct": false
+		},
+		{
+			"clock": "08:29",
+			"concept": "Restarts",
+			"correct": false
+		},
+		{
+			"clock": "16:55",
+			"concept": "Fouls and cards",
+			"correct": false
+		},
+		{
+			"clock": "03:25",
+			"concept": "Counter-pressing",
+			"correct": true
+		},
+		{
+			"clock": "53:09",
+			"concept": "Counter-pressing",
+			"correct": false
+		}
+	],
+	"right": 1,
+	"note": "Counter-pressing moved forward this match, still getting there. Next to work on: Line-breaking passes, getting there.",
+	"thresholds": {
+		"unlock": 0.8,
+		"mastery": 0.95
+	}
+}

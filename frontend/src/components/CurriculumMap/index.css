@@ -1,0 +1,42 @@
+/* The curriculum map, opened over any screen. */
+
+.curriculum-map {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+}
+
+.curriculum-map__back {
+	align-self: flex-start;
+	padding: 0;
+}
+
+.curriculum-map__heading {
+	font-size: var(--fs-display-l);
+	line-height: var(--lh-display-l);
+	font-weight: 600;
+}
+
+.curriculum-map__strand-name {
+	margin: 0 0 var(--s-2);
+	font-family: var(--font-display);
+	font-size: var(--fs-label);
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.curriculum-map__concepts {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.curriculum-map__level {
+	color: var(--text-muted);
+}
+
+.curriculum-map__error {
+	margin: 0;
+	color: var(--text);
+}

@@ -1,4 +1,14 @@
-import type { Club, Feedback, FullTime, NextStep, Question, Status, TeamSheet } from '../api/client.ts'
+import type {
+	Club,
+	ConceptMap,
+	Feedback,
+	FullTime,
+	MatchSummary,
+	NextStep,
+	Question,
+	Status,
+	TeamSheet
+} from '../api/client.ts'
 
 /** A point in a match: where the last question left the viewer, so the next step can say how far play moved on. */
 export interface Moment {
@@ -12,14 +22,15 @@ export interface Moment {
 export type Retry =
 	| { kind: 'start'; viewer: string }
 	| { kind: 'next' }
-	| { kind: 'status' }
+	| { kind: 'matches' }
 	| { kind: 'pick'; status: Status }
 	| { kind: 'choose'; club: number }
 	| { kind: 'sheet'; status: Status | null }
 	| { kind: 'answer'; question: Question; key: string }
 
 export type Screen =
-	| { kind: 'welcome'; status: Status | null; error: string | null }
+	| { kind: 'welcome'; error: string | null }
+	| { kind: 'matches'; status: Status; matches: MatchSummary[] }
 	| { kind: 'pick'; status: Status; clubs: Club[]; busy: boolean }
 	| { kind: 'sheet'; sheet: TeamSheet; status: Status | null }
 	| { kind: 'loading'; message: string }
@@ -29,16 +40,24 @@ export type Screen =
 	| { kind: 'full_time'; summary: FullTime }
 	| { kind: 'error'; message: string; retry: Retry }
 
+/** A sheet over the current screen, which stays as it was underneath: the curriculum map, opened from any header. */
+export interface Overlay {
+	kind: 'map'
+	map: ConceptMap | null
+	error: string | null
+}
+
 export interface AppState {
 	viewer: string | null
 	screen: Screen
 	/** When the last question was asked, in the match being watched. */
 	last: Moment | null
+	overlay: Overlay | null
 }
 
 export type Action =
 	| { type: 'loading'; message: string }
-	| { type: 'started'; status: Status }
+	| { type: 'matches'; status: Status; matches: MatchSummary[] }
 	| { type: 'picking'; status: Status; clubs: Club[] }
 	| { type: 'choosing' }
 	| { type: 'sheet'; sheet: TeamSheet; status: Status | null }
@@ -49,35 +68,40 @@ export type Action =
 	| { type: 'sending' }
 	| { type: 'answered'; feedback: Feedback }
 	| { type: 'failed'; message: string; retry: Retry }
+	| { type: 'map'; map: ConceptMap | null; error?: string }
+	| { type: 'close' }
 
 export const LOADING_NEXT = 'The match moves on…'
-export const LOADING_START = 'Finding your matches…'
+export const LOADING_START = 'Finding your place…'
+export const LOADING_MATCHES = 'Finding your matches…'
 export const LOADING_CLUBS = 'Finding the clubs…'
 export const LOADING_SHEET = 'Finding the line-ups…'
 
 /** A viewer who hasn't picked a team yet, and still can: they are asked before anything else. */
 export const needsClub = (status: Status) => status.club === null && status.can_choose_club && !status.finished
 
-export const welcome = (error: string | null = null): Screen => ({ kind: 'welcome', status: null, error })
+export const welcome = (error: string | null = null): Screen => ({ kind: 'welcome', error })
 
 /** The first state: straight to loading when a viewer is remembered, since the page resumes them at once. */
 export const initialState = (remembered: string | null): AppState =>
 	remembered === null
-		? { viewer: null, screen: welcome(), last: null }
-		: { viewer: remembered, screen: { kind: 'loading', message: LOADING_NEXT }, last: null }
+		? { viewer: null, screen: welcome(), last: null, overlay: null }
+		: { viewer: remembered, screen: { kind: 'loading', message: LOADING_START }, last: null, overlay: null }
 
 export const reducer = (state: AppState, action: Action): AppState => {
 	switch (action.type) {
 		case 'loading':
 			return { ...state, screen: { kind: 'loading', message: action.message } }
-		case 'started':
+		case 'matches':
 			return {
+				...state,
 				viewer: action.status.viewer_id,
-				screen: { kind: 'welcome', status: action.status, error: null },
+				screen: { kind: 'matches', status: action.status, matches: action.matches },
 				last: null
 			}
 		case 'picking':
 			return {
+				...state,
 				viewer: action.status.viewer_id,
 				screen: { kind: 'pick', status: action.status, clubs: action.clubs, busy: false },
 				last: null
@@ -87,9 +111,9 @@ export const reducer = (state: AppState, action: Action): AppState => {
 		case 'choosing':
 			return state.screen.kind === 'pick' ? { ...state, screen: { ...state.screen, busy: true } } : state
 		case 'rejected':
-			return { viewer: null, screen: welcome(action.message), last: null }
+			return { viewer: null, screen: welcome(action.message), last: null, overlay: null }
 		case 'forget':
-			return { viewer: null, screen: welcome(action.message ?? null), last: null }
+			return { viewer: null, screen: welcome(action.message ?? null), last: null, overlay: null }
 		case 'arrived':
 			return arrived(state, action.step)
 		case 'open':
@@ -107,8 +131,16 @@ export const reducer = (state: AppState, action: Action): AppState => {
 				: state
 		case 'failed':
 			return { ...state, screen: { kind: 'error', message: action.message, retry: action.retry } }
+		case 'map':
+			return { ...state, overlay: { kind: 'map', map: action.map, error: action.error ?? null } }
+		case 'close':
+			return { ...state, overlay: null }
 	}
 }
+
+/** Whether the header offers the map: on every screen after the viewer has started and picked a team. */
+export const offersMap = (state: AppState) =>
+	state.viewer !== null && state.screen.kind !== 'welcome' && state.screen.kind !== 'pick'
 
 const arrived = (state: AppState, step: NextStep): AppState => {
 	if (step.kind === 'full_time') {
@@ -140,8 +172,8 @@ export const matchHeader = (screen: Screen): { title: string; clock: string | nu
 				title: `${screen.summary.home} ${String(screen.summary.home_goals)}–${String(screen.summary.away_goals)} ${screen.summary.away}`,
 				clock: 'Full time'
 			}
-		case 'welcome':
-			return screen.status?.fixture
+		case 'matches':
+			return screen.status.fixture
 				? { title: `${screen.status.fixture.home} v ${screen.status.fixture.away}`, clock: null }
 				: null
 		case 'sheet': {
@@ -151,6 +183,7 @@ export const matchHeader = (screen: Screen): { title: string; clock: string | nu
 				? { title: `${home.name} v ${away.name}`, clock: null }
 				: null
 		}
+		case 'welcome':
 		case 'pick':
 		case 'loading':
 		case 'error':

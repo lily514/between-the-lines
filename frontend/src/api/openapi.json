@@ -1912,6 +1912,25 @@
         "summary": "Clubs"
       }
     },
+    "/api/concept-map": {
+      "get": {
+        "description": "Every concept by strand and tier, with no viewer's values: what the questions cover.",
+        "operationId": "get_curriculum_api_concept_map_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConceptMapOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Curriculum"
+      }
+    },
     "/api/viewers": {
       "post": {
         "description": "Start watching, or carry on where the viewer stopped.",

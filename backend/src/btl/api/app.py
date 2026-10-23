@@ -14,6 +14,7 @@ Routes:
   started watching (`ClubIn` → `StatusOut`).
 - ``GET /api/viewers/{viewer_id}/team-sheet``: who's playing in the viewer's next match
   (`TeamSheetOut`).
+- ``GET /api/concept-map``: the whole curriculum, before there is a viewer (`ConceptMapOut`).
 - ``GET /api/viewers/{viewer_id}/concept-map``: the whole curriculum, with the viewer's level
   on each concept asked about now (`ConceptMapOut`).
 - ``GET /api/viewers/{viewer_id}/matches``: the viewer's matches, upcoming, in progress and
@@ -248,6 +249,11 @@ def create_app(
         with serving(viewer_id):
             state = _watching(stored(viewer_id))
             return team_sheet_payload(viewer_sheet(course(), state, prepare))
+
+    @app.get("/api/concept-map")
+    def get_curriculum() -> ConceptMapOut:
+        """Every concept by strand and tier, with no viewer's values: what the questions cover."""
+        return concept_map_payload(curriculum(course(), None), course().model.thresholds)
 
     @app.get("/api/viewers/{viewer_id}/concept-map")
     def get_concept_map(viewer_id: str) -> ConceptMapOut:

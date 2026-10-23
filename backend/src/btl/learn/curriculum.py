@@ -51,15 +51,17 @@ def strand_name(key: str) -> str:
     return key.replace("_", " ").capitalize()
 
 
-def curriculum(course: Course, state: LearnerState) -> Curriculum:
-    """The viewer's map of the whole curriculum."""
+def curriculum(course: Course, state: LearnerState | None) -> Curriculum:
+    """The viewer's map of the whole curriculum, or the map alone, with no values, for no viewer."""
     concept_map = course.concept_map
     model = course.model
-    replayed = state.model_state(model, course.active)
+    replayed = None if state is None else state.model_state(model, course.active)
     concepts: list[MapConcept] = []
     for concept in concept_map.concepts:
         askable = concept.key in course.active
-        mastery = model.mastery(replayed, concept.key) if askable else None
+        mastery = None
+        if askable and replayed is not None:
+            mastery = model.mastery(replayed, concept.key)
         concepts.append(
             MapConcept(
                 key=concept.key,

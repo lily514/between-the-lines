@@ -1,13 +1,16 @@
-import { useCallback, useEffect, useReducer, useRef, useState, type CSSProperties } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useReducer, useRef, useState, type CSSProperties } from 'react'
 import {
 	answer,
 	ApiError,
 	chooseClub,
 	getClubs,
+	getConceptMap,
+	getMatches,
 	getStatus,
 	getTeamSheet,
 	nextStep,
 	startViewer,
+	type ConceptMap,
 	type Question,
 	type Status
 } from '../api/client.ts'
@@ -16,33 +19,38 @@ import {
 	forgetViewer,
 	initialState,
 	LOADING_CLUBS,
+	LOADING_MATCHES,
 	LOADING_NEXT,
 	LOADING_SHEET,
 	LOADING_START,
 	matchHeader,
 	needsClub,
 	newViewerId,
+	offersMap,
 	reducer,
 	rememberedViewer,
 	rememberViewer,
 	type Retry
 } from './App.support.ts'
+import CurriculumMap from './CurriculumMap/index.tsx'
 import ErrorPanel from './Shared/ErrorPanel.tsx'
+import Header from './Shared/Header.tsx'
 import PanelHandle from './Shared/PanelHandle.tsx'
 import { PANEL_DEFAULT, rememberedPanelWidth, rememberPanelWidth } from './Shared/PanelHandle.support.ts'
 import Feedback from './Feedback/index.tsx'
 import FullTime from './FullTime/index.tsx'
+import Matches from './Matches/index.tsx'
 import MatchStep from './MatchStep/index.tsx'
 import PickTeam from './PickTeam/index.tsx'
 import QuestionSheet from './QuestionSheet/index.tsx'
-import StartOver from './Shared/StartOver.tsx'
 import TeamSheet from './TeamSheet/index.tsx'
 import Welcome from './Welcome/index.tsx'
 
 const messageOf = (error: unknown) =>
 	error instanceof Error ? error.message : 'The server could not be reached. Check it is running, then try again.'
 
-/** The learning loop in the browser: a start, then each match as a run of questions, feedback and a full-time summary.
+/** The learning loop in the browser: a start, then Matches as home base, and each match as a run of questions,
+ * feedback and a full-time summary. The curriculum map opens over any screen from the header.
  *
  * On a wide screen the companion sits in a side panel beside the viewer's own stream, and never covers it. The viewer
  * can drag the panel wider; null keeps the usual width from tokens.css. */
@@ -51,6 +59,11 @@ const App = () => {
 	const [state, dispatch] = useReducer(reducer, remembered, initialState)
 	const viewer = state.viewer
 	const [panelWidth, setPanelWidth] = useState(rememberedPanelWidth)
+	const [curriculum, setCurriculum] = useState<ConceptMap | null>(null)
+	const panel = useRef<HTMLElement>(null)
+	const mapButton = useRef<HTMLButtonElement>(null)
+	// Where the screen under the map was scrolled to, so closing the map puts the viewer back exactly there.
+	const scrolled = useRef<{ page: number; panel: number } | null>(null)
 
 	const fail = useCallback((error: unknown, retry: Retry) => {
 		if (error instanceof ApiError && error.status === 404) {
@@ -73,13 +86,14 @@ const App = () => {
 		[fail]
 	)
 
-	const loadStatus = useCallback(
+	const loadMatches = useCallback(
 		async (id: string) => {
-			dispatch({ type: 'loading', message: LOADING_START })
+			dispatch({ type: 'loading', message: LOADING_MATCHES })
 			try {
-				dispatch({ type: 'started', status: await getStatus(id) })
+				const [status, matches] = await Promise.all([getStatus(id), getMatches(id)])
+				dispatch({ type: 'matches', status, matches })
 			} catch (error) {
-				fail(error, { kind: 'status' })
+				fail(error, { kind: 'matches' })
 			}
 		},
 		[fail]
@@ -113,31 +127,30 @@ const App = () => {
 		async (id: string, club: number) => {
 			dispatch({ type: 'choosing' })
 			try {
-				dispatch({ type: 'started', status: await chooseClub(id, club) })
+				await chooseClub(id, club)
+				await loadMatches(id)
 			} catch (error) {
 				// 409: the viewer has started watching (in another tab, say), so their team is settled.
 				if (error instanceof ApiError && error.status === 409) {
-					await loadStatus(id)
+					await loadMatches(id)
 				} else {
 					fail(error, { kind: 'choose', club })
 				}
 			}
 		},
-		[fail, loadStatus]
+		[fail, loadMatches]
 	)
 
 	const start = useCallback(
-		async (id: string, resume: boolean) => {
+		async (id: string) => {
 			dispatch({ type: 'loading', message: LOADING_START })
 			try {
 				const status = await startViewer(id)
 				rememberViewer(status.viewer_id)
 				if (needsClub(status)) {
 					await loadPick(status)
-				} else if (resume && !status.finished) {
-					await loadNext(status.viewer_id)
 				} else {
-					dispatch({ type: 'started', status })
+					await loadMatches(status.viewer_id)
 				}
 			} catch (error) {
 				// 422: the id kept in this browser isn't one the API accepts (edited by hand, say), so start afresh.
@@ -149,7 +162,7 @@ const App = () => {
 				}
 			}
 		},
-		[fail, loadNext, loadPick]
+		[fail, loadMatches, loadPick]
 	)
 
 	const send = useCallback(
@@ -169,21 +182,53 @@ const App = () => {
 		[fail, loadNext]
 	)
 
-	// A remembered viewer carries on where they left off: the server replays their match to the waiting question.
+	// A remembered viewer comes back to Matches, where they can rejoin a match part-way through.
 	const resumed = useRef(false)
 	useEffect(() => {
 		if (remembered !== null && !resumed.current) {
 			resumed.current = true
-			void start(remembered, true)
+			void start(remembered)
 		}
 	}, [remembered, start])
 
+	// The first screen says what the questions cover, from the curriculum; without it, it still works.
+	const onWelcome = state.screen.kind === 'welcome'
+	useEffect(() => {
+		if (onWelcome && curriculum === null) {
+			getConceptMap(null).then(setCurriculum, () => undefined)
+		}
+	}, [onWelcome, curriculum])
+
+	const openMap = async () => {
+		scrolled.current = { page: window.scrollY, panel: panel.current?.scrollTop ?? 0 }
+		dispatch({ type: 'map', map: null })
+		try {
+			dispatch({ type: 'map', map: await getConceptMap(viewer) })
+		} catch (error) {
+			dispatch({ type: 'map', map: null, error: messageOf(error) })
+		}
+	}
+
+	const closeMap = useCallback(() => {
+		dispatch({ type: 'close' })
+	}, [])
+
+	// Closing the map puts the screen back as it was: the same scroll, and focus on the button that opened it.
+	const mapOpen = state.overlay !== null
+	useLayoutEffect(() => {
+		if (mapOpen || scrolled.current === null) return
+		window.scrollTo(0, scrolled.current.page)
+		if (panel.current !== null) panel.current.scrollTop = scrolled.current.panel
+		scrolled.current = null
+		mapButton.current?.focus()
+	}, [mapOpen])
+
 	const retry = (what: Retry) => {
 		if (what.kind === 'start') {
-			void start(what.viewer, false)
+			void start(what.viewer)
 		} else if (viewer !== null) {
 			if (what.kind === 'next') void loadNext(viewer)
-			else if (what.kind === 'status') void loadStatus(viewer)
+			else if (what.kind === 'matches') void loadMatches(viewer)
 			else if (what.kind === 'pick') void loadPick(what.status)
 			else if (what.kind === 'choose') void choose(viewer, what.club)
 			else if (what.kind === 'sheet') void loadSheet(viewer, what.status)
@@ -230,26 +275,38 @@ const App = () => {
 					settlePanel(null)
 				}}
 			/>
-			<main className="layout__panel">
-				<header className="layout__brand">
-					<h1 className="layout__name">
-						Between <span className="layout__the">the</span> Lines
-					</h1>
-					{viewer !== null && screen.kind !== 'welcome' && <StartOver onConfirm={startOver} />}
-				</header>
-				<div className="layout__body">
+			<main ref={panel} className="layout__panel">
+				<Header
+					showMap={offersMap(state)}
+					mapOpen={mapOpen}
+					mapButton={mapButton}
+					onMap={() => {
+						if (mapOpen) closeMap()
+						else void openMap()
+					}}
+				/>
+				{state.overlay?.kind === 'map' && (
+					<div className="layout__body">
+						<CurriculumMap map={state.overlay.map} error={state.overlay.error} onBack={closeMap} />
+					</div>
+				)}
+				<div className="layout__body" hidden={mapOpen}>
 					{screen.kind === 'welcome' && (
 						<Welcome
-							status={screen.status}
+							curriculum={curriculum}
 							error={screen.error}
-							onStart={() => void start(newViewerId(), false)}
-							onWatch={() => {
-								if (viewer !== null) void loadSheet(viewer, screen.status)
-							}}
+							onStart={() => void start(newViewerId())}
+							onSeeAll={() => void openMap()}
+						/>
+					)}
+					{screen.kind === 'matches' && viewer !== null && (
+						<Matches
+							status={screen.status}
+							matches={screen.matches}
+							onWatch={() => void loadSheet(viewer, screen.status)}
+							onRejoin={() => void loadNext(viewer)}
+							onChangeTeam={() => void loadPick(screen.status)}
 							onStartOver={startOver}
-							onChangeTeam={() => {
-								if (screen.status !== null) void loadPick(screen.status)
-							}}
 						/>
 					)}
 					{screen.kind === 'pick' && viewer !== null && (
@@ -292,6 +349,13 @@ const App = () => {
 							}}
 						/>
 					)}
+					{(screen.kind === 'step' || screen.kind === 'feedback') && viewer !== null && (
+						<p className="layout__done">
+							<button type="button" className="text-button" onClick={() => void loadMatches(viewer)}>
+								Done for this match
+							</button>
+						</p>
+					)}
 					{screen.kind === 'question' && viewer !== null && (
 						<>
 							<QuestionSheet
@@ -313,10 +377,7 @@ const App = () => {
 						/>
 					)}
 					{screen.kind === 'full_time' && viewer !== null && (
-						<FullTime
-							summary={screen.summary}
-							onNext={() => void (screen.summary.finished ? loadStatus(viewer) : loadSheet(viewer, null))}
-						/>
+						<FullTime summary={screen.summary} onNext={() => void loadMatches(viewer)} />
 					)}
 					{screen.kind === 'error' && (
 						<ErrorPanel

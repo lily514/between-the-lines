@@ -1,0 +1,54 @@
+[
+	{
+		"match_number": 1,
+		"matchday": 1,
+		"date": "2026-10-24",
+		"date_label": "Sat 24 Oct",
+		"kick_off": "15:00",
+		"home": "Ripon Wardens",
+		"away": "Truro Otters",
+		"home_code": "RIP",
+		"away_code": "TRU",
+		"your_team": "home",
+		"state": "finished",
+		"score": {
+			"home": 1,
+			"away": 0,
+			"clock": null
+		},
+		"your_result": "won",
+		"questions": 5
+	},
+	{
+		"match_number": 2,
+		"matchday": 2,
+		"date": "2026-10-31",
+		"date_label": "Sat 31 Oct",
+		"kick_off": "15:00",
+		"home": "Bakewell Badgers",
+		"away": "Ripon Wardens",
+		"home_code": "BAK",
+		"away_code": "RIP",
+		"your_team": "away",
+		"state": "upcoming",
+		"score": null,
+		"your_result": null,
+		"questions": 0
+	},
+	{
+		"match_number": 3,
+		"matchday": 3,
+		"date": "2026-11-07",
+		"date_label": "Sat 7 Nov",
+		"kick_off": "15:00",
+		"home": "Ripon Wardens",
+		"away": "Alnwick Weavers",
+		"home_code": "RIP",
+		"away_code": "ALN",
+		"your_team": "home",
+		"state": "upcoming",
+		"score": null,
+		"your_result": null,
+		"questions": 0
+	}
+]

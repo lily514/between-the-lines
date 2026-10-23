@@ -1,0 +1,57 @@
+/* Home base: the viewer's matches. */
+
+.matches {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-4);
+}
+
+.matches__heading {
+	font-size: var(--fs-display-l);
+	line-height: var(--lh-display-l);
+	font-weight: 600;
+}
+
+.matches__team {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	margin: 0;
+	font-size: var(--fs-body);
+}
+
+.matches__list {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.matches__match {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	padding: var(--s-4);
+	border: 1px solid var(--border);
+	border-radius: var(--r-tile);
+	background: var(--surface);
+}
+
+.matches__when {
+	margin: 0;
+	font-family: var(--font-data);
+	font-size: var(--fs-data);
+	color: var(--text-muted);
+}
+
+.matches__fixture {
+	margin: 0;
+	font-size: var(--fs-body);
+	font-weight: 700;
+}
+
+.matches__start-over {
+	align-self: center;
+}

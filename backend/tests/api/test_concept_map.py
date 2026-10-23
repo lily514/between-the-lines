@@ -35,3 +35,11 @@ def test_the_map_moves_with_the_viewer_s_answers() -> None:
 
 def test_an_unknown_viewer_has_no_map() -> None:
     assert client(MemoryLearnerStore()).get("/api/viewers/nobody/concept-map").status_code == 404
+
+
+def test_the_map_without_a_viewer_names_what_is_asked_and_measures_nothing() -> None:
+    body = client(MemoryLearnerStore()).get("/api/concept-map").json()
+
+    assert len(body["concepts"]) == 20
+    assert sum(c["askable"] for c in body["concepts"]) == 5
+    assert all(c["mastery"] is None and c["level"] is None for c in body["concepts"])

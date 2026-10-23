@@ -58,3 +58,22 @@ Over the same 40 viewers: 799 questions instead of 800, and 224 asked at the sto
 **Why:** the rules hold by construction rather than by spacing luck; the catch-up needs goal facts the browser must
 not compute.
 **Affects:** nothing later; the demo viewer's attempt log changes slightly.
+
+## T5 — Navigation shell (2026-10-23)
+
+**Plan said:** `Shared/Header` with the map button and ⚙; an overlay layer for the map and preferences that restores
+scroll; screens `matches` and `report`; first open Welcome → Pick → Matches, and return visits and "Done for this
+match" → Matches; Welcome rebuilt to S7.
+**We did:**
+- **Overlay.** The header has the map button only; ⚙ comes with Preferences in T9. The map is an overlay over the
+  screen, which stays mounted and hidden, so a half-answered question keeps its pick. Closing restores both scroll
+  positions (the page's on a phone, the panel's on a wide screen) and puts focus back on the map button.
+- **Return visits.** A remembered viewer now lands on Matches instead of jumping straight to the waiting question;
+  "Rejoin the match" takes them there.
+- **Start over** moved from the header to Matches.
+- **Welcome needs the curriculum before there is a viewer,** so the API gained `GET /api/concept-map`, the map with no
+  values.
+- **The `report` screen comes in T8;** full time still uses the old summary, whose button now goes to Matches.
+
+**Why:** the map from anywhere must not lose a pick in progress; the Welcome may show only what the API says.
+**Affects:** T7 fills the map overlay; T8 adds the report screen; T9 adds ⚙.

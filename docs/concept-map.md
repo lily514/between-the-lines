@@ -17,6 +17,68 @@ The concept map is the curriculum: every football idea the app can teach, how th
   - the evidence fields its explanations need.
 - **Learner model settings**, under `learner_models`, by model name. Each model has its own thresholds and its own parameters for each tier, and a concept can override them. Bayesian Knowledge Tracing (`bkt`) is the only model so far.
 
+## The whole map
+
+All 20 concepts, tier 0 at the bottom, each arrow pointing from a prerequisite to what it unlocks. The five asked about now have a heavy outline; the rest are coming later, drawn dashed. On the page the same map is "Your pitch" (CM-A), opened from the map button in any header.
+
+```mermaid
+flowchart BT
+  subgraph T3["Tier 3 · Analyst"]
+    direction LR
+    expected_threat["Expected threat (xT) and possession value<br/><small>possession · Coming later</small>"]
+    pressure_shifts["Pressure shifts<br/><small>pressure · Coming later</small>"]
+    variance["Variance and results<br/><small>chances · Coming later</small>"]
+    control_vs_chaos["Control vs. chaos<br/><small>game flow · Coming later</small>"]
+  end
+  subgraph T2["Tier 2 · Engaged fan"]
+    direction LR
+    line_breaking_pass["Line-breaking passes<br/><small>possession · Asked now</small>"]
+    counter_press["Counter-pressing<br/><small>pressure · Asked now</small>"]
+    press_triggers["Pressing triggers and block height<br/><small>pressure · Coming later</small>"]
+    expected_goals["Expected goals (xG)<br/><small>chances · Coming later</small>"]
+    game_state["Game state<br/><small>game flow · Coming later</small>"]
+  end
+  subgraph T1["Tier 1 · Casual fan"]
+    direction LR
+    passing["Passing and pass difficulty<br/><small>possession · Coming later</small>"]
+    pressing["Pressing<br/><small>pressure · Coming later</small>"]
+    chance_quality["Chance quality<br/><small>chances · Coming later</small>"]
+    transitions["Transitions and counterattacks<br/><small>game flow · Coming later</small>"]
+    phase_of_play["Phase of play<br/><small>game flow · Coming later</small>"]
+  end
+  subgraph T0["Tier 0 · Newcomer"]
+    direction LR
+    possession["Possession<br/><small>possession · Coming later</small>"]
+    tackles["Tackles and turnovers<br/><small>pressure · Coming later</small>"]
+    shots_and_goals["Shots and goals<br/><small>chances · Coming later</small>"]
+    restarts["Restarts<br/><small>game flow · Asked now</small>"]
+    offside["Offside<br/><small>game flow · Asked now</small>"]
+    fouls_and_cards["Fouls and cards<br/><small>game flow · Asked now</small>"]
+  end
+  possession --> passing
+  tackles --> pressing
+  shots_and_goals --> chance_quality
+  passing --> chance_quality
+  restarts --> transitions
+  tackles --> transitions
+  possession --> phase_of_play
+  passing --> line_breaking_pass
+  pressing --> counter_press
+  pressing --> press_triggers
+  chance_quality --> expected_goals
+  transitions --> game_state
+  line_breaking_pass --> expected_threat
+  chance_quality --> expected_threat
+  press_triggers --> pressure_shifts
+  expected_goals --> variance
+  game_state --> control_vs_chaos
+  pressing --> control_vs_chaos
+  classDef asked stroke-width:3px
+  classDef later stroke-dasharray:4 3
+  class counter_press,fouls_and_cards,line_breaking_pass,offside,restarts asked
+  class possession,tackles,shots_and_goals,passing,pressing,chance_quality,transitions,phase_of_play,press_triggers,expected_goals,game_state,expected_threat,pressure_shifts,variance,control_vs_chaos later
+```
+
 ## Active concepts and the frontier
 
 A concept is **active** when the app can ask about it: a detector finds it in a match, and questions can be built for it. Five concepts are active: `line_breaking_pass` and `counter_press` (Milestone 2a), and the tier-0 basics `restarts`, `offside` and `fouls_and_cards` (Milestone 2d). The other concepts are the curriculum still to build.

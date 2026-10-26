@@ -5,12 +5,15 @@ The Blob store's run needs the Azurite emulator, so it is opt-in: ``uv run pytes
 
 import json
 from collections.abc import Callable
+from dataclasses import replace
 from pathlib import Path
+from typing import cast
 
 import pytest
 
 from btl.learn.knowledge import Delivery
-from btl.learn.learner import Attempt, LearnerState
+from btl.learn.learner import LEARNER_VERSION, Attempt, LearnerState
+from btl.learn.pace import Pace
 from btl.learn.questions import Asks, Form
 from btl.schema.ids import TeamId
 from btl.store.base import (
@@ -148,7 +151,25 @@ def test_a_record_from_before_clubs_reads_as_no_club_and_is_saved_as_the_new_ver
     assert state.club is None
     store.create(state)
     stored = store.get("lily")
-    assert stored is not None and to_document(stored.state)["version"] == 2
+    assert stored is not None and to_document(stored.state)["version"] == LEARNER_VERSION
+
+
+def test_a_version_2_attempt_reads_as_asked_in_an_unknown_period() -> None:
+    asked = replace(ANSWER, asked_in=2)
+    document = to_document(LearnerState("lily", seed=7).answered(asked))
+    document["version"] = 2
+    for attempt in cast(list[dict[str, object]], document["attempts"]):
+        del attempt["asked_in"]
+
+    state = from_document(document)
+
+    assert state.attempts == (replace(asked, asked_in=None),)
+
+
+def test_the_period_a_question_was_asked_in_round_trips() -> None:
+    state = LearnerState("lily", seed=7).answered(replace(ANSWER, asked_in=2))
+
+    assert from_document(json.loads(json.dumps(to_document(state)))) == state
 
 
 def test_a_record_from_another_version_is_refused() -> None:
@@ -167,3 +188,12 @@ def test_the_json_store_writes_one_readable_file_per_learner(tmp_path: Path) -> 
 
     assert files == ["lily.json"]
     assert saved["attempts"][0]["concept"] == "line_breaking_pass"
+
+
+def test_the_pace_round_trips_and_a_record_without_one_reads_as_normal() -> None:
+    state = LearnerState("lily", seed=7, pace=Pace.RARELY, pace_next=Pace.OFF)
+    document = to_document(state)
+
+    assert from_document(json.loads(json.dumps(document))) == state
+    del document["pace"], document["pace_next"]
+    assert from_document(document).pace is Pace.NORMAL

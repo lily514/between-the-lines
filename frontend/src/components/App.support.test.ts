@@ -1,13 +1,33 @@
-import { identifyFeedback, identifyQuestion, predictQuestion } from '../test-fixtures/index.ts'
-import { fullTime, startStatus } from '../test-fixtures/summaries.ts'
-import { initialState, matchHeader, momentOf, newViewerId, reducer, type AppState } from './App.support.ts'
+import {
+	conceptMap,
+	identifyFeedback,
+	identifyQuestion,
+	matchesInProgress,
+	predictQuestion,
+	reportFullTime,
+	reportHalftime
+} from '../test-fixtures/index.ts'
+import { startStatus } from '../test-fixtures/summaries.ts'
+import {
+	initialState,
+	matchHeader,
+	momentOf,
+	needsHalftime,
+	newViewerId,
+	offersMap,
+	reducer,
+	type AppState
+} from './App.support.ts'
 
 const fresh = initialState(null)
-const watching = (state: AppState = reducer(fresh, { type: 'started', status: startStatus })) => state
+const watching = (
+	state: AppState = reducer(fresh, { type: 'matches', status: startStatus, matches: matchesInProgress })
+) => state
 
 test('a new visitor starts at the welcome', () => {
 	expect(fresh.viewer).toBeNull()
-	expect(fresh.screen).toEqual({ kind: 'welcome', status: null, error: null })
+	expect(fresh.screen).toEqual({ kind: 'welcome', error: null })
+	expect(fresh.overlay).toBeNull()
 })
 
 // The API's viewer id rule (`check_viewer_id` in backend/src/btl/store/base.py).
@@ -28,16 +48,16 @@ test('a remembered viewer starts by loading, since the page resumes them at once
 	expect(state.screen.kind).toBe('loading')
 })
 
-test('starting shows the viewer where they stand', () => {
+test('starting lands on Matches, home base', () => {
 	const state = watching()
 	expect(state.viewer).toBe('lily')
-	expect(state.screen).toMatchObject({ kind: 'welcome', status: startStatus })
+	expect(state.screen).toEqual({ kind: 'matches', status: startStatus, matches: matchesInProgress })
 })
 
 test('a refused id returns to the welcome with the reason', () => {
 	const state = reducer(fresh, { type: 'rejected', message: 'not a valid viewer id' })
 	expect(state.viewer).toBeNull()
-	expect(state.screen).toEqual({ kind: 'welcome', status: null, error: 'not a valid viewer id' })
+	expect(state.screen).toEqual({ kind: 'welcome', error: 'not a valid viewer id' })
 })
 
 test('a question arrives as a step from kick-off, then opens as the question sheet', () => {
@@ -74,11 +94,23 @@ test('an answer that arrives when no question is open is ignored', () => {
 	expect(reducer(state, { type: 'open' })).toBe(state)
 })
 
-test('full time shows the summary and forgets where the last question was', () => {
+test('the full-time report forgets where the last question was, and goes back to Matches after', () => {
 	const first = reducer(watching(), { type: 'arrived', step: identifyQuestion })
-	const end = reducer(first, { type: 'arrived', step: fullTime })
-	expect(end.screen).toEqual({ kind: 'full_time', summary: fullTime })
+	const end = reducer(first, { type: 'report', report: reportFullTime, then: null })
+	expect(end.screen).toEqual({ kind: 'report', report: reportFullTime, then: null })
 	expect(end.last).toBeNull()
+})
+
+test('the halftime report shows once per match, before the first second-half question', () => {
+	const second = { ...predictQuestion, match_number: 1, delivered: { ...predictQuestion.delivered, period: 2 } }
+	const first = reducer(watching(), { type: 'arrived', step: { ...identifyQuestion, match_number: 1 } })
+	expect(needsHalftime(first, second)).toBe(true)
+	expect(needsHalftime(first, { ...identifyQuestion, match_number: 1 })).toBe(false)
+	const shown = reducer(first, { type: 'report', report: reportHalftime, then: second })
+	expect(shown.screen).toMatchObject({ kind: 'report', then: second })
+	expect(shown.halftimes).toEqual([1])
+	expect(needsHalftime(shown, second)).toBe(false)
+	expect(needsHalftime(reducer(first, { type: 'arrived', step: second }), second)).toBe(false)
 })
 
 test('a failure keeps what to retry', () => {
@@ -92,7 +124,7 @@ test('a failure keeps what to retry', () => {
 test('forgetting the viewer goes back to the welcome', () => {
 	const state = reducer(watching(), { type: 'forget', message: 'That record has gone.' })
 	expect(state.viewer).toBeNull()
-	expect(state.screen).toEqual({ kind: 'welcome', status: null, error: 'That record has gone.' })
+	expect(state.screen).toEqual({ kind: 'welcome', error: 'That record has gone.' })
 })
 
 test('the wide-screen header names the match being watched', () => {
@@ -100,9 +132,27 @@ test('the wide-screen header names the match being watched', () => {
 		title: 'Ripon Wardens v Ludlow Ferrymen',
 		clock: '13:59'
 	})
-	expect(matchHeader({ kind: 'full_time', summary: fullTime })).toEqual({
-		title: 'Ripon Wardens 2–1 Ludlow Ferrymen',
+	expect(matchHeader({ kind: 'report', report: reportFullTime, then: null })).toEqual({
+		title: 'Ripon Wardens 1–0 Truro Otters',
 		clock: 'Full time'
 	})
 	expect(matchHeader({ kind: 'loading', message: '…' })).toBeNull()
+})
+
+test('the map opens over the screen and closing it leaves the screen as it was', () => {
+	const open = reducer(reducer(watching(), { type: 'arrived', step: identifyQuestion }), { type: 'open' })
+	const loading = reducer(open, { type: 'map', map: null })
+	expect(loading.overlay).toEqual({ kind: 'map', map: null, error: null })
+	const loaded = reducer(loading, { type: 'map', map: conceptMap })
+	expect(loaded.screen).toBe(open.screen)
+	const closed = reducer(loaded, { type: 'close' })
+	expect(closed.overlay).toBeNull()
+	expect(closed.screen).toBe(open.screen)
+})
+
+test('the header offers the map once the viewer has picked a team, not during onboarding', () => {
+	expect(offersMap(fresh)).toBe(false)
+	expect(offersMap(reducer(fresh, { type: 'picking', status: startStatus, clubs: [] }))).toBe(false)
+	expect(offersMap(watching())).toBe(true)
+	expect(offersMap(reducer(watching(), { type: 'arrived', step: identifyQuestion }))).toBe(true)
 })

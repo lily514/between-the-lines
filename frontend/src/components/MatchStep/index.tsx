@@ -14,8 +14,10 @@ export interface MatchStepProps {
 	to: Question['delivered']
 	/** When the play the question is about happened. */
 	occurred: Question['occurred']
-	/** The score at a live question; a review question's score may be out of date, so it has none. */
+	/** The score as the question comes, from the server. */
 	score: string | null
+	/** What happened since the viewer's last answer in this match, from the server; null at the first question. */
+	catchUp: string | null
 	/** Which side is the viewer's team, tagged "You" in the fixture. */
 	yours: 'home' | 'away' | null
 	onArrive: () => void
@@ -25,7 +27,18 @@ export interface MatchStepProps {
  *
  * It takes a span of match time (`from` → `to`) rather than a question, so a component that plays the match at speed
  * can take its place with the same props and call `onArrive` when the clock gets there. */
-const MatchStep = ({ home, away, matchNumber, from, to, occurred, score, yours, onArrive }: MatchStepProps) => {
+const MatchStep = ({
+	home,
+	away,
+	matchNumber,
+	from,
+	to,
+	occurred,
+	score,
+	catchUp,
+	yours,
+	onArrive
+}: MatchStepProps) => {
 	const heading = useRef<HTMLHeadingElement>(null)
 	const headingId = useId()
 
@@ -46,6 +59,11 @@ const MatchStep = ({ home, away, matchNumber, from, to, occurred, score, yours, 
 					{score !== null && ` · ${score}`}
 				</span>
 			</header>
+			{catchUp !== null && (
+				<p className="match-step__catch-up">
+					<strong>While you were answering:</strong> {catchUp}
+				</p>
+			)}
 			<p className="match-step__moved">{movedOn(from, to)}</p>
 			<PhasePill phase={stepPhase(to)} detail={live ? null : to.restart} />
 			<h2 id={headingId} ref={heading} tabIndex={-1} className="match-step__heading screen-heading">

@@ -11,10 +11,11 @@ from typing import TypeVar
 
 from btl.learn.concept_map import ConceptKey
 from btl.learn.knowledge import Delivery, KnowledgeModel, Observation, replay
+from btl.learn.pace import Pace
 from btl.learn.questions import Asks, Form
 from btl.schema.ids import TeamId
 
-LEARNER_VERSION = 2
+LEARNER_VERSION = 3
 MATCHES_PER_SESSION = 3
 
 StateT = TypeVar("StateT")
@@ -25,7 +26,8 @@ class Attempt:
     """One answered question, with enough to replay it and to show it again.
 
     ``answered_at`` is an ISO 8601 timestamp supplied by the caller; nothing here reads the
-    clock.
+    clock. ``asked_in`` is the period the question was asked in, which for a review can be later
+    than the moment; None in records written before it was kept.
     """
 
     match_number: int
@@ -41,6 +43,7 @@ class Attempt:
     correct: bool
     pack_id: str
     answered_at: str
+    asked_in: int | None = None
 
     def observation(self) -> Observation:
         """The answer as a knowledge model sees it."""
@@ -61,6 +64,9 @@ class LearnerState:
     ``seed`` fixes the viewer's three matches, so a session can always be rebuilt. ``club`` is
     the team the viewer supports; their matches are its fixtures. Without one, the seed alone
     chooses the fixtures.
+
+    ``pace`` is how often questions come. A match part-way through is replayed from its answers,
+    so a change made during one waits in ``pace_next`` until the next match starts.
     """
 
     viewer_id: str
@@ -68,6 +74,8 @@ class LearnerState:
     match_number: int = 1
     attempts: tuple[Attempt, ...] = field(default=())
     club: TeamId | None = None
+    pace: Pace = Pace.NORMAL
+    pace_next: Pace | None = None
     version: int = LEARNER_VERSION
 
     @property
@@ -85,8 +93,15 @@ class LearnerState:
         return replace(self, attempts=(*self.attempts, attempt))
 
     def next_match(self) -> "LearnerState":
-        """The record after finishing the current match."""
-        return replace(self, match_number=self.match_number + 1)
+        """The record after finishing the current match, with any waiting pace now in force."""
+        pace = self.pace if self.pace_next is None else self.pace_next
+        return replace(self, match_number=self.match_number + 1, pace=pace, pace_next=None)
+
+    def with_pace(self, pace: Pace) -> "LearnerState":
+        """The record with a new pace: now, or from the next match if this one has answers."""
+        if not self.asked_in(self.match_number):
+            return replace(self, pace=pace, pace_next=None)
+        return replace(self, pace_next=None if pace == self.pace else pace)
 
     def asked_in(self, match_number: int) -> frozenset[tuple[ConceptKey, int]]:
         """The moments already asked about in a match, as (concept, action id)."""

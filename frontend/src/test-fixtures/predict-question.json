@@ -298,5 +298,11 @@
 		"ball": [89.2, 23.9],
 		"path": [],
 		"mark": null
-	}
+	},
+	"score": {
+		"home": 1,
+		"away": 0,
+		"clock": "32:45"
+	},
+	"catch_up": "No goals. It's still 1–0."
 }

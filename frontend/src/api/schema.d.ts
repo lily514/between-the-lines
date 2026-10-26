@@ -24,6 +24,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/concept-map": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Curriculum
+         * @description Every concept by strand and tier, with no viewer's values: what the questions cover.
+         */
+        get: operations["get_curriculum_api_concept_map_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/viewers": {
         parameters: {
             query?: never;
@@ -104,6 +124,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/viewers/{viewer_id}/concept-map": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Concept Map
+         * @description Every concept by strand and tier, and the viewer's level on those asked about now.
+         */
+        get: operations["get_concept_map_api_viewers__viewer_id__concept_map_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/viewers/{viewer_id}/matches": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Matches
+         * @description The viewer's matches in order, each telling only what the viewer has seen of it.
+         */
+        get: operations["get_matches_api_viewers__viewer_id__matches_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/viewers/{viewer_id}/matches/{match_number}/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Report
+         * @description The scouting report for a match at a break, once the viewer has reached it.
+         */
+        get: operations["get_report_api_viewers__viewer_id__matches__match_number__report_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/viewers/{viewer_id}/next": {
         parameters: {
             query?: never;
@@ -118,6 +198,26 @@ export interface paths {
          * @description The question waiting to be answered, or full time if the match has no more.
          */
         post: operations["next_step_api_viewers__viewer_id__next_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/viewers/{viewer_id}/pace": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Put Pace
+         * @description Set how often questions come; during a match, from the next one.
+         */
+        put: operations["put_pace_api_viewers__viewer_id__pace_put"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -159,15 +259,35 @@ export interface components {
             pack_id: string;
         };
         /**
+         * AnswerLineOut
+         * @description A question answered before the break: the moment's clock, the concept, right or not.
+         */
+        AnswerLineOut: {
+            /** Clock */
+            clock: string;
+            /** Concept */
+            concept: string;
+            /** Correct */
+            correct: boolean;
+        };
+        /**
          * Bar
-         * @description One concept's mastery, from 0 to 1.
+         * @description One concept's mastery, from 0 to 1, and the level word for it ("Solid").
          */
         Bar: {
+            /** Level */
+            level: string;
             /** Name */
             name: string;
             /** Value */
             value: number;
         };
+        /**
+         * Break
+         * @description Which break a report is for.
+         * @enum {string}
+         */
+        Break: "halftime" | "full_time";
         /**
          * ClubIn
          * @description Choose the team to support, by team id.
@@ -187,6 +307,41 @@ export interface components {
             name: string;
             /** Team Id */
             team_id: number;
+        };
+        /**
+         * ConceptMapOut
+         * @description The whole curriculum, with the viewer's level on each concept asked about now.
+         *
+         *     ``tiers`` names the tiers in order, from tier 0.
+         */
+        ConceptMapOut: {
+            /** Concepts */
+            concepts: components["schemas"]["MapConceptOut"][];
+            /** Strands */
+            strands: components["schemas"]["StrandOut"][];
+            thresholds: components["schemas"]["ThresholdsOut"];
+            /** Tiers */
+            tiers: string[];
+        };
+        /**
+         * ConceptMoveOut
+         * @description A concept asked about now: mastery and level word at kick-off and at the break.
+         */
+        ConceptMoveOut: {
+            /** After */
+            after: number;
+            /** Before */
+            before: number;
+            /** Level */
+            level: string;
+            /** Level Before */
+            level_before: string;
+            /** Mastered */
+            mastered: boolean;
+            /** Name */
+            name: string;
+            /** Strand */
+            strand: string;
         };
         /**
          * DeliveredTime
@@ -359,10 +514,51 @@ export interface components {
             /** Your Team */
             your_team: ("home" | "away") | null;
         };
+        /**
+         * GoalOut
+         * @description A goal, by match clock, side and scorer.
+         */
+        GoalOut: {
+            /** Clock */
+            clock: string;
+            /** Own Goal */
+            own_goal: boolean;
+            /** Scorer */
+            scorer: string;
+            /**
+             * Side
+             * @enum {string}
+             */
+            side: "home" | "away";
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /**
+         * MapConceptOut
+         * @description A concept on the map. ``mastery`` and ``level`` are null for one coming later.
+         */
+        MapConceptOut: {
+            /** Askable */
+            askable: boolean;
+            /** Key */
+            key: string;
+            /** Level */
+            level: string | null;
+            /** Mastery */
+            mastery: number | null;
+            /** Name */
+            name: string;
+            /** Objective */
+            objective: string;
+            /** Prerequisites */
+            prerequisites: string[];
+            /** Strand */
+            strand: string;
+            /** Tier */
+            tier: number;
         };
         /**
          * MarkerOut
@@ -384,6 +580,45 @@ export interface components {
             x: number;
             /** Y */
             y: number;
+        };
+        /**
+         * MatchOut
+         * @description One of the viewer's matches, for the Matches screen.
+         *
+         *     ``score`` and ``your_result`` are null until the viewer has seen some of the match:
+         *     an upcoming match tells only its clubs and date.
+         */
+        MatchOut: {
+            /** Away */
+            away: string;
+            /** Away Code */
+            away_code: string;
+            /** Date */
+            date: string;
+            /** Date Label */
+            date_label: string;
+            /** Home */
+            home: string;
+            /** Home Code */
+            home_code: string;
+            /** Kick Off */
+            kick_off: string;
+            /** Match Number */
+            match_number: number;
+            /** Matchday */
+            matchday: number;
+            /** Questions */
+            questions: number;
+            score: components["schemas"]["ScoreOut"] | null;
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "upcoming" | "in_progress" | "finished";
+            /** Your Result */
+            your_result: ("won" | "drew" | "lost") | null;
+            /** Your Team */
+            your_team: ("home" | "away") | null;
         };
         /**
          * MomentTime
@@ -429,6 +664,19 @@ export interface components {
                 number,
                 number
             ] | null;
+        };
+        /**
+         * Pace
+         * @description How often questions come.
+         * @enum {string}
+         */
+        Pace: "normal" | "rarely" | "off";
+        /**
+         * PaceIn
+         * @description How often questions should come.
+         */
+        PaceIn: {
+            pace: components["schemas"]["Pace"];
         };
         /**
          * PictureOut
@@ -487,6 +735,10 @@ export interface components {
         /**
          * QuestionOut
          * @description The next question, built from its question view only.
+         *
+         *     ``score`` is the score as the question comes. ``catch_up`` says what happened since the
+         *     viewer's last answer in this match, such as "Truro Otters scored at 41:02.", then the
+         *     score; null for the match's first question.
          */
         QuestionOut: {
             /** Asks */
@@ -495,6 +747,8 @@ export interface components {
             away: string;
             /** Away Code */
             away_code: string;
+            /** Catch Up */
+            catch_up: string | null;
             /** Concept Name */
             concept_name: string;
             /** Context */
@@ -526,10 +780,67 @@ export interface components {
             /** Pack Id */
             pack_id: string;
             picture: components["schemas"]["PictureOut"];
+            score: components["schemas"]["ScoreOut"];
             /** Text */
             text: string;
             /** Your Team */
             your_team: ("home" | "away") | null;
+        };
+        /**
+         * ReportOut
+         * @description The scouting report for one of the viewer's matches at halftime or full time.
+         *
+         *     It covers the match up to that break only. ``right`` counts the answers that were right.
+         */
+        ReportOut: {
+            /** Answers */
+            answers: components["schemas"]["AnswerLineOut"][];
+            /**
+             * At
+             * @enum {string}
+             */
+            at: "halftime" | "full_time";
+            /** Away */
+            away: string;
+            /** Away Code */
+            away_code: string;
+            /** Away Goals */
+            away_goals: number;
+            /** Concepts */
+            concepts: components["schemas"]["ConceptMoveOut"][];
+            /** Goals */
+            goals: components["schemas"]["GoalOut"][];
+            /** Home */
+            home: string;
+            /** Home Code */
+            home_code: string;
+            /** Home Goals */
+            home_goals: number;
+            /** Match Number */
+            match_number: number;
+            /** Note */
+            note: string;
+            /** Right */
+            right: number;
+            /** Strands */
+            strands: components["schemas"]["StrandValueOut"][];
+            thresholds: components["schemas"]["ThresholdsOut"];
+            /** Your Result */
+            your_result: ("won" | "drew" | "lost") | null;
+            /** Your Team */
+            your_team: ("home" | "away") | null;
+        };
+        /**
+         * ScoreOut
+         * @description Goals for each side, at ``clock`` for a match in progress (null at full time).
+         */
+        ScoreOut: {
+            /** Away */
+            away: number;
+            /** Clock */
+            clock: string | null;
+            /** Home */
+            home: number;
         };
         /**
          * SheetPlayerOut
@@ -599,6 +910,7 @@ export interface components {
          *
          *     ``club`` is the team they support. They can choose or change it while
          *     ``can_choose_club``; ``suggested_club`` is the one "Pick one for me" starts from.
+         *     ``pace`` is how often questions come; ``pace_next`` is a change waiting for the next match.
          */
         StatusOut: {
             /** Can Choose Club */
@@ -613,11 +925,41 @@ export interface components {
             match_number: number;
             /** Matches */
             matches: number;
+            pace: components["schemas"]["Pace"];
+            pace_next: components["schemas"]["Pace"] | null;
             /** Suggested Club */
             suggested_club: number;
             thresholds: components["schemas"]["ThresholdsOut"];
             /** Viewer Id */
             viewer_id: string;
+        };
+        /**
+         * StrandOut
+         * @description A strand of the curriculum.
+         */
+        StrandOut: {
+            /** Description */
+            description: string;
+            /** Key */
+            key: string;
+            /** Name */
+            name: string;
+        };
+        /**
+         * StrandValueOut
+         * @description A strand on the radar. ``kickoff`` and ``now`` are null when nothing in it is asked yet.
+         */
+        StrandValueOut: {
+            /** Concepts */
+            concepts: number;
+            /** Key */
+            key: string;
+            /** Kickoff */
+            kickoff: number | null;
+            /** Name */
+            name: string;
+            /** Now */
+            now: number | null;
         };
         /**
          * TeamSheetOut
@@ -683,6 +1025,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ClubOut"][];
+                };
+            };
+        };
+    };
+    get_curriculum_api_concept_map_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConceptMapOut"];
                 };
             };
         };
@@ -821,6 +1183,102 @@ export interface operations {
             };
         };
     };
+    get_concept_map_api_viewers__viewer_id__concept_map_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                viewer_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConceptMapOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_matches_api_viewers__viewer_id__matches_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                viewer_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MatchOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_report_api_viewers__viewer_id__matches__match_number__report_get: {
+        parameters: {
+            query: {
+                at: components["schemas"]["Break"];
+            };
+            header?: never;
+            path: {
+                viewer_id: string;
+                match_number: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     next_step_api_viewers__viewer_id__next_post: {
         parameters: {
             query?: never;
@@ -839,6 +1297,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["QuestionOut"] | components["schemas"]["FullTimeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_pace_api_viewers__viewer_id__pace_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                viewer_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PaceIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatusOut"];
                 };
             };
             /** @description Validation Error */

@@ -9,13 +9,19 @@ from collections.abc import Mapping
 from typing import Literal
 
 from btl.api.models import (
+    AnswerLineOut,
     Bar,
     ClubOut,
+    ConceptMapOut,
+    ConceptMoveOut,
     DeliveredTime,
     FactOut,
     FeedbackOption,
     FeedbackOut,
+    GoalOut,
+    MapConceptOut,
     MarkerOut,
+    MatchOut,
     MomentTime,
     Movement,
     OptionOut,
@@ -23,18 +29,26 @@ from btl.api.models import (
     PlayerNumbersOut,
     PositionOut,
     QuestionOut,
+    ReportOut,
+    ScoreOut,
     SheetPlayerOut,
     SheetTeamOut,
+    StrandOut,
+    StrandValueOut,
     TeamSheetOut,
     ThresholdsOut,
     YourTeam,
 )
 from btl.concepts.phase import PhaseOfPlay
-from btl.league.league import Club
+from btl.league.league import Club, League
 from btl.learn.concept_map import Thresholds
+from btl.learn.curriculum import Curriculum
 from btl.learn.evidence import Fact, Picture, percent_points
 from btl.learn.knowledge import Delivery
+from btl.learn.levels import level_word
+from btl.learn.matches import CatchUp, MatchState, ViewerMatch
 from btl.learn.questions import Form
+from btl.learn.report import Break, Report
 from btl.learn.session import Asked, Told
 from btl.learn.team_sheet import NEXT_STAGE, SheetPlayer, SheetTeam, TeamSheet
 from btl.schema.ids import TeamId
@@ -42,9 +56,14 @@ from btl.schema.scoreboard import clock
 
 
 def question_payload(
-    asked: Asked, match_number: int, home: Club, away: Club, club: TeamId | None
+    asked: Asked,
+    match_number: int,
+    home: Club,
+    away: Club,
+    club: TeamId | None,
+    caught: CatchUp,
 ) -> QuestionOut:
-    """The question as the page shows it: its view, its wording and when it is asked."""
+    """The question as the page shows it: its view, its wording, when it is asked and the score."""
     view, prompt = asked.view, asked.prompt
     candidate, delivered = prompt.candidate, prompt.delivered
     return QuestionOut(
@@ -77,7 +96,28 @@ def question_payload(
             for option in view.options
         ],
         picture=_picture(view.picture),
+        score=ScoreOut(
+            home=caught.home,
+            away=caught.away,
+            clock=clock(delivered.period_id, delivered.time_seconds),
+        ),
+        catch_up=catch_up_text(caught, home, away),
     )
+
+
+def catch_up_text(caught: CatchUp, home: Club, away: Club) -> str | None:
+    """The goals since the viewer's last answer and the score, in a sentence or two."""
+    if caught.goals is None:
+        return None
+    score = f"{caught.home}\N{EN DASH}{caught.away}"
+    if not caught.goals:
+        return f"No goals. It's still {score}."
+    said = [
+        f"{(home if goal.home else away).name} scored at {goal.clock}"
+        + (", an own goal" if goal.own_goal else "")
+        for goal in caught.goals
+    ]
+    return f"{'. '.join(said)}. It's {score}."
 
 
 def feedback_payload(
@@ -198,14 +238,129 @@ def _sheet_player(player: SheetPlayer) -> SheetPlayerOut:
     )
 
 
+def match_payload(match: ViewerMatch, league: League, club: TeamId | None) -> MatchOut:
+    """One of the viewer's matches, with the result from their side once it is finished."""
+    home, away = league.club(match.home_id), league.club(match.away_id)
+    side = your_team(club, home, away)
+    score = match.score
+    finished = match.state is MatchState.FINISHED
+    score_out = None
+    if score is not None:
+        score_out = ScoreOut(home=score.home, away=score.away, clock=score.clock)
+    return MatchOut(
+        match_number=match.match_number,
+        matchday=match.matchday.number,
+        date=match.matchday.day.isoformat(),
+        date_label=match.matchday.label,
+        kick_off=match.matchday.kick_off,
+        home=home.name,
+        away=away.name,
+        home_code=home.short_name,
+        away_code=away.short_name,
+        your_team=side,
+        state=match.state.value,
+        score=score_out,
+        your_result=your_result(side, score.home, score.away) if finished and score else None,
+        questions=match.questions,
+    )
+
+
+def report_payload(
+    made: Report, league: League, club: TeamId | None, thresholds: Thresholds
+) -> ReportOut:
+    """The scouting report, with the result from the viewer's side at full time."""
+    home, away = league.club(made.home_id), league.club(made.away_id)
+    side = your_team(club, home, away)
+    full_time = made.at is Break.FULL_TIME
+    return ReportOut(
+        match_number=made.match_number,
+        at=made.at.value,
+        home=home.name,
+        away=away.name,
+        home_code=home.short_name,
+        away_code=away.short_name,
+        your_team=side,
+        home_goals=made.home_goals,
+        away_goals=made.away_goals,
+        your_result=your_result(side, made.home_goals, made.away_goals) if full_time else None,
+        goals=[
+            GoalOut(
+                clock=goal.clock,
+                side="home" if goal.home else "away",
+                scorer=goal.scorer,
+                own_goal=goal.own_goal,
+            )
+            for goal in made.goals
+        ],
+        strands=[
+            StrandValueOut(
+                key=strand.key,
+                name=strand.name,
+                concepts=strand.concepts,
+                kickoff=strand.kickoff,
+                now=strand.now,
+            )
+            for strand in made.strands
+        ],
+        concepts=[
+            ConceptMoveOut(
+                name=move.name,
+                strand=move.strand,
+                before=move.before,
+                after=move.after,
+                level_before=move.level_before,
+                level=move.level,
+                mastered=move.mastered,
+            )
+            for move in made.concepts
+        ],
+        answers=[
+            AnswerLineOut(clock=line.clock, concept=line.concept, correct=line.correct)
+            for line in made.answers
+        ],
+        right=sum(line.correct for line in made.answers),
+        note=made.note,
+        thresholds=thresholds_payload(thresholds),
+    )
+
+
 def movements(before: Mapping[str, float], after: Mapping[str, float]) -> list[Movement]:
     """Each concept's mastery before and after, in the order of ``after``."""
     return [Movement(name=name, before=before[name], after=value) for name, value in after.items()]
 
 
-def bars(mastery: Mapping[str, float]) -> list[Bar]:
-    """Each concept's mastery now."""
-    return [Bar(name=name, value=value) for name, value in mastery.items()]
+def bars(mastery: Mapping[str, float], thresholds: Thresholds) -> list[Bar]:
+    """Each concept's mastery now, with its level word."""
+    return [
+        Bar(name=name, value=value, level=level_word(value, thresholds))
+        for name, value in mastery.items()
+    ]
+
+
+def concept_map_payload(whole: Curriculum, thresholds: Thresholds) -> ConceptMapOut:
+    """The viewer's map of the curriculum."""
+    return ConceptMapOut(
+        strands=[
+            StrandOut(key=strand.key, name=strand.name, description=strand.description)
+            for strand in whole.strands
+        ],
+        tiers=list(whole.tiers),
+        concepts=[
+            MapConceptOut(
+                key=c.key,
+                name=c.name,
+                strand=c.strand,
+                tier=c.tier,
+                objective=c.objective,
+                prerequisites=list(c.prerequisites),
+                askable=c.askable,
+                mastery=c.mastery,
+                level=c.level,
+            )
+            for c in whole.concepts
+        ],
+        thresholds=thresholds_payload(thresholds),
+    )
 
 
 def thresholds_payload(thresholds: Thresholds) -> ThresholdsOut:

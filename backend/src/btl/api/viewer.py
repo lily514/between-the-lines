@@ -117,3 +117,34 @@ class AnswerOnlyStore:
         if state.match_number != self.match_number:
             raise NotPendingError("no question is waiting to be answered")
         return self.store.put(state, etag)
+
+
+class MatchOverError(Exception):
+    """A replay reached full time: no question is left in the match."""
+
+
+@dataclass
+class ReadOnlyStore:
+    """A store for a replay that only looks: it reads, and stops the replay at the first save.
+
+    With no answer to give, the only save a replay makes is moving on at full time, so that
+    is where it stops.
+    """
+
+    store: LearnerStore
+
+    def get(self, viewer_id: str) -> Stored | None:
+        """Read through to the real store."""
+        return self.store.get(viewer_id)
+
+    def create(self, state: LearnerState) -> str:
+        """Never called: the viewer exists before a replay."""
+        raise MatchOverError(state.viewer_id)
+
+    def put(self, state: LearnerState, etag: str) -> str:
+        """Stop the replay instead of saving.
+
+        Raises:
+            MatchOverError: Always.
+        """
+        raise MatchOverError(state.viewer_id)

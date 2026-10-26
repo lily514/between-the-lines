@@ -9,6 +9,8 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field
 
+from btl.learn.pace import Pace
+
 Point = tuple[float, float]
 # Which side of a match is the viewer's team, if either.
 YourTeam = Literal["home", "away"] | None
@@ -70,8 +72,21 @@ class OptionOut(BaseModel):
     target_at: Point | None
 
 
+class ScoreOut(BaseModel):
+    """Goals for each side, at ``clock`` for a match in progress (null at full time)."""
+
+    home: int
+    away: int
+    clock: str | None
+
+
 class QuestionOut(BaseModel):
-    """The next question, built from its question view only."""
+    """The next question, built from its question view only.
+
+    ``score`` is the score as the question comes. ``catch_up`` says what happened since the
+    viewer's last answer in this match, such as "Truro Otters scored at 41:02.", then the
+    score; null for the match's first question.
+    """
 
     kind: Literal["question"] = "question"
     pack_id: str
@@ -91,13 +106,16 @@ class QuestionOut(BaseModel):
     context: dict[str, FactOut]
     options: list[OptionOut]
     picture: PictureOut
+    score: ScoreOut
+    catch_up: str | None
 
 
 class Bar(BaseModel):
-    """One concept's mastery, from 0 to 1."""
+    """One concept's mastery, from 0 to 1, and the level word for it ("Solid")."""
 
     name: str
     value: float
+    level: str
 
 
 class Movement(BaseModel):
@@ -205,6 +223,7 @@ class StatusOut(BaseModel):
 
     ``club`` is the team they support. They can choose or change it while
     ``can_choose_club``; ``suggested_club`` is the one "Pick one for me" starts from.
+    ``pace`` is how often questions come; ``pace_next`` is a change waiting for the next match.
     """
 
     viewer_id: str
@@ -217,6 +236,8 @@ class StatusOut(BaseModel):
     suggested_club: int
     concepts: list[Bar]
     thresholds: ThresholdsOut
+    pace: Pace
+    pace_next: Pace | None
 
 
 class StartIn(BaseModel):
@@ -229,6 +250,12 @@ class StartIn(BaseModel):
     viewer_id: str
     seed: int | None = None
     club: int | None = None
+
+
+class PaceIn(BaseModel):
+    """How often questions should come."""
+
+    pace: Pace
 
 
 class ClubIn(BaseModel):
@@ -297,6 +324,127 @@ class TeamSheetOut(BaseModel):
     stage: int
     next_stage: str | None
     teams: list[SheetTeamOut]
+
+
+class MatchOut(BaseModel):
+    """One of the viewer's matches, for the Matches screen.
+
+    ``score`` and ``your_result`` are null until the viewer has seen some of the match:
+    an upcoming match tells only its clubs and date.
+    """
+
+    match_number: int
+    matchday: int
+    date: str
+    date_label: str
+    kick_off: str
+    home: str
+    away: str
+    home_code: str
+    away_code: str
+    your_team: YourTeam
+    state: Literal["upcoming", "in_progress", "finished"]
+    score: ScoreOut | None
+    your_result: Literal["won", "drew", "lost"] | None
+    questions: int
+
+
+class StrandOut(BaseModel):
+    """A strand of the curriculum."""
+
+    key: str
+    name: str
+    description: str
+
+
+class MapConceptOut(BaseModel):
+    """A concept on the map. ``mastery`` and ``level`` are null for one coming later."""
+
+    key: str
+    name: str
+    strand: str
+    tier: int
+    objective: str
+    prerequisites: list[str]
+    askable: bool
+    mastery: float | None
+    level: str | None
+
+
+class ConceptMapOut(BaseModel):
+    """The whole curriculum, with the viewer's level on each concept asked about now.
+
+    ``tiers`` names the tiers in order, from tier 0.
+    """
+
+    strands: list[StrandOut]
+    tiers: list[str]
+    concepts: list[MapConceptOut]
+    thresholds: ThresholdsOut
+
+
+class StrandValueOut(BaseModel):
+    """A strand on the radar. ``kickoff`` and ``now`` are null when nothing in it is asked yet."""
+
+    key: str
+    name: str
+    concepts: int
+    kickoff: float | None
+    now: float | None
+
+
+class ConceptMoveOut(BaseModel):
+    """A concept asked about now: mastery and level word at kick-off and at the break."""
+
+    name: str
+    strand: str
+    before: float
+    after: float
+    level_before: str
+    level: str
+    mastered: bool
+
+
+class GoalOut(BaseModel):
+    """A goal, by match clock, side and scorer."""
+
+    clock: str
+    side: Literal["home", "away"]
+    scorer: str
+    own_goal: bool
+
+
+class AnswerLineOut(BaseModel):
+    """A question answered before the break: the moment's clock, the concept, right or not."""
+
+    clock: str
+    concept: str
+    correct: bool
+
+
+class ReportOut(BaseModel):
+    """The scouting report for one of the viewer's matches at halftime or full time.
+
+    It covers the match up to that break only. ``right`` counts the answers that were right.
+    """
+
+    match_number: int
+    at: Literal["halftime", "full_time"]
+    home: str
+    away: str
+    home_code: str
+    away_code: str
+    your_team: YourTeam
+    home_goals: int
+    away_goals: int
+    your_result: Literal["won", "drew", "lost"] | None
+    goals: list[GoalOut]
+    strands: list[StrandValueOut]
+    concepts: list[ConceptMoveOut]
+    answers: list[AnswerLineOut]
+    right: int
+    note: str
+    thresholds: ThresholdsOut
 
 
 class AnswerIn(BaseModel):

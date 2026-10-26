@@ -1,0 +1,135 @@
+/* Preferences (S8): how often questions come, your team, and the theme. */
+
+.preferences {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+}
+
+.preferences .preferences__back {
+	align-self: flex-start;
+	padding: 0;
+}
+
+.preferences__heading {
+	font-family: var(--font-display);
+	font-size: 28px;
+	font-weight: 700;
+}
+
+.preferences__group {
+	margin: 0;
+	padding: var(--s-3) 0 var(--s-5);
+	border: 0;
+	border-bottom: 1px solid var(--selected);
+	min-width: 0;
+}
+
+.preferences__legend {
+	margin: 0 0 var(--s-2);
+	padding: 0;
+	font-size: var(--fs-body);
+	font-weight: 600;
+}
+
+.preferences__help {
+	margin: var(--s-2) 0 0;
+	font-size: var(--fs-body-s);
+	line-height: var(--lh-body);
+	color: var(--text-muted);
+}
+
+.preferences__pending {
+	margin: var(--s-2) 0 0;
+	font-size: var(--fs-body-s);
+	font-weight: 600;
+	color: var(--text);
+}
+
+.preferences__team {
+	display: flex;
+	align-items: center;
+	gap: var(--s-3);
+	margin: 0;
+}
+
+.preferences__code {
+	padding: 2px 6px;
+	border: 1px solid var(--border-strong);
+	border-radius: var(--r-chip);
+	font-family: var(--font-data);
+	font-size: var(--fs-caption);
+}
+
+.preferences__club {
+	font-weight: 700;
+}
+
+/* A row of options that work as one radio group; the chosen one has the action colour's border and a check. */
+.segments {
+	display: grid;
+	grid-auto-columns: minmax(0, 1fr);
+	grid-auto-flow: column;
+	gap: var(--s-1);
+	padding: var(--s-1);
+	border-radius: var(--r-tile);
+	background: var(--surface);
+}
+
+.segments__option {
+	position: relative;
+}
+
+.segments__option input {
+	position: absolute;
+	inset: 0;
+	opacity: 0;
+	margin: 0;
+	cursor: pointer;
+}
+
+.segments__option span {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: var(--touch-min);
+	padding: 0 var(--s-1);
+	border: 2px solid transparent;
+	border-radius: 9px;
+	font-size: var(--fs-body-s);
+	font-weight: 600;
+	text-align: center;
+	color: var(--text-2);
+	transition: background var(--t-hover);
+}
+
+.segments__option:hover span {
+	background: var(--surface-raised);
+}
+
+.segments__option input:checked + span {
+	border-color: var(--act);
+	background: var(--selected);
+	color: var(--text);
+	font-weight: 700;
+}
+
+.segments__option input:checked + span::before {
+	content: '✓';
+	margin-right: var(--s-1);
+}
+
+.segments__option input:focus-visible + span {
+	outline: 3px solid var(--act);
+	outline-offset: 2px;
+}
+
+fieldset:disabled .segments__option span {
+	opacity: 0.6;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.segments__option span {
+		transition: none;
+	}
+}

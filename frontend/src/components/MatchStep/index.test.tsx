@@ -14,6 +14,7 @@ const stepTo = (question: typeof identifyQuestion, from: string | null = null, o
 			to={question.delivered}
 			occurred={question.occurred}
 			score={null}
+			catchUp={question.catch_up}
 			yours={question.your_team}
 			onArrive={onArrive}
 		/>
@@ -62,4 +63,15 @@ test('breaks are named as breaks, without a clock', () => {
 test('the viewer’s team is tagged in the fixture, not by colour alone', () => {
 	stepTo({ ...identifyQuestion, your_team: 'away' })
 	expect(screen.getByText('You').parentElement).toHaveTextContent('Ludlow Ferrymen You')
+})
+
+test('after an answer, the step says what happened while the viewer was answering', () => {
+	stepTo(predictQuestion, '13:59')
+	expect(screen.getByText('While you were answering:')).toBeInTheDocument()
+	expect(screen.getByText(/No goals\. It's still 1–0\./)).toBeInTheDocument()
+})
+
+test('the first question of a match has nothing to catch up on', () => {
+	stepTo(identifyQuestion)
+	expect(screen.queryByText('While you were answering:')).not.toBeInTheDocument()
 })

@@ -243,3 +243,19 @@ def test_the_built_page_is_served_outside_the_api(tmp_path: Path) -> None:
     assert api.get("/match/2").text == "<p>page</p>"
     assert api.get("/..%2Fsecret.txt").text == "<p>page</p>"
     assert api.get("/api/nothing").status_code == 404
+
+
+def test_each_question_carries_the_score_and_a_catch_up_after_the_first() -> None:
+    api = client(MemoryLearnerStore())
+    started(api)
+    first = next_step(api)
+    answer(api, first["pack_id"], first["options"][0]["key"])
+
+    second = next_step(api)
+
+    assert first["catch_up"] is None
+    assert first["score"]["clock"] == first["delivered"]["clock"]
+    if second["kind"] == "question":
+        assert second["catch_up"].endswith(
+            f"{second['score']['home']}\N{EN DASH}{second['score']['away']}."
+        )

@@ -20,9 +20,37 @@
         "title": "AnswerIn",
         "type": "object"
       },
-      "Bar": {
-        "description": "One concept's mastery, from 0 to 1.",
+      "AnswerLineOut": {
+        "description": "A question answered before the break: the moment's clock, the concept, right or not.",
         "properties": {
+          "clock": {
+            "title": "Clock",
+            "type": "string"
+          },
+          "concept": {
+            "title": "Concept",
+            "type": "string"
+          },
+          "correct": {
+            "title": "Correct",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "clock",
+          "concept",
+          "correct"
+        ],
+        "title": "AnswerLineOut",
+        "type": "object"
+      },
+      "Bar": {
+        "description": "One concept's mastery, from 0 to 1, and the level word for it (\"Solid\").",
+        "properties": {
+          "level": {
+            "title": "Level",
+            "type": "string"
+          },
           "name": {
             "title": "Name",
             "type": "string"
@@ -34,10 +62,20 @@
         },
         "required": [
           "name",
-          "value"
+          "value",
+          "level"
         ],
         "title": "Bar",
         "type": "object"
+      },
+      "Break": {
+        "description": "Which break a report is for.",
+        "enum": [
+          "halftime",
+          "full_time"
+        ],
+        "title": "Break",
+        "type": "string"
       },
       "ClubIn": {
         "description": "Choose the team to support, by team id.",
@@ -75,6 +113,87 @@
           "code"
         ],
         "title": "ClubOut",
+        "type": "object"
+      },
+      "ConceptMapOut": {
+        "description": "The whole curriculum, with the viewer's level on each concept asked about now.\n\n``tiers`` names the tiers in order, from tier 0.",
+        "properties": {
+          "concepts": {
+            "items": {
+              "$ref": "#/components/schemas/MapConceptOut"
+            },
+            "title": "Concepts",
+            "type": "array"
+          },
+          "strands": {
+            "items": {
+              "$ref": "#/components/schemas/StrandOut"
+            },
+            "title": "Strands",
+            "type": "array"
+          },
+          "thresholds": {
+            "$ref": "#/components/schemas/ThresholdsOut"
+          },
+          "tiers": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tiers",
+            "type": "array"
+          }
+        },
+        "required": [
+          "strands",
+          "tiers",
+          "concepts",
+          "thresholds"
+        ],
+        "title": "ConceptMapOut",
+        "type": "object"
+      },
+      "ConceptMoveOut": {
+        "description": "A concept asked about now: mastery and level word at kick-off and at the break.",
+        "properties": {
+          "after": {
+            "title": "After",
+            "type": "number"
+          },
+          "before": {
+            "title": "Before",
+            "type": "number"
+          },
+          "level": {
+            "title": "Level",
+            "type": "string"
+          },
+          "level_before": {
+            "title": "Level Before",
+            "type": "string"
+          },
+          "mastered": {
+            "title": "Mastered",
+            "type": "boolean"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "strand": {
+            "title": "Strand",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "strand",
+          "before",
+          "after",
+          "level_before",
+          "level",
+          "mastered"
+        ],
+        "title": "ConceptMoveOut",
         "type": "object"
       },
       "DeliveredTime": {
@@ -550,6 +669,39 @@
         "title": "FullTimeOut",
         "type": "object"
       },
+      "GoalOut": {
+        "description": "A goal, by match clock, side and scorer.",
+        "properties": {
+          "clock": {
+            "title": "Clock",
+            "type": "string"
+          },
+          "own_goal": {
+            "title": "Own Goal",
+            "type": "boolean"
+          },
+          "scorer": {
+            "title": "Scorer",
+            "type": "string"
+          },
+          "side": {
+            "enum": [
+              "home",
+              "away"
+            ],
+            "title": "Side",
+            "type": "string"
+          }
+        },
+        "required": [
+          "clock",
+          "side",
+          "scorer",
+          "own_goal"
+        ],
+        "title": "GoalOut",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -561,6 +713,77 @@
           }
         },
         "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "MapConceptOut": {
+        "description": "A concept on the map. ``mastery`` and ``level`` are null for one coming later.",
+        "properties": {
+          "askable": {
+            "title": "Askable",
+            "type": "boolean"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Level"
+          },
+          "mastery": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mastery"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "objective": {
+            "title": "Objective",
+            "type": "string"
+          },
+          "prerequisites": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Prerequisites",
+            "type": "array"
+          },
+          "strand": {
+            "title": "Strand",
+            "type": "string"
+          },
+          "tier": {
+            "title": "Tier",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "key",
+          "name",
+          "strand",
+          "tier",
+          "objective",
+          "prerequisites",
+          "askable",
+          "mastery",
+          "level"
+        ],
+        "title": "MapConceptOut",
         "type": "object"
       },
       "MarkerOut": {
@@ -604,6 +827,119 @@
           "role"
         ],
         "title": "MarkerOut",
+        "type": "object"
+      },
+      "MatchOut": {
+        "description": "One of the viewer's matches, for the Matches screen.\n\n``score`` and ``your_result`` are null until the viewer has seen some of the match:\nan upcoming match tells only its clubs and date.",
+        "properties": {
+          "away": {
+            "title": "Away",
+            "type": "string"
+          },
+          "away_code": {
+            "title": "Away Code",
+            "type": "string"
+          },
+          "date": {
+            "title": "Date",
+            "type": "string"
+          },
+          "date_label": {
+            "title": "Date Label",
+            "type": "string"
+          },
+          "home": {
+            "title": "Home",
+            "type": "string"
+          },
+          "home_code": {
+            "title": "Home Code",
+            "type": "string"
+          },
+          "kick_off": {
+            "title": "Kick Off",
+            "type": "string"
+          },
+          "match_number": {
+            "title": "Match Number",
+            "type": "integer"
+          },
+          "matchday": {
+            "title": "Matchday",
+            "type": "integer"
+          },
+          "questions": {
+            "title": "Questions",
+            "type": "integer"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ScoreOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "state": {
+            "enum": [
+              "upcoming",
+              "in_progress",
+              "finished"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "your_result": {
+            "anyOf": [
+              {
+                "enum": [
+                  "won",
+                  "drew",
+                  "lost"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Your Result"
+          },
+          "your_team": {
+            "anyOf": [
+              {
+                "enum": [
+                  "home",
+                  "away"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Your Team"
+          }
+        },
+        "required": [
+          "match_number",
+          "matchday",
+          "date",
+          "date_label",
+          "kick_off",
+          "home",
+          "away",
+          "home_code",
+          "away_code",
+          "your_team",
+          "state",
+          "score",
+          "your_result",
+          "questions"
+        ],
+        "title": "MatchOut",
         "type": "object"
       },
       "MomentTime": {
@@ -706,6 +1042,29 @@
           "target_at"
         ],
         "title": "OptionOut",
+        "type": "object"
+      },
+      "Pace": {
+        "description": "How often questions come.",
+        "enum": [
+          "normal",
+          "rarely",
+          "off"
+        ],
+        "title": "Pace",
+        "type": "string"
+      },
+      "PaceIn": {
+        "description": "How often questions should come.",
+        "properties": {
+          "pace": {
+            "$ref": "#/components/schemas/Pace"
+          }
+        },
+        "required": [
+          "pace"
+        ],
+        "title": "PaceIn",
         "type": "object"
       },
       "PictureOut": {
@@ -843,7 +1202,7 @@
         "type": "object"
       },
       "QuestionOut": {
-        "description": "The next question, built from its question view only.",
+        "description": "The next question, built from its question view only.\n\n``score`` is the score as the question comes. ``catch_up`` says what happened since the\nviewer's last answer in this match, such as \"Truro Otters scored at 41:02.\", then the\nscore; null for the match's first question.",
         "properties": {
           "asks": {
             "title": "Asks",
@@ -856,6 +1215,17 @@
           "away_code": {
             "title": "Away Code",
             "type": "string"
+          },
+          "catch_up": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Catch Up"
           },
           "concept_name": {
             "title": "Concept Name",
@@ -918,6 +1288,9 @@
           "picture": {
             "$ref": "#/components/schemas/PictureOut"
           },
+          "score": {
+            "$ref": "#/components/schemas/ScoreOut"
+          },
           "text": {
             "title": "Text",
             "type": "string"
@@ -955,9 +1328,174 @@
           "delivered",
           "context",
           "options",
-          "picture"
+          "picture",
+          "score",
+          "catch_up"
         ],
         "title": "QuestionOut",
+        "type": "object"
+      },
+      "ReportOut": {
+        "description": "The scouting report for one of the viewer's matches at halftime or full time.\n\nIt covers the match up to that break only. ``right`` counts the answers that were right.",
+        "properties": {
+          "answers": {
+            "items": {
+              "$ref": "#/components/schemas/AnswerLineOut"
+            },
+            "title": "Answers",
+            "type": "array"
+          },
+          "at": {
+            "enum": [
+              "halftime",
+              "full_time"
+            ],
+            "title": "At",
+            "type": "string"
+          },
+          "away": {
+            "title": "Away",
+            "type": "string"
+          },
+          "away_code": {
+            "title": "Away Code",
+            "type": "string"
+          },
+          "away_goals": {
+            "title": "Away Goals",
+            "type": "integer"
+          },
+          "concepts": {
+            "items": {
+              "$ref": "#/components/schemas/ConceptMoveOut"
+            },
+            "title": "Concepts",
+            "type": "array"
+          },
+          "goals": {
+            "items": {
+              "$ref": "#/components/schemas/GoalOut"
+            },
+            "title": "Goals",
+            "type": "array"
+          },
+          "home": {
+            "title": "Home",
+            "type": "string"
+          },
+          "home_code": {
+            "title": "Home Code",
+            "type": "string"
+          },
+          "home_goals": {
+            "title": "Home Goals",
+            "type": "integer"
+          },
+          "match_number": {
+            "title": "Match Number",
+            "type": "integer"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "right": {
+            "title": "Right",
+            "type": "integer"
+          },
+          "strands": {
+            "items": {
+              "$ref": "#/components/schemas/StrandValueOut"
+            },
+            "title": "Strands",
+            "type": "array"
+          },
+          "thresholds": {
+            "$ref": "#/components/schemas/ThresholdsOut"
+          },
+          "your_result": {
+            "anyOf": [
+              {
+                "enum": [
+                  "won",
+                  "drew",
+                  "lost"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Your Result"
+          },
+          "your_team": {
+            "anyOf": [
+              {
+                "enum": [
+                  "home",
+                  "away"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Your Team"
+          }
+        },
+        "required": [
+          "match_number",
+          "at",
+          "home",
+          "away",
+          "home_code",
+          "away_code",
+          "your_team",
+          "home_goals",
+          "away_goals",
+          "your_result",
+          "goals",
+          "strands",
+          "concepts",
+          "answers",
+          "right",
+          "note",
+          "thresholds"
+        ],
+        "title": "ReportOut",
+        "type": "object"
+      },
+      "ScoreOut": {
+        "description": "Goals for each side, at ``clock`` for a match in progress (null at full time).",
+        "properties": {
+          "away": {
+            "title": "Away",
+            "type": "integer"
+          },
+          "clock": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clock"
+          },
+          "home": {
+            "title": "Home",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "home",
+          "away",
+          "clock"
+        ],
+        "title": "ScoreOut",
         "type": "object"
       },
       "SheetPlayerOut": {
@@ -1117,7 +1655,7 @@
         "type": "object"
       },
       "StatusOut": {
-        "description": "Where a viewer stands: which match is next, and their mastery of each concept.\n\n``club`` is the team they support. They can choose or change it while\n``can_choose_club``; ``suggested_club`` is the one \"Pick one for me\" starts from.",
+        "description": "Where a viewer stands: which match is next, and their mastery of each concept.\n\n``club`` is the team they support. They can choose or change it while\n``can_choose_club``; ``suggested_club`` is the one \"Pick one for me\" starts from.\n``pace`` is how often questions come; ``pace_next`` is a change waiting for the next match.",
         "properties": {
           "can_choose_club": {
             "title": "Can Choose Club",
@@ -1162,6 +1700,19 @@
             "title": "Matches",
             "type": "integer"
           },
+          "pace": {
+            "$ref": "#/components/schemas/Pace"
+          },
+          "pace_next": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Pace"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "suggested_club": {
             "title": "Suggested Club",
             "type": "integer"
@@ -1184,9 +1735,83 @@
           "can_choose_club",
           "suggested_club",
           "concepts",
-          "thresholds"
+          "thresholds",
+          "pace",
+          "pace_next"
         ],
         "title": "StatusOut",
+        "type": "object"
+      },
+      "StrandOut": {
+        "description": "A strand of the curriculum.",
+        "properties": {
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "name",
+          "description"
+        ],
+        "title": "StrandOut",
+        "type": "object"
+      },
+      "StrandValueOut": {
+        "description": "A strand on the radar. ``kickoff`` and ``now`` are null when nothing in it is asked yet.",
+        "properties": {
+          "concepts": {
+            "title": "Concepts",
+            "type": "integer"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "kickoff": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kickoff"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "now": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Now"
+          }
+        },
+        "required": [
+          "key",
+          "name",
+          "concepts",
+          "kickoff",
+          "now"
+        ],
+        "title": "StrandValueOut",
         "type": "object"
       },
       "TeamSheetOut": {
@@ -1316,6 +1941,25 @@
           }
         },
         "summary": "Clubs"
+      }
+    },
+    "/api/concept-map": {
+      "get": {
+        "description": "Every concept by strand and tier, with no viewer's values: what the questions cover.",
+        "operationId": "get_curriculum_api_concept_map_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConceptMapOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Curriculum"
       }
     },
     "/api/viewers": {
@@ -1497,6 +2141,147 @@
         "summary": "Put Club"
       }
     },
+    "/api/viewers/{viewer_id}/concept-map": {
+      "get": {
+        "description": "Every concept by strand and tier, and the viewer's level on those asked about now.",
+        "operationId": "get_concept_map_api_viewers__viewer_id__concept_map_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "viewer_id",
+            "required": true,
+            "schema": {
+              "title": "Viewer Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConceptMapOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Concept Map"
+      }
+    },
+    "/api/viewers/{viewer_id}/matches": {
+      "get": {
+        "description": "The viewer's matches in order, each telling only what the viewer has seen of it.",
+        "operationId": "get_matches_api_viewers__viewer_id__matches_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "viewer_id",
+            "required": true,
+            "schema": {
+              "title": "Viewer Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MatchOut"
+                  },
+                  "title": "Response Get Matches Api Viewers  Viewer Id  Matches Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Matches"
+      }
+    },
+    "/api/viewers/{viewer_id}/matches/{match_number}/report": {
+      "get": {
+        "description": "The scouting report for a match at a break, once the viewer has reached it.",
+        "operationId": "get_report_api_viewers__viewer_id__matches__match_number__report_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "viewer_id",
+            "required": true,
+            "schema": {
+              "title": "Viewer Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "match_number",
+            "required": true,
+            "schema": {
+              "title": "Match Number",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "at",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Break"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Report"
+      }
+    },
     "/api/viewers/{viewer_id}/next": {
       "post": {
         "description": "The question waiting to be answered, or full time if the match has no more.",
@@ -1550,6 +2335,56 @@
           }
         },
         "summary": "Next Step"
+      }
+    },
+    "/api/viewers/{viewer_id}/pace": {
+      "put": {
+        "description": "Set how often questions come; during a match, from the next one.",
+        "operationId": "put_pace_api_viewers__viewer_id__pace_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "viewer_id",
+            "required": true,
+            "schema": {
+              "title": "Viewer Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaceIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Pace"
       }
     },
     "/api/viewers/{viewer_id}/team-sheet": {

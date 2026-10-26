@@ -19,10 +19,12 @@ export const startStatus: Status = {
 	can_choose_club: true,
 	suggested_club: 2,
 	concepts: [
-		{ name: 'Line-breaking passes', value: 0.15 },
-		{ name: 'Counter-pressing', value: 0.17 }
+		{ name: 'Line-breaking passes', value: 0.15, level: 'Getting there' },
+		{ name: 'Counter-pressing', value: 0.17, level: 'Getting there' }
 	],
-	thresholds: { unlock: 0.8, mastery: 0.95 }
+	thresholds: { unlock: 0.8, mastery: 0.95 },
+	pace: 'normal',
+	pace_next: null
 }
 
 /** A new viewer, before picking a team. */

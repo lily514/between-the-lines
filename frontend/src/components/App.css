@@ -11,24 +11,9 @@
 	padding: 0 var(--gutter) var(--s-6);
 }
 
-.layout__brand {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: var(--s-3);
-	min-height: 60px;
-	margin-bottom: var(--s-3);
-	border-bottom: 1px solid var(--surface-raised);
-}
-
-.layout__name {
-	font-size: 18px;
-	letter-spacing: 0.06em;
-	text-transform: uppercase;
-}
-
-.layout__the {
-	color: var(--text-muted);
+.layout__done {
+	margin: var(--s-3) 0 0;
+	text-align: center;
 }
 
 .layout__loading {

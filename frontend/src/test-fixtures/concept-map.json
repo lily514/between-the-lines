@@ -1,0 +1,251 @@
+{
+	"strands": [
+		{
+			"key": "possession",
+			"name": "Possession",
+			"description": "Keeping and moving the ball."
+		},
+		{
+			"key": "pressure",
+			"name": "Pressure",
+			"description": "Winning the ball back and denying space."
+		},
+		{
+			"key": "chances",
+			"name": "Chances",
+			"description": "Creating and judging scoring opportunities."
+		},
+		{
+			"key": "game_flow",
+			"name": "Game flow",
+			"description": "Rules, phases of play, and how matches change over time."
+		}
+	],
+	"tiers": ["Newcomer", "Casual fan", "Engaged fan", "Analyst"],
+	"concepts": [
+		{
+			"key": "possession",
+			"name": "Possession",
+			"strand": "possession",
+			"tier": 0,
+			"objective": "Tell which team has the ball and notice when it changes hands.",
+			"prerequisites": [],
+			"askable": false,
+			"mastery": null,
+			"level": null
+		},
+		{
+			"key": "tackles",
+			"name": "Tackles and turnovers",
+			"strand": "pressure",
+			"tier": 0,
+			"objective": "Recognize how a team wins the ball back: tackles, interceptions, and loose balls.",
+			"prerequisites": [],
+			"askable": false,
+			"mastery": null,
+			"level": null
+		},
+		{
+			"key": "shots_and_goals",
+			"name": "Shots and goals",
+			"strand": "chances",
+			"tier": 0,
+			"objective": "Recognize shots, shots on target, saves, and goals.",
+			"prerequisites": [],
+			"askable": false,
+			"mastery": null,
+			"level": null
+		},
+		{
+			"key": "restarts",
+			"name": "Restarts",
+			"strand": "game_flow",
+			"tier": 0,
+			"objective": "Say which restart comes next, and for which team, when the ball goes out of play.",
+			"prerequisites": [],
+			"askable": true,
+			"mastery": 0.2400091345055949,
+			"level": "Getting there"
+		},
+		{
+			"key": "offside",
+			"name": "Offside",
+			"strand": "game_flow",
+			"tier": 0,
+			"objective": "Tell whether an attacker is offside when the ball is played to them.",
+			"prerequisites": [],
+			"askable": true,
+			"mastery": 0.35,
+			"level": "Getting there"
+		},
+		{
+			"key": "fouls_and_cards",
+			"name": "Fouls and cards",
+			"strand": "game_flow",
+			"tier": 0,
+			"objective": "Say what a foul gives, and to whom, why a player is booked, and when the referee plays advantage.",
+			"prerequisites": [],
+			"askable": true,
+			"mastery": 0.2597864768683274,
+			"level": "Getting there"
+		},
+		{
+			"key": "passing",
+			"name": "Passing and pass difficulty",
+			"strand": "possession",
+			"tier": 1,
+			"objective": "Distinguish pass types (short, long, forward, backward) and judge how difficult a pass was.",
+			"prerequisites": ["possession"],
+			"askable": false,
+			"mastery": null,
+			"level": null
+		},
+		{
+			"key": "pressing",
+			"name": "Pressing",
+			"strand": "pressure",
+			"tier": 1,
+			"objective": "Recognize when a team is pressing: closing down the ball carrier to force a mistake or win it back.",
+			"prerequisites": ["tackles"],
+			"askable": false,
+			"mastery": null,
+			"level": null
+		},
+		{
+			"key": "chance_quality",
+			"name": "Chance quality",
+			"strand": "chances",
+			"tier": 1,
+			"objective": "Judge whether a chance was good or poor from shot location, angle, and the build-up.",
+			"prerequisites": ["shots_and_goals", "passing"],
+			"askable": false,
+			"mastery": null,
+			"level": null
+		},
+		{
+			"key": "transitions",
+			"name": "Transitions and counterattacks",
+			"strand": "game_flow",
+			"tier": 1,
+			"objective": "Recognize the moment after a turnover, when both teams are briefly out of shape, and spot a counterattack.",
+			"prerequisites": ["restarts", "tackles"],
+			"askable": false,
+			"mastery": null,
+			"level": null
+		},
+		{
+			"key": "phase_of_play",
+			"name": "Phase of play",
+			"strand": "game_flow",
+			"tier": 1,
+			"objective": "Tell whether play is settled, in transition, or stopped, and why that changes what teams try to do.",
+			"prerequisites": ["possession"],
+			"askable": false,
+			"mastery": null,
+			"level": null
+		},
+		{
+			"key": "line_breaking_pass",
+			"name": "Line-breaking passes",
+			"strand": "possession",
+			"tier": 2,
+			"objective": "Spot passes that cut through a defensive line and explain why they create danger.",
+			"prerequisites": ["passing"],
+			"askable": true,
+			"mastery": 0.15,
+			"level": "Getting there"
+		},
+		{
+			"key": "counter_press",
+			"name": "Counter-pressing",
+			"strand": "pressure",
+			"tier": 2,
+			"objective": "Recognize a counter-press: winning the ball straight back after losing it, before the opponent can organize.",
+			"prerequisites": ["pressing"],
+			"askable": true,
+			"mastery": 0.2346159837980994,
+			"level": "Getting there"
+		},
+		{
+			"key": "press_triggers",
+			"name": "Pressing triggers and block height",
+			"strand": "pressure",
+			"tier": 2,
+			"objective": "Predict when a team will press (its triggers) and describe how high or deep it defends.",
+			"prerequisites": ["pressing"],
+			"askable": false,
+			"mastery": null,
+			"level": null
+		},
+		{
+			"key": "expected_goals",
+			"name": "Expected goals (xG)",
+			"strand": "chances",
+			"tier": 2,
+			"objective": "Explain xG as the probability a shot becomes a goal, and use it to compare chances.",
+			"prerequisites": ["chance_quality"],
+			"askable": false,
+			"mastery": null,
+			"level": null
+		},
+		{
+			"key": "game_state",
+			"name": "Game state",
+			"strand": "game_flow",
+			"tier": 2,
+			"objective": "Explain how the score and the clock change how teams play.",
+			"prerequisites": ["transitions"],
+			"askable": false,
+			"mastery": null,
+			"level": null
+		},
+		{
+			"key": "expected_threat",
+			"name": "Expected threat (xT) and possession value",
+			"strand": "possession",
+			"tier": 3,
+			"objective": "Use xT to value actions that do not end in shots, and explain its limits.",
+			"prerequisites": ["line_breaking_pass", "chance_quality"],
+			"askable": false,
+			"mastery": null,
+			"level": null
+		},
+		{
+			"key": "pressure_shifts",
+			"name": "Pressure shifts",
+			"strand": "pressure",
+			"tier": 3,
+			"objective": "Detect when a team's pressing intensity changes over a match, and explain likely causes.",
+			"prerequisites": ["press_triggers"],
+			"askable": false,
+			"mastery": null,
+			"level": null
+		},
+		{
+			"key": "variance",
+			"name": "Variance and results",
+			"strand": "chances",
+			"tier": 3,
+			"objective": "Separate performance from results, and reason about luck and sample size.",
+			"prerequisites": ["expected_goals"],
+			"askable": false,
+			"mastery": null,
+			"level": null
+		},
+		{
+			"key": "control_vs_chaos",
+			"name": "Control vs. chaos",
+			"strand": "game_flow",
+			"tier": 3,
+			"objective": "Judge whether a stretch of play is controlled or chaotic, describe its rhythm, and say which team it favors.",
+			"prerequisites": ["game_state", "pressing"],
+			"askable": false,
+			"mastery": null,
+			"level": null
+		}
+	],
+	"thresholds": {
+		"unlock": 0.8,
+		"mastery": 0.95
+	}
+}

@@ -12,8 +12,17 @@ Routes:
 - ``GET /api/viewers/{viewer_id}``: where a viewer stands (`StatusOut`).
 - ``PUT /api/viewers/{viewer_id}/club``: choose the team to support, until the viewer has
   started watching (`ClubIn` → `StatusOut`).
+- ``PUT /api/viewers/{viewer_id}/pace``: how often questions come, now or from the next match
+  (`PaceIn` → `StatusOut`).
 - ``GET /api/viewers/{viewer_id}/team-sheet``: who's playing in the viewer's next match
   (`TeamSheetOut`).
+- ``GET /api/concept-map``: the whole curriculum, before there is a viewer (`ConceptMapOut`).
+- ``GET /api/viewers/{viewer_id}/concept-map``: the whole curriculum, with the viewer's level
+  on each concept asked about now (`ConceptMapOut`).
+- ``GET /api/viewers/{viewer_id}/matches``: the viewer's matches, upcoming, in progress and
+  finished, with their dates (`MatchOut`).
+- ``GET /api/viewers/{viewer_id}/matches/{match_number}/report?at=halftime|full_time``: the
+  scouting report at a break the viewer has reached (`ReportOut`).
 - ``POST /api/viewers/{viewer_id}/next``: the pending question, or the full-time summary when
   the match has no more, which also moves the viewer on to their next match (`NextOut`).
 - ``POST /api/viewers/{viewer_id}/answers``: answer the pending question (`AnswerIn` →
@@ -40,10 +49,14 @@ from btl.api.models import (
     AnswerIn,
     ClubIn,
     ClubOut,
+    ConceptMapOut,
     FeedbackOut,
     Fixture,
     FullTimeOut,
+    MatchOut,
     NextOut,
+    PaceIn,
+    ReportOut,
     StartIn,
     StatusOut,
     TeamSheetOut,
@@ -51,9 +64,12 @@ from btl.api.models import (
 from btl.api.payloads import (
     bars,
     club_payload,
+    concept_map_payload,
     feedback_payload,
+    match_payload,
     movements,
     question_payload,
+    report_payload,
     team_sheet_payload,
     thresholds_payload,
     your_result,
@@ -63,23 +79,29 @@ from btl.api.viewer import (
     AnswerOnlyStore,
     BadKeyError,
     FeedbackGivenError,
+    MatchOverError,
     NotPendingError,
     QuestionPendingError,
+    ReadOnlyStore,
     WebViewer,
 )
+from btl.learn.curriculum import curriculum
 from btl.learn.learner import MATCHES_PER_SESSION, LearnerState
+from btl.learn.matches import catch_up, viewer_matches
+from btl.learn.report import Break, match_goals, report
 from btl.learn.session import (
     ClubLockedError,
     Course,
     PreparedMatch,
     choose_club,
+    choose_pace,
     prepare_match,
     seed_for_viewer,
     start_session,
     watch_match,
 )
 from btl.learn.team_sheet import viewer_sheet
-from btl.schema.ids import TeamId
+from btl.schema.ids import ActionId, TeamId
 from btl.schema.scoreboard import goals
 from btl.store.base import LearnerStore, StaleWriteError, Stored, check_viewer_id
 
@@ -183,8 +205,10 @@ def create_app(
             club=None if state.club is None else club_payload(league.club(state.club)),
             can_choose_club=state.can_choose_club,
             suggested_club=league.clubs[state.seed % len(league.clubs)].team_id,
-            concepts=bars(course().bars(state)),
+            concepts=bars(course().bars(state), course().model.thresholds),
             thresholds=thresholds_payload(course().model.thresholds),
+            pace=state.pace,
+            pace_next=state.pace_next,
         )
 
     def chosen(viewer_id: str, club: int) -> Stored:
@@ -225,12 +249,74 @@ def create_app(
             stored(viewer_id)
             return status(chosen(viewer_id, body.club))
 
+    @app.put("/api/viewers/{viewer_id}/pace")
+    def put_pace(viewer_id: str, body: PaceIn) -> StatusOut:
+        """Set how often questions come; during a match, from the next one."""
+        with serving(viewer_id):
+            stored(viewer_id)
+            try:
+                return status(choose_pace(store, viewer_id, body.pace))
+            except StaleWriteError:
+                raise HTTPException(409, "the record changed; try again") from None
+
     @app.get("/api/viewers/{viewer_id}/team-sheet")
     def get_team_sheet(viewer_id: str) -> TeamSheetOut:
         """Who's playing in the viewer's next match, as much as their stage shows."""
         with serving(viewer_id):
             state = _watching(stored(viewer_id))
             return team_sheet_payload(viewer_sheet(course(), state, prepare))
+
+    @app.get("/api/concept-map")
+    def get_curriculum() -> ConceptMapOut:
+        """Every concept by strand and tier, with no viewer's values: what the questions cover."""
+        return concept_map_payload(curriculum(course(), None), course().model.thresholds)
+
+    @app.get("/api/viewers/{viewer_id}/concept-map")
+    def get_concept_map(viewer_id: str) -> ConceptMapOut:
+        """Every concept by strand and tier, and the viewer's level on those asked about now."""
+        with serving(viewer_id):
+            state = stored(viewer_id).state
+            return concept_map_payload(curriculum(course(), state), course().model.thresholds)
+
+    @app.get("/api/viewers/{viewer_id}/matches")
+    def get_matches(viewer_id: str) -> list[MatchOut]:
+        """The viewer's matches in order, each telling only what the viewer has seen of it."""
+        with serving(viewer_id):
+            state = stored(viewer_id).state
+            league, club = course().league, state.club
+            return [
+                match_payload(match, league, club)
+                for match in viewer_matches(course(), state, prepare)
+            ]
+
+    @app.get("/api/viewers/{viewer_id}/matches/{match_number}/report")
+    def get_report(viewer_id: str, match_number: int, at: Break) -> ReportOut:
+        """The scouting report for a match at a break, once the viewer has reached it."""
+        with serving(viewer_id):
+            state = stored(viewer_id).state
+            if not 1 <= match_number <= MATCHES_PER_SESSION:
+                raise HTTPException(404, f"there is no match {match_number}")
+            if not reached(state, match_number, at):
+                raise HTTPException(409, "the match hasn't reached that break yet")
+            made = report(
+                course(), state, prepare(state.seed, match_number, state.club), match_number, at
+            )
+            return report_payload(made, course().league, state.club, course().model.thresholds)
+
+    def reached(state: LearnerState, match_number: int, at: Break) -> bool:
+        # A finished match has reached both breaks; the one being watched, only halftime, and
+        # only once the next question is in the second half or none is left.
+        if match_number < state.match_number:
+            return True
+        if match_number > state.match_number or at is Break.FULL_TIME:
+            return False
+        try:
+            watch_match(course(), ReadOnlyStore(store), state.viewer_id, WebViewer(), now, prepare)
+        except QuestionPendingError as pending:
+            return pending.asked.prompt.delivered.period_id > 1
+        except MatchOverError:
+            return True
+        return True
 
     @app.get("/api/viewers/{viewer_id}")
     def get_status(viewer_id: str) -> StatusOut:
@@ -248,8 +334,16 @@ def create_app(
                 after = watch_match(course(), store, viewer_id, viewer, now, prepare)
             except QuestionPendingError as pending:
                 match = prepare(state.seed, state.match_number, state.club)
+                answered = [a for a in state.attempts if a.match_number == state.match_number]
+                delivered = pending.asked.prompt.delivered
+                caught = catch_up(
+                    match_goals(course().league, match.match),
+                    ActionId(answered[-1].action_id) if answered else None,
+                    delivered.period_id,
+                    delivered.time_seconds,
+                )
                 question = question_payload(
-                    pending.asked, state.match_number, match.home, match.away, state.club
+                    pending.asked, state.match_number, match.home, match.away, state.club, caught
                 )
                 # A reload asks again; the queries count each pack_id once.
                 emit(

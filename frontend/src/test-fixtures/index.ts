@@ -1,12 +1,18 @@
 // Real payloads captured from the API (seed 7's matches), for tests. JSON imports type pairs as number[] rather than
 // [number, number], so each is cast once here.
-import type { Feedback, Question, TeamSheet } from '../api/client.ts'
+import type { ConceptMap, Feedback, MatchSummary, Question, Report, TeamSheet } from '../api/client.ts'
+import conceptMapJson from './concept-map.json'
 import counterFeedbackJson from './counter-feedback.json'
 import counterQuestionJson from './counter-question.json'
+import curriculumJson from './curriculum.json'
 import identifyFeedbackJson from './identify-feedback.json'
 import identifyQuestionJson from './identify-question.json'
+import matchesJson from './matches.json'
+import matchesInProgressJson from './matches-in-progress.json'
 import predictFeedbackJson from './predict-feedback.json'
 import predictQuestionJson from './predict-question.json'
+import reportFullTimeJson from './report-full-time.json'
+import reportHalftimeJson from './report-halftime.json'
 import sheetStage1Json from './sheet-stage-1.json'
 import sheetStage3Json from './sheet-stage-3.json'
 
@@ -35,3 +41,15 @@ export const sheetStage2: TeamSheet = {
 		players: team.players.map(player => ({ ...player, numbers: null }))
 	}))
 }
+
+/** The curriculum before there is a viewer: all 20 concepts, five asked about now, no values. */
+export const curriculum = curriculumJson as unknown as ConceptMap
+/** A Ripon Wardens fan's map after match 1: levels on the five concepts asked about now. */
+export const conceptMap = conceptMapJson as unknown as ConceptMap
+/** The same fan's matches with two answers in match 1: it is in progress, 0–0 at the last answer. */
+export const matchesInProgress = matchesInProgressJson as unknown as MatchSummary[]
+/** The same fan's matches after match 1: finished 1–0 to them, match 2 next. */
+export const matchesAfterOne = matchesJson as unknown as MatchSummary[]
+/** Match 1's scouting reports for that fan, at halftime and full time. */
+export const reportHalftime = reportHalftimeJson as unknown as Report
+export const reportFullTime = reportFullTimeJson as unknown as Report

@@ -1,0 +1,71 @@
+/* The panel's header: the name on the left, the map button and other header buttons on the right. */
+
+.header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--s-3);
+	min-height: 60px;
+	margin-bottom: var(--s-3);
+	border-bottom: 1px solid var(--surface-raised);
+}
+
+.header__name {
+	font-size: 18px;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+}
+
+.header__the {
+	color: var(--text-muted);
+}
+
+.header__actions {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+/* A square 44 px button with an icon only; its name is its aria-label. */
+.icon-button {
+	display: grid;
+	place-items: center;
+	width: var(--touch-min);
+	height: var(--touch-min);
+	padding: 0;
+	border: 1px solid var(--border);
+	border-radius: var(--r-tile);
+	background: transparent;
+	color: var(--text-2);
+	cursor: pointer;
+	transition:
+		background var(--t-hover),
+		border-color var(--t-hover);
+}
+
+.icon-button:hover {
+	background: var(--surface-raised);
+	border-color: var(--border-strong);
+}
+
+.icon-button[aria-pressed='true'] {
+	border: 2px solid var(--act);
+	background: var(--selected);
+	color: var(--act);
+}
+
+.icon-button__icon {
+	width: 22px;
+	height: 22px;
+	fill: none;
+	stroke: currentcolor;
+	stroke-width: 1.6;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.icon-button {
+		transition: none;
+	}
+}

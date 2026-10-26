@@ -32,6 +32,7 @@ from btl.learn.concept_map import ConceptKey, ConceptMap, load_concept_map
 from btl.learn.evidence import EvidencePack, QuestionView, build_pack, question_view
 from btl.learn.grader import Answer, ChoiceAnswer, ChoiceGrader, Grade
 from btl.learn.learner import Attempt, LearnerState
+from btl.learn.pace import Pace
 from btl.learn.questions import active_concepts, build_question
 from btl.learn.selector import Prompt, run_match
 from btl.schema.ids import TeamId
@@ -223,6 +224,19 @@ def choose_club(course: Course, store: LearnerStore, viewer_id: str, club: TeamI
     return Stored(state, store.put(state, stored.etag))
 
 
+def choose_pace(store: LearnerStore, viewer_id: str, pace: Pace) -> Stored:
+    """Set how often the viewer wants questions: now, or from their next match if one is under way.
+
+    Raises:
+        ValueError: If there is no such viewer.
+    """
+    stored = store.get(viewer_id)
+    if stored is None:
+        raise ValueError(f"no learner {viewer_id!r}; start a session first")
+    state = stored.state.with_pace(pace)
+    return Stored(state, store.put(state, stored.etag))
+
+
 def watch_match(
     course: Course,
     store: LearnerStore,
@@ -322,6 +336,7 @@ def watch_match(
             correct=grade.correct,
             pack_id=pack.pack_id,
             answered_at=now(),
+            asked_in=prompt.delivered.period_id,
         )
         before = mastery_state()
         history.append(attempt)
@@ -356,6 +371,7 @@ def watch_match(
         model.thresholds,
         mastery,
         ask,
+        state.pace,
     )
     state = state.next_match()
     store.put(state, etag)

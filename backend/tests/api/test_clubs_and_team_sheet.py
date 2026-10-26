@@ -103,14 +103,16 @@ def test_a_beginner_s_team_sheet_lists_both_elevens_their_team_first() -> None:
     sheet = api.get("/api/viewers/lily/team-sheet").json()
 
     assert sheet["match_number"] == 1 and sheet["stage"] == 1
-    assert sheet["next_stage"] == "Get to level 2 in any concept to see the formation."
+    assert (
+        sheet["next_stage"] == "Get to level 2 in any concept to see formations and position tags."
+    )
     yours, theirs = sheet["teams"]
     assert (yours["code"], yours["yours"], theirs["yours"]) == ("HEX", True, False)
     assert len(yours["players"]) == len(theirs["players"]) == 11
     keeper = yours["players"][0]
     assert keeper["role"] == "GK" and keeper["position"]["name"] == "Goalkeeper"
     assert keeper["position"]["description"]
-    assert keeper["at_kickoff"] is None and keeper["numbers"] is None
+    assert len(keeper["at_kickoff"]) == 2 and keeper["numbers"] is None
     assert yours["formation"] is None and yours["matches_watched"] is None
 
 

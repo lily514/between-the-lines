@@ -1,0 +1,122 @@
+/* The kick-off pitch is the same in both themes: every colour here is a pitch token. */
+
+.kickoff-pitch {
+	display: block;
+	width: 100%;
+	height: auto;
+	border-radius: var(--r-pitch);
+}
+
+.kickoff-pitch__grass {
+	fill: var(--pitch);
+}
+
+.kickoff-pitch__markings {
+	fill: none;
+	stroke: var(--pitch-line);
+	stroke-width: 0.4;
+}
+
+.kickoff-pitch__your-half {
+	fill: var(--home);
+	fill-opacity: 0.05;
+	stroke: var(--home);
+	stroke-width: 0.45;
+	stroke-dasharray: 1.6 1;
+}
+
+.kickoff-pitch__you-tag {
+	fill: var(--home);
+}
+
+.kickoff-pitch__you-text,
+.kickoff-pitch__label text {
+	fill: var(--home-ink);
+	font-family: var(--font-body);
+	font-weight: 700;
+	text-anchor: middle;
+}
+
+.kickoff-pitch__you-text {
+	font-size: 2.6px;
+}
+
+.kickoff-pitch__half-names {
+	fill: var(--home);
+	fill-opacity: 0.8;
+	font-family: var(--font-body);
+	font-size: 2.3px;
+	font-weight: 600;
+}
+
+.kickoff-pitch__player {
+	cursor: pointer;
+	outline: none;
+}
+
+.kickoff-pitch__hit {
+	fill: transparent;
+}
+
+/* Keyboard focus: a dashed ring outside the chosen ring, so both can show at once. */
+.kickoff-pitch__focus {
+	fill: none;
+	stroke: var(--home);
+	stroke-width: 0.5;
+	stroke-dasharray: 1 0.7;
+	opacity: 0;
+}
+
+.kickoff-pitch__player:focus-visible .kickoff-pitch__focus {
+	opacity: 1;
+}
+
+.kickoff-pitch__ring {
+	fill: none;
+	stroke: var(--on-pitch);
+	stroke-width: 0.7;
+	opacity: 0;
+	transition: opacity var(--t-hover) var(--ease-out);
+}
+
+.kickoff-pitch__player--chosen .kickoff-pitch__ring {
+	opacity: 1;
+}
+
+.kickoff-pitch__number {
+	font-family: var(--font-data);
+	font-size: 2.3px;
+	font-weight: 500;
+	text-anchor: middle;
+}
+
+/* Home: a filled disc. Away: a ring. Teams are told apart by shape, never colour alone. */
+.kickoff-pitch__player--home .kickoff-pitch__disc {
+	fill: var(--home);
+}
+
+.kickoff-pitch__player--home .kickoff-pitch__number {
+	fill: var(--home-ink);
+}
+
+.kickoff-pitch__player--away .kickoff-pitch__disc {
+	fill: var(--pitch);
+	stroke: var(--away);
+	stroke-width: 0.6;
+}
+
+.kickoff-pitch__player--away .kickoff-pitch__number {
+	fill: var(--away);
+}
+
+.kickoff-pitch__label {
+	pointer-events: none;
+}
+
+.kickoff-pitch__label rect {
+	fill: var(--home);
+}
+
+.kickoff-pitch__label text {
+	font-size: 2.7px;
+}

@@ -1,9 +1,10 @@
-/* Who's playing (TS-Stage1–3): the key, the kick-off shape from stage 2, then a card per side. */
+/* Who's playing (TS-Stage1–3, pitch-first): two club cards, the kick-off pitch, the chosen player's card, then the
+   line-ups as a list. */
 
 .team-sheet {
 	display: flex;
 	flex-direction: column;
-	gap: var(--s-3);
+	gap: var(--s-4);
 }
 
 .team-sheet__eyebrow {
@@ -16,99 +17,113 @@
 }
 
 .team-sheet__heading {
+	margin-top: calc(-1 * var(--s-2));
 	font-size: var(--fs-display-l);
 	line-height: var(--lh-display-l);
 	font-weight: 600;
-}
-
-.team-sheet__fixture {
-	margin: 0;
-	color: var(--text-2);
 }
 
 .team-sheet__number {
 	font-family: var(--font-data);
 }
 
-.team-sheet__key {
+.team-sheet__clubs {
 	display: grid;
-	grid-template-columns: 1fr 1fr;
-	gap: var(--s-2) var(--s-3);
-	margin: 0;
-	padding: var(--s-3);
-	border: 1px solid var(--border);
-	border-radius: var(--r-tile);
-	list-style: none;
-	font-size: var(--fs-body-s);
-	color: var(--text-2);
-}
-
-.team-sheet__key li {
-	display: flex;
-	align-items: center;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
 	gap: var(--s-2);
-}
-
-/* The key's glyphs draw like the pitch's markers, which look the same in both themes. */
-.team-sheet__glyph {
-	flex: none;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	min-width: 26px;
-	height: 26px;
-	border-radius: var(--r-pill);
-	font-family: var(--font-display);
-	font-size: var(--fs-caption);
-	font-weight: 700;
-}
-
-.team-sheet__glyph--home {
-	background: var(--home);
-	color: var(--home-ink);
-	box-shadow: 0 0 0 2px var(--pitch);
-}
-
-.team-sheet__glyph--away {
-	background: var(--pitch);
-	color: var(--home);
-	border: 2px solid var(--away);
-}
-
-.team-sheet__glyph--yours {
-	padding: 0 var(--s-1);
-	border: 2px dashed var(--text);
-	color: var(--text);
-}
-
-.team-sheet__glyph--hash {
-	border: 1px solid var(--border-strong);
-	font-family: var(--font-data);
 }
 
 .team-sheet__pitch {
 	margin: 0;
 }
 
-.team-sheet__pitch-caption {
+.team-sheet__pitch-head {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: var(--s-2);
 	margin-bottom: var(--s-2);
-	font-size: var(--fs-label);
+}
+
+.team-sheet__pitch-heading {
+	font-size: 20px;
 	font-weight: 700;
-	letter-spacing: 0.08em;
-	text-transform: uppercase;
+}
+
+.team-sheet__hint {
+	font-size: var(--fs-caption);
 	color: var(--text-muted);
 }
 
-.team-sheet__teams {
+/* Phones are tapped; a mouse can hover. */
+.team-sheet__hint--pointer {
+	display: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+	.team-sheet__hint--touch {
+		display: none;
+	}
+
+	.team-sheet__hint--pointer {
+		display: inline;
+	}
+}
+
+.team-sheet__key {
 	display: flex;
-	flex-direction: column;
-	gap: var(--s-4);
+	flex-wrap: wrap;
+	gap: 6px 14px;
+	margin-top: var(--s-2);
+	font-size: var(--fs-caption);
+	color: var(--text-2);
+}
+
+.team-sheet__key > span {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+}
+
+.team-sheet__glyph {
+	flex: none;
+	width: 12px;
+	height: 12px;
+	border-radius: var(--r-pill);
+}
+
+.team-sheet__glyph--home {
+	background: var(--text);
+}
+
+.team-sheet__glyph--away {
+	border: 2px solid var(--text);
+}
+
+.team-sheet__glyph--yours {
+	width: 14px;
+	border: 1.5px dashed var(--text);
+	border-radius: 3px;
 }
 
 .team-sheet__next {
+	display: flex;
+	align-items: center;
+	gap: var(--s-3);
 	margin: 0;
+	padding: 14px var(--s-4);
+	border: 1px dashed var(--border-strong);
+	border-radius: var(--r-btn);
 	font-size: var(--fs-body-s);
-	color: var(--text-muted);
+	color: var(--text-2);
+}
+
+.team-sheet__next svg {
+	flex: none;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2;
+	stroke-linecap: round;
 }
 
 .team-sheet__change {

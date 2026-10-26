@@ -175,7 +175,6 @@ def _sheet_team(team: SheetTeam) -> SheetTeamOut:
 
 
 def _sheet_player(player: SheetPlayer) -> SheetPlayerOut:
-    spot = player.at_kickoff
     numbers = player.numbers
     return SheetPlayerOut(
         shirt=player.shirt_number,
@@ -186,7 +185,7 @@ def _sheet_player(player: SheetPlayer) -> SheetPlayerOut:
             name=player.position.name,
             description=player.position.description,
         ),
-        at_kickoff=None if spot is None else (round(spot[0], 1), round(spot[1], 1)),
+        at_kickoff=(round(player.at_kickoff[0], 1), round(player.at_kickoff[1], 1)),
         numbers=None
         if numbers is None
         else PlayerNumbersOut(

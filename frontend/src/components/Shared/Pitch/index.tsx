@@ -36,8 +36,6 @@ export interface PitchProps {
 	label: string
 	/** Which side is the viewer's team: its players get a dashed ring. */
 	yours?: 'home' | 'away' | null
-	/** Draw the ball; a line-up has none. */
-	ball?: boolean
 }
 
 /** The pitch as an SVG in metres, portrait, with the team on the ball attacking up. */
@@ -49,8 +47,7 @@ const Pitch = ({
 	line = null,
 	crop = 'full',
 	label,
-	yours = null,
-	ball: withBall = true
+	yours = null
 }: PitchProps) => {
 	const arrowId = useId()
 	const view = crop === 'moment' ? cropTo(momentPoints(picture, options, path, line)) : FULL_VIEW
@@ -169,7 +166,7 @@ const Pitch = ({
 					markerEnd={`url(#${arrowId})`}
 				/>
 			)}
-			{withBall && <circle className="pitch__ball" cx={ball[0]} cy={ball[1]} r={0.95} />}
+			<circle className="pitch__ball" cx={ball[0]} cy={ball[1]} r={0.95} />
 			{options.map(option => {
 				const [x, y] = tagPosition(from, toScreen(option.at), playerPoints)
 				return (

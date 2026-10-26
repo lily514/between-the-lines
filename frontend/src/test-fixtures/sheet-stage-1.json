@@ -1,7 +1,7 @@
 {
 	"match_number": 1,
 	"stage": 1,
-	"next_stage": "Get to level 2 in any concept to see the formation.",
+	"next_stage": "Get to level 2 in any concept to see formations and position tags.",
 	"teams": [
 		{
 			"team_id": 1,
@@ -21,7 +21,7 @@
 						"name": "Goalkeeper",
 						"description": "Stops shots, and is the only player allowed to handle the ball, inside their own box."
 					},
-					"at_kickoff": null,
+					"at_kickoff": [5.7, 33.9],
 					"numbers": null
 				},
 				{
@@ -33,7 +33,7 @@
 						"name": "Left back",
 						"description": "Defends the left side, and joins attacks down it."
 					},
-					"at_kickoff": null,
+					"at_kickoff": [21.3, 56.5],
 					"numbers": null
 				},
 				{
@@ -45,7 +45,7 @@
 						"name": "Centre back",
 						"description": "Defends the middle in front of goal: wins headers, blocks shots."
 					},
-					"at_kickoff": null,
+					"at_kickoff": [23.8, 42.4],
 					"numbers": null
 				},
 				{
@@ -57,7 +57,7 @@
 						"name": "Centre back",
 						"description": "Defends the middle in front of goal: wins headers, blocks shots."
 					},
-					"at_kickoff": null,
+					"at_kickoff": [19.1, 27.0],
 					"numbers": null
 				},
 				{
@@ -69,7 +69,7 @@
 						"name": "Right back",
 						"description": "Defends the right side, and joins attacks down it."
 					},
-					"at_kickoff": null,
+					"at_kickoff": [22.9, 14.4],
 					"numbers": null
 				},
 				{
@@ -81,7 +81,7 @@
 						"name": "Left midfielder",
 						"description": "Covers the left side of midfield, and crosses from it."
 					},
-					"at_kickoff": null,
+					"at_kickoff": [40.8, 55.2],
 					"numbers": null
 				},
 				{
@@ -93,7 +93,7 @@
 						"name": "Centre midfielder",
 						"description": "Links defence and attack in the middle: passes, tackles, runs."
 					},
-					"at_kickoff": null,
+					"at_kickoff": [42.9, 42.1],
 					"numbers": null
 				},
 				{
@@ -105,7 +105,7 @@
 						"name": "Centre midfielder",
 						"description": "Links defence and attack in the middle: passes, tackles, runs."
 					},
-					"at_kickoff": null,
+					"at_kickoff": [52.5, 34.0],
 					"numbers": null
 				},
 				{
@@ -117,7 +117,7 @@
 						"name": "Right midfielder",
 						"description": "Covers the right side of midfield, and crosses from it."
 					},
-					"at_kickoff": null,
+					"at_kickoff": [42.4, 10.4],
 					"numbers": null
 				},
 				{
@@ -129,7 +129,7 @@
 						"name": "Striker",
 						"description": "Plays furthest forward, closest to goal: there to score."
 					},
-					"at_kickoff": null,
+					"at_kickoff": [61.7, 48.0],
 					"numbers": null
 				},
 				{
@@ -141,7 +141,7 @@
 						"name": "Striker",
 						"description": "Plays furthest forward, closest to goal: there to score."
 					},
-					"at_kickoff": null,
+					"at_kickoff": [60.2, 17.6],
 					"numbers": null
 				}
 			]
@@ -164,7 +164,7 @@
 						"name": "Goalkeeper",
 						"description": "Stops shots, and is the only player allowed to handle the ball, inside their own box."
 					},
-					"at_kickoff": null,
+					"at_kickoff": [99.5, 33.8],
 					"numbers": null
 				},
 				{
@@ -176,7 +176,7 @@
 						"name": "Left back",
 						"description": "Defends the left side, and joins attacks down it."
 					},
-					"at_kickoff": null,
+					"at_kickoff": [71.9, 19.9],
 					"numbers": null
 				},
 				{
@@ -188,7 +188,7 @@
 						"name": "Centre back",
 						"description": "Defends the middle in front of goal: wins headers, blocks shots."
 					},
-					"at_kickoff": null,
+					"at_kickoff": [68.8, 31.0],
 					"numbers": null
 				},
 				{
@@ -200,7 +200,7 @@
 						"name": "Centre back",
 						"description": "Defends the middle in front of goal: wins headers, blocks shots."
 					},
-					"at_kickoff": null,
+					"at_kickoff": [70.4, 40.4],
 					"numbers": null
 				},
 				{
@@ -212,7 +212,7 @@
 						"name": "Right back",
 						"description": "Defends the right side, and joins attacks down it."
 					},
-					"at_kickoff": null,
+					"at_kickoff": [71.9, 48.0],
 					"numbers": null
 				},
 				{
@@ -224,7 +224,7 @@
 						"name": "Left midfielder",
 						"description": "Covers the left side of midfield, and crosses from it."
 					},
-					"at_kickoff": null,
+					"at_kickoff": [56.0, 18.4],
 					"numbers": null
 				},
 				{
@@ -236,7 +236,7 @@
 						"name": "Centre midfielder",
 						"description": "Links defence and attack in the middle: passes, tackles, runs."
 					},
-					"at_kickoff": null,
+					"at_kickoff": [56.8, 30.0],
 					"numbers": null
 				},
 				{
@@ -248,7 +248,7 @@
 						"name": "Centre midfielder",
 						"description": "Links defence and attack in the middle: passes, tackles, runs."
 					},
-					"at_kickoff": null,
+					"at_kickoff": [57.5, 39.9],
 					"numbers": null
 				},
 				{
@@ -260,7 +260,7 @@
 						"name": "Right midfielder",
 						"description": "Covers the right side of midfield, and crosses from it."
 					},
-					"at_kickoff": null,
+					"at_kickoff": [56.3, 47.2],
 					"numbers": null
 				},
 				{
@@ -272,7 +272,7 @@
 						"name": "Striker",
 						"description": "Plays furthest forward, closest to goal: there to score."
 					},
-					"at_kickoff": null,
+					"at_kickoff": [44.0, 25.0],
 					"numbers": null
 				},
 				{
@@ -284,7 +284,7 @@
 						"name": "Striker",
 						"description": "Plays furthest forward, closest to goal: there to score."
 					},
-					"at_kickoff": null,
+					"at_kickoff": [44.8, 44.3],
 					"numbers": null
 				}
 			]

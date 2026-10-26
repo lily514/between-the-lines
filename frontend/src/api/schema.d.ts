@@ -536,7 +536,7 @@ export interface components {
          * @description A starter on the team sheet.
          *
          *     ``at_kickoff`` is where they stood at kick-off, with the sheet's first team attacking left
-         *     to right; null before stage 2. ``numbers`` is null before stage 3, or if the viewer hasn't
+         *     to right. ``numbers`` is null before stage 3, or if the viewer hasn't
          *     seen them play.
          */
         SheetPlayerOut: {
@@ -544,7 +544,7 @@ export interface components {
             at_kickoff: [
                 number,
                 number
-            ] | null;
+            ];
             /** Name */
             name: string;
             numbers: components["schemas"]["PlayerNumbersOut"] | null;

@@ -60,11 +60,14 @@ def test_the_designed_lineups_are_the_ones_the_match_tracks_for_any_clubs() -> N
         assert [slot.player_id for slot in match.positions.slots] == expected
 
 
-def test_a_beginner_sees_names_and_positions_but_no_shape() -> None:
-    first = sheet(designed(0), 1).teams[0]
+def test_a_beginner_sees_names_positions_and_kickoff_spots_but_no_formation() -> None:
+    match = designed(0)
+    first = sheet(match, 1).teams[0]
 
     assert first.formation is None
-    assert all(player.at_kickoff is None for player in first.players)
+    assert [p.at_kickoff for p in first.players] == [
+        p.at_kickoff for p in sheet(match, 2).teams[0].players
+    ]
     assert [p.role for p in first.players][:2] == [Role.GOALKEEPER, Role.DEFENDER]
 
 
@@ -86,7 +89,7 @@ def test_the_viewers_team_comes_first_and_is_marked_as_theirs() -> None:
     assert elsewhere == plain
 
 
-def test_stage_two_shows_formations_and_kickoff_spots_seen_by_the_first_team() -> None:
+def test_stage_two_shows_formations_and_kickoff_spots_are_seen_by_the_first_team() -> None:
     match = designed(0)
 
     staged = sheet(match, 2, AWAY.team_id)
@@ -100,7 +103,7 @@ def test_stage_two_shows_formations_and_kickoff_spots_seen_by_the_first_team() -
         assert all(player.at_kickoff == spots[player.player_id] for player in team.players)
     # The first team attacks towards x = 105, so its keeper is near x = 0.
     keeper = staged.teams[0].players[0]
-    assert keeper.at_kickoff is not None and keeper.at_kickoff[0] < 20
+    assert keeper.at_kickoff[0] < 20
 
 
 def test_an_unknown_stage_is_refused() -> None:

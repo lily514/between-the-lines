@@ -1,0 +1,112 @@
+/* Both line-ups as a list, collapsed under the player card. */
+
+.lineup-list {
+	padding: 0 14px;
+	border: 1px solid var(--border);
+	border-radius: var(--r-btn);
+}
+
+.lineup-list__summary {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	min-height: 48px;
+	font-size: var(--fs-body-s);
+	font-weight: 600;
+	list-style: none;
+	cursor: pointer;
+}
+
+.lineup-list__summary::before {
+	content: '▸';
+	font-size: var(--fs-caption);
+	transition: transform var(--t-hover) var(--ease-out);
+}
+
+.lineup-list[open] .lineup-list__summary::before {
+	transform: rotate(90deg);
+}
+
+.lineup-list__summary::-webkit-details-marker {
+	display: none;
+}
+
+.lineup-list__team {
+	padding-bottom: var(--s-3);
+}
+
+.lineup-list__heading {
+	margin: var(--s-1) 0 6px;
+	font-family: var(--font-body);
+	font-size: var(--fs-caption);
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--text-muted);
+}
+
+.lineup-list__players {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: var(--s-1) var(--s-2);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.lineup-list__player {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	width: 100%;
+	min-height: var(--touch-min);
+	padding: 0 var(--s-2);
+	border: 1px solid var(--border);
+	border-radius: 10px;
+	background: transparent;
+	color: var(--text);
+	font: inherit;
+	font-size: var(--fs-label);
+	text-align: left;
+	cursor: pointer;
+	transition:
+		background var(--t-hover),
+		border-color var(--t-hover);
+}
+
+.lineup-list__player:hover {
+	background: var(--surface-raised);
+	border-color: var(--border-strong);
+}
+
+.lineup-list__player:focus-visible {
+	outline: 3px solid var(--act);
+	outline-offset: 2px;
+}
+
+.lineup-list__player[aria-pressed='true'] {
+	padding: 0 calc(var(--s-2) - 1px);
+	border: 2px solid var(--act);
+	background: var(--selected);
+}
+
+.lineup-list__shirt {
+	width: 24px;
+	font-family: var(--font-data);
+	color: var(--text-muted);
+}
+
+.lineup-list__name {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	font-weight: 600;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.lineup-list__tag {
+	font-family: var(--font-data);
+	font-size: var(--fs-caption);
+	color: var(--text-2);
+}

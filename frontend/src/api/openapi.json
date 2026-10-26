@@ -961,28 +961,21 @@
         "type": "object"
       },
       "SheetPlayerOut": {
-        "description": "A starter on the team sheet.\n\n``at_kickoff`` is where they stood at kick-off, with the sheet's first team attacking left\nto right; null before stage 2. ``numbers`` is null before stage 3, or if the viewer hasn't\nseen them play.",
+        "description": "A starter on the team sheet.\n\n``at_kickoff`` is where they stood at kick-off, with the sheet's first team attacking left\nto right. ``numbers`` is null before stage 3, or if the viewer hasn't\nseen them play.",
         "properties": {
           "at_kickoff": {
-            "anyOf": [
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
               {
-                "maxItems": 2,
-                "minItems": 2,
-                "prefixItems": [
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "number"
-                  }
-                ],
-                "type": "array"
+                "type": "number"
               },
               {
-                "type": "null"
+                "type": "number"
               }
             ],
-            "title": "At Kickoff"
+            "title": "At Kickoff",
+            "type": "array"
           },
           "name": {
             "title": "Name",

@@ -88,7 +88,7 @@ def answer_frames(
         ValueError: If the match has no player positions.
     """
     first, last = question_action(moment), moment.answer_action_id
-    end = match.events[last].time_seconds + _flight(match, last)
+    end = match.events[last].time_seconds + flight_seconds(match, last)
     return _clip(match, first, last, end, fps)[1:]
 
 
@@ -101,7 +101,8 @@ def _clip(
     return tuple(_frame(match, time, first, last) for time in [*times, end])
 
 
-def _flight(match: Match, action_id: ActionId) -> float:
+def flight_seconds(match: Match, action_id: ActionId) -> float:
+    """How long the ball takes from an action's start to its end: until the next action, capped."""
     if action_id + 1 >= len(match.events):
         return LONGEST_ACTION
     gap = match.events[action_id + 1].time_seconds - match.events[action_id].time_seconds
@@ -116,7 +117,7 @@ def _frame(match: Match, time: float, first: ActionId, last: ActionId) -> Replay
     event = match.events[current]
     since = time - event.time_seconds
 
-    flight = _flight(match, current)
+    flight = flight_seconds(match, current)
     along = min(since / flight, 1.0) if flight > 0 else 1.0
     ball = (
         event.start_x + along * (event.end_x - event.start_x),

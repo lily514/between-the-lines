@@ -177,6 +177,10 @@ export const reducer = (state: AppState, action: Action): AppState => {
 export const offersMap = (state: AppState) =>
 	state.viewer !== null && state.screen.kind !== 'welcome' && state.screen.kind !== 'pick'
 
+/** Whether the page is the welcome, which fills the window on a wide screen: there is no match yet to stand
+ * beside. */
+export const fillsWindow = (state: AppState) => state.screen.kind === 'welcome'
+
 const arrived = (state: AppState, step: Question): AppState => ({
 	...state,
 	screen: { kind: 'step', question: step },

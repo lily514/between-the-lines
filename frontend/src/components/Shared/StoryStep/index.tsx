@@ -33,7 +33,9 @@ const StoryStep = ({ flow, index, count, onSkip, onBack, next, scene, eyebrow, t
 	}, [index])
 
 	return (
-		<section className="story-step" aria-labelledby={headingId}>
+		<section
+			className={scene === undefined ? 'story-step' : 'story-step story-step--scene'}
+			aria-labelledby={headingId}>
 			<div className="story-step__top">
 				<span className="story-step__flow">{flow}</span>
 				<span className="story-step__counter">

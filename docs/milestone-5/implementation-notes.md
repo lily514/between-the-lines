@@ -523,3 +523,13 @@ server.
 **Affects:** the API (`TouchOut.action`/`where`/`zone`, `PlayByPlayOut.feed`/`stats`; `openapi.json` and
 `schema.d.ts` regenerated). The scorebug shows the score as of the feed, so a goal in the unnamed play before a
 saved question shows in the panel's score first.
+
+## After T16 — The welcome fills the window (2026-10-27)
+**Plan said:** the welcome sits in the side panel beside the stream view, as every screen does.
+**We did:** on a wide screen the welcome (intro page, scenes and summary) fills the window: the stream view and the
+panel's resize handle are hidden (`fillsWindow` in `App.support.ts`). Pages of words keep to 640 px; a scene step
+widens to 960 px with the scene filling the half beside its words, so the scene is bigger and the page no taller. The intro's four
+steps are titles only.
+Picking a team keeps the side panel, since Matches and Preferences open it later too.
+**Why:** before the first match there is no match to sit beside, so "Your match" was empty space.
+**Affects:** nothing.

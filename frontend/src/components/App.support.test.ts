@@ -15,6 +15,7 @@ import {
 	momentOf,
 	needsHalftime,
 	newViewerId,
+	fillsWindow,
 	offersMap,
 	reducer,
 	type AppState
@@ -169,4 +170,10 @@ test('the header offers the map once the viewer has picked a team, not during on
 	expect(offersMap(reducer(fresh, { type: 'picking', status: startStatus, clubs: [] }))).toBe(false)
 	expect(offersMap(watching())).toBe(true)
 	expect(offersMap(reducer(watching(), { type: 'arrived', step: identifyQuestion }))).toBe(true)
+})
+
+test('only the welcome fills the window; picking a team and everything after sit beside the match', () => {
+	expect(fillsWindow(fresh)).toBe(true)
+	expect(fillsWindow(reducer(fresh, { type: 'map', map: conceptMap }))).toBe(true)
+	expect(fillsWindow(watching())).toBe(false)
 })

@@ -116,3 +116,35 @@
 	content: '✕ ';
 	color: var(--text-muted);
 }
+
+/* Filling a wide window (App), the welcome's words keep to a reading width, and a scene sits beside its words. */
+@media (min-width: 900px) {
+	.layout--fill .intro,
+	.layout--fill .story-step:not(.story-step--scene) {
+		max-width: 640px;
+		margin-inline: auto;
+	}
+
+	.layout--fill .story-step--scene .story-step__body {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		/* The words take the rows they need; the last row takes up the rest of the scene's height. */
+		grid-template-rows: repeat(5, auto) 1fr;
+		column-gap: var(--s-6);
+	}
+
+	.layout--fill .story-step--scene .story-step__body > * {
+		grid-column: 2;
+	}
+
+	/* The scene fills its half: neither the card nor the scene keeps its usual 350 px cap. */
+	.layout--fill .story-step--scene .story-step__body > .scene-card {
+		grid-column: 1;
+		grid-row: 1 / -1;
+		max-width: none;
+	}
+
+	.layout--fill .story-step--scene .scene {
+		max-width: none;
+	}
+}

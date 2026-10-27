@@ -8,24 +8,7 @@ export interface IntroProps {
 	onSkip: () => void
 }
 
-const HOW = [
-	{
-		title: 'Follow a match',
-		body: 'Pick a team to support and follow their matches here, moment by moment.'
-	},
-	{
-		title: 'Answer when play stops',
-		body: 'At a stoppage or a quiet spell, you get one quick question. Never in the middle of a fast break.'
-	},
-	{
-		title: 'Guess first, then see',
-		body: 'Say what you think, then we show you what happened and why.'
-	},
-	{
-		title: 'Grow at your pace',
-		body: 'Each topic moves up as you get it right, from Getting there to Solid to Sharp.'
-	}
-]
+const HOW = ['Follow a match', 'Answer when play stops', 'Guess first, then see', 'Grow at your pace']
 
 /** The very first page: what Between the Lines is and how it works, before the welcome's scenes. */
 const Intro = ({ onNext, onSkip }: IntroProps) => {
@@ -47,15 +30,12 @@ const Intro = ({ onNext, onSkip }: IntroProps) => {
 				An adaptive learning tool for football fans at every level. It helps you read the game as it plays out.
 			</p>
 			<ol className="intro__how" aria-label="How it works">
-				{HOW.map((item, i) => (
-					<li key={item.title} className="intro__how-item">
+				{HOW.map((title, i) => (
+					<li key={title} className="intro__how-item">
 						<span className="intro__how-number" aria-hidden="true">
 							{i + 1}
 						</span>
-						<span className="intro__how-words">
-							<span className="intro__how-title">{item.title}</span>
-							<span className="intro__how-body">{item.body}</span>
-						</span>
+						<span className="intro__how-title">{title}</span>
 					</li>
 				))}
 			</ol>

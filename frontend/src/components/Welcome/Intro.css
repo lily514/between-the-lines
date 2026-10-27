@@ -70,27 +70,25 @@
 	color: var(--text-2);
 }
 
+/* The steps are cells of one card; the 1px gaps show the border colour between them. */
 .intro__how {
-	display: flex;
-	flex-direction: column;
+	display: grid;
+	gap: 1px;
 	margin: 0;
 	padding: 0;
 	list-style: none;
+	overflow: hidden;
 	border: 1px solid var(--border);
 	border-radius: var(--r-btn);
-	background: var(--surface);
+	background: var(--border);
 }
 
 .intro__how-item {
 	display: flex;
-	align-items: flex-start;
-	gap: var(--s-3);
-	padding: var(--s-3) 14px;
-	border-bottom: 1px solid var(--border);
-}
-
-.intro__how-item:last-child {
-	border-bottom: 0;
+	align-items: center;
+	gap: 10px;
+	padding: 10px 12px;
+	background: var(--surface);
 }
 
 .intro__how-number {
@@ -98,8 +96,8 @@
 	flex: none;
 	align-items: center;
 	justify-content: center;
-	width: 26px;
-	height: 26px;
+	width: 22px;
+	height: 22px;
 	border-radius: var(--r-pill);
 	background: var(--know-tint);
 	font-family: var(--font-data);
@@ -108,21 +106,9 @@
 	color: var(--know);
 }
 
-.intro__how-words {
-	display: flex;
-	flex-direction: column;
-	gap: 2px;
-}
-
 .intro__how-title {
 	font-size: var(--fs-body);
 	font-weight: 700;
-}
-
-.intro__how-body {
-	font-size: var(--fs-body);
-	line-height: var(--lh-body);
-	color: var(--text-2);
 }
 
 .intro__actions {

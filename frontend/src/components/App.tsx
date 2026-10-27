@@ -33,6 +33,7 @@ import {
 	needsHalftime,
 	needsClub,
 	newViewerId,
+	fillsWindow,
 	offersMap,
 	reducer,
 	rememberedViewer,
@@ -345,7 +346,7 @@ const App = () => {
 	const header = matchHeader(screen)
 	const layoutStyle = panelWidth === null ? undefined : ({ '--panel-w': `${String(panelWidth)}px` } as CSSProperties)
 	return (
-		<div className="layout" style={layoutStyle}>
+		<div className={fillsWindow(state) ? 'layout layout--fill' : 'layout'} style={layoutStyle}>
 			{/* Stands in for the viewer's own stream on a wide screen; the panel repeats everything in it. Between
 			    questions the match feed fills it, in place of the placeholder. */}
 			<div className="layout__stream" aria-hidden="true">

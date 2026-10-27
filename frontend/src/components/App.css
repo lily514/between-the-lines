@@ -150,4 +150,19 @@
 	.layout__keys {
 		display: block;
 	}
+
+	/* The welcome fills the window: no match to stand beside yet, so no stream view and no handle. Its scenes use the
+	   whole 960 px; its pages of words keep to 640 px (Welcome). */
+	.layout--fill .layout__stream,
+	.layout--fill .panel-handle {
+		display: none;
+	}
+
+	.layout--fill .layout__panel {
+		flex: 1;
+		width: auto;
+		max-width: none;
+		padding-inline: max(var(--gutter-panel), calc((100% - 960px) / 2));
+		border-left: 0;
+	}
 }

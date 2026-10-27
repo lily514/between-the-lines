@@ -58,9 +58,9 @@
 		padding: var(--s-6);
 	}
 
-	/* Between questions the match feed fills the stream view, in place of the placeholder. */
+	/* Between questions the match feed fills the stream view, in place of the placeholder, centred with room around it. */
 	.layout__stream:has(.layout__feed:not(:empty)) {
-		padding-top: 20px;
+		padding: var(--s-8);
 	}
 
 	.layout__stream:has(.layout__feed:not(:empty)) .layout__match,
@@ -116,6 +116,7 @@
 		flex: 1;
 		min-height: 0;
 		width: min(100%, 720px);
+		margin-inline: auto;
 	}
 
 	.layout__feed:empty {

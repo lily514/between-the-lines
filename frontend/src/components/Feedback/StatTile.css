@@ -17,7 +17,7 @@
 	font-family: var(--font-data);
 	font-size: var(--fs-data-l);
 	font-weight: 500;
-	overflow-wrap: anywhere;
+	overflow-wrap: break-word;
 }
 
 .stat-tile__unit {

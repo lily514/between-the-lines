@@ -19,6 +19,21 @@ from btl.learn.evidence import EvidencePack, Fact, QuestionView, Timing
 
 SLOT = re.compile(r"\{([A-Za-z_][A-Za-z0-9_.]*)\}")
 
+# The map's wording is written for counts above one ("Breaking {lines_broken} lines"), so a
+# count of one takes the singular of the noun right after its slot.
+SINGULAR = {
+    "defenders": "defender",
+    "lines": "line",
+    "passes": "pass",
+    "players": "player",
+    "recoveries": "recovery",
+    "seconds": "second",
+    "shots": "shot",
+    "times": "time",
+}
+ONE = frozenset({"one", "1"})
+COUNTED_NOUN = re.compile(r"\{([A-Za-z_][A-Za-z0-9_.]*)\}(\s+)(" + "|".join(SINGULAR) + r")\b")
+
 
 class SlotError(KeyError):
     """A slot names a fact that isn't available."""
@@ -30,7 +45,7 @@ def slot_names(text: str) -> set[str]:
 
 
 def fill(text: str, values: Mapping[str, str]) -> str:
-    """Replace each slot with its value.
+    """Replace each slot with its value; a count of one makes the noun after it singular.
 
     Raises:
         SlotError: If a slot names something not in ``values``.
@@ -38,7 +53,12 @@ def fill(text: str, values: Mapping[str, str]) -> str:
     missing = sorted(slot_names(text) - set(values))
     if missing:
         raise SlotError(f"no value for {', '.join('{' + name + '}' for name in missing)}")
-    return SLOT.sub(lambda match: values[match.group(1)], text)
+
+    def agree(match: re.Match[str]) -> str:
+        slot, space, noun = match.groups()
+        return f"{{{slot}}}{space}{SINGULAR[noun] if values[slot] in ONE else noun}"
+
+    return SLOT.sub(lambda match: values[match.group(1)], COUNTED_NOUN.sub(agree, text))
 
 
 def question_values(view: QuestionView) -> dict[str, str]:

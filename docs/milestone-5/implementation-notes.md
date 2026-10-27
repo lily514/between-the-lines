@@ -552,3 +552,26 @@ plays at the chosen speed. Both are kept in this browser, like the theme, and st
 A change of speed mid-run carries on from where the clock has got to.
 **Why:** a viewer couldn't tell the feed runs far faster than a real match, and the 20 s cap is for demos.
 **Affects:** nothing.
+
+## After the merge — Small fixes from the screenshots (2026-10-27)
+**Plan said:** nothing; these were found in the dark-mode screenshots taken for the video.
+**We did:**
+- **A count of one takes a singular noun.** The map's wording is written for counts above one, so a pass that broke
+  one line read "Breaking one lines". `fill` (`tutor/slots.py`) now makes the noun right after a slot singular when
+  the slot's value is "one" or "1", for the nouns the map and templates count (lines, shots, seconds, times,
+  recoveries, players, defenders, passes). The map's text and the model's prompts are unchanged, so the recorded
+  Tutor replies still match. One rule where slots are filled fixes every such sentence, the model's wording included.
+- **Scene labels stay in sight.** A zone's value was drawn at the zone's centre, under the players, and the ball (so a
+  player) is always in that zone: the Sharp line-breaking scene hid "2.4%" under #2. It is now a small pill on the
+  zone's top edge, drawn above the players, or on its bottom edge when the level tag covers the top-left corner.
+  A note along the bottom (`edge: 'bottom'`) was still drawn at the right, under Pause motion, although T15 says it
+  moved; it now starts at the left.
+- **Stat tiles wrap between words.** In the desktop side panel three tiles a row and `overflow-wrap: anywhere` split
+  "Bakewell Badgers" into "Bakewe / ll / Badger / s". The row now fits as many tiles as its width allows (at least
+  136 px each) and a value breaks only between words, unless one word is wider than its tile.
+- **A feed entry's mark stays with its words.** The meta line ("● LUD · PASSING MOVE · 3 PLAYERS") was a wrapping
+  flex row of a mark and one block of text, so on a phone the whole text wrapped below and left the mark alone on
+  its line. It is now plain text with the icon and mark inline, and wraps like a sentence.
+**Why:** each was seen in the screenshots for the video. Apart from the grammar, none changes what the page shows,
+only where it sits.
+**Affects:** nothing.

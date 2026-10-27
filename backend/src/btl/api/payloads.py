@@ -12,6 +12,7 @@ from typing import Literal
 from btl.api.models import (
     AnswerLineOut,
     Bar,
+    BeforeMatchOut,
     ClubOut,
     ConceptMapOut,
     ConceptMoveOut,
@@ -20,6 +21,8 @@ from btl.api.models import (
     FeedbackOption,
     FeedbackOut,
     GoalOut,
+    LevelRowOut,
+    LevelUpOut,
     MapConceptOut,
     MarkerOut,
     MatchOut,
@@ -45,11 +48,12 @@ from btl.api.models import (
 )
 from btl.concepts.phase import PhaseOfPlay
 from btl.league.league import Club, League
-from btl.learn.concept_map import Thresholds
+from btl.learn.before_match import BeforeMatch, LevelRow
+from btl.learn.concept_map import ConceptKey, Thresholds
 from btl.learn.curriculum import Curriculum
 from btl.learn.evidence import Fact, Picture, percent_points
 from btl.learn.knowledge import Delivery
-from btl.learn.levels import level_word
+from btl.learn.levels import band_for, level_word
 from btl.learn.matches import CatchUp, MatchState, ViewerMatch, score_as_of
 from btl.learn.play_by_play import play_by_play
 from btl.learn.questions import Form
@@ -343,12 +347,15 @@ def report_payload(
         ],
         concepts=[
             ConceptMoveOut(
+                key=move.key,
                 name=move.name,
                 strand=move.strand,
                 before=move.before,
                 after=move.after,
                 level_before=move.level_before,
                 level=move.level,
+                band_before=move.band_before,
+                band=move.band,
                 mastered=move.mastered,
             )
             for move in made.concepts
@@ -368,12 +375,61 @@ def movements(before: Mapping[str, float], after: Mapping[str, float]) -> list[M
     return [Movement(name=name, before=before[name], after=value) for name, value in after.items()]
 
 
-def bars(mastery: Mapping[str, float], thresholds: Thresholds) -> list[Bar]:
-    """Each concept's mastery now, with its level word."""
+def bars(
+    mastery: Mapping[ConceptKey, float], names: Mapping[ConceptKey, str], thresholds: Thresholds
+) -> list[Bar]:
+    """Each concept's mastery now, with its level word and band."""
     return [
-        Bar(name=name, value=value, level=level_word(value, thresholds))
-        for name, value in mastery.items()
+        Bar(
+            key=key,
+            name=names[key],
+            value=value,
+            level=level_word(value, thresholds),
+            band=band_for(value),
+        )
+        for key, value in mastery.items()
     ]
+
+
+def before_match_payload(made: BeforeMatch) -> BeforeMatchOut:
+    """The flows before a match: First looks, Level-ups, the level list and the unlock note."""
+    return BeforeMatchOut(
+        match_number=made.match_number,
+        first_looks=[_level_row(row) for row in made.first_looks],
+        level_ups=[
+            LevelUpOut(
+                key=up.key,
+                name=up.name,
+                strand=up.strand,
+                strand_name=up.strand_name,
+                before=up.before,
+                after=up.after,
+                level_before=up.level_before,
+                level=up.level,
+                band_before=up.band_before,
+                band=up.band,
+                mastered=up.mastered,
+            )
+            for up in made.level_ups
+        ],
+        levels=[_level_row(row) for row in made.levels],
+        unlock_note=made.unlock_note,
+    )
+
+
+def _level_row(row: LevelRow) -> LevelRowOut:
+    return LevelRowOut(
+        key=row.key,
+        name=row.name,
+        strand=row.strand,
+        strand_name=row.strand_name,
+        mastery=row.mastery,
+        level=row.level,
+        band=row.band,
+        mastered=row.mastered,
+        waits_for=list(row.waits_for),
+        moved=row.moved,
+    )
 
 
 def concept_map_payload(whole: Curriculum, thresholds: Thresholds) -> ConceptMapOut:
@@ -395,6 +451,8 @@ def concept_map_payload(whole: Curriculum, thresholds: Thresholds) -> ConceptMap
                 askable=c.askable,
                 mastery=c.mastery,
                 level=c.level,
+                band=c.band,
+                waits_for=list(c.waits_for),
             )
             for c in whole.concepts
         ],

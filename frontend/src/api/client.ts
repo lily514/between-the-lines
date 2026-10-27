@@ -17,6 +17,10 @@ export type ConceptMap = Schemas['ConceptMapOut']
 export type MapConcept = Schemas['MapConceptOut']
 export type Report = Schemas['ReportOut']
 export type ReportAt = Report['at']
+export type Band = Schemas['Band']
+export type BeforeMatch = Schemas['BeforeMatchOut']
+export type LevelRow = Schemas['LevelRowOut']
+export type LevelUp = Schemas['LevelUpOut']
 
 /** A response other than 2xx. `status` lets callers tell a stale question (409) from a bad name (422). */
 export class ApiError extends Error {
@@ -61,6 +65,15 @@ export const getConceptMap = (viewerId: string | null) =>
 
 export const getReport = (viewerId: string, matchNumber: number, at: ReportAt) =>
 	request<Report>(`${viewerPath(viewerId)}/matches/${String(matchNumber)}/report?at=${at}`)
+
+/** The First looks and Level-ups to run before the viewer's next match, and their level on every concept. */
+export const getBeforeMatch = (viewerId: string) => request<BeforeMatch>(`${viewerPath(viewerId)}/before-match`)
+
+/** The viewer has had a First look at these concepts, by key. */
+export const markIntroduced = (viewerId: string, concepts: string[]) => {
+	const body: Schemas['IntroducedIn'] = { concepts }
+	return request<Status>(`${viewerPath(viewerId)}/introduced`, body)
+}
 
 export const nextStep = (viewerId: string) => request<NextStep>(`${viewerPath(viewerId)}/next`, {})
 

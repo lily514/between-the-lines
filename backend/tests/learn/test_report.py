@@ -6,6 +6,7 @@ import pytest
 
 from btl.learn.concept_map import ConceptKey
 from btl.learn.learner import LearnerState
+from btl.learn.levels import band_for
 from btl.learn.report import Break, ConceptMove, report, scout_note, strand_values
 from btl.learn.session import Course, PreparedMatch, prepare_match
 from btl.schema.scoreboard import goals
@@ -119,6 +120,8 @@ def move(name: str, before: float, after: float, level_before: str, level: str) 
         after,
         level_before,
         level,
+        band_for(before),
+        band_for(after),
         after >= 0.95,
     )
 

@@ -9,6 +9,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field
 
+from btl.learn.levels import Band
 from btl.learn.pace import Pace
 
 Point = tuple[float, float]
@@ -142,11 +143,16 @@ class QuestionOut(BaseModel):
 
 
 class Bar(BaseModel):
-    """One concept's mastery, from 0 to 1, and the level word for it ("Solid")."""
+    """One concept's mastery, from 0 to 1, with the level word ("Solid") and band for it.
 
+    The band is the level as a key the page switches on; "Mastered" is the Sharp band.
+    """
+
+    key: str
     name: str
     value: float
     level: str
+    band: Band
 
 
 class Movement(BaseModel):
@@ -389,7 +395,11 @@ class StrandOut(BaseModel):
 
 
 class MapConceptOut(BaseModel):
-    """A concept on the map. ``mastery`` and ``level`` are null for one coming later."""
+    """A concept on the map. ``mastery``, ``level`` and ``band`` are null for one coming later.
+
+    ``waits_for`` names the askable prerequisites the viewer hasn't unlocked yet: the concept
+    is locked while it isn't empty.
+    """
 
     key: str
     name: str
@@ -400,6 +410,8 @@ class MapConceptOut(BaseModel):
     askable: bool
     mastery: float | None
     level: str | None
+    band: Band | None
+    waits_for: list[str]
 
 
 class ConceptMapOut(BaseModel):
@@ -425,14 +437,17 @@ class StrandValueOut(BaseModel):
 
 
 class ConceptMoveOut(BaseModel):
-    """A concept asked about now: mastery and level word at kick-off and at the break."""
+    """A concept asked about now: mastery, level word and band at kick-off and at the break."""
 
+    key: str
     name: str
     strand: str
     before: float
     after: float
     level_before: str
     level: str
+    band_before: Band
+    band: Band
     mastered: bool
 
 
@@ -476,6 +491,62 @@ class ReportOut(BaseModel):
     right: int
     note: str
     thresholds: ThresholdsOut
+
+
+class LevelRowOut(BaseModel):
+    """The viewer's level on one active concept, for a level list.
+
+    ``waits_for`` names the askable prerequisites not yet unlocked (locked while not empty);
+    ``moved`` says whether the band rose over the last match.
+    """
+
+    key: str
+    name: str
+    strand: str
+    strand_name: str
+    mastery: float
+    level: str
+    band: Band
+    mastered: bool
+    waits_for: list[str]
+    moved: bool
+
+
+class LevelUpOut(BaseModel):
+    """A concept whose band rose over the viewer's last match: before and after."""
+
+    key: str
+    name: str
+    strand: str
+    strand_name: str
+    before: float
+    after: float
+    level_before: str
+    level: str
+    band_before: Band
+    band: Band
+    mastered: bool
+
+
+class BeforeMatchOut(BaseModel):
+    """What the page runs before the viewer's next match: First looks, then Level-ups.
+
+    ``first_looks`` are the active concepts the viewer hasn't been introduced to; ``level_ups``
+    the concepts whose band rose over their last match; ``levels`` a row per active concept;
+    ``unlock_note`` what the team sheet newly shows, if their stage rose, else null.
+    """
+
+    match_number: int
+    first_looks: list[LevelRowOut]
+    level_ups: list[LevelUpOut]
+    levels: list[LevelRowOut]
+    unlock_note: str | None
+
+
+class IntroducedIn(BaseModel):
+    """The concepts the viewer has now had a First look at, by key."""
+
+    concepts: list[str]
 
 
 class AnswerIn(BaseModel):

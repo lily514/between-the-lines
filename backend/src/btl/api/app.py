@@ -14,6 +14,10 @@ Routes:
   started watching (`ClubIn` → `StatusOut`).
 - ``PUT /api/viewers/{viewer_id}/pace``: how often questions come, now or from the next match
   (`PaceIn` → `StatusOut`).
+- ``GET /api/viewers/{viewer_id}/before-match``: the First looks and Level-ups to run before the
+  viewer's next match, and their level on every concept (`BeforeMatchOut`).
+- ``POST /api/viewers/{viewer_id}/introduced``: the viewer has had a First look at these
+  concepts (`IntroducedIn` → `StatusOut`).
 - ``GET /api/viewers/{viewer_id}/team-sheet``: who's playing in the viewer's next match
   (`TeamSheetOut`).
 - ``GET /api/concept-map``: the whole curriculum, before there is a viewer (`ConceptMapOut`).
@@ -47,12 +51,14 @@ from btl.api.events import emit
 from btl.api.limits import current_viewer
 from btl.api.models import (
     AnswerIn,
+    BeforeMatchOut,
     ClubIn,
     ClubOut,
     ConceptMapOut,
     FeedbackOut,
     Fixture,
     FullTimeOut,
+    IntroducedIn,
     MatchOut,
     NextOut,
     PaceIn,
@@ -63,6 +69,7 @@ from btl.api.models import (
 )
 from btl.api.payloads import (
     bars,
+    before_match_payload,
     club_payload,
     concept_map_payload,
     feedback_payload,
@@ -85,6 +92,8 @@ from btl.api.viewer import (
     ReadOnlyStore,
     WebViewer,
 )
+from btl.learn.before_match import before_match
+from btl.learn.concept_map import ConceptKey
 from btl.learn.curriculum import curriculum
 from btl.learn.learner import MATCHES_PER_SESSION, LearnerState
 from btl.learn.matches import catch_up, score_as_of, viewer_matches
@@ -95,6 +104,7 @@ from btl.learn.session import (
     PreparedMatch,
     choose_club,
     choose_pace,
+    mark_introduced,
     prepare_match,
     seed_for_viewer,
     start_session,
@@ -205,7 +215,7 @@ def create_app(
             club=None if state.club is None else club_payload(league.club(state.club)),
             can_choose_club=state.can_choose_club,
             suggested_club=league.clubs[state.seed % len(league.clubs)].team_id,
-            concepts=bars(course().bars(state), course().model.thresholds),
+            concepts=bars(course().mastery(state), course().names(), course().model.thresholds),
             thresholds=thresholds_payload(course().model.thresholds),
             pace=state.pace,
             pace_next=state.pace_next,
@@ -237,7 +247,8 @@ def create_app(
         _check(body.viewer_id)
         seed = seed_for_viewer(body.viewer_id) if body.seed is None else body.seed
         with serving(body.viewer_id):
-            found = start_session(store, body.viewer_id, seed)
+            # The welcome has just covered every concept asked about now.
+            found = start_session(store, body.viewer_id, seed, course().active)
             if body.club is not None:
                 found = chosen(body.viewer_id, body.club)
             return status(found)
@@ -256,6 +267,27 @@ def create_app(
             stored(viewer_id)
             try:
                 return status(choose_pace(store, viewer_id, body.pace))
+            except StaleWriteError:
+                raise HTTPException(409, "the record changed; try again") from None
+
+    @app.get("/api/viewers/{viewer_id}/before-match")
+    def get_before_match(viewer_id: str) -> BeforeMatchOut:
+        """The First looks and Level-ups to run before the viewer's next match, and their levels."""
+        with serving(viewer_id):
+            state = _watching(stored(viewer_id))
+            return before_match_payload(before_match(course(), state, prepare))
+
+    @app.post("/api/viewers/{viewer_id}/introduced")
+    def post_introduced(viewer_id: str, body: IntroducedIn) -> StatusOut:
+        """Record that the viewer has had a First look at these concepts."""
+        with serving(viewer_id):
+            stored(viewer_id)
+            unknown = sorted(set(body.concepts) - set(course().active))
+            if unknown:
+                raise HTTPException(422, f"not asked about now: {', '.join(unknown)}")
+            try:
+                keys = [ConceptKey(key) for key in body.concepts]
+                return status(mark_introduced(store, viewer_id, keys))
             except StaleWriteError:
                 raise HTTPException(409, "the record changed; try again") from None
 

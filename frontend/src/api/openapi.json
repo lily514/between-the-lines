@@ -44,9 +44,26 @@
         "title": "AnswerLineOut",
         "type": "object"
       },
+      "Band": {
+        "description": "A viewer's level on a concept, as the page keys its scenes and icons.",
+        "enum": [
+          "getting_there",
+          "solid",
+          "sharp"
+        ],
+        "title": "Band",
+        "type": "string"
+      },
       "Bar": {
-        "description": "One concept's mastery, from 0 to 1, and the level word for it (\"Solid\").",
+        "description": "One concept's mastery, from 0 to 1, with the level word (\"Solid\") and band for it.\n\nThe band is the level as a key the page switches on; \"Mastered\" is the Sharp band.",
         "properties": {
+          "band": {
+            "$ref": "#/components/schemas/Band"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
           "level": {
             "title": "Level",
             "type": "string"
@@ -61,11 +78,63 @@
           }
         },
         "required": [
+          "key",
           "name",
           "value",
-          "level"
+          "level",
+          "band"
         ],
         "title": "Bar",
+        "type": "object"
+      },
+      "BeforeMatchOut": {
+        "description": "What the page runs before the viewer's next match: First looks, then Level-ups.\n\n``first_looks`` are the active concepts the viewer hasn't been introduced to; ``level_ups``\nthe concepts whose band rose over their last match; ``levels`` a row per active concept;\n``unlock_note`` what the team sheet newly shows, if their stage rose, else null.",
+        "properties": {
+          "first_looks": {
+            "items": {
+              "$ref": "#/components/schemas/LevelRowOut"
+            },
+            "title": "First Looks",
+            "type": "array"
+          },
+          "level_ups": {
+            "items": {
+              "$ref": "#/components/schemas/LevelUpOut"
+            },
+            "title": "Level Ups",
+            "type": "array"
+          },
+          "levels": {
+            "items": {
+              "$ref": "#/components/schemas/LevelRowOut"
+            },
+            "title": "Levels",
+            "type": "array"
+          },
+          "match_number": {
+            "title": "Match Number",
+            "type": "integer"
+          },
+          "unlock_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unlock Note"
+          }
+        },
+        "required": [
+          "match_number",
+          "first_looks",
+          "level_ups",
+          "levels",
+          "unlock_note"
+        ],
+        "title": "BeforeMatchOut",
         "type": "object"
       },
       "Break": {
@@ -153,15 +222,25 @@
         "type": "object"
       },
       "ConceptMoveOut": {
-        "description": "A concept asked about now: mastery and level word at kick-off and at the break.",
+        "description": "A concept asked about now: mastery, level word and band at kick-off and at the break.",
         "properties": {
           "after": {
             "title": "After",
             "type": "number"
           },
+          "band": {
+            "$ref": "#/components/schemas/Band"
+          },
+          "band_before": {
+            "$ref": "#/components/schemas/Band"
+          },
           "before": {
             "title": "Before",
             "type": "number"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
           },
           "level": {
             "title": "Level",
@@ -185,12 +264,15 @@
           }
         },
         "required": [
+          "key",
           "name",
           "strand",
           "before",
           "after",
           "level_before",
           "level",
+          "band_before",
+          "band",
           "mastered"
         ],
         "title": "ConceptMoveOut",
@@ -715,12 +797,162 @@
         "title": "HTTPValidationError",
         "type": "object"
       },
+      "IntroducedIn": {
+        "description": "The concepts the viewer has now had a First look at, by key.",
+        "properties": {
+          "concepts": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Concepts",
+            "type": "array"
+          }
+        },
+        "required": [
+          "concepts"
+        ],
+        "title": "IntroducedIn",
+        "type": "object"
+      },
+      "LevelRowOut": {
+        "description": "The viewer's level on one active concept, for a level list.\n\n``waits_for`` names the askable prerequisites not yet unlocked (locked while not empty);\n``moved`` says whether the band rose over the last match.",
+        "properties": {
+          "band": {
+            "$ref": "#/components/schemas/Band"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "level": {
+            "title": "Level",
+            "type": "string"
+          },
+          "mastered": {
+            "title": "Mastered",
+            "type": "boolean"
+          },
+          "mastery": {
+            "title": "Mastery",
+            "type": "number"
+          },
+          "moved": {
+            "title": "Moved",
+            "type": "boolean"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "strand": {
+            "title": "Strand",
+            "type": "string"
+          },
+          "strand_name": {
+            "title": "Strand Name",
+            "type": "string"
+          },
+          "waits_for": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Waits For",
+            "type": "array"
+          }
+        },
+        "required": [
+          "key",
+          "name",
+          "strand",
+          "strand_name",
+          "mastery",
+          "level",
+          "band",
+          "mastered",
+          "waits_for",
+          "moved"
+        ],
+        "title": "LevelRowOut",
+        "type": "object"
+      },
+      "LevelUpOut": {
+        "description": "A concept whose band rose over the viewer's last match: before and after.",
+        "properties": {
+          "after": {
+            "title": "After",
+            "type": "number"
+          },
+          "band": {
+            "$ref": "#/components/schemas/Band"
+          },
+          "band_before": {
+            "$ref": "#/components/schemas/Band"
+          },
+          "before": {
+            "title": "Before",
+            "type": "number"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "level": {
+            "title": "Level",
+            "type": "string"
+          },
+          "level_before": {
+            "title": "Level Before",
+            "type": "string"
+          },
+          "mastered": {
+            "title": "Mastered",
+            "type": "boolean"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "strand": {
+            "title": "Strand",
+            "type": "string"
+          },
+          "strand_name": {
+            "title": "Strand Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "name",
+          "strand",
+          "strand_name",
+          "before",
+          "after",
+          "level_before",
+          "level",
+          "band_before",
+          "band",
+          "mastered"
+        ],
+        "title": "LevelUpOut",
+        "type": "object"
+      },
       "MapConceptOut": {
-        "description": "A concept on the map. ``mastery`` and ``level`` are null for one coming later.",
+        "description": "A concept on the map. ``mastery``, ``level`` and ``band`` are null for one coming later.\n\n``waits_for`` names the askable prerequisites the viewer hasn't unlocked yet: the concept\nis locked while it isn't empty.",
         "properties": {
           "askable": {
             "title": "Askable",
             "type": "boolean"
+          },
+          "band": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Band"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "key": {
             "title": "Key",
@@ -770,6 +1002,13 @@
           "tier": {
             "title": "Tier",
             "type": "integer"
+          },
+          "waits_for": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Waits For",
+            "type": "array"
           }
         },
         "required": [
@@ -781,7 +1020,9 @@
           "prerequisites",
           "askable",
           "mastery",
-          "level"
+          "level",
+          "band",
+          "waits_for"
         ],
         "title": "MapConceptOut",
         "type": "object"
@@ -2177,6 +2418,46 @@
         "summary": "Answer"
       }
     },
+    "/api/viewers/{viewer_id}/before-match": {
+      "get": {
+        "description": "The First looks and Level-ups to run before the viewer's next match, and their levels.",
+        "operationId": "get_before_match_api_viewers__viewer_id__before_match_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "viewer_id",
+            "required": true,
+            "schema": {
+              "title": "Viewer Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BeforeMatchOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Before Match"
+      }
+    },
     "/api/viewers/{viewer_id}/club": {
       "put": {
         "description": "Choose the team to support, before answering anything.",
@@ -2265,6 +2546,56 @@
           }
         },
         "summary": "Get Concept Map"
+      }
+    },
+    "/api/viewers/{viewer_id}/introduced": {
+      "post": {
+        "description": "Record that the viewer has had a First look at these concepts.",
+        "operationId": "post_introduced_api_viewers__viewer_id__introduced_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "viewer_id",
+            "required": true,
+            "schema": {
+              "title": "Viewer Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IntroducedIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Post Introduced"
       }
     },
     "/api/viewers/{viewer_id}/matches": {

@@ -104,6 +104,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/viewers/{viewer_id}/before-match": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Before Match
+         * @description The First looks and Level-ups to run before the viewer's next match, and their levels.
+         */
+        get: operations["get_before_match_api_viewers__viewer_id__before_match_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/viewers/{viewer_id}/club": {
         parameters: {
             query?: never;
@@ -138,6 +158,26 @@ export interface paths {
         get: operations["get_concept_map_api_viewers__viewer_id__concept_map_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/viewers/{viewer_id}/introduced": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Post Introduced
+         * @description Record that the viewer has had a First look at these concepts.
+         */
+        post: operations["post_introduced_api_viewers__viewer_id__introduced_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -271,16 +311,47 @@ export interface components {
             correct: boolean;
         };
         /**
+         * Band
+         * @description A viewer's level on a concept, as the page keys its scenes and icons.
+         * @enum {string}
+         */
+        Band: "getting_there" | "solid" | "sharp";
+        /**
          * Bar
-         * @description One concept's mastery, from 0 to 1, and the level word for it ("Solid").
+         * @description One concept's mastery, from 0 to 1, with the level word ("Solid") and band for it.
+         *
+         *     The band is the level as a key the page switches on; "Mastered" is the Sharp band.
          */
         Bar: {
+            band: components["schemas"]["Band"];
+            /** Key */
+            key: string;
             /** Level */
             level: string;
             /** Name */
             name: string;
             /** Value */
             value: number;
+        };
+        /**
+         * BeforeMatchOut
+         * @description What the page runs before the viewer's next match: First looks, then Level-ups.
+         *
+         *     ``first_looks`` are the active concepts the viewer hasn't been introduced to; ``level_ups``
+         *     the concepts whose band rose over their last match; ``levels`` a row per active concept;
+         *     ``unlock_note`` what the team sheet newly shows, if their stage rose, else null.
+         */
+        BeforeMatchOut: {
+            /** First Looks */
+            first_looks: components["schemas"]["LevelRowOut"][];
+            /** Level Ups */
+            level_ups: components["schemas"]["LevelUpOut"][];
+            /** Levels */
+            levels: components["schemas"]["LevelRowOut"][];
+            /** Match Number */
+            match_number: number;
+            /** Unlock Note */
+            unlock_note: string | null;
         };
         /**
          * Break
@@ -325,13 +396,17 @@ export interface components {
         };
         /**
          * ConceptMoveOut
-         * @description A concept asked about now: mastery and level word at kick-off and at the break.
+         * @description A concept asked about now: mastery, level word and band at kick-off and at the break.
          */
         ConceptMoveOut: {
             /** After */
             after: number;
+            band: components["schemas"]["Band"];
+            band_before: components["schemas"]["Band"];
             /** Before */
             before: number;
+            /** Key */
+            key: string;
             /** Level */
             level: string;
             /** Level Before */
@@ -537,12 +612,78 @@ export interface components {
             detail?: components["schemas"]["ValidationError"][];
         };
         /**
+         * IntroducedIn
+         * @description The concepts the viewer has now had a First look at, by key.
+         */
+        IntroducedIn: {
+            /** Concepts */
+            concepts: string[];
+        };
+        /**
+         * LevelRowOut
+         * @description The viewer's level on one active concept, for a level list.
+         *
+         *     ``waits_for`` names the askable prerequisites not yet unlocked (locked while not empty);
+         *     ``moved`` says whether the band rose over the last match.
+         */
+        LevelRowOut: {
+            band: components["schemas"]["Band"];
+            /** Key */
+            key: string;
+            /** Level */
+            level: string;
+            /** Mastered */
+            mastered: boolean;
+            /** Mastery */
+            mastery: number;
+            /** Moved */
+            moved: boolean;
+            /** Name */
+            name: string;
+            /** Strand */
+            strand: string;
+            /** Strand Name */
+            strand_name: string;
+            /** Waits For */
+            waits_for: string[];
+        };
+        /**
+         * LevelUpOut
+         * @description A concept whose band rose over the viewer's last match: before and after.
+         */
+        LevelUpOut: {
+            /** After */
+            after: number;
+            band: components["schemas"]["Band"];
+            band_before: components["schemas"]["Band"];
+            /** Before */
+            before: number;
+            /** Key */
+            key: string;
+            /** Level */
+            level: string;
+            /** Level Before */
+            level_before: string;
+            /** Mastered */
+            mastered: boolean;
+            /** Name */
+            name: string;
+            /** Strand */
+            strand: string;
+            /** Strand Name */
+            strand_name: string;
+        };
+        /**
          * MapConceptOut
-         * @description A concept on the map. ``mastery`` and ``level`` are null for one coming later.
+         * @description A concept on the map. ``mastery``, ``level`` and ``band`` are null for one coming later.
+         *
+         *     ``waits_for`` names the askable prerequisites the viewer hasn't unlocked yet: the concept
+         *     is locked while it isn't empty.
          */
         MapConceptOut: {
             /** Askable */
             askable: boolean;
+            band: components["schemas"]["Band"] | null;
             /** Key */
             key: string;
             /** Level */
@@ -559,6 +700,8 @@ export interface components {
             strand: string;
             /** Tier */
             tier: number;
+            /** Waits For */
+            waits_for: string[];
         };
         /**
          * MarkerOut
@@ -1193,6 +1336,37 @@ export interface operations {
             };
         };
     };
+    get_before_match_api_viewers__viewer_id__before_match_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                viewer_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BeforeMatchOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     put_club_api_viewers__viewer_id__club_put: {
         parameters: {
             query?: never;
@@ -1246,6 +1420,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ConceptMapOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_introduced_api_viewers__viewer_id__introduced_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                viewer_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IntroducedIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatusOut"];
                 };
             };
             /** @description Validation Error */

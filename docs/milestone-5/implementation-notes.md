@@ -193,3 +193,27 @@ the demo script gets one in three right in match 1 and one in two in match 2. Li
 the demo script should answer the basics better, so the README's demo shows all eight, is for her to decide.
 **Why:** the map's prerequisites are the source of truth for the frontier.
 **Affects:** T16's summary; an open question for Lily.
+
+## T8 — Bands, locks, introduced, and the before-match API (2026-10-27)
+
+**Plan said:** `band` and `key` on `Bar`, `MapConceptOut` and `ConceptMoveOut`; `waits_for` on `MapConceptOut` and
+the level rows; `LearnerState.introduced` with version 4 and the store's fallback; `POST …/introduced`;
+`GET …/before-match` with `first_looks`, `level_ups`, `levels` and `unlock_note`.
+**We did:** as planned, with these details:
+- `Band` (`getting_there`, `solid`, `sharp`) and `band_for` live beside `level_word` in `learn/levels.py`; `band_rose`
+  is what a Level-up step is shown for, so a two-band jump is one step by construction.
+- `waits_for` names the askable prerequisites in force whose mastery is under the unlock threshold, in map order.
+  Without a viewer (the map before the welcome) a new viewer's priors stand in, so the map shows the same locks a
+  new viewer would get: Transitions waits for Tackles and Restarts, Counter-pressing for Tackles.
+- **Who marks a new viewer introduced.** The record is model-free, so `start_session` takes the concepts already
+  met: the API's start route and the CLI pass `course.active`, since the welcome covers them all. A record created
+  without any (the tests' plain `start_session`) gets a First look at everything.
+- The flows' data is built in `learn/before_match.py`, from the full-time report of the last match (Level-ups and
+  the "new" marks), the record (First looks) and the team-sheet stage before and after the last match (the unlock
+  note, with `STAGE_OPENED` copy beside `NEXT_STAGE` in `learn/team_sheet.py`).
+- `POST …/introduced` returns the viewer's status, like the other record changes, and refuses a concept that
+  isn't asked about now (422). `GET …/before-match` is 409 for a viewer who has finished, like the team sheet.
+- The page's client gained `getBeforeMatch` and `markIntroduced`; the hand-built status fixture carries `key`
+  and `band`. The captured JSON fixtures stay as they are until T15 (they are cast, so the types don't bite).
+**Why:** the browser never applies a cut-off, so every level it shows arrives as a band from the API.
+**Affects:** T10 (icons switch on `band`, locks on `waits_for`), T13 (the flows), T15 (fixtures).

@@ -29,8 +29,13 @@ def test_the_map_moves_with_the_viewer_s_answers() -> None:
     body = api.get("/api/viewers/demo/concept-map").json()
     status = api.get("/api/viewers/demo").json()
 
-    on_map = {c["name"]: (c["mastery"], c["level"]) for c in body["concepts"] if c["askable"]}
-    assert on_map == {bar["name"]: (bar["value"], bar["level"]) for bar in status["concepts"]}
+    on_map = {
+        c["key"]: (c["mastery"], c["level"], c["band"]) for c in body["concepts"] if c["askable"]
+    }
+    assert on_map == {
+        bar["key"]: (bar["value"], bar["level"], bar["band"]) for bar in status["concepts"]
+    }
+    assert {bar["band"] for bar in status["concepts"]} <= {"getting_there", "solid", "sharp"}
 
 
 def test_an_unknown_viewer_has_no_map() -> None:

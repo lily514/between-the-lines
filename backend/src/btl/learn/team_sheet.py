@@ -35,6 +35,11 @@ NEXT_STAGE: dict[int, str] = {
     1: "Get to level 2 in any concept to see formations and position tags.",
     2: "Get to level 3 in any concept to see players' numbers from matches you've watched.",
 }
+# What a stage newly shows, told before the match when the viewer's best concept reaches it.
+STAGE_OPENED: dict[int, str] = {
+    2: "New on Who's playing: each team's formation and position tags.",
+    3: "New on Who's playing: players' numbers from the matches you've watched.",
+}
 
 
 @dataclass(frozen=True, slots=True)

@@ -551,8 +551,9 @@ def learn(
     store = JsonLearnerStore(learners)
     if reset:
         (learners / f"{viewer}.json").unlink(missing_ok=True)
-    stored = start_session(store, viewer, seed_for_viewer(viewer) if seed is None else seed)
     course = Course(_threat_model_or_fit(model), _tutor(tutor, tutor_log))
+    chosen_seed = seed_for_viewer(viewer) if seed is None else seed
+    stored = start_session(store, viewer, chosen_seed, course.active)
     if club is not None:
         stored = _choose_club(course, store, viewer, club)
     if stored.state.club is not None:
@@ -610,7 +611,7 @@ def demo_viewer(
     """
     course = Course(_threat_model_or_fit(model), _tutor(tutor, tutor_log))
     store = MemoryLearnerStore()
-    start_session(store, "demo", seed)
+    start_session(store, "demo", seed, course.active)
 
     def show_answer(asked: Asked, key: str) -> None:
         show_question(console, asked)

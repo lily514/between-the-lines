@@ -1,5 +1,33 @@
 # Milestone 5 — Implementation notes
 
+## Summary
+
+**Biggest changes:**
+- **Three more concepts are asked about:** Tackles and turnovers (`ball_win` detector), Shots and goals (`shot`) and
+  Transitions and counter-attacks (the `counter_attack` detector, with counter-attacks now planted in every match).
+  Eight of twenty are active; the tier-0 cap is five a match.
+- **Levels have bands and icons.** The API sends each concept's band (`getting_there`, `solid`, `sharp`) and what it
+  still waits for; the page shows a quarter, half or full disc beside every level word, a tick for Mastered, and
+  "Unlocks after …" for a locked concept. The team sheet's gate copy says Solid and Sharp.
+- **Scenes.** One real moment per active concept (`btl scene-fixtures`, committed and checked) drives an animated
+  scene with a layer per level, on a 5 s CSS loop with Pause and a reduced-motion still frame. Specs place every
+  label from the fixture's players, path and facts.
+- **Story flows.** The welcome is a step per strand with its scene; before a match, a First look introduces concepts
+  new to the viewer (record version 4 remembers which) and a Level-up tells each concept that moved up, then the
+  level list and the unlock note.
+
+**What was cut:** nothing from the plan. The Tutor evaluation's recorded replies could not be re-recorded without the
+model (see T5): four tests in `tests/tutor/test_evaluation.py` fail until Lily records them.
+
+**What carries over:**
+- Re-record `tests/fixtures/tutor-replies.json` with the model and update the counts in `test_evaluation.py` (T5).
+- The demo viewer (seed 7, answering as the terminal demo does) never reaches Transitions or Counter-pressing in
+  three matches, by the accepted gating; a viewer answering well reaches both by match 2 (T7).
+- Headless Chrome here enforces a 500 px minimum viewport; `tmp/cdp-shot.mjs` drives screenshots over the
+  DevTools protocol instead (T12, T15). It is not in the repo.
+- The hand-tuned question and feedback fixtures are unchanged from Milestone 4 apart from the new level fields;
+  their matches have moved on since they were captured (T10).
+
 ## T0 — Plan and design reference (2026-10-26)
 
 **Plan said:** `design/` holds the handoff `.md` and the "Welcome redesign" export, unchanged.
@@ -404,5 +432,16 @@ Mastered before match 3). What that found and fixed:
    open a First look at Tackles, Shots and Transitions first, once only.
 7. The demo on Container Apps is unchanged until this branch is merged and deployed; the learner records there are
    version 3 and will get the First look on their next visit.
+**Why:** nothing to add.
+**Affects:** nothing.
+
+## T16 — Wrap-up (2026-10-27)
+
+**Plan said:** a summary at the top of these notes; `docs/concept-map.md` with eight active concepts and the new
+gating; the `--no-ff` merge into `main` is Lily's.
+**We did:** the summary, the concept-map doc (the three new nodes drawn as asked now, the active list, and the
+gating paragraph rewritten for `tackles` being active), and the README (a Milestone 5 row in Status, the eight
+concepts and the story flows under "Try the web page", five new screenshots, Solid and Sharp in the team-sheet
+line, "eight" where it said five). No merge: the branch stops here for review.
 **Why:** nothing to add.
 **Affects:** nothing.

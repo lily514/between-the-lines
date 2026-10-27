@@ -48,6 +48,12 @@ ASKING: Mapping[Asks, str] = {
     Asks.WHERE_FROM: "{player} has just had a shot for {team}. Where was it from?",
     Asks.HOW_THE_CHANCE_CAME: "{player} has just had a shot for {team}. How did the chance come "
     "about?",
+    Asks.WHAT_NEXT_AFTER_WINNING: "{team} have just won the ball in their own half. What did "
+    "they do next?",
+    Asks.SECONDS_TO_BOX: "{team} won the ball in their own half and went forward. How long did "
+    "they take to reach the {opponent} box?",
+    Asks.WHY_A_COUNTER_ATTACK: "{team} won the ball in their own half and were in the "
+    "{opponent} box within seconds. What made that a counter-attack?",
 }
 # How a question asked after the play opens, by where play is when it is asked.
 LOOKING_BACK: Mapping[str, str] = {
@@ -94,6 +100,12 @@ SETTLED_BY: Mapping[Asks, str] = {
     Asks.WHERE_FROM: "It was {shot_outcome}, from {shot_zone}, {metres_from_goal} m out.",
     Asks.HOW_THE_CHANCE_CAME: "The chance came from {chance_from}: a shot from {shot_zone} that "
     "was {shot_outcome}.",
+    Asks.WHAT_NEXT_AFTER_WINNING: "{player} won it {won_metres_from_own_goal} m from their own "
+    "goal, and {team} were in the box {seconds_to_box} s later.",
+    Asks.SECONDS_TO_BOX: "{team} were in the box {seconds_to_box} s after {player} won the ball.",
+    Asks.WHY_A_COUNTER_ATTACK: "{team} were in the box {seconds_to_box} s after winning it; so "
+    "far they have {transition_shots} shots from transitions and {settled_shots} from settled "
+    "possession.",
 }
 
 

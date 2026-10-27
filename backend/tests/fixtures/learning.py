@@ -20,7 +20,7 @@ FOULS = ConceptKey("fouls_and_cards")
 TRANSITIONS = ConceptKey("transitions")
 TACKLES = ConceptKey("tackles")
 SHOTS = ConceptKey("shots_and_goals")
-ACTIVE = (TACKLES, SHOTS, RESTARTS, OFFSIDE, FOULS, LINE_BREAKING, COUNTER_PRESS)
+ACTIVE = (TACKLES, SHOTS, RESTARTS, OFFSIDE, FOULS, TRANSITIONS, LINE_BREAKING, COUNTER_PRESS)
 
 
 @cache

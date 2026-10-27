@@ -79,7 +79,7 @@ def test_the_radar_averages_each_strand_s_concepts_asked_about_now() -> None:
 
     strands = {s.key: s for s in made.strands}
     assert list(strands) == ["possession", "pressure", "chances", "game_flow"]
-    assert [strands[k].concepts for k in strands] == [1, 2, 1, 3]
+    assert [strands[k].concepts for k in strands] == [1, 2, 1, 4]
     flow = [c.after for c in made.concepts if c.strand == "game_flow"]
     assert strands["game_flow"].now == pytest.approx(sum(flow) / len(flow))
 

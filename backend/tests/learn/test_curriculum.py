@@ -13,6 +13,7 @@ ASKED_NOW = {
     "Restarts",
     "Offside",
     "Fouls and cards",
+    "Transitions and counterattacks",
     "Line-breaking passes",
     "Counter-pressing",
 }

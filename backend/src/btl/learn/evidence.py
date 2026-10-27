@@ -23,7 +23,7 @@ from dataclasses import asdict, dataclass, replace
 
 from btl.concepts.ball_win import THIRDS, BallWin, WonWith, pitch_third
 from btl.concepts.base import MatchContext
-from btl.concepts.phase import PhaseOfPlay
+from btl.concepts.phase import PhaseOfPlay, phase_timeline
 from btl.concepts.shot import ChanceFrom, ShotOutcome, ShotZone, shot_outcome
 from btl.league.league import League
 from btl.learn.candidates import AskedWhen
@@ -37,7 +37,7 @@ from btl.schema.scoreboard import clock, goals
 from btl.schema.vocab import ActionType, ConceptId
 from btl.value.xt import ThreatModel
 
-PACK_VERSION = 3
+PACK_VERSION = 4
 # Pressing players count if they stand this close to the ball when it is won back.
 PRESSING_DISTANCE = 10.0
 COUNT_WORDS = ("no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine")
@@ -488,6 +488,32 @@ def _shot_facts(
     return {"player": _text(names.player(shot.player_id))}, outcome
 
 
+def _counter_attack_facts(
+    question: Question, ctx: MatchContext, threat: ThreatModel, names: _Names
+) -> tuple[dict[str, Fact], dict[str, Fact]]:
+    tag = question.candidate.tag
+    win = ctx.events[tag.action_id]
+    # The team's shots so far, up to the end of this break: from transitions, and from
+    # settled possession, by the phase each shot was taken in.
+    timeline = phase_timeline(ctx.match)
+    from_transitions = settled = 0
+    for event in ctx.events[: tag.span[1] + 1]:
+        if event.action_type in SHOTS and event.team_id == win.team_id:
+            if timeline.phase_of(event.action_id) is PhaseOfPlay.TRANSITION:
+                from_transitions += 1
+            else:
+                settled += 1
+    outcome = {
+        "seconds_to_box": _seconds(tag.evidence["seconds to the box"]),
+        "won_metres_from_own_goal": _metres(tag.evidence["won (m from own goal)"]),
+        "transition_shots": _measured(from_transitions),
+        "settled_shots": _measured(settled),
+        # Who won the ball is part of what happened next.
+        "player": _text(names.player(win.player_id)),
+    }
+    return {}, outcome
+
+
 def _box_position(metres: float) -> Fact:
     if metres < 0:
         return Fact(metres, "inside the penalty area")
@@ -571,6 +597,11 @@ def _up_to_the_shot(question: Question) -> tuple[ActionId, ActionId] | None:
     # The ball arriving, but not the shot itself: where it ended is the answer.
     first, shot = question.candidate.tag.span
     return None if first == shot else (first, ActionId(shot - 1))
+
+
+def _nothing_shown(question: Question) -> tuple[ActionId, ActionId] | None:
+    # The run to the box is what the question asks about, so only the win is pictured.
+    return None
 
 
 def _out_point(question: Question, ctx: MatchContext) -> tuple[float, float] | None:
@@ -672,6 +703,7 @@ FACTS: Mapping[
     ConceptId.FOUL: _foul_facts,
     ConceptId.BALL_WIN: _ball_win_facts,
     ConceptId.SHOT: _shot_facts,
+    ConceptId.COUNTER_ATTACK: _counter_attack_facts,
 }
 # The stretch of play a question shows before the viewer answers, for each concept that
 # doesn't follow the rule: the whole play for an identify question, none for a predict one.
@@ -679,4 +711,5 @@ SHOWN: Mapping[ConceptId, Callable[[Question], tuple[ActionId, ActionId] | None]
     ConceptId.RESTART: _action_out,
     ConceptId.FOUL: _foul_shown,
     ConceptId.SHOT: _up_to_the_shot,
+    ConceptId.COUNTER_ATTACK: _nothing_shown,
 }

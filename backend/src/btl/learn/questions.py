@@ -11,8 +11,10 @@ The form depends on the concept, the moment, the viewer's level and when the que
 - Everything else is an **identify** question about play the viewer has just seen: a
   line-breaking pass asked at level 1 or after a delay, every counter-press, since a
   counter-press happens during a transition and is never asked live, an offside call asked
-  later, why the referee played advantage, and every ball win, which opens a transition: how
-  it was won, then which third it was won in, then why that matters.
+  later, why the referee played advantage, every ball win, which opens a transition (how it
+  was won, then which third, then why that matters), every shot (what came of it, where from,
+  how the chance came), and every counter-attack (what the team did next, how long it took to
+  reach the box, why it counts as one).
 
 Questions get harder as the level rises. Predict questions offer closer alternatives.
 Identify questions ask for finer detail: how many lines a pass broke, then how wide its gap
@@ -113,6 +115,19 @@ CHANCE_SOURCES = {
     ChanceFrom.FREE_KICK: "From a free kick",
     ChanceFrom.LOOSE_BALL: "From a loose ball",
 }
+# What a team did after winning the ball in its own half; a counter-attack went for goal.
+AFTER_WINNING_IT = ("Went straight for goal", "Built up slowly", "Lost it again")
+# Seconds-to-the-box ranges for the level-2 identify question, around the planted levels.
+BOX_EDGES = (8.0, 10.0)
+BOX_STEP = 2.0
+# Why it was a counter-attack: the right reason, the map's misconception, and a wrong reason
+# (a test keeps the misconception the same as the map's wording).
+WHY_A_COUNTER = (
+    "They went for goal at once, while the defence was still out of shape",
+    "A counterattack is any fast attack",
+    "They had most of the possession before the chance came",
+)
+ANY_FAST_ATTACK = WHY_A_COUNTER[1]
 
 
 class Form(StrEnum):
@@ -143,6 +158,9 @@ class Asks(StrEnum):
     ON_TARGET = "on target"
     WHERE_FROM = "where from"
     HOW_THE_CHANCE_CAME = "how the chance came"
+    WHAT_NEXT_AFTER_WINNING = "what next after winning it"
+    SECONDS_TO_BOX = "seconds to the box"
+    WHY_A_COUNTER_ATTACK = "why a counter-attack"
 
 
 @dataclass(frozen=True, slots=True)
@@ -264,8 +282,8 @@ def _line_breaking(
 
 
 def _after_the_play(candidate: Candidate, level: int, delivery: Delivery) -> Form:
-    # A counter-press or a ball win happens in a transition, and a shot's result is its
-    # answer, so these are only asked after the play.
+    # A counter-press, a ball win or a counter-attack happens in a transition, and a shot's
+    # result is its answer, so these are only asked after the play.
     return Form.IDENTIFY
 
 
@@ -453,6 +471,24 @@ def _shot(
     return Asks.HOW_THE_CHANCE_CAME, _labelled(labels, 0)
 
 
+def _counter_attack(
+    candidate: Candidate,
+    level: int,
+    form: Form,
+    ctx: MatchContext,
+    threat: ThreatModel,
+    rng: Generator,
+) -> _Built:
+    """What the team did next, then how long it took to reach the box, then why it counts."""
+    if level == 1:
+        return Asks.WHAT_NEXT_AFTER_WINNING, _labelled(AFTER_WINNING_IT, 0)
+    if level == 2:
+        seconds = candidate.tag.evidence["seconds to the box"]
+        ranges = _ranges(seconds, BOX_EDGES, BOX_STEP, rng)
+        return Asks.SECONDS_TO_BOX, _range_options(ranges, seconds, "s")
+    return Asks.WHY_A_COUNTER_ATTACK, _labelled(WHY_A_COUNTER, 0)
+
+
 def _where_to_pass(
     candidate: Candidate, level: int, ctx: MatchContext, threat: ThreatModel
 ) -> _Built:
@@ -591,5 +627,6 @@ QUESTIONS: Mapping[ConceptId, ConceptQuestions] = {
     ConceptId.FOUL: ConceptQuestions(_foul_form, _foul),
     ConceptId.BALL_WIN: ConceptQuestions(_after_the_play, _ball_win),
     ConceptId.SHOT: ConceptQuestions(_after_the_play, _shot),
+    ConceptId.COUNTER_ATTACK: ConceptQuestions(_after_the_play, _counter_attack),
 }
 ASKABLE = frozenset(QUESTIONS)

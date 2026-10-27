@@ -1,10 +1,11 @@
-"""Questions about the concepts that joined in Milestone 5: tackles and turnovers, then shots."""
+"""Questions about the concepts that joined in Milestone 5: tackles, shots, and transitions."""
 
 import numpy as np
 import pytest
 
 from btl.concepts.ball_win import BallWin, WonWith
 from btl.concepts.base import MatchContext, match_context
+from btl.concepts.counter_attack import CounterAttack
 from btl.concepts.phase import PhaseOfPlay, phase_timeline
 from btl.concepts.shot import ChanceFrom, Shot, ShotZone
 from btl.league.league import generate_league
@@ -13,11 +14,14 @@ from btl.learn.concept_map import load_concept_map
 from btl.learn.evidence import build_pack
 from btl.learn.knowledge import Delivery
 from btl.learn.questions import (
+    AFTER_WINNING_IT,
+    ANY_FAST_ATTACK,
     CHANCE_SOURCES,
     DEEP_WINS_ARE_JUST_AS_USEFUL,
     SHOT_OUTCOMES,
     SHOT_ZONES,
     WHICH_THIRD,
+    WHY_A_COUNTER,
     WHY_THE_THIRD_MATTERS,
     WON_WITH,
     Asks,
@@ -25,11 +29,18 @@ from btl.learn.questions import (
     Question,
     build_question,
 )
+from btl.learn.selector import BANDS
 from btl.schema.match import Match
 from btl.schema.possession import SHOTS as ALL_SHOTS
 from btl.schema.vocab import ActionType, ConceptId, Result
 from tests.fixtures.concepts import chance_and_shot, lost_and_won_back, won_and_carried
-from tests.fixtures.learning import SHOTS, TACKLES, designed_with_candidates, threat_model
+from tests.fixtures.learning import (
+    SHOTS,
+    TACKLES,
+    TRANSITIONS,
+    designed_with_candidates,
+    threat_model,
+)
 from tests.learn.test_evidence import ASKED_LATER
 
 DEFERRED = Delivery.DEFERRED
@@ -280,5 +291,100 @@ def test_every_simulated_shot_gets_a_fair_question_at_every_level(seed: int) -> 
         for level in (1, 2, 3):
             question = ask(ctx, candidate, level)
             assert len(question.options) == 3
+            assert sum(o.correct for o in question.options) == 1
+            assert len({o.label for o in question.options}) == 3
+
+
+# ---------------------------------------------------------------- Transitions
+
+
+def counter_attack(match: Match) -> tuple[MatchContext, Candidate]:
+    ctx = match_context(match)
+    (tag,) = CounterAttack().detect(ctx)
+    assert tag.difficulty is not None
+    return ctx, Candidate(TRANSITIONS, tag, tag.difficulty, PhaseOfPlay.TRANSITION, 1, 0.0)
+
+
+def test_the_three_levels_ask_what_next_how_long_and_why() -> None:
+    ctx, candidate = counter_attack(won_and_carried(9, (30.0, 34.0)))
+
+    what_next, how_long, why = (ask(ctx, candidate, level) for level in (1, 2, 3))
+
+    assert (what_next.form, what_next.asks) == (Form.IDENTIFY, Asks.WHAT_NEXT_AFTER_WINNING)
+    assert answer(what_next) == AFTER_WINNING_IT[0]
+    assert how_long.asks is Asks.SECONDS_TO_BOX
+    assert {o.label: o.correct for o in how_long.options} == {
+        "Under 8 s": False,
+        "8 to 10 s": True,
+        "10 s or more": False,
+    }
+    assert why.asks is Asks.WHY_A_COUNTER_ATTACK
+    assert answer(why) == WHY_A_COUNTER[0]
+    assert ANY_FAST_ATTACK in {o.label for o in why.options}
+
+
+def test_the_counter_attack_distractor_is_the_maps_own_misconception() -> None:
+    transitions = load_concept_map().concept(TRANSITIONS)
+
+    assert ANY_FAST_ATTACK + "." in transitions.misconceptions
+
+
+def test_a_counter_attack_is_never_asked_live_and_shows_only_the_win_before_answering() -> None:
+    ctx, candidate = counter_attack(won_and_carried(9, (30.0, 34.0)))
+
+    for level in (1, 2, 3):
+        for delivery in Delivery:
+            question = build_question(
+                candidate, level, delivery, ctx, threat_model(), np.random.default_rng(0)
+            )
+            assert question is not None and question.form is Form.IDENTIFY
+        pack = packed(ctx, ask(ctx, candidate, level))
+        assert pack.picture.path == ()
+        assert pack.picture.ball == (30.0, 34.0)
+        assert pack.reveal_path == ((30.0, 34.0), (30.0, 34.0), (92.0, 40.0), (105.0, 34.0))
+        assert set(pack.context) == {
+            "home_team",
+            "away_team",
+            "team",
+            "opponent",
+            "score",
+            "minute",
+        }
+        assert pack.outcome["seconds_to_box"].display == "9"
+        assert pack.outcome["won_metres_from_own_goal"].display == "30"
+
+
+def test_the_facts_count_the_teams_shots_from_transitions_and_settled_play_so_far() -> None:
+    match, ctx, candidates = designed_with_candidates(0)
+    counters = [c for c in candidates if c.tag.concept is ConceptId.COUNTER_ATTACK]
+    timeline = phase_timeline(match)
+    assert len(counters) >= 3
+
+    for candidate in counters:
+        pack = packed(ctx, ask(ctx, candidate, 3))
+        team = match.events[candidate.tag.action_id].team_id
+        shots = [
+            e
+            for e in match.events[: candidate.tag.span[1] + 1]
+            if e.action_type in ALL_SHOTS and e.team_id == team
+        ]
+        from_transitions = sum(
+            timeline.phase_of(e.action_id) is PhaseOfPlay.TRANSITION for e in shots
+        )
+        assert pack.outcome["transition_shots"].value == from_transitions
+        assert pack.outcome["settled_shots"].value == len(shots) - from_transitions
+
+
+@pytest.mark.parametrize("seed", range(10))
+def test_every_designed_match_has_a_counter_attack_for_each_level(seed: int) -> None:
+    _, ctx, candidates = designed_with_candidates(seed)
+    counters = [c for c in candidates if c.tag.concept is ConceptId.COUNTER_ATTACK]
+
+    for level, (low, high) in BANDS.items():
+        assert any(low <= c.difficulty <= high for c in counters), level
+    for candidate in counters:
+        assert candidate.phase is PhaseOfPlay.TRANSITION
+        for level in (1, 2, 3):
+            question = ask(ctx, candidate, level)
             assert sum(o.correct for o in question.options) == 1
             assert len({o.label for o in question.options}) == 3

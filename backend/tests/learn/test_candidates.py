@@ -12,14 +12,7 @@ from btl.learn.candidates import Candidate, find_candidates
 from btl.learn.concept_map import load_concept_map
 from btl.schema.vocab import ConceptId
 from tests.fixtures.concepts import BACK_LINE, MIDFIELD_LINE, Spot, one_pass
-from tests.fixtures.learning import (
-    ACTIVE,
-    COUNTER_PRESS,
-    LINE_BREAKING,
-    TRANSITIONS,
-    candidates_in,
-    designed,
-)
+from tests.fixtures.learning import ACTIVE, COUNTER_PRESS, LINE_BREAKING, candidates_in, designed
 
 # The selector's difficulty band for each question level.
 BANDS = {1: (0.0, 0.4), 2: (0.3, 0.7), 3: (0.6, 1.0)}
@@ -57,7 +50,7 @@ def test_candidates_need_threat_values() -> None:
 @pytest.mark.parametrize("seed", range(6))
 def test_every_planted_moment_is_a_candidate(seed: int) -> None:
     match = designed(seed)
-    candidates = candidates_in(match, (*ACTIVE, TRANSITIONS))
+    candidates = candidates_in(match)
     # A counter-attack's answer is the touch in the box, where its tag's span ends; the other
     # moments' answers are their tags' key actions.
     found = {(c.tag.concept, c.tag.action_id) for c in candidates} | {

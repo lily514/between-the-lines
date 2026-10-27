@@ -141,3 +141,55 @@ shot, no restart named, `mark`; a test plays shot questions through the API.
   rule keeps a test although every strand has a concept asked about.
 **Why:** a shot's result is its answer, and every path to it (score, catch-up, restart, picture) had to close.
 **Affects:** T7 and T15 (the queue change moves the demo transcript and the captured fixtures again).
+
+## T7 — Transitions questions (2026-10-27)
+
+**Plan said:** as T5; facts `seconds_to_box`, `transition_shots` and `settled_shots` so far from `concepts/phase.py`;
+`PACK_VERSION` bumped once.
+**We did:** as planned (`PACK_VERSION` is 4), with these details:
+- The level-2 ranges are "Under 8 s", "8 to 10 s" and "10 s or more", around the planted levels, through the
+  same range helper the counter-press regain question uses.
+- The level-3 distractor is the map's "A counterattack is any fast attack" (the map spells it without a
+  hyphen; a test keeps them equal). The question says "counter-attack", which the Verifier's hint check reads
+  as a different word, and the asks value "why a counter-attack" makes it part of the question's subject.
+- **Nothing of the run is pictured before answering.** The level-1 answer is that the team went straight for
+  goal, so the picture shows the win only; the reveal path after answering runs from the win to the box.
+- `transition_shots` and `settled_shots` count the team's shots up to the end of the counter-attack by the
+  phase each shot was taken in; `won_metres_from_own_goal` joins them for the feedback.
+
+**Enough moments** (candidates a match by concept and level band, min / median / mean over seeds 0–19):
+
+| Concept | Level 1 | Level 2 | Level 3 |
+|---|---|---|---|
+| tackles | 126 / 144.5 / 142.6 | 30 / 48 / 46.5 | 34 / 50.5 / 49.2 |
+| shots_and_goals | 11 / 16 / 15.0 | 2 / 6 / 5.0 | 2 / 3 / 3.0 |
+| restarts | 41 / 53 / 53.1 | 20 / 27.5 / 28.4 | 1 / 8 / 7.0 |
+| offside | 6 / 10 / 10.4 | 5 / 10.5 / 11.0 | 4 / 9.5 / 9.6 |
+| fouls_and_cards | 10 / 17 / 16.9 | 3 / 8.5 / 8.4 | 0 / 3.5 / 3.7 |
+| transitions | 1 / 1 / 1.2 | 1 / 1 / 1.2 | 1 / 1 / 1.3 |
+| line_breaking_pass | 1 / 3.5 / 3.7 | 26 / 40.5 / 40.9 | 72 / 79 / 81.2 |
+| counter_press | 1 / 3 / 3.8 | 5 / 7 / 8.2 | 7 / 13.5 / 13.8 |
+
+Every concept has at least one moment at every level in every match except fouls at level 3 (as before M5).
+Transitions has exactly the planted three in most matches: the simulator's open play rarely counter-attacks.
+
+**The demo viewer, seed 7, after T7** (match · concept · level · right or wrong · delivery):
+
+```
+1 restarts 1 right live            2 restarts 1 right live           3 fouls_and_cards 2 right live
+1 fouls_and_cards 1 wrong live     2 fouls_and_cards 1 wrong live    3 tackles 1 right deferred
+1 restarts 2 wrong live            2 fouls_and_cards 1 right live    3 line_breaking_pass 1 right deferred
+1 line_breaking_pass 1 right def.  2 line_breaking_pass 1 wrong def. 3 line_breaking_pass 2 right deferred
+1 line_breaking_pass 2 wrong def.  2 shots_and_goals 1 right def.    3 line_breaking_pass 3 right deferred
+1 tackles 1 wrong deferred         2 tackles 2 wrong deferred        3 tackles 2 right deferred
+1 tackles 1 right deferred                                           3 line_breaking_pass 3 right deferred
+                                                                     3 offside 1 right deferred
+```
+
+Final mastery: Tackles 0.88, Shots 0.67, Restarts 0.71, Offside 0.67, Fouls 0.82, Transitions 0.25 (its
+prior), Line-breaking 0.97, Counter-pressing 0.15 (its prior). **Six of the eight concepts are asked; Transitions
+(waits for Restarts and Tackles at 0.8) and Counter-pressing (waits for Tackles) are never reached**, because
+the demo script gets one in three right in match 1 and one in two in match 2. Lily accepted the gating; whether
+the demo script should answer the basics better, so the README's demo shows all eight, is for her to decide.
+**Why:** the map's prerequisites are the source of truth for the frontier.
+**Affects:** T16's summary; an open question for Lily.

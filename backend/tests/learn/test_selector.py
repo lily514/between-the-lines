@@ -34,6 +34,7 @@ from tests.fixtures.learning import (
     RESTARTS,
     SHOTS,
     TACKLES,
+    TRANSITIONS,
     designed_with_candidates,
 )
 from tests.fixtures.matches import HOME, HOME_MIDFIELDER, make_event
@@ -48,6 +49,7 @@ DETECTORS = {
     FOULS: ConceptId.FOUL,
     TACKLES: ConceptId.BALL_WIN,
     SHOTS: ConceptId.SHOT,
+    TRANSITIONS: ConceptId.COUNTER_ATTACK,
 }
 MINUTE = 60.0
 
@@ -67,6 +69,7 @@ class Scenario:
             COUNTER_PRESS: 0.15,
             TACKLES: 0.99,
             SHOTS: 0.99,
+            TRANSITIONS: 0.99,
             RESTARTS: 0.99,
             OFFSIDE: 0.99,
             FOULS: 0.99,

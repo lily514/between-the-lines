@@ -54,6 +54,10 @@ OUTCOME_NAMES = {
     "shots",
     "shots_on_target",
     "opp_shots",
+    "seconds_to_box",
+    "won_metres_from_own_goal",
+    "transition_shots",
+    "settled_shots",
 }
 ASKED_LATER = Delivered(Delivery.DEFERRED, 1, 2000.0, PhaseOfPlay.DEAD_BALL, "goal kick")
 

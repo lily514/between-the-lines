@@ -190,6 +190,7 @@ def test_the_active_concepts_are_those_with_questions() -> None:
         "restarts",
         "offside",
         "fouls_and_cards",
+        "transitions",
         "line_breaking_pass",
         "counter_press",
     )

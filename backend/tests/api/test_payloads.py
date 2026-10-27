@@ -38,9 +38,20 @@ OUTCOME_NAMES = {
     "metres_from_own_goal",
     "high_recoveries",
     "avg_high_recoveries",
+    "shot_outcome",
+    "shot_zone",
+    "chance_from",
+    "shots",
+    "shots_on_target",
+    "opp_shots",
 }
 # The concepts whose every question is checked for leaks; the basics have their own tests.
-LEAK_CHECKED = (ConceptId.LINE_BREAKING_PASS, ConceptId.COUNTER_PRESS, ConceptId.BALL_WIN)
+LEAK_CHECKED = (
+    ConceptId.LINE_BREAKING_PASS,
+    ConceptId.COUNTER_PRESS,
+    ConceptId.BALL_WIN,
+    ConceptId.SHOT,
+)
 HIDDEN = {
     "correct",
     "correct_key",

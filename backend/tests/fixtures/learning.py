@@ -19,7 +19,8 @@ OFFSIDE = ConceptKey("offside")
 FOULS = ConceptKey("fouls_and_cards")
 TRANSITIONS = ConceptKey("transitions")
 TACKLES = ConceptKey("tackles")
-ACTIVE = (TACKLES, RESTARTS, OFFSIDE, FOULS, LINE_BREAKING, COUNTER_PRESS)
+SHOTS = ConceptKey("shots_and_goals")
+ACTIVE = (TACKLES, SHOTS, RESTARTS, OFFSIDE, FOULS, LINE_BREAKING, COUNTER_PRESS)
 
 
 @cache

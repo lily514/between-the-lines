@@ -134,6 +134,12 @@ def test_question_wording_never_names_an_outcome() -> None:
         "metres_from_own_goal",
         "high_recoveries",
         "avg_high_recoveries",
+        "shot_outcome",
+        "shot_zone",
+        "chance_from",
+        "shots",
+        "shots_on_target",
+        "opp_shots",
     }
 
     assert set(ASKING) == set(Asks)

@@ -163,8 +163,10 @@ def _after_a_foul(tag: ConceptTag) -> AskedWhen:
     return AskedWhen.AFTERWARDS if tag.evidence["advantage"] else AskedWhen.AT_THE_STOPPAGE
 
 
-# When each concept's moments may be asked, for those not asked in play.
+# When each concept's moments may be asked, for those not asked in play. A shot is only ever
+# reviewed: asked live, the stoppage after it would say how it ended.
 ASKED_WHEN: Mapping[ConceptId, Callable[[ConceptTag], AskedWhen]] = {
     ConceptId.RESTART: lambda tag: AskedWhen.AT_THE_STOPPAGE,
     ConceptId.FOUL: _after_a_foul,
+    ConceptId.SHOT: lambda tag: AskedWhen.AFTERWARDS,
 }

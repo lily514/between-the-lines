@@ -1,4 +1,4 @@
-"""Questions about the concepts that joined in Milestone 5: tackles and turnovers first."""
+"""Questions about the concepts that joined in Milestone 5: tackles and turnovers, then shots."""
 
 import numpy as np
 import pytest
@@ -6,13 +6,17 @@ import pytest
 from btl.concepts.ball_win import BallWin, WonWith
 from btl.concepts.base import MatchContext, match_context
 from btl.concepts.phase import PhaseOfPlay, phase_timeline
+from btl.concepts.shot import ChanceFrom, Shot, ShotZone
 from btl.league.league import generate_league
-from btl.learn.candidates import Candidate
+from btl.learn.candidates import ASKED_WHEN, AskedWhen, Candidate
 from btl.learn.concept_map import load_concept_map
 from btl.learn.evidence import build_pack
 from btl.learn.knowledge import Delivery
 from btl.learn.questions import (
+    CHANCE_SOURCES,
     DEEP_WINS_ARE_JUST_AS_USEFUL,
+    SHOT_OUTCOMES,
+    SHOT_ZONES,
     WHICH_THIRD,
     WHY_THE_THIRD_MATTERS,
     WON_WITH,
@@ -22,12 +26,14 @@ from btl.learn.questions import (
     build_question,
 )
 from btl.schema.match import Match
-from btl.schema.vocab import ActionType, ConceptId
-from tests.fixtures.concepts import lost_and_won_back, won_and_carried
-from tests.fixtures.learning import TACKLES, designed_with_candidates, threat_model
+from btl.schema.possession import SHOTS as ALL_SHOTS
+from btl.schema.vocab import ActionType, ConceptId, Result
+from tests.fixtures.concepts import chance_and_shot, lost_and_won_back, won_and_carried
+from tests.fixtures.learning import SHOTS, TACKLES, designed_with_candidates, threat_model
 from tests.learn.test_evidence import ASKED_LATER
 
 DEFERRED = Delivery.DEFERRED
+LEAGUE = generate_league(np.random.default_rng(0))
 
 
 def ball_win(match: Match, index: int = 0) -> tuple[MatchContext, Candidate]:
@@ -35,6 +41,14 @@ def ball_win(match: Match, index: int = 0) -> tuple[MatchContext, Candidate]:
     tag = BallWin().detect(ctx)[index]
     assert tag.difficulty is not None
     return ctx, Candidate(TACKLES, tag, tag.difficulty, PhaseOfPlay.TRANSITION, 1, 0.0)
+
+
+def shot(match: Match) -> tuple[MatchContext, Candidate]:
+    ctx = match_context(match)
+    (tag,) = Shot().detect(ctx)
+    assert tag.difficulty is not None
+    asked_when = ASKED_WHEN[tag.concept](tag)
+    return ctx, Candidate(SHOTS, tag, tag.difficulty, PhaseOfPlay.SETTLED, 1, 0.0, asked_when)
 
 
 def ask(ctx: MatchContext, candidate: Candidate, level: int) -> Question:
@@ -47,6 +61,13 @@ def ask(ctx: MatchContext, candidate: Candidate, level: int) -> Question:
 
 def answer(question: Question) -> str:
     return next(o.label for o in question.options if o.correct)
+
+
+def packed(ctx: MatchContext, question: Question):
+    return build_pack(question, ASKED_LATER, ctx, threat_model(), LEAGUE, load_concept_map())
+
+
+# ---------------------------------------------------------------- Tackles and turnovers
 
 
 def test_level_one_asks_how_the_ball_was_won() -> None:
@@ -105,12 +126,9 @@ def test_a_ball_win_is_never_asked_live() -> None:
 def test_the_facts_count_recoveries_in_the_attacking_third_so_far() -> None:
     match, ctx, candidates = designed_with_candidates(0)
     wins = [c for c in candidates if c.tag.concept is ConceptId.BALL_WIN]
-    league = generate_league(np.random.default_rng(0))
     counted: list[tuple[float, float]] = []
     for candidate in wins[::7]:
-        pack = build_pack(
-            ask(ctx, candidate, 3), ASKED_LATER, ctx, threat_model(), league, load_concept_map()
-        )
+        pack = packed(ctx, ask(ctx, candidate, 3))
         high = float(pack.outcome["high_recoveries"].value)
         average = float(pack.outcome["avg_high_recoveries"].value)
         counted.append((high, average))
@@ -154,6 +172,111 @@ def test_every_simulated_ball_win_happens_in_a_transition_and_gets_a_fair_questi
     for candidate in wins:
         assert candidate.phase is PhaseOfPlay.TRANSITION
         assert timeline.phase_of(candidate.tag.action_id) is PhaseOfPlay.TRANSITION
+        for level in (1, 2, 3):
+            question = ask(ctx, candidate, level)
+            assert len(question.options) == 3
+            assert sum(o.correct for o in question.options) == 1
+            assert len({o.label for o in question.options}) == 3
+
+
+# ---------------------------------------------------------------- Shots and goals
+
+
+def test_level_one_asks_what_came_of_the_shot() -> None:
+    saved = chance_and_shot((95.0, 30.0), (105.0, 34.0), saved=True)
+    scored = chance_and_shot((101.0, 36.0), (105.0, 37.0), result=Result.SUCCESS)
+    wide = chance_and_shot((80.0, 34.0), (105.0, 40.0))
+
+    questions = [ask(*shot(match), 1) for match in (saved, scored, wide)]
+
+    assert all((q.form, q.asks) == (Form.IDENTIFY, Asks.ON_TARGET) for q in questions)
+    assert [answer(q) for q in questions] == ["Saved", "Scored", "Off target"]
+    assert all({o.label for o in q.options} == set(SHOT_OUTCOMES.values()) for q in questions)
+
+
+def test_level_two_asks_where_from_and_level_three_how_the_chance_came() -> None:
+    from_a_cross = chance_and_shot(
+        (101.0, 36.0), (105.0, 34.0), made_by=ActionType.CROSS, saved=True
+    )
+    from_a_dribble = chance_and_shot(
+        (80.0, 34.0), (105.0, 34.0), made_by=ActionType.DRIBBLE, saved=True
+    )
+    free_kick = chance_and_shot(
+        (80.0, 34.0), (105.0, 34.0), kind=ActionType.SHOT_FREEKICK, saved=True
+    )
+
+    where = ask(*shot(from_a_cross), 2)
+    how_cross, how_dribble, how_free_kick = (
+        ask(*shot(match), 3) for match in (from_a_cross, from_a_dribble, free_kick)
+    )
+
+    assert where.asks is Asks.WHERE_FROM and answer(where) == SHOT_ZONES[ShotZone.SIX_YARD_BOX]
+    assert answer(ask(*shot(from_a_dribble), 2)) == SHOT_ZONES[ShotZone.OUTSIDE_THE_BOX]
+    assert how_cross.asks is Asks.HOW_THE_CHANCE_CAME
+    assert answer(how_cross) == CHANCE_SOURCES[ChanceFrom.CROSS]
+    assert answer(how_dribble) == CHANCE_SOURCES[ChanceFrom.DRIBBLE]
+    assert answer(how_free_kick) == CHANCE_SOURCES[ChanceFrom.FREE_KICK]
+    assert all(len({o.label for o in q.options}) == 3 for q in (how_cross, how_dribble))
+
+
+def test_a_shot_is_only_ever_reviewed_and_its_picture_stops_before_the_shot() -> None:
+    ctx, candidate = shot(chance_and_shot((95.0, 30.0), (105.0, 34.0), saved=True))
+
+    assert candidate.asked_when is AskedWhen.AFTERWARDS
+    for level in (1, 2, 3):
+        pack = packed(ctx, ask(ctx, candidate, level))
+        # The pass arriving, drawn to the shooter, and nothing of where the shot went.
+        assert pack.picture.path == ((70.0, 20.0), (95.0, 30.0))
+        assert pack.picture.mark is None
+        assert pack.picture.ball == (95.0, 30.0)
+        assert pack.reveal_path == ((70.0, 20.0), (95.0, 30.0), (105.0, 34.0))
+        assert set(pack.context) == {
+            "home_team",
+            "away_team",
+            "team",
+            "opponent",
+            "score",
+            "minute",
+            "player",
+        }
+        assert pack.outcome["shot_outcome"].display == "saved"
+        assert pack.outcome["shot_zone"].display == "the penalty area"
+        assert pack.outcome["chance_from"].display == "a pass"
+
+
+def test_a_shot_that_opens_a_possession_shows_no_path_before_answering() -> None:
+    ctx, candidate = shot(chance_and_shot((95.0, 30.0), (105.0, 34.0), made_by=None, saved=True))
+
+    pack = packed(ctx, ask(ctx, candidate, 1))
+
+    assert pack.picture.path == ()
+    assert pack.reveal_path == ((95.0, 30.0), (105.0, 34.0))
+
+
+def test_the_shot_facts_count_each_sides_shots_so_far_this_one_included() -> None:
+    match, ctx, candidates = designed_with_candidates(0)
+    shots = [c for c in candidates if c.tag.concept is ConceptId.SHOT]
+    assert len(shots) > 10
+
+    for candidate in shots[::4]:
+        pack = packed(ctx, ask(ctx, candidate, 2))
+        team = match.events[candidate.tag.action_id].team_id
+        before = match.events[: candidate.tag.action_id + 1]
+        taken = [e for e in before if e.action_type in ALL_SHOTS]
+        ours = [e for e in taken if e.team_id == team]
+        assert pack.outcome["shots"].value == len(ours)
+        assert pack.outcome["opp_shots"].value == len(taken) - len(ours)
+        assert 0 <= float(pack.outcome["shots_on_target"].value) <= len(ours)
+
+
+@pytest.mark.parametrize("seed", range(10))
+def test_every_simulated_shot_gets_a_fair_question_at_every_level(seed: int) -> None:
+    _, ctx, candidates = designed_with_candidates(seed)
+    shots = [c for c in candidates if c.tag.concept is ConceptId.SHOT]
+
+    assert len(shots) > 10
+    for candidate in shots:
+        assert candidate.asked_when is AskedWhen.AFTERWARDS
         for level in (1, 2, 3):
             question = ask(ctx, candidate, level)
             assert len(question.options) == 3

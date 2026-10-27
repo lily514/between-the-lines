@@ -33,6 +33,7 @@ from btl.concepts.ball_win import THIRDS, WonWith, pitch_third
 from btl.concepts.base import MatchContext
 from btl.concepts.line_breaking import LineBreakingPass
 from btl.concepts.offside import HALFWAY, offside_line
+from btl.concepts.shot import ChanceFrom, ShotOutcome, ShotZone
 from btl.learn.candidates import AskedWhen, Candidate
 from btl.learn.concept_map import ConceptKey, ConceptMap
 from btl.learn.knowledge import Delivery
@@ -94,6 +95,24 @@ WHY_THE_THIRD_MATTERS = (
 DEEP_WINS_ARE_JUST_AS_USEFUL = (
     "Winning the ball deep in your own half is just as useful as winning it high"
 )
+# A shot's outcome, where it was from, and what made the chance, as options.
+SHOT_OUTCOMES = {
+    ShotOutcome.SCORED: "Scored",
+    ShotOutcome.SAVED: "Saved",
+    ShotOutcome.OFF_TARGET: "Off target",
+}
+SHOT_ZONES = {
+    ShotZone.SIX_YARD_BOX: "From the six-yard box",
+    ShotZone.PENALTY_AREA: "From the penalty area",
+    ShotZone.OUTSIDE_THE_BOX: "From outside the box",
+}
+CHANCE_SOURCES = {
+    ChanceFrom.CROSS: "From a cross",
+    ChanceFrom.PASS: "From a pass",
+    ChanceFrom.DRIBBLE: "From a dribble",
+    ChanceFrom.FREE_KICK: "From a free kick",
+    ChanceFrom.LOOSE_BALL: "From a loose ball",
+}
 
 
 class Form(StrEnum):
@@ -121,6 +140,9 @@ class Asks(StrEnum):
     HOW_WON = "how won"
     WHERE_WON = "where won"
     WHY_WHERE_MATTERS = "why where matters"
+    ON_TARGET = "on target"
+    WHERE_FROM = "where from"
+    HOW_THE_CHANCE_CAME = "how the chance came"
 
 
 @dataclass(frozen=True, slots=True)
@@ -242,7 +264,8 @@ def _line_breaking(
 
 
 def _after_the_play(candidate: Candidate, level: int, delivery: Delivery) -> Form:
-    # A counter-press or a ball win happens in a transition, so it is only asked after the play.
+    # A counter-press or a ball win happens in a transition, and a shot's result is its
+    # answer, so these are only asked after the play.
     return Form.IDENTIFY
 
 
@@ -406,6 +429,30 @@ def _ball_win(
     return Asks.WHY_WHERE_MATTERS, _labelled(reasons, 0)
 
 
+def _shot(
+    candidate: Candidate,
+    level: int,
+    form: Form,
+    ctx: MatchContext,
+    threat: ThreatModel,
+    rng: Generator,
+) -> _Built:
+    """How the shot ended, then where it was from, then what made the chance."""
+    evidence = candidate.tag.evidence
+    if level == 1:
+        outcome = ShotOutcome(int(evidence["outcome"]))
+        return Asks.ON_TARGET, _labelled(
+            list(SHOT_OUTCOMES.values()), list(SHOT_OUTCOMES).index(outcome)
+        )
+    if level == 2:
+        zone = ShotZone(int(evidence["zone"]))
+        return Asks.WHERE_FROM, _labelled(list(SHOT_ZONES.values()), list(SHOT_ZONES).index(zone))
+    source = ChanceFrom(int(evidence["chance from"]))
+    others = [way for way in ChanceFrom if way is not source][:2]
+    labels = [CHANCE_SOURCES[source], *(CHANCE_SOURCES[way] for way in others)]
+    return Asks.HOW_THE_CHANCE_CAME, _labelled(labels, 0)
+
+
 def _where_to_pass(
     candidate: Candidate, level: int, ctx: MatchContext, threat: ThreatModel
 ) -> _Built:
@@ -543,5 +590,6 @@ QUESTIONS: Mapping[ConceptId, ConceptQuestions] = {
     ConceptId.OFFSIDE: ConceptQuestions(_offside_form, _offside),
     ConceptId.FOUL: ConceptQuestions(_foul_form, _foul),
     ConceptId.BALL_WIN: ConceptQuestions(_after_the_play, _ball_win),
+    ConceptId.SHOT: ConceptQuestions(_after_the_play, _shot),
 }
 ASKABLE = frozenset(QUESTIONS)

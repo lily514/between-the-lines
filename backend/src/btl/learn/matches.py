@@ -13,11 +13,14 @@ from dataclasses import dataclass
 from enum import StrEnum
 
 from btl.league.calendar import Matchday, matchday
+from btl.learn.candidates import Candidate
+from btl.learn.evidence import Delivered
 from btl.learn.learner import MATCHES_PER_SESSION, LearnerState
 from btl.learn.report import Goal
 from btl.learn.session import Course, PreparedMatch
 from btl.schema.ids import ActionId, TeamId
 from btl.schema.scoreboard import goals, match_clock
+from btl.schema.vocab import ConceptId
 
 
 class MatchState(StrEnum):
@@ -118,8 +121,32 @@ class CatchUp:
     goals: tuple[Goal, ...] | None
 
 
+@dataclass(frozen=True, slots=True)
+class ScoreTime:
+    """When a question's score stands, and the action it counts goals up to, if not all so far."""
+
+    period_id: int
+    seconds: float
+    up_to: ActionId | None = None
+
+
+def score_as_of(candidate: Candidate, delivered: Delivered) -> ScoreTime:
+    """When a question's score is taken: as it is asked, or just before a shot.
+
+    A shot's result is its answer, so its question shows the score as it stood before the shot,
+    whatever has happened since.
+    """
+    if candidate.tag.concept is ConceptId.SHOT:
+        return ScoreTime(candidate.period_id, candidate.time_seconds, candidate.tag.action_id)
+    return ScoreTime(delivered.period_id, delivered.time_seconds)
+
+
 def catch_up(
-    match_goals: Sequence[Goal], last_answered: ActionId | None, period_id: int, seconds: float
+    match_goals: Sequence[Goal],
+    last_answered: ActionId | None,
+    period_id: int,
+    seconds: float,
+    up_to: ActionId | None = None,
 ) -> CatchUp:
     """What the viewer needs to know as a question comes: the score, and goals they missed.
 
@@ -128,8 +155,15 @@ def catch_up(
         last_answered: The moment of the viewer's last answer in this match, if any.
         period_id: When the question is asked: its period.
         seconds: And its seconds into that period.
+        up_to: Count only goals from actions before this one, when the question's own moment
+            must stay out of the score.
     """
-    so_far = [g for g in match_goals if (g.period_id, g.seconds) <= (period_id, seconds)]
+    so_far = [
+        g
+        for g in match_goals
+        if (g.period_id, g.seconds) <= (period_id, seconds)
+        and (up_to is None or g.action_id < up_to)
+    ]
     missed = None
     if last_answered is not None:
         missed = tuple(g for g in so_far if g.action_id > last_answered)

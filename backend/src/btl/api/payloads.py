@@ -50,7 +50,7 @@ from btl.learn.curriculum import Curriculum
 from btl.learn.evidence import Fact, Picture, percent_points
 from btl.learn.knowledge import Delivery
 from btl.learn.levels import level_word
-from btl.learn.matches import CatchUp, MatchState, ViewerMatch
+from btl.learn.matches import CatchUp, MatchState, ViewerMatch, score_as_of
 from btl.learn.play_by_play import play_by_play
 from btl.learn.questions import Form
 from btl.learn.report import Break, Report
@@ -68,9 +68,14 @@ def question_payload(
     club: TeamId | None,
     caught: CatchUp,
 ) -> QuestionOut:
-    """The question as the page shows it: its view, its wording, when it is asked and the score."""
+    """The question as the page shows it: its view, its wording, when it is asked and the score.
+
+    ``caught`` is the score as of `score_as_of`: when the question is asked, or just before a
+    shot, whose result is the answer.
+    """
     view, prompt = asked.view, asked.prompt
     candidate, delivered = prompt.candidate, prompt.delivered
+    stands_at = score_as_of(candidate, delivered)
     return QuestionOut(
         pack_id=view.pack_id,
         match_number=match_number,
@@ -104,7 +109,7 @@ def question_payload(
         score=ScoreOut(
             home=caught.home,
             away=caught.away,
-            clock=clock(delivered.period_id, delivered.time_seconds),
+            clock=clock(stands_at.period_id, stands_at.seconds),
         ),
         catch_up=catch_up_text(caught, home, away),
         play_by_play=play_by_play_payload(asked, home, away),

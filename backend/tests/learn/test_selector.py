@@ -32,6 +32,7 @@ from tests.fixtures.learning import (
     LINE_BREAKING,
     OFFSIDE,
     RESTARTS,
+    SHOTS,
     TACKLES,
     designed_with_candidates,
 )
@@ -46,6 +47,7 @@ DETECTORS = {
     OFFSIDE: ConceptId.OFFSIDE,
     FOULS: ConceptId.FOUL,
     TACKLES: ConceptId.BALL_WIN,
+    SHOTS: ConceptId.SHOT,
 }
 MINUTE = 60.0
 
@@ -64,6 +66,7 @@ class Scenario:
             LINE_BREAKING: 0.15,
             COUNTER_PRESS: 0.15,
             TACKLES: 0.99,
+            SHOTS: 0.99,
             RESTARTS: 0.99,
             OFFSIDE: 0.99,
             FOULS: 0.99,
@@ -275,6 +278,41 @@ def test_with_everything_mastered_review_is_occasional_and_hard() -> None:
     assert [(p.level, minutes([p])[0]) for p in prompts] == [(3, 10)]
 
 
+def test_a_queued_basic_gives_up_its_place_to_a_rarer_concepts_moment() -> None:
+    scene = Scenario()
+    # Tackles stays high enough to keep counter-pressing open, so its moment is a hard one.
+    scene.mastery |= {TACKLES: 0.85, SHOTS: 0.15}
+    scene.moment(10, 0.8, TRANSITION, TACKLES)
+    scene.moment(11, 0.2, SETTLED, SHOTS, asked_when=AskedWhen.AFTERWARDS)
+    # The queue is full of basics when the match's one line-breaking review comes along.
+    scene.moment(12, 0.2, TRANSITION, LINE_BREAKING)
+    scene.moment(13, 0.2, TRANSITION, COUNTER_PRESS)
+    scene.dead_ball(20)
+    scene.dead_ball(30)
+    scene.dead_ball(40)
+
+    prompts = scene.run()
+
+    assert [p.candidate.concept for p in prompts] == [LINE_BREAKING, COUNTER_PRESS]
+
+
+def test_a_queued_moment_no_longer_wanted_gives_up_its_place() -> None:
+    scene = Scenario()
+    scene.mastery |= {TACKLES: 0.15}
+    scene.moment(10, 0.2, TRANSITION, TACKLES)
+    scene.moment(11, 0.2, TRANSITION, LINE_BREAKING)
+    scene.dead_ball(20)
+    scene.dead_ball(30)
+
+    def master_tackles_first(prompt: Prompt) -> bool:
+        scene.mastery[TACKLES] = 0.97
+        return True
+
+    prompts = scene.run(master_tackles_first)
+
+    assert [p.candidate.concept for p in prompts] == [TACKLES, LINE_BREAKING]
+
+
 def test_a_question_that_could_not_be_asked_does_not_count() -> None:
     scene = Scenario()
     scene.moment(10, difficulty=0.2)
@@ -408,6 +446,20 @@ def test_a_review_at_the_stoppage_its_moment_caused_names_no_restart() -> None:
 
     assert named_not.delivered.restart is None
     assert named.delivered.restart == "free kick"
+
+
+def test_a_shot_review_never_names_the_stoppage_it_is_asked_at() -> None:
+    scene = Scenario()
+    scene.mastery |= {SHOTS: 0.15}
+    scene.moment(10, 0.2, SETTLED, SHOTS, asked_when=AskedWhen.AFTERWARDS)
+    # The kickoff after a later goal, which the shot had nothing to do with.
+    scene.dead_ball(20, seconds=40, restart=ActionType.PASS)
+
+    (prompt,) = scene.run()
+
+    assert prompt.candidate.concept == SHOTS
+    assert prompt.delivered.delivery is Delivery.DEFERRED
+    assert prompt.delivered.restart is None
 
 
 def test_a_stoppage_asks_only_its_own_restart_and_the_review_waits() -> None:

@@ -9,6 +9,7 @@ from tests.fixtures.learning import threat_model
 
 ASKED_NOW = {
     "Tackles and turnovers",
+    "Shots and goals",
     "Restarts",
     "Offside",
     "Fouls and cards",

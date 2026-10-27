@@ -44,6 +44,10 @@ ASKING: Mapping[Asks, str] = {
     "win it?",
     Asks.WHY_WHERE_MATTERS: "{team} have the ball back from {opponent}. Why does where they took "
     "it matter?",
+    Asks.ON_TARGET: "{player} has just had a shot for {team}. What came of it?",
+    Asks.WHERE_FROM: "{player} has just had a shot for {team}. Where was it from?",
+    Asks.HOW_THE_CHANCE_CAME: "{player} has just had a shot for {team}. How did the chance come "
+    "about?",
 }
 # How a question asked after the play opens, by where play is when it is asked.
 LOOKING_BACK: Mapping[str, str] = {
@@ -86,6 +90,10 @@ SETTLED_BY: Mapping[Asks, str] = {
     Asks.WHY_WHERE_MATTERS: "{player} won it in the {pitch_third}; {team} have won it in the "
     "attacking third {high_recoveries} times so far, against a match average of "
     "{avg_high_recoveries}.",
+    Asks.ON_TARGET: "The shot, from {metres_from_goal} m out, was {shot_outcome}.",
+    Asks.WHERE_FROM: "It was {shot_outcome}, from {shot_zone}, {metres_from_goal} m out.",
+    Asks.HOW_THE_CHANCE_CAME: "The chance came from {chance_from}: a shot from {shot_zone} that "
+    "was {shot_outcome}.",
 }
 
 

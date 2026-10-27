@@ -140,7 +140,7 @@ def report(
         home_goals=sum(goal.home for goal in goals),
         away_goals=sum(not goal.home for goal in goals),
         goals=goals,
-        strands=_strands(course, concepts),
+        strands=strand_values(course, concepts),
         concepts=concepts,
         answers=tuple(
             AnswerLine(
@@ -202,7 +202,8 @@ def _move(course: Course, kickoff: BktState, now: BktState, key: ConceptKey) -> 
     )
 
 
-def _strands(course: Course, concepts: Sequence[ConceptMove]) -> tuple[StrandValue, ...]:
+def strand_values(course: Course, concepts: Sequence[ConceptMove]) -> tuple[StrandValue, ...]:
+    """The radar: each strand's mean mastery over the concepts given; None where it has none."""
     values: list[StrandValue] = []
     for key in course.concept_map.strands:
         inside = [c for c in concepts if c.strand == key]

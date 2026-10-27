@@ -6,7 +6,7 @@ import pytest
 
 from btl.learn.concept_map import ConceptKey
 from btl.learn.learner import LearnerState
-from btl.learn.report import Break, ConceptMove, report, scout_note
+from btl.learn.report import Break, ConceptMove, report, scout_note, strand_values
 from btl.learn.session import Course, PreparedMatch, prepare_match
 from btl.schema.scoreboard import goals
 from btl.tutor.templates import TemplateTutor
@@ -74,16 +74,25 @@ def test_a_report_s_kick_off_values_are_before_the_match() -> None:
     assert [c.before for c in made.concepts] == [c.after for c in new.concepts]
 
 
-def test_the_radar_averages_each_strand_s_concepts_and_leaves_chances_empty() -> None:
+def test_the_radar_averages_each_strand_s_concepts_asked_about_now() -> None:
     made = report(course(), finished_state(), prepared(1), 1, Break.FULL_TIME)
 
     strands = {s.key: s for s in made.strands}
     assert list(strands) == ["possession", "pressure", "chances", "game_flow"]
-    assert strands["chances"].concepts == 0
-    assert strands["chances"].kickoff is None and strands["chances"].now is None
-    assert [strands[k].concepts for k in ("possession", "pressure", "game_flow")] == [1, 2, 3]
+    assert [strands[k].concepts for k in strands] == [1, 2, 1, 3]
     flow = [c.after for c in made.concepts if c.strand == "game_flow"]
     assert strands["game_flow"].now == pytest.approx(sum(flow) / len(flow))
+
+
+def test_a_strand_with_nothing_asked_about_has_no_value_rather_than_zero() -> None:
+    made = report(course(), finished_state(), prepared(1), 1, Break.FULL_TIME)
+    only_flow = [c for c in made.concepts if c.strand == "game_flow"]
+
+    strands = {s.key: s for s in strand_values(course(), only_flow)}
+
+    assert strands["chances"].concepts == 0
+    assert strands["chances"].kickoff is None and strands["chances"].now is None
+    assert strands["game_flow"].now is not None
 
 
 def test_an_attempt_from_before_the_period_was_kept_counts_by_its_moment() -> None:

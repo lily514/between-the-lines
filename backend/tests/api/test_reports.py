@@ -62,5 +62,5 @@ def test_after_full_time_both_reports_agree_with_the_summary() -> None:
     assert len(half["answers"]) <= len(whole["answers"])
     assert half["home_goals"] <= whole["home_goals"]
     chances = next(s for s in whole["strands"] if s["key"] == "chances")
-    assert chances["now"] is None and chances["concepts"] == 0
+    assert chances["now"] is not None and chances["concepts"] == 1
     assert whole["note"]

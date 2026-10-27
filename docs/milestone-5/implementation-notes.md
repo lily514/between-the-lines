@@ -104,3 +104,40 @@ affects the session test.
   still passes (Line-breaking passes reaches the viewer in match 2).
 **Why:** the map's wording is the source of truth, so the Verifier bends, not the map.
 **Affects:** T7 (Transitions waits for Tackles too); T16's transcript; an open question for Lily on the demo.
+
+## T6 — Shots questions (2026-10-27)
+
+**Plan said:** as T5, plus the no-giveaway rule: `ASKED_WHEN` afterwards, the score and catch-up before the
+shot, no restart named, `mark`; a test plays shot questions through the API.
+**We did:**
+- Three identify questions, only ever reviewed (`AskedWhen.AFTERWARDS`). Level 1 asks "What came of it?"
+  rather than "Was it on target?", because "target" is a word in the option "Off target" and the Verifier's
+  hint check rightly refuses a question that uses an option's own word.
+- **The score stands just before the shot.** `score_as_of` (`learn/matches.py`) gives a question's score time:
+  delivery for every other concept, the shot's own moment for a shot, counting goals from actions before it.
+  The API route and the payload both use it, so the step's score, its clock and the catch-up all stop before the
+  shot.
+- **No restart is ever named for a shot.** The selector already dropped the name when the stoppage followed the
+  moment itself; the API test found a shot asked at a later kickoff (another goal's) with "kickoff" in the
+  text, which still says a goal was scored. `HIDES_THE_RESTART` in the selector now blanks the restart for every
+  shot review, wherever it is asked.
+- **The picture stops at the shot's start.** `SHOWN` draws the span up to the action before the shot (the pass
+  or cross arriving), and nothing for a shot that opens a possession; there is no `mark` before answering. The
+  plan's "the picture marks where the ball ended" would have shown on target or not, which is the level-1
+  answer, so the end point waits for the feedback's reveal path.
+- **Facts:** `shots`, `shots_on_target` and `opp_shots` are counted up to and including the shot, so the map's
+  text reads true at that moment; `metres_from_goal` joins them for the feedback.
+- **The review queue yields to rarer concepts.** With every open-play turnover and every shot a review
+  candidate, the two-slot queue was full of basics by the time a match's one planted level-1 line-breaking
+  moment came along, and the demo viewer met no line-breaking pass in matches 1 and 2
+  (`test_the_basics_reach_the_viewer…` failed). `_save_for_a_stoppage` now drops a queued moment whose concept
+  is no longer wanted and lets a rarer concept's moment take a queued basic's place: basics come round every
+  few minutes, which is the reason they are capped. Seed 7's demo viewer now meets line-breaking in match 1.
+- **Two more Verifier adjustments for the map's own text:** the echo check now reads a comma as the end of a
+  clause (the Shots objective says "shots, shots on target"), and "you"/"your" join the label stopwords beside
+  "their" and "his" (the Tackles misconception says "your own half", which made the fake model's wording a hint).
+  `docs/milestone-2b/verifier.md` says both.
+- `strand_values` in `learn/report.py` is public now, so the radar's "no value for a strand with nothing asked"
+  rule keeps a test although every strand has a concept asked about.
+**Why:** a shot's result is its answer, and every path to it (score, catch-up, restart, picture) had to close.
+**Affects:** T7 and T15 (the queue change moves the demo transcript and the captured fixtures again).

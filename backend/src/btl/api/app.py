@@ -87,7 +87,7 @@ from btl.api.viewer import (
 )
 from btl.learn.curriculum import curriculum
 from btl.learn.learner import MATCHES_PER_SESSION, LearnerState
-from btl.learn.matches import catch_up, viewer_matches
+from btl.learn.matches import catch_up, score_as_of, viewer_matches
 from btl.learn.report import Break, match_goals, report
 from btl.learn.session import (
     ClubLockedError,
@@ -335,12 +335,14 @@ def create_app(
             except QuestionPendingError as pending:
                 match = prepare(state.seed, state.match_number, state.club)
                 answered = [a for a in state.attempts if a.match_number == state.match_number]
-                delivered = pending.asked.prompt.delivered
+                prompt = pending.asked.prompt
+                at = score_as_of(prompt.candidate, prompt.delivered)
                 caught = catch_up(
                     match_goals(course().league, match.match),
                     ActionId(answered[-1].action_id) if answered else None,
-                    delivered.period_id,
-                    delivered.time_seconds,
+                    at.period_id,
+                    at.seconds,
+                    at.up_to,
                 )
                 question = question_payload(
                     pending.asked, state.match_number, match.home, match.away, state.club, caught

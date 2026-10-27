@@ -49,7 +49,7 @@ Football phrases that contain number words are allowed whole: "second-last defen
 - **By an option's slot:** `{B.label}`.
 - **By a word from an option's label that tells the options apart:** a word in some labels but not all, which the question doesn't otherwise show.
 
-  Words that join a label together ("to", "the", "when") don't count, and neither do words any football question uses ("ball", "back", "play", "stopped", "referee").
+  Words that join a label together ("to", "the", "when", "their", "your") don't count, and neither do words any football question uses ("ball", "back", "play", "stopped", "referee").
 
 - Rejected: "Should the pass go to {B.label}?" and "Is option B the pass?"
 - Rejected, for a restart: "The ball has gone over the {out_line}, last touched by {last_touch_team}. Is it a corner?" "Corner" is in one option's label.
@@ -87,7 +87,7 @@ A comparison code can't check ("better", "faster", or "than" without "more" or "
 ## echo
 
 **Rule:** read with the slots filled in, the text must not:
-- say the same words twice in a row;
+- say the same words twice in a row within a clause (a comma ends a clause, so "shots, shots on target" is fine);
 - write out a name or phrase in the same sentence as its own slot;
 - use a whole-sentence fact (such as `{foul_outcome}`, "Hexham Anchors get a free kick.") inside another sentence.
 

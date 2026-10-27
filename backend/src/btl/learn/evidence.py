@@ -24,6 +24,7 @@ from dataclasses import asdict, dataclass, replace
 from btl.concepts.ball_win import THIRDS, BallWin, WonWith, pitch_third
 from btl.concepts.base import MatchContext
 from btl.concepts.phase import PhaseOfPlay
+from btl.concepts.shot import ChanceFrom, ShotOutcome, ShotZone, shot_outcome
 from btl.league.league import League
 from btl.learn.candidates import AskedWhen
 from btl.learn.concept_map import ConceptKey, ConceptMap
@@ -31,6 +32,7 @@ from btl.learn.knowledge import Delivery
 from btl.learn.questions import Asks, Form, Option, Question, offside_reference
 from btl.schema import PITCH_LENGTH, PITCH_WIDTH
 from btl.schema.ids import ActionId, PlayerId, TeamId
+from btl.schema.possession import SHOTS
 from btl.schema.scoreboard import clock, goals
 from btl.schema.vocab import ActionType, ConceptId
 from btl.value.xt import ThreatModel
@@ -456,6 +458,36 @@ def _ball_win_facts(
     return {}, outcome
 
 
+def _shot_facts(
+    question: Question, ctx: MatchContext, threat: ThreatModel, names: _Names
+) -> tuple[dict[str, Fact], dict[str, Fact]]:
+    tag = question.candidate.tag
+    shot = ctx.events[tag.action_id]
+    # Each side's shots so far in the match, this one included, and how many tested the keeper.
+    taken: dict[TeamId, int] = {ctx.match.home_team_id: 0, ctx.match.away_team_id: 0}
+    on_target = 0
+    for event in ctx.events[: tag.action_id + 1]:
+        if event.action_type in SHOTS:
+            taken[event.team_id] += 1
+            if (
+                event.team_id == shot.team_id
+                and shot_outcome(ctx, event) is not ShotOutcome.OFF_TARGET
+            ):
+                on_target += 1
+    other = next(team for team in taken if team != shot.team_id)
+    outcome = {
+        "shot_outcome": _text(ShotOutcome(int(tag.evidence["outcome"])).label),
+        "shot_zone": _text(ShotZone(int(tag.evidence["zone"])).label),
+        "chance_from": _text(ChanceFrom(int(tag.evidence["chance from"])).label),
+        "metres_from_goal": _metres(tag.evidence["metres from goal"]),
+        "shots": _measured(taken[shot.team_id]),
+        "shots_on_target": _measured(on_target),
+        "opp_shots": _measured(taken[other]),
+    }
+    # The shooter is known before the shot's result is.
+    return {"player": _text(names.player(shot.player_id))}, outcome
+
+
 def _box_position(metres: float) -> Fact:
     if metres < 0:
         return Fact(metres, "inside the penalty area")
@@ -533,6 +565,12 @@ def _foul_shown(question: Question) -> tuple[ActionId, ActionId] | None:
     # After advantage, the play that went on; at a stoppage, just the foul's spot.
     after = question.candidate.asked_when is AskedWhen.AFTERWARDS
     return question.candidate.tag.span if after else None
+
+
+def _up_to_the_shot(question: Question) -> tuple[ActionId, ActionId] | None:
+    # The ball arriving, but not the shot itself: where it ended is the answer.
+    first, shot = question.candidate.tag.span
+    return None if first == shot else (first, ActionId(shot - 1))
 
 
 def _out_point(question: Question, ctx: MatchContext) -> tuple[float, float] | None:
@@ -633,10 +671,12 @@ FACTS: Mapping[
     ConceptId.OFFSIDE: _offside_facts,
     ConceptId.FOUL: _foul_facts,
     ConceptId.BALL_WIN: _ball_win_facts,
+    ConceptId.SHOT: _shot_facts,
 }
 # The stretch of play a question shows before the viewer answers, for each concept that
 # doesn't follow the rule: the whole play for an identify question, none for a predict one.
 SHOWN: Mapping[ConceptId, Callable[[Question], tuple[ActionId, ActionId] | None]] = {
     ConceptId.RESTART: _action_out,
     ConceptId.FOUL: _foul_shown,
+    ConceptId.SHOT: _up_to_the_shot,
 }

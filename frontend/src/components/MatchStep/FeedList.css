@@ -75,16 +75,24 @@
 	min-width: 0;
 }
 
+/* Plain flowing text, with the icon and team mark inline, so a long line wraps like a sentence and a mark never
+ * ends up on a line of its own. */
 .feed-list__meta {
-	display: inline-flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: 6px;
 	font-size: var(--fs-caption);
 	font-weight: 700;
 	letter-spacing: 0.08em;
 	text-transform: uppercase;
 	color: var(--text-muted);
+}
+
+.feed-list__meta .feed-list__icon,
+.feed-list__meta .side-mark {
+	margin-right: 6px;
+	vertical-align: -1px;
+}
+
+.feed-list__meta .feed-list__icon {
+	vertical-align: -2px;
 }
 
 .feed-list__entry--goal .feed-list__meta {

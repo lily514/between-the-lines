@@ -8,7 +8,9 @@ import {
 	getMatches,
 	getReport,
 	getStatus,
+	getBeforeMatch,
 	getTeamSheet,
+	markIntroduced,
 	nextStep,
 	setPace,
 	startViewer,
@@ -24,12 +26,14 @@ import {
 	LOADING_MATCHES,
 	LOADING_NEXT,
 	LOADING_REPORT,
+	LOADING_BEFORE,
 	LOADING_SHEET,
 	LOADING_START,
 	matchHeader,
 	needsHalftime,
 	needsClub,
 	newViewerId,
+	fillsWindow,
 	offersMap,
 	reducer,
 	rememberedViewer,
@@ -44,11 +48,20 @@ import { PANEL_DEFAULT, rememberedPanelWidth, rememberPanelWidth } from './Share
 import Feedback from './Feedback/index.tsx'
 import Matches from './Matches/index.tsx'
 import Preferences from './Preferences/index.tsx'
-import { applyTheme, rememberedTheme, rememberTheme, type Theme } from './Preferences/index.support.ts'
+import {
+	applyTheme,
+	rememberedPlayback,
+	rememberedTheme,
+	rememberPlayback,
+	rememberTheme,
+	type Playback,
+	type Theme
+} from './Preferences/index.support.ts'
 import MatchStep from './MatchStep/index.tsx'
 import PickTeam from './PickTeam/index.tsx'
 import QuestionSheet from './QuestionSheet/index.tsx'
 import Report from './Report/index.tsx'
+import BeforeMatch from './BeforeMatch/index.tsx'
 import TeamSheet from './TeamSheet/index.tsx'
 import Welcome from './Welcome/index.tsx'
 
@@ -72,6 +85,9 @@ const App = () => {
 	const [panelWidth, setPanelWidth] = useState(rememberedPanelWidth)
 	const [curriculum, setCurriculum] = useState<ConceptMap | null>(null)
 	const [theme, setTheme] = useState<Theme>(rememberedTheme)
+	const [playback, setPlayback] = useState<Playback>(rememberedPlayback)
+	// The stream view's place for the match feed; the step screen draws it there on a wide screen.
+	const [streamSlot, setStreamSlot] = useState<HTMLDivElement | null>(null)
 	const panel = useRef<HTMLElement>(null)
 	const mapButton = useRef<HTMLButtonElement>(null)
 	const preferencesButton = useRef<HTMLButtonElement>(null)
@@ -147,6 +163,22 @@ const App = () => {
 			}
 		},
 		[fail]
+	)
+
+	// Before Who's playing: a First look at any concept new to the viewer, then their Level-ups since the last match.
+	const loadBefore = useCallback(
+		async (id: string, status: Status | null) => {
+			dispatch({ type: 'loading', message: LOADING_BEFORE })
+			try {
+				const before = await getBeforeMatch(id)
+				if (before.first_looks.length > 0) dispatch({ type: 'before', before, flow: 'first_look', status })
+				else if (before.level_ups.length > 0) dispatch({ type: 'before', before, flow: 'level_up', status })
+				else await loadSheet(id, status)
+			} catch (error) {
+				fail(error, { kind: 'before', status })
+			}
+		},
+		[fail, loadSheet]
 	)
 
 	const loadPick = useCallback(
@@ -304,6 +336,7 @@ const App = () => {
 			else if (what.kind === 'pick') void loadPick(what.status)
 			else if (what.kind === 'choose') void choose(viewer, what.club)
 			else if (what.kind === 'sheet') void loadSheet(viewer, what.status)
+			else if (what.kind === 'before') void loadBefore(viewer, what.status)
 			else void send(viewer, what.question, what.key)
 		}
 	}
@@ -322,8 +355,9 @@ const App = () => {
 	const header = matchHeader(screen)
 	const layoutStyle = panelWidth === null ? undefined : ({ '--panel-w': `${String(panelWidth)}px` } as CSSProperties)
 	return (
-		<div className="layout" style={layoutStyle}>
-			{/* Stands in for the viewer's own stream on a wide screen; the panel repeats everything in it. */}
+		<div className={fillsWindow(state) ? 'layout layout--fill' : 'layout'} style={layoutStyle}>
+			{/* Stands in for the viewer's own stream on a wide screen; the panel repeats everything in it. Between
+			    questions the match feed fills it, in place of the placeholder. */}
 			<div className="layout__stream" aria-hidden="true">
 				<div className="layout__match">
 					{header !== null && (
@@ -338,6 +372,7 @@ const App = () => {
 					<p className="layout__screen-title">Your match: TV, stream or another tab</p>
 					<p>Between the Lines never covers it. The panel sits beside it.</p>
 				</div>
+				<div ref={setStreamSlot} className="layout__feed" />
 			</div>
 			<PanelHandle
 				width={panelWidth ?? PANEL_DEFAULT}
@@ -381,6 +416,7 @@ const App = () => {
 						<Preferences
 							status={state.overlay.status}
 							theme={theme}
+							playback={playback}
 							busy={state.overlay.busy}
 							onPace={pace => {
 								if (state.overlay?.kind === 'preferences' && state.overlay.status !== null) {
@@ -390,6 +426,10 @@ const App = () => {
 							onTheme={chosen => {
 								setTheme(chosen)
 								rememberTheme(chosen)
+							}}
+							onPlayback={chosen => {
+								setPlayback(chosen)
+								rememberPlayback(chosen)
 							}}
 							onChangeTeam={() => {
 								if (state.overlay?.kind === 'preferences' && state.overlay.status !== null) {
@@ -415,7 +455,7 @@ const App = () => {
 						<Matches
 							status={screen.status}
 							matches={screen.matches}
-							onWatch={() => void loadSheet(viewer, screen.status)}
+							onWatch={() => void loadBefore(viewer, screen.status)}
 							onRejoin={() => void loadNext(viewer)}
 							onChangeTeam={() => void loadPick(screen.status)}
 							onMap={() => void openMap()}
@@ -430,6 +470,33 @@ const App = () => {
 							suggested={screen.status.suggested_club}
 							busy={screen.busy}
 							onChoose={club => void choose(viewer, club)}
+						/>
+					)}
+					{screen.kind === 'before' && viewer !== null && (
+						<BeforeMatch
+							key={screen.flow}
+							before={screen.before}
+							flow={screen.flow}
+							onMap={() => void openMap()}
+							onDone={() => {
+								if (screen.flow === 'first_look') {
+									// A failed mark only means the First look shows again next time.
+									markIntroduced(
+										viewer,
+										screen.before.first_looks.map(row => row.key)
+									).catch(() => undefined)
+									if (screen.before.level_ups.length > 0) {
+										dispatch({
+											type: 'before',
+											before: screen.before,
+											flow: 'level_up',
+											status: screen.status
+										})
+										return
+									}
+								}
+								void loadSheet(viewer, screen.status)
+							}}
 						/>
 					)}
 					{screen.kind === 'sheet' && viewer !== null && (
@@ -451,6 +518,8 @@ const App = () => {
 						<MatchStep
 							home={screen.question.home}
 							away={screen.question.away}
+							homeCode={screen.question.home_code}
+							awayCode={screen.question.away_code}
 							matchNumber={screen.question.match_number}
 							play={screen.question.play_by_play}
 							to={screen.question.delivered}
@@ -458,6 +527,8 @@ const App = () => {
 							score={`${String(screen.question.score.home)}–${String(screen.question.score.away)}`}
 							catchUp={screen.question.catch_up}
 							yours={screen.question.your_team}
+							streamSlot={streamSlot}
+							playback={playback}
 							onArrive={() => {
 								dispatch({ type: 'open' })
 							}}

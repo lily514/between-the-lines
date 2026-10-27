@@ -1,7 +1,9 @@
 // Real payloads captured from the API (seed 7's matches), for tests. JSON imports type pairs as number[] rather than
 // [number, number], so each is cast once here. The questions' `play_by_play` was written by hand to fit their clocks,
 // as the matches have changed since they were captured.
-import type { ConceptMap, Feedback, MatchSummary, Question, Report, TeamSheet } from '../api/client.ts'
+import type { BeforeMatch, ConceptMap, Feedback, MatchSummary, Question, Report, TeamSheet } from '../api/client.ts'
+import beforeMatchFirstLookJson from './before-match-first-look.json'
+import beforeMatchLevelUpJson from './before-match-level-up.json'
 import conceptMapJson from './concept-map.json'
 import counterFeedbackJson from './counter-feedback.json'
 import counterQuestionJson from './counter-question.json'
@@ -35,7 +37,7 @@ export const sheetStage3 = sheetStage3Json as unknown as TeamSheet
 export const sheetStage2: TeamSheet = {
 	...sheetStage3,
 	stage: 2,
-	next_stage: "Get to level 3 in any concept to see players' numbers from matches you've watched.",
+	next_stage: "Get to Sharp in any concept to see players' numbers from matches you've watched.",
 	teams: sheetStage3.teams.map(team => ({
 		...team,
 		matches_watched: null,
@@ -43,9 +45,9 @@ export const sheetStage2: TeamSheet = {
 	}))
 }
 
-/** The curriculum before there is a viewer: all 20 concepts, five asked about now, no values. */
+/** The curriculum before there is a viewer: all 20 concepts, eight asked about now, no values. */
 export const curriculum = curriculumJson as unknown as ConceptMap
-/** A Ripon Wardens fan's map after match 1: levels on the five concepts asked about now. */
+/** A Ripon Wardens fan's map after match 1: levels on the eight concepts asked about now. */
 export const conceptMap = conceptMapJson as unknown as ConceptMap
 /** The same fan's matches with two answers in match 1: it is in progress, 0–0 at the last answer. */
 export const matchesInProgress = matchesInProgressJson as unknown as MatchSummary[]
@@ -54,3 +56,10 @@ export const matchesAfterOne = matchesJson as unknown as MatchSummary[]
 /** Match 1's scouting reports for that fan, at halftime and full time. */
 export const reportHalftime = reportHalftimeJson as unknown as Report
 export const reportFullTime = reportFullTimeJson as unknown as Report
+
+/** Before match 2 for the Ripon Wardens fan: Line-breaking passes rose to Solid, so Who's playing shows formations. */
+export const beforeMatchLevelUp = beforeMatchLevelUpJson as unknown as BeforeMatch
+/** Before match 1 for a viewer from before Milestone 5: a First look at the three concepts new to them. */
+export const beforeMatchFirstLook = beforeMatchFirstLookJson as unknown as BeforeMatch
+/** Before a match with nothing new: straight on to Who's playing. */
+export const beforeMatchNothing: BeforeMatch = { ...beforeMatchLevelUp, level_ups: [], unlock_note: null }

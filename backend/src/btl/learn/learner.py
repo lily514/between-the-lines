@@ -15,7 +15,7 @@ from btl.learn.pace import Pace
 from btl.learn.questions import Asks, Form
 from btl.schema.ids import TeamId
 
-LEARNER_VERSION = 3
+LEARNER_VERSION = 4
 MATCHES_PER_SESSION = 3
 
 StateT = TypeVar("StateT")
@@ -67,6 +67,9 @@ class LearnerState:
 
     ``pace`` is how often questions come. A match part-way through is replayed from its answers,
     so a change made during one waits in ``pace_next`` until the next match starts.
+
+    ``introduced`` is the concepts the viewer has had a First look at (or the welcome covered).
+    An active concept not in it gets a First look before their next match.
     """
 
     viewer_id: str
@@ -76,6 +79,7 @@ class LearnerState:
     club: TeamId | None = None
     pace: Pace = Pace.NORMAL
     pace_next: Pace | None = None
+    introduced: tuple[ConceptKey, ...] = field(default=())
     version: int = LEARNER_VERSION
 
     @property
@@ -102,6 +106,15 @@ class LearnerState:
         if not self.asked_in(self.match_number):
             return replace(self, pace=pace, pace_next=None)
         return replace(self, pace_next=None if pace == self.pace else pace)
+
+    def with_introduced(self, concepts: Collection[ConceptKey]) -> "LearnerState":
+        """The record with these concepts introduced too, in the order first met."""
+        new = [key for key in concepts if key not in self.introduced]
+        return replace(self, introduced=(*self.introduced, *dict.fromkeys(new)))
+
+    def not_yet_introduced(self, active: Collection[ConceptKey]) -> tuple[ConceptKey, ...]:
+        """The active concepts, in the order given, that the viewer hasn't had a First look at."""
+        return tuple(key for key in active if key not in self.introduced)
 
     def asked_in(self, match_number: int) -> frozenset[tuple[ConceptKey, int]]:
         """The moments already asked about in a match, as (concept, action id)."""

@@ -17,6 +17,7 @@ from btl.learn.pace import Pace
 from btl.learn.questions import Asks, Form
 from btl.schema.ids import TeamId
 from btl.store.base import (
+    INTRODUCED_BEFORE_VERSION_4,
     LearnerExistsError,
     LearnerStore,
     StaleWriteError,
@@ -188,6 +189,33 @@ def test_the_json_store_writes_one_readable_file_per_learner(tmp_path: Path) -> 
 
     assert files == ["lily.json"]
     assert saved["attempts"][0]["concept"] == "line_breaking_pass"
+
+
+def test_a_version_3_record_reads_as_introduced_to_the_five_concepts_before_milestone_5() -> None:
+    document = to_document(LearnerState("lily", seed=7).answered(ANSWER))
+    document["version"] = 3
+    del document["introduced"]
+
+    state = from_document(document)
+
+    assert state.introduced == INTRODUCED_BEFORE_VERSION_4
+    assert state.introduced == (
+        "restarts",
+        "offside",
+        "fouls_and_cards",
+        "line_breaking_pass",
+        "counter_press",
+    )
+    assert to_document(state)["version"] == LEARNER_VERSION == 4
+
+
+def test_the_introduced_concepts_round_trip() -> None:
+    state = LearnerState("lily", seed=7).with_introduced([LINE_BREAKING])
+
+    document = json.loads(json.dumps(to_document(state)))
+
+    assert document["introduced"] == ["line_breaking_pass"]
+    assert from_document(document) == state
 
 
 def test_the_pace_round_trips_and_a_record_without_one_reads_as_normal() -> None:

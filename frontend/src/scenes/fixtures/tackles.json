@@ -1,0 +1,604 @@
+{
+  "concept": "tackles",
+  "detector": "ball_win",
+  "evidence_fields": [
+    "team",
+    "recovery_type",
+    "pitch_third",
+    "high_recoveries",
+    "avg_high_recoveries"
+  ],
+  "match": {
+    "away": "Sherborne Kingfishers",
+    "away_code": "SHE",
+    "home": "Whitby Kestrels",
+    "home_code": "WHI",
+    "seed": 7002
+  },
+  "moment": {
+    "action_id": 28,
+    "clock": "01:43",
+    "difficulty": 0.5,
+    "evidence": {
+      "metres from own goal": 64.0,
+      "won with": 0.0
+    },
+    "phase": "transition",
+    "span": [
+      27,
+      28
+    ]
+  },
+  "name": "Tackles and turnovers",
+  "pack": {
+    "asks": "how won",
+    "concept": {
+      "analyst": "{team} have made {high_recoveries} recoveries in the attacking third, against a match average of {avg_high_recoveries}. Those high turnovers are the starting point for transitions.",
+      "beginner": "A tackle is when a defender takes the ball off an opponent. An interception is when they cut out a pass.",
+      "intermediate": "{team} won the ball by {recovery_type} in the {pitch_third}. Where a team wins the ball matters as much as how.",
+      "key": "tackles",
+      "misconceptions": [
+        "Winning the ball deep in your own half is just as useful as winning it high.",
+        "Tackles are the main way teams win the ball back."
+      ],
+      "name": "Tackles and turnovers",
+      "objective": "Recognize how a team wins the ball back: tackles, interceptions, and loose balls."
+    },
+    "context": {
+      "away_team": {
+        "display": "Sherborne Kingfishers",
+        "value": "Sherborne Kingfishers"
+      },
+      "home_team": {
+        "display": "Whitby Kestrels",
+        "value": "Whitby Kestrels"
+      },
+      "minute": {
+        "display": "01:43",
+        "value": "01:43"
+      },
+      "opponent": {
+        "display": "Whitby Kestrels",
+        "value": "Whitby Kestrels"
+      },
+      "score": {
+        "display": "0–0",
+        "value": "0–0"
+      },
+      "team": {
+        "display": "Sherborne Kingfishers",
+        "value": "Sherborne Kingfishers"
+      }
+    },
+    "correct_key": "B",
+    "form": "identify",
+    "level": 1,
+    "options": [
+      {
+        "correct": false,
+        "key": "A",
+        "label": "The keeper gathered it",
+        "neutral": {},
+        "outcome": {},
+        "target_at": null
+      },
+      {
+        "correct": true,
+        "key": "B",
+        "label": "A tackle",
+        "neutral": {},
+        "outcome": {},
+        "target_at": null
+      },
+      {
+        "correct": false,
+        "key": "C",
+        "label": "An interception",
+        "neutral": {},
+        "outcome": {},
+        "target_at": null
+      }
+    ],
+    "outcome": {
+      "avg_high_recoveries": {
+        "display": "0.5",
+        "value": 0.5
+      },
+      "high_recoveries": {
+        "display": "1",
+        "value": 1
+      },
+      "metres_from_own_goal": {
+        "display": "64",
+        "value": 64.0
+      },
+      "pitch_third": {
+        "display": "middle third",
+        "value": "middle third"
+      },
+      "player": {
+        "display": "#14 Jordan Drayley",
+        "value": "#14 Jordan Drayley"
+      },
+      "recovery_type": {
+        "display": "a tackle",
+        "value": "a tackle"
+      }
+    },
+    "pack_id": "0a1c6db092717d16",
+    "pack_version": 4,
+    "picture": {
+      "action_id": 28,
+      "ball": [
+        64.0,
+        43.8
+      ],
+      "mark": null,
+      "markers": [
+        {
+          "home": true,
+          "role": "keeper",
+          "shirt": 1,
+          "side": "defending",
+          "x": 98.9,
+          "y": 36.6
+        },
+        {
+          "home": true,
+          "role": "player",
+          "shirt": 2,
+          "side": "defending",
+          "x": 94.5,
+          "y": 56.9
+        },
+        {
+          "home": true,
+          "role": "player",
+          "shirt": 3,
+          "side": "defending",
+          "x": 95.3,
+          "y": 41.9
+        },
+        {
+          "home": true,
+          "role": "player",
+          "shirt": 4,
+          "side": "defending",
+          "x": 92.9,
+          "y": 30.4
+        },
+        {
+          "home": true,
+          "role": "player",
+          "shirt": 5,
+          "side": "defending",
+          "x": 95.1,
+          "y": 16.3
+        },
+        {
+          "home": true,
+          "role": "player",
+          "shirt": 8,
+          "side": "defending",
+          "x": 76.1,
+          "y": 57.2
+        },
+        {
+          "home": true,
+          "role": "player",
+          "shirt": 10,
+          "side": "defending",
+          "x": 73.7,
+          "y": 41.8
+        },
+        {
+          "home": true,
+          "role": "player",
+          "shirt": 14,
+          "side": "defending",
+          "x": 74.2,
+          "y": 30.7
+        },
+        {
+          "home": true,
+          "role": "player",
+          "shirt": 16,
+          "side": "defending",
+          "x": 71.6,
+          "y": 16.0
+        },
+        {
+          "home": true,
+          "role": "player",
+          "shirt": 7,
+          "side": "defending",
+          "x": 51.8,
+          "y": 51.1
+        },
+        {
+          "home": true,
+          "role": "player",
+          "shirt": 9,
+          "side": "defending",
+          "x": 53.7,
+          "y": 22.8
+        },
+        {
+          "home": false,
+          "role": "keeper",
+          "shirt": 1,
+          "side": "attacking",
+          "x": 11.0,
+          "y": 33.8
+        },
+        {
+          "home": false,
+          "role": "player",
+          "shirt": 2,
+          "side": "attacking",
+          "x": 44.8,
+          "y": 23.1
+        },
+        {
+          "home": false,
+          "role": "player",
+          "shirt": 3,
+          "side": "attacking",
+          "x": 45.4,
+          "y": 33.0
+        },
+        {
+          "home": false,
+          "role": "player",
+          "shirt": 4,
+          "side": "attacking",
+          "x": 45.1,
+          "y": 44.8
+        },
+        {
+          "home": false,
+          "role": "player",
+          "shirt": 5,
+          "side": "attacking",
+          "x": 45.5,
+          "y": 49.2
+        },
+        {
+          "home": false,
+          "role": "player",
+          "shirt": 8,
+          "side": "attacking",
+          "x": 58.9,
+          "y": 21.0
+        },
+        {
+          "home": false,
+          "role": "player",
+          "shirt": 10,
+          "side": "attacking",
+          "x": 62.3,
+          "y": 33.5
+        },
+        {
+          "home": false,
+          "role": "on the ball",
+          "shirt": 14,
+          "side": "attacking",
+          "x": 64.0,
+          "y": 43.8
+        },
+        {
+          "home": false,
+          "role": "player",
+          "shirt": 16,
+          "side": "attacking",
+          "x": 59.1,
+          "y": 52.9
+        },
+        {
+          "home": false,
+          "role": "player",
+          "shirt": 7,
+          "side": "attacking",
+          "x": 74.1,
+          "y": 30.1
+        },
+        {
+          "home": false,
+          "role": "player",
+          "shirt": 9,
+          "side": "attacking",
+          "x": 73.8,
+          "y": 49.8
+        }
+      ],
+      "path": [
+        [
+          64.5,
+          44.2
+        ],
+        [
+          64.0,
+          43.8
+        ],
+        [
+          64.0,
+          43.8
+        ]
+      ]
+    },
+    "reveal_line": null,
+    "reveal_path": [
+      [
+        64.5,
+        44.2
+      ],
+      [
+        64.0,
+        43.8
+      ],
+      [
+        64.0,
+        43.8
+      ]
+    ],
+    "timing": {
+      "delivered_at": "02:43",
+      "delivered_phase": "dead ball",
+      "delivery": "deferred",
+      "occurred_at": "01:43",
+      "occurred_phase": "transition",
+      "restart": null
+    }
+  },
+  "path": [
+    {
+      "action": "dribble",
+      "action_id": 27,
+      "at": 0.0,
+      "result": "fail",
+      "shirt": 10,
+      "side": "defending",
+      "x": 64.5,
+      "y": 44.2
+    },
+    {
+      "action": "tackle",
+      "action_id": 28,
+      "at": 0.97,
+      "result": "success",
+      "shirt": 14,
+      "side": "attacking",
+      "x": 64.0,
+      "y": 43.8
+    },
+    {
+      "action": "end",
+      "action_id": 28,
+      "at": 1.95,
+      "x": 64.0,
+      "y": 43.8
+    }
+  ],
+  "questions": {
+    "1": {
+      "asks": "how won",
+      "correct": "B",
+      "form": "identify",
+      "options": [
+        "The keeper gathered it",
+        "A tackle",
+        "An interception"
+      ],
+      "text": "Play has stopped. Sherborne Kingfishers have just taken the ball off Whitby Kestrels. How did they win it?"
+    },
+    "2": {
+      "asks": "where won",
+      "correct": "B",
+      "form": "identify",
+      "options": [
+        "Their own third",
+        "The middle third",
+        "The attacking third"
+      ],
+      "text": "Play has stopped. Sherborne Kingfishers have just taken the ball off Whitby Kestrels. Where on the pitch did they win it?"
+    },
+    "3": {
+      "asks": "why where matters",
+      "correct": "A",
+      "form": "identify",
+      "options": [
+        "Won in midfield, while the opponent is still turning, with ground to cover",
+        "Winning the ball deep in your own half is just as useful as winning it high",
+        "Won deep, so the whole pitch is still ahead of them before a chance"
+      ],
+      "text": "Play has stopped. Sherborne Kingfishers have the ball back from Whitby Kestrels. Why does where they took it matter?"
+    }
+  },
+  "snapshot": {
+    "action_id": 28,
+    "ball": [
+      64.0,
+      43.8
+    ],
+    "markers": [
+      {
+        "home": true,
+        "role": "keeper",
+        "shirt": 1,
+        "side": "defending",
+        "x": 98.9,
+        "y": 36.6
+      },
+      {
+        "home": true,
+        "role": "player",
+        "shirt": 2,
+        "side": "defending",
+        "x": 94.5,
+        "y": 56.9
+      },
+      {
+        "home": true,
+        "role": "player",
+        "shirt": 3,
+        "side": "defending",
+        "x": 95.3,
+        "y": 41.9
+      },
+      {
+        "home": true,
+        "role": "player",
+        "shirt": 4,
+        "side": "defending",
+        "x": 92.9,
+        "y": 30.4
+      },
+      {
+        "home": true,
+        "role": "player",
+        "shirt": 5,
+        "side": "defending",
+        "x": 95.1,
+        "y": 16.3
+      },
+      {
+        "home": true,
+        "role": "player",
+        "shirt": 8,
+        "side": "defending",
+        "x": 76.1,
+        "y": 57.2
+      },
+      {
+        "home": true,
+        "role": "player",
+        "shirt": 10,
+        "side": "defending",
+        "x": 73.7,
+        "y": 41.8
+      },
+      {
+        "home": true,
+        "role": "player",
+        "shirt": 14,
+        "side": "defending",
+        "x": 74.2,
+        "y": 30.7
+      },
+      {
+        "home": true,
+        "role": "player",
+        "shirt": 16,
+        "side": "defending",
+        "x": 71.6,
+        "y": 16.0
+      },
+      {
+        "home": true,
+        "role": "player",
+        "shirt": 7,
+        "side": "defending",
+        "x": 51.8,
+        "y": 51.1
+      },
+      {
+        "home": true,
+        "role": "player",
+        "shirt": 9,
+        "side": "defending",
+        "x": 53.7,
+        "y": 22.8
+      },
+      {
+        "home": false,
+        "role": "keeper",
+        "shirt": 1,
+        "side": "attacking",
+        "x": 11.0,
+        "y": 33.8
+      },
+      {
+        "home": false,
+        "role": "player",
+        "shirt": 2,
+        "side": "attacking",
+        "x": 44.8,
+        "y": 23.1
+      },
+      {
+        "home": false,
+        "role": "player",
+        "shirt": 3,
+        "side": "attacking",
+        "x": 45.4,
+        "y": 33.0
+      },
+      {
+        "home": false,
+        "role": "player",
+        "shirt": 4,
+        "side": "attacking",
+        "x": 45.1,
+        "y": 44.8
+      },
+      {
+        "home": false,
+        "role": "player",
+        "shirt": 5,
+        "side": "attacking",
+        "x": 45.5,
+        "y": 49.2
+      },
+      {
+        "home": false,
+        "role": "player",
+        "shirt": 8,
+        "side": "attacking",
+        "x": 58.9,
+        "y": 21.0
+      },
+      {
+        "home": false,
+        "role": "player",
+        "shirt": 10,
+        "side": "attacking",
+        "x": 62.3,
+        "y": 33.5
+      },
+      {
+        "home": false,
+        "role": "on the ball",
+        "shirt": 14,
+        "side": "attacking",
+        "x": 64.0,
+        "y": 43.8
+      },
+      {
+        "home": false,
+        "role": "player",
+        "shirt": 16,
+        "side": "attacking",
+        "x": 59.1,
+        "y": 52.9
+      },
+      {
+        "home": false,
+        "role": "player",
+        "shirt": 7,
+        "side": "attacking",
+        "x": 74.1,
+        "y": 30.1
+      },
+      {
+        "home": false,
+        "role": "player",
+        "shirt": 9,
+        "side": "attacking",
+        "x": 73.8,
+        "y": 49.8
+      }
+    ]
+  },
+  "strand": "pressure"
+}

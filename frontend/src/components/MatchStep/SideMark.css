@@ -1,0 +1,17 @@
+/* A team's mark: a filled disc for home, a ring for away, in the text colour. */
+
+.side-mark {
+	display: inline-block;
+	flex: none;
+	width: 9px;
+	height: 9px;
+	border-radius: 50%;
+}
+
+.side-mark--home {
+	background: currentColor;
+}
+
+.side-mark--away {
+	border: 2px solid currentColor;
+}

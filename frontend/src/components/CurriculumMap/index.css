@@ -116,6 +116,10 @@
 	stroke-dasharray: 0.9 0.7;
 }
 
+.curriculum-map__node--locked .curriculum-map__dot {
+	stroke-dasharray: 0.9 0.7;
+}
+
 .curriculum-map__arc {
 	fill: none;
 	stroke: var(--know);
@@ -203,6 +207,10 @@
 .curriculum-map__key--asked {
 	border: 2px solid var(--know);
 	border-right-color: var(--border-strong);
+}
+
+.curriculum-map__key--locked {
+	border: 2px dashed var(--on-pitch);
 }
 
 .curriculum-map__key--later {

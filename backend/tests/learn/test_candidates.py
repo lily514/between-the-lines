@@ -50,9 +50,16 @@ def test_candidates_need_threat_values() -> None:
 @pytest.mark.parametrize("seed", range(6))
 def test_every_planted_moment_is_a_candidate(seed: int) -> None:
     match = designed(seed)
-    found = {(c.tag.concept, c.tag.action_id) for c in candidates_in(match)}
+    candidates = candidates_in(match)
+    # A counter-attack's answer is the touch in the box, where its tag's span ends; the other
+    # moments' answers are their tags' key actions.
+    found = {(c.tag.concept, c.tag.action_id) for c in candidates} | {
+        (c.tag.concept, c.tag.span[1])
+        for c in candidates
+        if c.tag.concept is ConceptId.COUNTER_ATTACK
+    }
 
-    assert len(match.planted) == 6
+    assert len(match.planted) == 9
     assert all((m.concept, m.answer_action_id) in found for m in match.planted)
 
 

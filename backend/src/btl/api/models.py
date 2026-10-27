@@ -9,6 +9,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field
 
+from btl.learn.levels import Band
 from btl.learn.pace import Pace
 
 Point = tuple[float, float]
@@ -81,11 +82,20 @@ class ScoreOut(BaseModel):
 
 
 class TouchOut(BaseModel):
-    """A player on the ball, at ``at`` seconds on the match clock."""
+    """A player on the ball, at ``at`` seconds on the match clock.
+
+    ``surname`` is what the commentary calls them by; a surname may have more than one word.
+    ``action`` is what they did, e.g. "crosses", and ``where`` where, seen by their own team;
+    ``zone`` is that place as a key, for the page's strip of thirds.
+    """
 
     at: float
     player: str
+    surname: str
     number: int
+    action: str
+    where: str
+    zone: Literal["own_third", "middle_third", "final_third", "box"]
 
 
 class SpellOut(BaseModel):
@@ -95,19 +105,86 @@ class SpellOut(BaseModel):
     touches: list[TouchOut]
 
 
+class FeedScoreOut(BaseModel):
+    """The score after a goal, or at halftime."""
+
+    home: int
+    away: int
+
+
+class FeedEntryOut(BaseModel):
+    """One entry of the match feed, worded for the page.
+
+    ``at`` is when it happened, in seconds on the match clock; the page shows it once the clock
+    reaches ``until``, a move's last touch. ``label`` names it, e.g. "Shot · saved"; ``text`` is
+    its line. A move's ``names`` are its players in turn; ``side`` is null only at halftime.
+    """
+
+    at: float
+    until: float
+    side: Literal["home", "away"] | None
+    kind: Literal[
+        "kick_off",
+        "move",
+        "goal",
+        "own_goal",
+        "shot",
+        "corner",
+        "throw_in",
+        "goal_kick",
+        "foul",
+        "yellow_card",
+        "red_card",
+        "offside",
+        "halftime",
+    ]
+    label: str
+    text: str
+    names: list[str]
+    score: FeedScoreOut | None
+
+
+class SideStatsOut(BaseModel):
+    """One team's numbers so far; ``possession`` is its share of time on the ball, in %.
+
+    ``attempts`` are its shots at goal; the name keeps clear of the outcome facts' "shots".
+    """
+
+    goals: int
+    possession: int
+    attempts: int
+    corners: int
+    fouls: int
+    yellow_cards: int
+    red_cards: int
+
+
+class StatsOut(BaseModel):
+    """Both teams' numbers as they stand from ``at`` seconds on the match clock, in ``period``."""
+
+    at: float
+    period: int
+    home: SideStatsOut
+    away: SideStatsOut
+
+
 class PlayByPlayOut(BaseModel):
     """Who had the ball between the viewer's last question and the next, for the page to play.
 
     Times are seconds on the match clock: ``start`` where the viewer left off (0 at kick-off),
     ``end`` when the next question is asked. The spells stop at ``names_until``, the moment the
     question is about, so they say nothing of how that play turned out; a question saved for a
-    stoppage has play between it and ``end`` that goes unnamed.
+    stoppage has play between it and ``end`` that goes unnamed. ``feed`` runs from kick-off and
+    ``stats`` from ``start`` (or from ``names_until``, when the viewer left off after it), and
+    both stop at ``names_until`` too.
     """
 
     start: float
     end: float
     names_until: float
     spells: list[SpellOut]
+    feed: list[FeedEntryOut]
+    stats: list[StatsOut]
 
 
 class QuestionOut(BaseModel):
@@ -142,19 +219,29 @@ class QuestionOut(BaseModel):
 
 
 class Bar(BaseModel):
-    """One concept's mastery, from 0 to 1, and the level word for it ("Solid")."""
+    """One concept's mastery, from 0 to 1, with the level word ("Solid") and band for it.
 
+    The band is the level as a key the page switches on; "Mastered" is the Sharp band.
+    """
+
+    key: str
     name: str
     value: float
     level: str
+    band: Band
+    # The askable prerequisites it still waits for; the page shows it locked while any remain.
+    waits_for: list[str]
 
 
 class Movement(BaseModel):
-    """How one concept's mastery moved: before and after, from 0 to 1."""
+    """How one concept's mastery moved: before and after, from 0 to 1, and its level now."""
 
     name: str
     before: float
     after: float
+    level: str
+    band: Band
+    mastered: bool
 
 
 class ThresholdsOut(BaseModel):
@@ -318,11 +405,12 @@ class SheetPlayerOut(BaseModel):
 
     ``at_kickoff`` is where they stood at kick-off, with the sheet's first team attacking left
     to right. ``numbers`` is null before stage 3, or if the viewer hasn't
-    seen them play.
+    seen them play. ``surname`` is the name on their shirt; it may have more than one word.
     """
 
     shirt: int
     name: str
+    surname: str
     role: str
     position: PositionOut
     at_kickoff: Point
@@ -389,7 +477,11 @@ class StrandOut(BaseModel):
 
 
 class MapConceptOut(BaseModel):
-    """A concept on the map. ``mastery`` and ``level`` are null for one coming later."""
+    """A concept on the map. ``mastery``, ``level`` and ``band`` are null for one coming later.
+
+    ``waits_for`` names the askable prerequisites the viewer hasn't unlocked yet: the concept
+    is locked while it isn't empty.
+    """
 
     key: str
     name: str
@@ -400,6 +492,8 @@ class MapConceptOut(BaseModel):
     askable: bool
     mastery: float | None
     level: str | None
+    band: Band | None
+    waits_for: list[str]
 
 
 class ConceptMapOut(BaseModel):
@@ -425,15 +519,19 @@ class StrandValueOut(BaseModel):
 
 
 class ConceptMoveOut(BaseModel):
-    """A concept asked about now: mastery and level word at kick-off and at the break."""
+    """A concept asked about now: mastery, level word and band at kick-off and at the break."""
 
+    key: str
     name: str
     strand: str
     before: float
     after: float
     level_before: str
     level: str
+    band_before: Band
+    band: Band
     mastered: bool
+    waits_for: list[str]
 
 
 class GoalOut(BaseModel):
@@ -476,6 +574,62 @@ class ReportOut(BaseModel):
     right: int
     note: str
     thresholds: ThresholdsOut
+
+
+class LevelRowOut(BaseModel):
+    """The viewer's level on one active concept, for a level list.
+
+    ``waits_for`` names the askable prerequisites not yet unlocked (locked while not empty);
+    ``moved`` says whether the band rose over the last match.
+    """
+
+    key: str
+    name: str
+    strand: str
+    strand_name: str
+    mastery: float
+    level: str
+    band: Band
+    mastered: bool
+    waits_for: list[str]
+    moved: bool
+
+
+class LevelUpOut(BaseModel):
+    """A concept whose band rose over the viewer's last match: before and after."""
+
+    key: str
+    name: str
+    strand: str
+    strand_name: str
+    before: float
+    after: float
+    level_before: str
+    level: str
+    band_before: Band
+    band: Band
+    mastered: bool
+
+
+class BeforeMatchOut(BaseModel):
+    """What the page runs before the viewer's next match: First looks, then Level-ups.
+
+    ``first_looks`` are the active concepts the viewer hasn't been introduced to; ``level_ups``
+    the concepts whose band rose over their last match; ``levels`` a row per active concept;
+    ``unlock_note`` what the team sheet newly shows, if their stage rose, else null.
+    """
+
+    match_number: int
+    first_looks: list[LevelRowOut]
+    level_ups: list[LevelUpOut]
+    levels: list[LevelRowOut]
+    unlock_note: str | None
+
+
+class IntroducedIn(BaseModel):
+    """The concepts the viewer has now had a First look at, by key."""
+
+    concepts: list[str]
 
 
 class AnswerIn(BaseModel):

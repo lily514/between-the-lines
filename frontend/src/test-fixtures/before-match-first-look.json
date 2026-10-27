@@ -1,0 +1,141 @@
+{
+	"match_number": 1,
+	"first_looks": [
+		{
+			"key": "tackles",
+			"name": "Tackles and turnovers",
+			"strand": "pressure",
+			"strand_name": "Pressure",
+			"mastery": 0.35,
+			"level": "Getting there",
+			"band": "getting_there",
+			"mastered": false,
+			"waits_for": [],
+			"moved": false
+		},
+		{
+			"key": "shots_and_goals",
+			"name": "Shots and goals",
+			"strand": "chances",
+			"strand_name": "Chances",
+			"mastery": 0.35,
+			"level": "Getting there",
+			"band": "getting_there",
+			"mastered": false,
+			"waits_for": [],
+			"moved": false
+		},
+		{
+			"key": "transitions",
+			"name": "Transitions and counterattacks",
+			"strand": "game_flow",
+			"strand_name": "Game flow",
+			"mastery": 0.25,
+			"level": "Getting there",
+			"band": "getting_there",
+			"mastered": false,
+			"waits_for": ["Tackles and turnovers", "Restarts"],
+			"moved": false
+		}
+	],
+	"level_ups": [],
+	"levels": [
+		{
+			"key": "tackles",
+			"name": "Tackles and turnovers",
+			"strand": "pressure",
+			"strand_name": "Pressure",
+			"mastery": 0.35,
+			"level": "Getting there",
+			"band": "getting_there",
+			"mastered": false,
+			"waits_for": [],
+			"moved": false
+		},
+		{
+			"key": "shots_and_goals",
+			"name": "Shots and goals",
+			"strand": "chances",
+			"strand_name": "Chances",
+			"mastery": 0.35,
+			"level": "Getting there",
+			"band": "getting_there",
+			"mastered": false,
+			"waits_for": [],
+			"moved": false
+		},
+		{
+			"key": "restarts",
+			"name": "Restarts",
+			"strand": "game_flow",
+			"strand_name": "Game flow",
+			"mastery": 0.35,
+			"level": "Getting there",
+			"band": "getting_there",
+			"mastered": false,
+			"waits_for": [],
+			"moved": false
+		},
+		{
+			"key": "offside",
+			"name": "Offside",
+			"strand": "game_flow",
+			"strand_name": "Game flow",
+			"mastery": 0.35,
+			"level": "Getting there",
+			"band": "getting_there",
+			"mastered": false,
+			"waits_for": [],
+			"moved": false
+		},
+		{
+			"key": "fouls_and_cards",
+			"name": "Fouls and cards",
+			"strand": "game_flow",
+			"strand_name": "Game flow",
+			"mastery": 0.35,
+			"level": "Getting there",
+			"band": "getting_there",
+			"mastered": false,
+			"waits_for": [],
+			"moved": false
+		},
+		{
+			"key": "transitions",
+			"name": "Transitions and counterattacks",
+			"strand": "game_flow",
+			"strand_name": "Game flow",
+			"mastery": 0.25,
+			"level": "Getting there",
+			"band": "getting_there",
+			"mastered": false,
+			"waits_for": ["Tackles and turnovers", "Restarts"],
+			"moved": false
+		},
+		{
+			"key": "line_breaking_pass",
+			"name": "Line-breaking passes",
+			"strand": "possession",
+			"strand_name": "Possession",
+			"mastery": 0.15,
+			"level": "Getting there",
+			"band": "getting_there",
+			"mastered": false,
+			"waits_for": [],
+			"moved": false
+		},
+		{
+			"key": "counter_press",
+			"name": "Counter-pressing",
+			"strand": "pressure",
+			"strand_name": "Pressure",
+			"mastery": 0.15,
+			"level": "Getting there",
+			"band": "getting_there",
+			"mastered": false,
+			"waits_for": ["Tackles and turnovers"],
+			"moved": false
+		}
+	],
+	"unlock_note": null
+}

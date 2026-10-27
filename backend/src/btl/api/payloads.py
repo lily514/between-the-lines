@@ -6,12 +6,14 @@ answers. Its play-by-play comes from the match, and stops before the moment aske
 feedback payload is the whole pack.
 """
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import Literal
 
+from btl.api.commentary import ZONE_WORDS, action_words, feed_words
 from btl.api.models import (
     AnswerLineOut,
     Bar,
+    BeforeMatchOut,
     ClubOut,
     ConceptMapOut,
     ConceptMoveOut,
@@ -19,7 +21,11 @@ from btl.api.models import (
     FactOut,
     FeedbackOption,
     FeedbackOut,
+    FeedEntryOut,
+    FeedScoreOut,
     GoalOut,
+    LevelRowOut,
+    LevelUpOut,
     MapConceptOut,
     MarkerOut,
     MatchOut,
@@ -35,7 +41,9 @@ from btl.api.models import (
     ScoreOut,
     SheetPlayerOut,
     SheetTeamOut,
+    SideStatsOut,
     SpellOut,
+    StatsOut,
     StrandOut,
     StrandValueOut,
     TeamSheetOut,
@@ -45,18 +53,21 @@ from btl.api.models import (
 )
 from btl.concepts.phase import PhaseOfPlay
 from btl.league.league import Club, League
-from btl.learn.concept_map import Thresholds
+from btl.learn.before_match import BeforeMatch, LevelRow
+from btl.learn.concept_map import ConceptKey, Thresholds
 from btl.learn.curriculum import Curriculum
 from btl.learn.evidence import Fact, Picture, percent_points
 from btl.learn.knowledge import Delivery
-from btl.learn.levels import level_word
-from btl.learn.matches import CatchUp, MatchState, ViewerMatch
+from btl.learn.levels import band_for, level_word
+from btl.learn.match_feed import FeedEntry, FeedKind, match_feed
+from btl.learn.match_stats import SideStats, stats_timeline
+from btl.learn.matches import CatchUp, MatchState, ViewerMatch, score_as_of
 from btl.learn.play_by_play import play_by_play
 from btl.learn.questions import Form
 from btl.learn.report import Break, Report
 from btl.learn.session import Asked, Told
 from btl.learn.team_sheet import NEXT_STAGE, SheetPlayer, SheetTeam, TeamSheet
-from btl.schema.ids import TeamId
+from btl.schema.ids import PlayerId, TeamId
 from btl.schema.scoreboard import clock, clock_seconds
 
 
@@ -68,9 +79,14 @@ def question_payload(
     club: TeamId | None,
     caught: CatchUp,
 ) -> QuestionOut:
-    """The question as the page shows it: its view, its wording, when it is asked and the score."""
+    """The question as the page shows it: its view, its wording, when it is asked and the score.
+
+    ``caught`` is the score as of `score_as_of`: when the question is asked, or just before a
+    shot, whose result is the answer.
+    """
     view, prompt = asked.view, asked.prompt
     candidate, delivered = prompt.candidate, prompt.delivered
+    stands_at = score_as_of(candidate, delivered)
     return QuestionOut(
         pack_id=view.pack_id,
         match_number=match_number,
@@ -104,7 +120,7 @@ def question_payload(
         score=ScoreOut(
             home=caught.home,
             away=caught.away,
-            clock=clock(delivered.period_id, delivered.time_seconds),
+            clock=clock(stands_at.period_id, stands_at.seconds),
         ),
         catch_up=catch_up_text(caught, home, away),
         play_by_play=play_by_play_payload(asked, home, away),
@@ -112,30 +128,90 @@ def question_payload(
 
 
 def play_by_play_payload(asked: Asked, home: Club, away: Club) -> PlayByPlayOut:
-    """Who had the ball from where the viewer left off up to the moment the question is about."""
+    """Who had the ball from where the viewer left off up to the moment the question is about.
+
+    With the match feed from kick-off, and the match's numbers as they changed.
+    """
     previous, candidate = asked.previous, asked.prompt.candidate
     delivered = asked.prompt.delivered
     after = None if previous is None else (previous.period_id, previous.time_seconds)
     before = (candidate.period_id, candidate.time_seconds)
     players = {player.player_id: player for player in (*home.squad, *away.squad)}
+
+    def side(team_id: TeamId) -> Literal["home", "away"]:
+        return "home" if team_id == home.team_id else "away"
+
+    def surname(player_id: PlayerId) -> str:
+        return players[player_id].last_name
+
+    def club(team_id: TeamId) -> str:
+        return home.name if team_id == home.team_id else away.name
+
+    def rival(team_id: TeamId) -> str:
+        return away.name if team_id == home.team_id else home.name
+
+    def feed_entry(entry: FeedEntry) -> FeedEntryOut:
+        label, text = feed_words(entry, surname, club, rival)
+        at = clock_seconds(entry.period_id, entry.time_seconds)
+        moves = (FeedKind.MOVE, FeedKind.KICK_OFF)
+        score = None
+        if entry.score is not None:
+            score = FeedScoreOut(home=entry.score[0], away=entry.score[1])
+        return FeedEntryOut(
+            at=at,
+            until=clock_seconds(entry.period_id, entry.until_seconds),
+            side=None if entry.team_id is None else side(entry.team_id),
+            kind=entry.kind.value,
+            label=label,
+            text=text,
+            names=[surname(p) for p in entry.players] if entry.kind in moves else [],
+            score=score,
+        )
+
     return PlayByPlayOut(
         start=0.0 if after is None else clock_seconds(*after),
         end=clock_seconds(delivered.period_id, delivered.time_seconds),
         names_until=clock_seconds(*before),
         spells=[
             SpellOut(
-                side="home" if spell.team_id == home.team_id else "away",
+                side=side(spell.team_id),
                 touches=[
                     TouchOut(
                         at=clock_seconds(touch.period_id, touch.time_seconds),
                         player=players[touch.player_id].full_name,
+                        surname=players[touch.player_id].last_name,
                         number=players[touch.player_id].shirt_number,
+                        action=action_words(touch.action_type, touch.result),
+                        where=ZONE_WORDS[touch.zone],
+                        zone=touch.zone.value,
                     )
                     for touch in spell.touches
                 ],
             )
             for spell in play_by_play(asked.match, after, before)
         ],
+        feed=[feed_entry(entry) for entry in match_feed(asked.match, before)],
+        stats=[
+            StatsOut(
+                at=clock_seconds(entry.period_id, entry.time_seconds),
+                period=entry.period_id,
+                home=_side_stats(entry.home),
+                away=_side_stats(entry.away),
+            )
+            for entry in stats_timeline(asked.match, after, before)
+        ],
+    )
+
+
+def _side_stats(stats: SideStats) -> SideStatsOut:
+    return SideStatsOut(
+        goals=stats.goals,
+        possession=stats.possession,
+        attempts=stats.attempts,
+        corners=stats.corners,
+        fouls=stats.fouls,
+        yellow_cards=stats.yellow_cards,
+        red_cards=stats.red_cards,
     )
 
 
@@ -196,7 +272,7 @@ def feedback_payload(
         picture=_picture(pack.picture),
         reveal_path=list(pack.reveal_path),
         reveal_line=pack.reveal_line,
-        concepts=movements(before, told.mastery),
+        concepts=movements(before, told.mastery, thresholds),
         thresholds=thresholds_payload(thresholds),
     )
 
@@ -253,6 +329,7 @@ def _sheet_player(player: SheetPlayer) -> SheetPlayerOut:
     return SheetPlayerOut(
         shirt=player.shirt_number,
         name=player.name,
+        surname=player.surname,
         role=player.role.value,
         position=PositionOut(
             short=player.position.short,
@@ -338,13 +415,17 @@ def report_payload(
         ],
         concepts=[
             ConceptMoveOut(
+                key=move.key,
                 name=move.name,
                 strand=move.strand,
                 before=move.before,
                 after=move.after,
                 level_before=move.level_before,
                 level=move.level,
+                band_before=move.band_before,
+                band=move.band,
                 mastered=move.mastered,
+                waits_for=list(move.waits_for),
             )
             for move in made.concepts
         ],
@@ -358,17 +439,82 @@ def report_payload(
     )
 
 
-def movements(before: Mapping[str, float], after: Mapping[str, float]) -> list[Movement]:
-    """Each concept's mastery before and after, in the order of ``after``."""
-    return [Movement(name=name, before=before[name], after=value) for name, value in after.items()]
-
-
-def bars(mastery: Mapping[str, float], thresholds: Thresholds) -> list[Bar]:
-    """Each concept's mastery now, with its level word."""
+def movements(
+    before: Mapping[str, float], after: Mapping[str, float], thresholds: Thresholds
+) -> list[Movement]:
+    """Each concept's mastery before and after, in the order of ``after``, with its level now."""
     return [
-        Bar(name=name, value=value, level=level_word(value, thresholds))
-        for name, value in mastery.items()
+        Movement(
+            name=name,
+            before=before[name],
+            after=value,
+            level=level_word(value, thresholds),
+            band=band_for(value),
+            mastered=value >= thresholds.mastery,
+        )
+        for name, value in after.items()
     ]
+
+
+def bars(
+    mastery: Mapping[ConceptKey, float],
+    names: Mapping[ConceptKey, str],
+    thresholds: Thresholds,
+    waits_for: Mapping[ConceptKey, Sequence[str]],
+) -> list[Bar]:
+    """Each concept's mastery now, with its level word and band, and what it still waits for."""
+    return [
+        Bar(
+            key=key,
+            name=names[key],
+            value=value,
+            level=level_word(value, thresholds),
+            band=band_for(value),
+            waits_for=list(waits_for.get(key, ())),
+        )
+        for key, value in mastery.items()
+    ]
+
+
+def before_match_payload(made: BeforeMatch) -> BeforeMatchOut:
+    """The flows before a match: First looks, Level-ups, the level list and the unlock note."""
+    return BeforeMatchOut(
+        match_number=made.match_number,
+        first_looks=[_level_row(row) for row in made.first_looks],
+        level_ups=[
+            LevelUpOut(
+                key=up.key,
+                name=up.name,
+                strand=up.strand,
+                strand_name=up.strand_name,
+                before=up.before,
+                after=up.after,
+                level_before=up.level_before,
+                level=up.level,
+                band_before=up.band_before,
+                band=up.band,
+                mastered=up.mastered,
+            )
+            for up in made.level_ups
+        ],
+        levels=[_level_row(row) for row in made.levels],
+        unlock_note=made.unlock_note,
+    )
+
+
+def _level_row(row: LevelRow) -> LevelRowOut:
+    return LevelRowOut(
+        key=row.key,
+        name=row.name,
+        strand=row.strand,
+        strand_name=row.strand_name,
+        mastery=row.mastery,
+        level=row.level,
+        band=row.band,
+        mastered=row.mastered,
+        waits_for=list(row.waits_for),
+        moved=row.moved,
+    )
 
 
 def concept_map_payload(whole: Curriculum, thresholds: Thresholds) -> ConceptMapOut:
@@ -390,6 +536,8 @@ def concept_map_payload(whole: Curriculum, thresholds: Thresholds) -> ConceptMap
                 askable=c.askable,
                 mastery=c.mastery,
                 level=c.level,
+                band=c.band,
+                waits_for=list(c.waits_for),
             )
             for c in whole.concepts
         ],

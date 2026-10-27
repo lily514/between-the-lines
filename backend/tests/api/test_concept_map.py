@@ -12,7 +12,7 @@ def test_the_concept_map_lists_all_twenty_with_levels_for_those_asked_now() -> N
     body = response.json()
     assert len(body["concepts"]) == 20
     asked_now = [c for c in body["concepts"] if c["askable"]]
-    assert len(asked_now) == 5
+    assert len(asked_now) == 8
     assert {c["level"] for c in asked_now} == {"Getting there"}
     later = [c for c in body["concepts"] if not c["askable"]]
     assert all(c["mastery"] is None and c["level"] is None for c in later)
@@ -29,8 +29,22 @@ def test_the_map_moves_with_the_viewer_s_answers() -> None:
     body = api.get("/api/viewers/demo/concept-map").json()
     status = api.get("/api/viewers/demo").json()
 
-    on_map = {c["name"]: (c["mastery"], c["level"]) for c in body["concepts"] if c["askable"]}
-    assert on_map == {bar["name"]: (bar["value"], bar["level"]) for bar in status["concepts"]}
+    on_map = {
+        c["key"]: (c["mastery"], c["level"], c["band"]) for c in body["concepts"] if c["askable"]
+    }
+    assert on_map == {
+        bar["key"]: (bar["value"], bar["level"], bar["band"]) for bar in status["concepts"]
+    }
+    assert {bar["band"] for bar in status["concepts"]} <= {"getting_there", "solid", "sharp"}
+    # The status carries what each concept waits for, as the map does, so progress rows can lock.
+    assert {c["key"]: c["waits_for"] for c in body["concepts"] if c["askable"]} == {
+        bar["key"]: bar["waits_for"] for bar in status["concepts"]
+    }
+    locked = {bar["key"]: bar["waits_for"] for bar in status["concepts"] if bar["waits_for"]}
+    assert locked == {
+        "transitions": ["Tackles and turnovers", "Restarts"],
+        "counter_press": ["Tackles and turnovers"],
+    }
 
 
 def test_an_unknown_viewer_has_no_map() -> None:
@@ -41,5 +55,5 @@ def test_the_map_without_a_viewer_names_what_is_asked_and_measures_nothing() -> 
     body = client(MemoryLearnerStore()).get("/api/concept-map").json()
 
     assert len(body["concepts"]) == 20
-    assert sum(c["askable"] for c in body["concepts"]) == 5
+    assert sum(c["askable"] for c in body["concepts"]) == 8
     assert all(c["mastery"] is None and c["level"] is None for c in body["concepts"])

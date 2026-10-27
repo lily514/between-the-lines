@@ -1,95 +1,103 @@
-/* The first screen: what the questions cover, by strand, then Continue. */
+/* The welcome's summary step: what the questions cover, the level track, and where to see everything. */
 
-.welcome {
+.welcome__rows {
 	display: flex;
 	flex-direction: column;
-	gap: var(--s-3);
-}
-
-.welcome__heading {
-	font-size: var(--fs-display-l);
-	line-height: var(--lh-display-l);
-	font-weight: 600;
-}
-
-.welcome__intro {
 	margin: 0;
-	font-size: var(--fs-body-l);
-	line-height: var(--lh-body-l);
-	color: var(--text-2);
-}
-
-.welcome__strand {
-	padding: var(--s-3) var(--s-4);
+	padding: 0;
+	list-style: none;
 	border: 1px solid var(--border);
-	border-radius: var(--r-tile);
+	border-radius: var(--r-btn);
 	background: var(--surface);
 }
 
-.welcome__strand-name {
+.welcome__row {
 	display: flex;
-	align-items: baseline;
-	justify-content: space-between;
-	gap: var(--s-2);
-	margin: 0 0 var(--s-2);
-	font-family: var(--font-display);
-	font-size: var(--fs-label);
+	flex-direction: column;
+	gap: 2px;
+	padding: var(--s-3) 14px;
+	border-bottom: 1px solid var(--border);
+}
+
+.welcome__row:last-child {
+	border-bottom: 0;
+}
+
+.welcome__row-name {
+	font-size: var(--fs-caption);
 	font-weight: 700;
 	letter-spacing: 0.08em;
 	text-transform: uppercase;
-}
-
-.welcome__count {
-	font-family: var(--font-body);
-	font-size: var(--fs-caption);
-	font-weight: 600;
-	letter-spacing: 0;
-	text-transform: none;
 	color: var(--text-muted);
 }
 
-.welcome__concepts {
+.welcome__row-detail {
+	font-size: var(--fs-body);
+	font-weight: 600;
+}
+
+.welcome__row-detail--later {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	color: var(--text-muted);
+}
+
+.welcome__later-icon {
+	width: 14px;
+	height: 14px;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 1.4;
+	stroke-linecap: round;
+}
+
+.welcome__levels {
 	display: flex;
 	flex-direction: column;
+	gap: var(--s-2);
+	padding: 14px;
+	border: 1px solid var(--border);
+	border-radius: var(--r-btn);
+	background: var(--surface);
+}
+
+.welcome__levels-label {
+	font-size: var(--fs-caption);
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--text-muted);
+}
+
+.welcome__track {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
 	gap: var(--s-2);
 	margin: 0;
 	padding: 0;
 	list-style: none;
-}
-
-.welcome__concepts li {
-	display: flex;
-	flex-direction: column;
-}
-
-.welcome__concept {
-	font-weight: 700;
-}
-
-.welcome__objective {
-	font-size: var(--fs-body-s);
-	color: var(--text-2);
-}
-
-.welcome__later {
-	margin: 0;
-	font-size: var(--fs-body-s);
+	font-size: var(--fs-body);
+	font-weight: 600;
 	color: var(--text-muted);
 }
 
-.welcome__start-level {
-	margin: 0;
-	font-size: var(--fs-body);
-	line-height: var(--lh-body);
+.welcome__level {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
 }
 
-.welcome__start-level strong {
+.welcome__level--start {
+	font-weight: 700;
 	color: var(--know);
 }
 
-.welcome .welcome__all {
+.story-step .welcome__all {
 	align-self: flex-start;
 	padding: 0;
+	font-size: var(--fs-body);
 }
 
 .welcome__hint {
@@ -107,4 +115,36 @@
 .welcome__error::before {
 	content: '✕ ';
 	color: var(--text-muted);
+}
+
+/* Filling a wide window (App), the welcome's words keep to a reading width, and a scene sits beside its words. */
+@media (min-width: 900px) {
+	.layout--fill .intro,
+	.layout--fill .story-step:not(.story-step--scene) {
+		max-width: 640px;
+		margin-inline: auto;
+	}
+
+	.layout--fill .story-step--scene .story-step__body {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		/* The words take the rows they need; the last row takes up the rest of the scene's height. */
+		grid-template-rows: repeat(5, auto) 1fr;
+		column-gap: var(--s-6);
+	}
+
+	.layout--fill .story-step--scene .story-step__body > * {
+		grid-column: 2;
+	}
+
+	/* The scene fills its half: neither the card nor the scene keeps its usual 350 px cap. */
+	.layout--fill .story-step--scene .story-step__body > .scene-card {
+		grid-column: 1;
+		grid-row: 1 / -1;
+		max-width: none;
+	}
+
+	.layout--fill .story-step--scene .scene {
+		max-width: none;
+	}
 }

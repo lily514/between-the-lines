@@ -52,7 +52,20 @@
 		flex-direction: column;
 		gap: var(--s-4);
 		min-width: 0;
+		height: 100dvh;
+		position: sticky;
+		top: 0;
 		padding: var(--s-6);
+	}
+
+	/* Between questions the match feed fills the stream view, in place of the placeholder, centred with room around it. */
+	.layout__stream:has(.layout__feed:not(:empty)) {
+		padding: var(--s-8);
+	}
+
+	.layout__stream:has(.layout__feed:not(:empty)) .layout__match,
+	.layout__stream:has(.layout__feed:not(:empty)) .layout__screen {
+		display: none;
 	}
 
 	.layout__match {
@@ -99,6 +112,17 @@
 		font-weight: 600;
 	}
 
+	.layout__feed {
+		flex: 1;
+		min-height: 0;
+		width: min(100%, 720px);
+		margin-inline: auto;
+	}
+
+	.layout__feed:empty {
+		display: none;
+	}
+
 	.layout__screen-icon {
 		width: 48px;
 		height: 48px;
@@ -126,5 +150,20 @@
 
 	.layout__keys {
 		display: block;
+	}
+
+	/* The welcome fills the window: no match to stand beside yet, so no stream view and no handle. Its scenes use the
+	   whole 960 px; its pages of words keep to 640 px (Welcome). */
+	.layout--fill .layout__stream,
+	.layout--fill .panel-handle {
+		display: none;
+	}
+
+	.layout--fill .layout__panel {
+		flex: 1;
+		width: auto;
+		max-width: none;
+		padding-inline: max(var(--gutter-panel), calc((100% - 960px) / 2));
+		border-left: 0;
 	}
 }

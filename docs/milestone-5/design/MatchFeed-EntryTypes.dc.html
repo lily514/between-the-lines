@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<title>Match feed entry types</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style></style>
+<style>
+body{margin:0}
+a{color:#8C2440}a:hover{color:#6E1C32}
+</style>
+</helmet>
+<div style="width: 660px; height: 1180px; box-sizing: border-box; background: #ECE0D1; color: #2B1018; font-family: 'DM Sans', system-ui, sans-serif; padding: 28px; display: flex; flex-direction: column; gap: 16px">
+
+<div style="display: flex; flex-direction: column; gap: 6px">
+<h1 style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-size: 28px; font-weight: 700">Feed entry types</h1>
+<p style="margin: 0; font-size: 16px; line-height: 1.45; color: #664B51">Every row: time in mono, team as a filled disc (home) or ring (away) plus its code, the event named in words. Bracketed names and times are placeholders.</p>
+</div>
+
+<section style="background: #FFFAF3; border: 1px solid #DCCAB6; border-radius: 16px; padding: 6px 18px">
+<ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column">
+
+<!-- Goal -->
+<li style="display: grid; grid-template-columns: 62px minmax(0, 1fr); gap: 10px; padding: 14px 12px; margin: 8px -12px; border: 2px solid #2B1018; border-radius: 12px; background: #EFE5D8">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 15px; padding-top: 2px">[mm:ss]</span>
+<div style="display: flex; flex-direction: column; gap: 4px">
+<span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase"><svg width="16" height="16" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 20V6h18v14"></path><path d="M3 10h18M3 14h18M9 6v14M15 6v14"></path></svg>Goal · <span aria-hidden="true" style="width: 9px; height: 9px; border-radius: 50%; background: #2B1018; display: inline-block"></span>WHI</span>
+<span style="font-family: 'Bricolage Grotesque', sans-serif; font-size: 22px; font-weight: 700">[Player] scores.</span>
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 16px">WHI [n] – [n] BAK</span>
+</div>
+</li>
+
+<!-- Shot -->
+<li style="display: grid; grid-template-columns: 62px minmax(0, 1fr); gap: 10px; padding: 10px 0; border-top: 1px solid #DCCAB6">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 15px; padding-top: 2px">[mm:ss]</span>
+<div style="display: flex; flex-direction: column; gap: 3px">
+<span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #664B51"><svg width="14" height="14" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="6" cy="18" r="3"></circle><path d="M9 15l11-11M14 4h6v6"></path></svg>Shot · saved · <span aria-hidden="true" style="width: 9px; height: 9px; box-sizing: border-box; border-radius: 50%; border: 2px solid #2B1018; display: inline-block"></span>BAK</span>
+<span style="font-size: 17px">[Player] shoots; [Keeper] saves.</span>
+</div>
+</li>
+
+<!-- Corner -->
+<li style="display: grid; grid-template-columns: 62px minmax(0, 1fr); gap: 10px; padding: 10px 0; border-top: 1px solid #DCCAB6">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 15px; padding-top: 2px">[mm:ss]</span>
+<div style="display: flex; flex-direction: column; gap: 3px">
+<span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #664B51"><svg width="14" height="14" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 21V3l10 4-10 4"></path></svg>Corner · <span aria-hidden="true" style="width: 9px; height: 9px; border-radius: 50%; background: #2B1018; display: inline-block"></span>WHI</span>
+<span style="font-size: 17px">Corner on the right, taken by [Player].</span>
+</div>
+</li>
+
+<!-- Throw-in -->
+<li style="display: grid; grid-template-columns: 62px minmax(0, 1fr); gap: 10px; padding: 10px 0; border-top: 1px solid #DCCAB6">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 15px; padding-top: 2px">[mm:ss]</span>
+<div style="display: flex; flex-direction: column; gap: 3px">
+<span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #664B51"><svg width="14" height="14" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="1"></rect></svg>Dead ball · throw-in · <span aria-hidden="true" style="width: 9px; height: 9px; box-sizing: border-box; border-radius: 50%; border: 2px solid #2B1018; display: inline-block"></span>BAK</span>
+<span style="font-size: 17px">Out off [Player]. Throw-in to Bakewell Badgers, left touchline.</span>
+</div>
+</li>
+
+<!-- Foul -->
+<li style="display: grid; grid-template-columns: 62px minmax(0, 1fr); gap: 10px; padding: 10px 0; border-top: 1px solid #DCCAB6">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 15px; padding-top: 2px">[mm:ss]</span>
+<div style="display: flex; flex-direction: column; gap: 3px">
+<span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #664B51"><svg width="14" height="14" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="14" r="5"></circle><path d="M13 11l8-4M14 9h6"></path></svg>Foul · <span aria-hidden="true" style="width: 9px; height: 9px; border-radius: 50%; background: #2B1018; display: inline-block"></span>WHI</span>
+<span style="font-size: 17px">[Player] fouls [Player]. Free kick to Bakewell Badgers.</span>
+</div>
+</li>
+
+<!-- Yellow card -->
+<li style="display: grid; grid-template-columns: 62px minmax(0, 1fr); gap: 10px; padding: 10px 0; border-top: 1px solid #DCCAB6">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 15px; padding-top: 2px">[mm:ss]</span>
+<div style="display: flex; flex-direction: column; gap: 3px">
+<span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #664B51"><svg width="14" height="14" sc-camel-view-box="0 0 24 24" aria-hidden="true"><rect x="6" y="3" width="12" height="18" rx="2" fill="#D9A92A" stroke="#2B1018" stroke-width="1.6"></rect></svg>Yellow card · <span aria-hidden="true" style="width: 9px; height: 9px; border-radius: 50%; background: #2B1018; display: inline-block"></span>WHI</span>
+<span style="font-size: 17px">[Player] is booked.</span>
+</div>
+</li>
+
+<!-- Substitution -->
+<li style="display: grid; grid-template-columns: 62px minmax(0, 1fr); gap: 10px; padding: 10px 0; border-top: 1px solid #DCCAB6">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 15px; padding-top: 2px">[mm:ss]</span>
+<div style="display: flex; flex-direction: column; gap: 3px">
+<span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #664B51"><svg width="14" height="14" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h14l-4-4M20 16H6l4 4"></path></svg>Substitution · <span aria-hidden="true" style="width: 9px; height: 9px; box-sizing: border-box; border-radius: 50%; border: 2px solid #2B1018; display: inline-block"></span>BAK</span>
+<span style="font-size: 17px">[Player] on, [Player] off.</span>
+</div>
+</li>
+
+<!-- Passing move, asked -->
+<li style="display: grid; grid-template-columns: 62px minmax(0, 1fr); gap: 10px; padding: 10px 0; border-top: 1px solid #DCCAB6">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 15px; padding-top: 2px">[mm:ss]</span>
+<div style="display: flex; flex-direction: column; gap: 5px">
+<span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #664B51"><span aria-hidden="true" style="width: 9px; height: 9px; border-radius: 50%; background: #2B1018; display: inline-block"></span>WHI · Passing move · [n] players</span>
+<span style="font-size: 17px">[Player] <span aria-label="to" style="color: #664B51">→</span> [Player] <span aria-label="to" style="color: #664B51">→</span> [Player]</span>
+<span style="align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; padding: 4px 9px; border-radius: 999px; border: 1.5px dashed #8E7563">Asked in the panel<svg width="14" height="14" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span>
+</div>
+</li>
+
+<!-- Kick-off -->
+<li style="display: grid; grid-template-columns: 62px minmax(0, 1fr); gap: 10px; padding: 10px 0; border-top: 1px solid #DCCAB6">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 15px; padding-top: 2px">[mm:ss]</span>
+<div style="display: flex; flex-direction: column; gap: 3px">
+<span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #664B51"><svg width="14" height="14" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18"></path></svg>Kick-off · <span aria-hidden="true" style="width: 9px; height: 9px; box-sizing: border-box; border-radius: 50%; border: 2px solid #2B1018; display: inline-block"></span>BAK</span>
+<span style="font-size: 17px">Second half under way. [Player] <span aria-label="to" style="color: #664B51">→</span> [Player]</span>
+</div>
+</li>
+
+<!-- Halftime divider -->
+<li style="display: flex; align-items: center; gap: 12px; padding: 16px 0 12px">
+<span aria-hidden="true" style="flex: 1; height: 0; border-top: 2px solid #2B1018"></span>
+<span style="display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase"><svg width="14" height="14" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M9 5v14M15 5v14"></path></svg>Halftime</span>
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 15px">WHI [n] – [n] BAK</span>
+<span aria-hidden="true" style="flex: 1; height: 0; border-top: 2px solid #2B1018"></span>
+</li>
+</ol>
+</section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script="" data-props="{&quot;$preview&quot;:{&quot;width&quot;:660,&quot;height&quot;:1180}}">
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+
+
+</body></html>

@@ -69,6 +69,7 @@ def test_a_beginner_sees_names_positions_and_kickoff_spots_but_no_formation() ->
         p.at_kickoff for p in sheet(match, 2).teams[0].players
     ]
     assert [p.role for p in first.players][:2] == [Role.GOALKEEPER, Role.DEFENDER]
+    assert all(p.name.endswith(f" {p.surname}") for p in first.players)
 
 
 def test_each_line_is_listed_left_to_right_as_the_team_faces() -> None:

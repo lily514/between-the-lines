@@ -240,6 +240,46 @@ def pass_to(
     )
 
 
+def chance_and_shot(
+    start: Spot,
+    end: Spot,
+    *,
+    result: Result = Result.FAIL,
+    made_by: ActionType | None = ActionType.PASS,
+    saved: bool = False,
+    kind: ActionType = ActionType.SHOT,
+    team: TeamId = HOME,
+) -> Match:
+    """A team's action makes a chance, and it shoots; then what the shot leads to.
+
+    ``start`` and ``end`` are seen as if ``team`` attacks towards x = 105; the match stores
+    everything in the team's real direction.
+
+    - 0: the ``made_by`` action from (70, 20) to ``start``, or the other team's failed pass
+      there when None, so the shot opens the possession.
+    - 1: the shot (``kind``), from ``start`` to ``end``.
+    - 2: the other team's keeper saves it, or the kickoff after a goal, or a goal kick.
+    """
+    other = AWAY if team == HOME else HOME
+    ours = HOME_MIDFIELDER if team == HOME else AWAY_MIDFIELDER
+    theirs = AWAY_MIDFIELDER if team == HOME else HOME_MIDFIELDER
+    their_keeper = KEEPER_ID
+    if made_by is None:
+        first = make_event(0, other, theirs, (70, 20), start, result=Result.FAIL)
+    else:
+        first = make_event(0, team, ours, (70, 20), start, made_by)
+    events = [first, make_event(1, team, ours, start, end, kind, result)]
+    if saved:
+        events.append(make_event(2, other, their_keeper, end, end, ActionType.KEEPER_SAVE))
+    elif result is Result.SUCCESS:
+        events.append(make_event(2, other, theirs, (52.5, 34), (45, 30)))
+    else:
+        events.append(make_event(2, other, their_keeper, (99.5, 34), (70, 34), ActionType.GOALKICK))
+    if team == AWAY:
+        events = [_mirror_event(event) for event in events]
+    return Match(game_id=GAME, home_team_id=HOME, away_team_id=AWAY, events=tuple(events))
+
+
 def fouled(
     where: Spot,
     *,

@@ -1,0 +1,131 @@
+/* The intro page: a still pitch, what the app is, how it works, then on to the welcome's steps. */
+
+.intro {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-4);
+	padding-top: var(--s-2);
+}
+
+.intro__pitch {
+	width: 100%;
+	height: auto;
+}
+
+.intro__pitch-grass {
+	fill: var(--pitch);
+}
+
+.intro__pitch-line {
+	fill: none;
+	stroke: var(--pitch-line);
+	stroke-width: 1.5;
+}
+
+.intro__pitch-gap {
+	stroke-dasharray: 4 5;
+}
+
+.intro__pitch-away {
+	fill: var(--away);
+}
+
+.intro__pitch-home {
+	fill: var(--home);
+}
+
+.intro__pitch-pass {
+	fill: none;
+	stroke: var(--ball);
+	stroke-width: 2;
+	stroke-dasharray: 6 5;
+	stroke-linecap: round;
+}
+
+.intro__pitch-ball {
+	fill: var(--ball);
+}
+
+.intro__eyebrow {
+	margin: 0;
+	font-family: var(--font-display);
+	font-size: var(--fs-label);
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--text-muted);
+}
+
+.intro__title {
+	margin: calc(-1 * var(--s-2)) 0 0;
+	font-size: 30px;
+	line-height: var(--lh-display-l);
+	font-weight: 700;
+}
+
+.intro__lede {
+	margin: 0;
+	font-size: 18px;
+	line-height: var(--lh-body-l);
+	color: var(--text-2);
+}
+
+/* The steps are cells of one card; the 1px gaps show the border colour between them. */
+.intro__how {
+	display: grid;
+	gap: 1px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	overflow: hidden;
+	border: 1px solid var(--border);
+	border-radius: var(--r-btn);
+	background: var(--border);
+}
+
+.intro__how-item {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 10px 12px;
+	background: var(--surface);
+}
+
+.intro__how-number {
+	display: inline-flex;
+	flex: none;
+	align-items: center;
+	justify-content: center;
+	width: 22px;
+	height: 22px;
+	border-radius: var(--r-pill);
+	background: var(--know-tint);
+	font-family: var(--font-data);
+	font-size: var(--fs-caption);
+	font-weight: 700;
+	color: var(--know);
+}
+
+.intro__how-title {
+	font-size: var(--fs-body);
+	font-weight: 700;
+}
+
+.intro__actions {
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	gap: var(--s-2);
+}
+
+.intro .intro__skip {
+	align-self: center;
+	font-size: var(--fs-body);
+}
+
+.intro__hint {
+	margin: 0;
+	font-size: var(--fs-body-s);
+	color: var(--text-muted);
+	text-align: center;
+}

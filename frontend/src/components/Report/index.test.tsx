@@ -18,21 +18,47 @@ test('the full-time report leads with the score and the result from the viewer�
 	expect(within(screen.getByRole('list', { name: 'Goals' })).getAllByRole('listitem')).toHaveLength(1)
 })
 
-test('the scout’s note and every concept asked now show, with Chances coming later', () => {
+/** The report as it was before a Chances concept was asked about: that strand empty, with no value. */
+const noChances = {
+	...reportFullTime,
+	strands: reportFullTime.strands.map(strand =>
+		strand.key === 'chances' ? { ...strand, concepts: 0, kickoff: null, now: null } : strand
+	),
+	concepts: reportFullTime.concepts.filter(concept => concept.strand !== 'chances')
+}
+
+test('the scout’s note and every concept asked now show, each with its level word and icon', () => {
 	show()
 	expect(screen.getByText(reportFullTime.note)).toBeInTheDocument()
 	const asked = screen.getByRole('region', { name: 'What you’re being asked' })
-	expect(within(asked).getAllByRole('meter')).toHaveLength(5)
+	expect(within(asked).getAllByRole('meter')).toHaveLength(8)
+	expect(within(asked).queryByText(/coming later/)).toBeNull()
+	expect(byStrand(reportFullTime).map(strand => strand.concepts.length)).toEqual([1, 2, 1, 4])
+	const solid = within(asked).getByText('Solid')
+	expect(solid.querySelector('.level-icon')?.getAttribute('data-band')).toBe('solid')
+	expect(within(asked).getAllByText('Getting there')).toHaveLength(5)
+})
+
+test('a concept that waits on another reads as locked instead of a level, on its own row', () => {
+	show()
+	const asked = screen.getByRole('region', { name: 'What you’re being asked' })
+	expect(within(asked).getByText('Unlocks after Tackles and turnovers and Restarts')).toBeInTheDocument()
+	expect(within(asked).getByText('Unlocks after Tackles and turnovers')).toBeInTheDocument()
+})
+
+test('a strand with nothing asked about yet says its concepts are coming later', () => {
+	show(noChances)
+	const asked = screen.getByRole('region', { name: 'What you’re being asked' })
+	expect(within(asked).getAllByRole('meter')).toHaveLength(7)
 	expect(within(asked).getByText(/Chances concepts are coming later/)).toBeInTheDocument()
-	expect(byStrand(reportFullTime).map(strand => strand.concepts.length)).toEqual([1, 1, 0, 3])
 })
 
 test('each answer says right or not in words, with a mark that isn’t colour alone', () => {
 	show()
 	const answers = screen.getByRole('region', { name: 'Questions this match' })
-	expect(within(answers).getByText((_, element) => element?.textContent === '1 of 5 right.')).toBeInTheDocument()
-	expect(within(answers).getAllByText('Right read')).toHaveLength(1)
-	expect(within(answers).getAllByText('Not this one')).toHaveLength(4)
+	expect(within(answers).getByText((_, element) => element?.textContent === '3 of 8 right.')).toBeInTheDocument()
+	expect(within(answers).getAllByText('Right read')).toHaveLength(3)
+	expect(within(answers).getAllByText('Not this one')).toHaveLength(5)
 })
 
 test('halftime goes on to the second half, full time back to Matches, and both open the map', async () => {
@@ -45,9 +71,9 @@ test('halftime goes on to the second half, full time back to Matches, and both o
 })
 
 test('the radar has a table of the same values, and an empty strand reads Not yet', () => {
-	show()
+	show(noChances)
 	const table = screen.getByRole('table', { name: 'Your scouting report by strand' })
 	const chances = within(table).getByRole('row', { name: /Chances/ })
 	expect(within(chances).getAllByText('Not yet')).toHaveLength(2)
-	expect(within(table).getByRole('row', { name: /Possession/ })).toHaveTextContent('15%')
+	expect(within(table).getByRole('row', { name: /Possession/ })).toHaveTextContent('15%53%')
 })

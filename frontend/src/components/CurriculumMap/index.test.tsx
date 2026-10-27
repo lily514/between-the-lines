@@ -2,7 +2,7 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { conceptMap, curriculum } from '../../test-fixtures/index.ts'
 import CurriculumMap from './index.tsx'
-import { BAND, buildsOn, labelLines, MAP_WIDTH, place, stateOf } from './index.support.ts'
+import { BAND, buildsOn, labelLines, levelText, MAP_WIDTH, place, stateOf } from './index.support.ts'
 
 test('every concept sits in its strand’s column and its tier’s band, deepest at the top', () => {
 	const placed = place(conceptMap)
@@ -36,13 +36,38 @@ test('a concept builds on its prerequisites and theirs, nearest first', () => {
 	])
 })
 
-test('nodes are mastered, asked now, or coming later', () => {
+test('nodes are mastered, asked now, locked behind another concept, or coming later', () => {
 	const later = conceptMap.concepts.find(c => !c.askable)
-	const asked = conceptMap.concepts.find(c => c.askable)
-	if (later === undefined || asked === undefined) throw new Error('fixture lacks concepts')
+	const asked = conceptMap.concepts.find(c => c.askable && c.waits_for.length === 0)
+	const locked = conceptMap.concepts.find(c => c.key === 'transitions')
+	if (later === undefined || asked === undefined || locked === undefined) throw new Error('fixture lacks concepts')
 	expect(stateOf(later, 0.95)).toBe('later')
 	expect(stateOf({ ...asked, mastery: 0.5 }, 0.95)).toBe('asked')
 	expect(stateOf({ ...asked, mastery: 0.96 }, 0.95)).toBe('mastered')
+	expect(stateOf(locked, 0.95)).toBe('locked')
+	expect(stateOf({ ...locked, mastery: 0.96 }, 0.95)).toBe('mastered')
+	expect(levelText(locked)).toBe('Unlocks after Tackles and turnovers and Restarts')
+	expect(levelText(later)).toBe('Coming later')
+})
+
+test('a locked concept says what it unlocks after on the map, its card and the list, with no icon', async () => {
+	render(<CurriculumMap map={conceptMap} error={null} onBack={vi.fn()} />)
+	const node = screen.getByRole('button', {
+		name: 'Transitions and counterattacks: Unlocks after Tackles and turnovers and Restarts'
+	})
+	expect(node).toHaveClass('curriculum-map__node--locked')
+	await userEvent.click(node)
+	const card = document.querySelector('.curriculum-map__card')
+	if (card === null) throw new Error('no card')
+	expect(within(card as HTMLElement).getByText('Transitions and counterattacks')).toBeInTheDocument()
+	expect(within(card as HTMLElement).getByText('Unlocks after Tackles and turnovers and Restarts')).toHaveClass(
+		'level-word--locked'
+	)
+	expect(card.querySelector('.level-icon')).toBeNull()
+	const line = screen.getByRole('button', { name: /^Line-breaking passes: Solid/ })
+	await userEvent.click(line)
+	const solid = within(card as HTMLElement).getByText('Solid')
+	expect(solid.querySelector('.level-icon')?.getAttribute('data-band')).toBe('solid')
 })
 
 test('the map opens on a concept asked now, and choosing another by keyboard fills the card', async () => {

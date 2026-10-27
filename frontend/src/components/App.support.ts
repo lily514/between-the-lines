@@ -1,4 +1,5 @@
 import type {
+	BeforeMatch,
 	Club,
 	ConceptMap,
 	Feedback,
@@ -26,13 +27,18 @@ export type Retry =
 	| { kind: 'pick'; status: Status }
 	| { kind: 'choose'; club: number }
 	| { kind: 'sheet'; status: Status | null }
+	| { kind: 'before'; status: Status | null }
 	| { kind: 'answer'; question: Question; key: string }
+
+export type BeforeFlow = 'first_look' | 'level_up'
 
 export type Screen =
 	| { kind: 'welcome'; error: string | null }
 	| { kind: 'matches'; status: Status; matches: MatchSummary[] }
 	| { kind: 'pick'; status: Status; clubs: Club[]; busy: boolean }
 	| { kind: 'sheet'; sheet: TeamSheet; status: Status | null }
+	/** A story flow before a match: First look at new concepts, or Level-ups since the last match; then Who's playing. */
+	| { kind: 'before'; before: BeforeMatch; flow: BeforeFlow; status: Status | null }
 	| { kind: 'loading'; message: string }
 	| { kind: 'step'; question: Question }
 	| { kind: 'question'; question: Question; busy: boolean }
@@ -63,6 +69,7 @@ export type Action =
 	| { type: 'picking'; status: Status; clubs: Club[] }
 	| { type: 'choosing' }
 	| { type: 'sheet'; sheet: TeamSheet; status: Status | null }
+	| { type: 'before'; before: BeforeMatch; flow: BeforeFlow; status: Status | null }
 	| { type: 'rejected'; message: string }
 	| { type: 'forget'; message?: string }
 	| { type: 'arrived'; step: Question }
@@ -80,6 +87,7 @@ export const LOADING_START = 'Finding your place…'
 export const LOADING_MATCHES = 'Finding your matches…'
 export const LOADING_CLUBS = 'Finding the clubs…'
 export const LOADING_SHEET = 'Finding the line-ups…'
+export const LOADING_BEFORE = 'Checking your levels…'
 export const LOADING_REPORT = 'Writing the report…'
 
 /** A viewer who hasn't picked a team yet, and still can: they are asked before anything else. */
@@ -119,6 +127,12 @@ export const reducer = (state: AppState, action: Action): AppState => {
 			}
 		case 'sheet':
 			return { ...state, screen: { kind: 'sheet', sheet: action.sheet, status: action.status }, last: null }
+		case 'before':
+			return {
+				...state,
+				screen: { kind: 'before', before: action.before, flow: action.flow, status: action.status },
+				last: null
+			}
 		case 'choosing':
 			return state.screen.kind === 'pick' ? { ...state, screen: { ...state.screen, busy: true } } : state
 		case 'rejected':
@@ -163,6 +177,10 @@ export const reducer = (state: AppState, action: Action): AppState => {
 export const offersMap = (state: AppState) =>
 	state.viewer !== null && state.screen.kind !== 'welcome' && state.screen.kind !== 'pick'
 
+/** Whether the page is the welcome, which fills the window on a wide screen: there is no match yet to stand
+ * beside. */
+export const fillsWindow = (state: AppState) => state.screen.kind === 'welcome'
+
 const arrived = (state: AppState, step: Question): AppState => ({
 	...state,
 	screen: { kind: 'step', question: step },
@@ -199,7 +217,8 @@ export const matchHeader = (screen: Screen): { title: string; clock: string | nu
 				clock: screen.report.at === 'halftime' ? 'Halftime' : 'Full time'
 			}
 		case 'matches':
-			return screen.status.fixture
+		case 'before':
+			return screen.status?.fixture
 				? { title: `${screen.status.fixture.home} v ${screen.status.fixture.away}`, clock: null }
 				: null
 		case 'sheet': {

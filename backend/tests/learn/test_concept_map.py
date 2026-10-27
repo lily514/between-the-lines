@@ -93,6 +93,8 @@ def test_the_shipped_map_loads_and_keeps_its_rules() -> None:
         ConceptId.RESTART,
         ConceptId.OFFSIDE,
         ConceptId.FOUL,
+        ConceptId.BALL_WIN,
+        ConceptId.SHOT,
     }
 
 

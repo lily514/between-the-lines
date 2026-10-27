@@ -17,7 +17,8 @@ the very next decision:
   The breaks also guarantee at least ``MINIMUM_PER_MATCH`` questions: if there are fewer, a
   break asks about the best moment already passed, whatever its difficulty. Tier-0 concepts
   come round every few minutes, so each is asked at most ``TIER0_CAP`` times a match, and
-  all of them ``TIER0_MATCH_CAP`` times, leaving room for the others.
+  all of them ``TIER0_MATCH_CAP`` times, leaving room for the others; for the same reason a
+  queued tier-0 moment gives up its place to a rarer concept's moment when the queue is full.
 - **One per stoppage:** a dead ball whose own restart or foul will be asked about live doesn't
   also ask a saved review; the review waits for the next long stoppage or a break.
 - **Not near the whistle:** nothing is asked in play or at a dead ball in the last
@@ -42,7 +43,7 @@ from btl.learn.pace import Caps, Pace
 from btl.schema.event import Event
 from btl.schema.ids import ActionId
 from btl.schema.scoreboard import PERIOD_MINUTES
-from btl.schema.vocab import ActionType
+from btl.schema.vocab import ActionType, ConceptId
 
 LEVEL_FLOORS = ((0.7, 3), (0.4, 2), (0.0, 1))
 BANDS: Mapping[int, tuple[float, float]] = {1: (0.0, 0.4), 2: (0.3, 0.7), 3: (0.6, 1.0)}
@@ -54,7 +55,7 @@ QUEUE_LIMIT = 2
 # With everything mastered, review stays occasional.
 REVIEW_CAP = 1
 TIER0_CAP = 2
-TIER0_MATCH_CAP = 3
+TIER0_MATCH_CAP = 5
 WHISTLE_MARGIN = 30.0
 # The viewer's Preferences setting scales the caps; off asks nothing at all.
 PACE_CAPS: Mapping[Pace, Caps] = {
@@ -62,6 +63,9 @@ PACE_CAPS: Mapping[Pace, Caps] = {
     Pace.RARELY: Caps(1, BREAK_CAP, MINIMUM_PER_MATCH),
     Pace.OFF: Caps(0, 0, 0),
 }
+# Concepts whose review never names the stoppage it is asked at: a shot's result is the answer,
+# and a kickoff would say a goal was scored.
+HIDES_THE_RESTART = frozenset({ConceptId.SHOT})
 RESTART_NAMES: Mapping[ActionType, str] = {
     ActionType.THROW_IN: "throw-in",
     ActionType.GOALKICK: "goal kick",
@@ -217,8 +221,8 @@ def run_match(
                 if room_in_play() and spaced(period_id, seconds):
                     live = Delivered(Delivery.LIVE, period_id, seconds, PhaseOfPlay.SETTLED)
                     deliver(Prompt(item, level, live), in_play=True)
-            elif len(queue) < QUEUE_LIMIT and item.concept not in {c.concept for c in queue}:
-                queue.append(item)
+            elif item.concept not in {c.concept for c in queue}:
+                _save_for_a_stoppage(queue, item, wanted, concept_map)
             continue
 
         assert isinstance(item, Segment)
@@ -248,6 +252,29 @@ def run_match(
     return tuple(asked)
 
 
+def _save_for_a_stoppage(
+    queue: list[Candidate],
+    item: Candidate,
+    wanted: Callable[[ConceptKey], bool],
+    concept_map: ConceptMap,
+) -> None:
+    """Queue a moment for the next stoppage, up to ``QUEUE_LIMIT`` and one per concept.
+
+    A queued moment whose concept is no longer wanted gives up its place. So does a queued
+    basic (tier 0) when a rarer concept's moment comes along: basics come round every few
+    minutes, so another will be saved soon, while the rarer moment may be the match's only one.
+    """
+    queue[:] = [c for c in queue if wanted(c.concept)]
+    if len(queue) < QUEUE_LIMIT:
+        queue.append(item)
+        return
+    if concept_map.concept(item.concept).tier == 0:
+        return
+    basic = next((i for i, c in enumerate(queue) if concept_map.concept(c.concept).tier == 0), None)
+    if basic is not None:
+        queue[basic] = item
+
+
 def _deliver_queued(
     queue: list[Candidate],
     when: Delivered,
@@ -262,7 +289,8 @@ def _deliver_queued(
     """Ask about the oldest queued moments still worth asking, re-levelled to mastery now.
 
     ``stopped`` is the action after which play stopped, at a dead ball. A moment that includes
-    it led to the restart, such as an offside free kick, so naming the restart would hint.
+    it led to the restart, such as an offside free kick, so naming the restart would hint; so
+    would naming any restart to a concept in ``HIDES_THE_RESTART``.
     """
     delivered = 0
     while queue and delivered < limit:
@@ -271,7 +299,8 @@ def _deliver_queued(
             continue
         first, last = candidate.tag.span
         led_to_it = stopped is not None and first <= stopped <= last
-        asked_when = replace(when, restart=None) if led_to_it else when
+        hidden = led_to_it or candidate.tag.concept in HIDES_THE_RESTART
+        asked_when = replace(when, restart=None) if hidden else when
         prompt = Prompt(candidate, level_now(candidate.concept), asked_when)
         if deliver(prompt, in_play=in_play):
             delivered += 1

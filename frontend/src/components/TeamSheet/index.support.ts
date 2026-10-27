@@ -74,7 +74,7 @@ export const firstPick = (spots: readonly Spot[]): Spot | undefined => {
 }
 
 /** The name in the list and on the pitch label: their last name, as on the back of a shirt. */
-export const shirtName = (player: SheetPlayer): string => player.name.split(' ').at(-1) ?? player.name
+export const shirtName = (player: SheetPlayer): string => player.surname
 
 /** What a screen reader hears for a starter, on the pitch and in the list. */
 export const spotLabel = ({ player, team }: Spot) =>

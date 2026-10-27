@@ -1,0 +1,155 @@
+/* The match feed: time in mono on the left, then the team, the kind of event and its words. */
+
+.feed-list {
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	padding: 14px 18px var(--s-2);
+	border: 1px solid var(--border);
+	border-radius: var(--r-tile);
+	background: var(--surface);
+}
+
+.feed-list__head {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	padding-bottom: var(--s-2);
+}
+
+.feed-list__heading {
+	margin: 0;
+	font-family: var(--font-display);
+	font-size: 18px;
+	font-weight: 700;
+}
+
+.feed-list__order {
+	font-size: var(--fs-body-s);
+	color: var(--text-muted);
+}
+
+.feed-list__entries {
+	display: flex;
+	flex-direction: column;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.feed-list__entry {
+	display: grid;
+	grid-template-columns: 62px minmax(0, 1fr);
+	gap: 10px;
+	padding: 10px 0;
+	border-top: 1px solid var(--border);
+}
+
+.feed-list__entry--goal {
+	margin: var(--s-2) -12px;
+	padding: 14px 12px;
+	border: 2px solid var(--text);
+	border-radius: var(--r-btn);
+	background: var(--surface-raised);
+}
+
+.feed-list__entry--goal + .feed-list__entry {
+	border-top: 0;
+}
+
+.feed-list__clock,
+.feed-list__score {
+	font-family: var(--font-data);
+	font-size: var(--fs-body);
+	font-variant-numeric: tabular-nums;
+}
+
+.feed-list__clock {
+	padding-top: 2px;
+}
+
+.feed-list__body {
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+	min-width: 0;
+}
+
+.feed-list__meta {
+	display: inline-flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+	font-size: var(--fs-caption);
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--text-muted);
+}
+
+.feed-list__entry--goal .feed-list__meta {
+	color: var(--text);
+}
+
+.feed-list__text,
+.feed-list__names {
+	font-size: 17px;
+}
+
+.feed-list__entry--goal .feed-list__text {
+	font-family: var(--font-display);
+	font-size: var(--fs-display-m);
+	font-weight: 700;
+}
+
+.feed-list__arrow {
+	color: var(--text-muted);
+}
+
+.feed-list__icon {
+	flex: none;
+	width: 14px;
+	height: 14px;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2.2;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+
+.feed-list__icon--yellow_card {
+	fill: var(--yours);
+	stroke: var(--text);
+	stroke-width: 1.6;
+}
+
+.feed-list__icon--red_card {
+	fill: var(--note);
+	stroke: var(--text);
+	stroke-width: 1.6;
+}
+
+.feed-list__halftime {
+	display: flex;
+	align-items: center;
+	gap: var(--s-3);
+	padding: var(--s-4) 0 var(--s-3);
+}
+
+.feed-list__halftime .feed-list__meta {
+	color: var(--text);
+}
+
+.feed-list__rule {
+	flex: 1;
+	border-top: 2px solid var(--text);
+}
+
+.feed-list__start {
+	margin: auto 0 0;
+	padding: 10px 0 6px;
+	border-top: 1px dashed var(--border);
+	font-size: var(--fs-body-s);
+	color: var(--text-muted);
+	text-align: center;
+}

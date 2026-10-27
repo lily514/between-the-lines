@@ -1,4 +1,4 @@
-import { answer, ApiError, getStatus, nextStep, startViewer } from './client'
+import { answer, ApiError, getBeforeMatch, getStatus, markIntroduced, nextStep, startViewer } from './client'
 
 const reply = (status: number, body: unknown) =>
 	new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
@@ -46,6 +46,21 @@ test('an answer sends the question it answers', async () => {
 	await answer('lily', 'abc123', 'B')
 	expect(sentTo(spy).path).toBe('/api/viewers/lily/answers')
 	expect(sentBody(spy)).toEqual({ pack_id: 'abc123', key: 'B' })
+})
+
+test('before a match is a plain get, and finishing a first look posts the concepts', async () => {
+	const got = mockFetch(
+		reply(200, { match_number: 2, first_looks: [], level_ups: [], levels: [], unlock_note: null })
+	)
+	await getBeforeMatch('lily')
+	expect(sentTo(got).path).toBe('/api/viewers/lily/before-match')
+	expect(sentTo(got).init?.method).toBeUndefined()
+	vi.restoreAllMocks()
+	const posted = mockFetch(reply(200, { viewer_id: 'lily' }))
+	await markIntroduced('lily', ['tackles', 'shots_and_goals'])
+	expect(sentTo(posted).path).toBe('/api/viewers/lily/introduced')
+	expect(sentTo(posted).init?.method).toBe('POST')
+	expect(sentBody(posted)).toEqual({ concepts: ['tackles', 'shots_and_goals'] })
 })
 
 test('viewer names are escaped in the path', async () => {

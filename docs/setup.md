@@ -68,6 +68,12 @@ cd ../frontend && npm run api-types
 ```
 A backend test fails if `openapi.json` is out of date, and a frontend test fails if `schema.d.ts` doesn't match it.
 
+**After changing what the detectors find, the questions, or the evidence facts**, regenerate the page's scene fixtures in the same commit. Each is a real moment from seed 7's matches, one per concept asked about now, with its evidence pack, snapshot, timed path and the question each level asks; the page's animated scenes draw from them:
+```sh
+cd backend && uv run btl scene-fixtures   # writes frontend/src/scenes/fixtures/<concept>.json
+```
+A backend test fails if the committed fixtures are out of date.
+
 ## Optional: the container (Docker)
 
 The public demo runs as one container: the built page, the API and the learning engine, with the threat model fitted when the image is built. Building it locally needs [Docker Desktop](https://www.docker.com/products/docker-desktop/); deploying to Azure doesn't, since azd builds the image in Azure.

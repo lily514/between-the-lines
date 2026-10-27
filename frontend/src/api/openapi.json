@@ -44,9 +44,26 @@
         "title": "AnswerLineOut",
         "type": "object"
       },
+      "Band": {
+        "description": "A viewer's level on a concept, as the page keys its scenes and icons.",
+        "enum": [
+          "getting_there",
+          "solid",
+          "sharp"
+        ],
+        "title": "Band",
+        "type": "string"
+      },
       "Bar": {
-        "description": "One concept's mastery, from 0 to 1, and the level word for it (\"Solid\").",
+        "description": "One concept's mastery, from 0 to 1, with the level word (\"Solid\") and band for it.\n\nThe band is the level as a key the page switches on; \"Mastered\" is the Sharp band.",
         "properties": {
+          "band": {
+            "$ref": "#/components/schemas/Band"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
           "level": {
             "title": "Level",
             "type": "string"
@@ -58,14 +75,74 @@
           "value": {
             "title": "Value",
             "type": "number"
+          },
+          "waits_for": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Waits For",
+            "type": "array"
           }
         },
         "required": [
+          "key",
           "name",
           "value",
-          "level"
+          "level",
+          "band",
+          "waits_for"
         ],
         "title": "Bar",
+        "type": "object"
+      },
+      "BeforeMatchOut": {
+        "description": "What the page runs before the viewer's next match: First looks, then Level-ups.\n\n``first_looks`` are the active concepts the viewer hasn't been introduced to; ``level_ups``\nthe concepts whose band rose over their last match; ``levels`` a row per active concept;\n``unlock_note`` what the team sheet newly shows, if their stage rose, else null.",
+        "properties": {
+          "first_looks": {
+            "items": {
+              "$ref": "#/components/schemas/LevelRowOut"
+            },
+            "title": "First Looks",
+            "type": "array"
+          },
+          "level_ups": {
+            "items": {
+              "$ref": "#/components/schemas/LevelUpOut"
+            },
+            "title": "Level Ups",
+            "type": "array"
+          },
+          "levels": {
+            "items": {
+              "$ref": "#/components/schemas/LevelRowOut"
+            },
+            "title": "Levels",
+            "type": "array"
+          },
+          "match_number": {
+            "title": "Match Number",
+            "type": "integer"
+          },
+          "unlock_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unlock Note"
+          }
+        },
+        "required": [
+          "match_number",
+          "first_looks",
+          "level_ups",
+          "levels",
+          "unlock_note"
+        ],
+        "title": "BeforeMatchOut",
         "type": "object"
       },
       "Break": {
@@ -153,15 +230,25 @@
         "type": "object"
       },
       "ConceptMoveOut": {
-        "description": "A concept asked about now: mastery and level word at kick-off and at the break.",
+        "description": "A concept asked about now: mastery, level word and band at kick-off and at the break.",
         "properties": {
           "after": {
             "title": "After",
             "type": "number"
           },
+          "band": {
+            "$ref": "#/components/schemas/Band"
+          },
+          "band_before": {
+            "$ref": "#/components/schemas/Band"
+          },
           "before": {
             "title": "Before",
             "type": "number"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
           },
           "level": {
             "title": "Level",
@@ -182,16 +269,27 @@
           "strand": {
             "title": "Strand",
             "type": "string"
+          },
+          "waits_for": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Waits For",
+            "type": "array"
           }
         },
         "required": [
+          "key",
           "name",
           "strand",
           "before",
           "after",
           "level_before",
           "level",
-          "mastered"
+          "band_before",
+          "band",
+          "mastered",
+          "waits_for"
         ],
         "title": "ConceptMoveOut",
         "type": "object"
@@ -270,6 +368,109 @@
           "display"
         ],
         "title": "FactOut",
+        "type": "object"
+      },
+      "FeedEntryOut": {
+        "description": "One entry of the match feed, worded for the page.\n\n``at`` is when it happened, in seconds on the match clock; the page shows it once the clock\nreaches ``until``, a move's last touch. ``label`` names it, e.g. \"Shot \u00b7 saved\"; ``text`` is\nits line. A move's ``names`` are its players in turn; ``side`` is null only at halftime.",
+        "properties": {
+          "at": {
+            "title": "At",
+            "type": "number"
+          },
+          "kind": {
+            "enum": [
+              "kick_off",
+              "move",
+              "goal",
+              "own_goal",
+              "shot",
+              "corner",
+              "throw_in",
+              "goal_kick",
+              "foul",
+              "yellow_card",
+              "red_card",
+              "offside",
+              "halftime"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "names": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Names",
+            "type": "array"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FeedScoreOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "side": {
+            "anyOf": [
+              {
+                "enum": [
+                  "home",
+                  "away"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Side"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          },
+          "until": {
+            "title": "Until",
+            "type": "number"
+          }
+        },
+        "required": [
+          "at",
+          "until",
+          "side",
+          "kind",
+          "label",
+          "text",
+          "names",
+          "score"
+        ],
+        "title": "FeedEntryOut",
+        "type": "object"
+      },
+      "FeedScoreOut": {
+        "description": "The score after a goal, or at halftime.",
+        "properties": {
+          "away": {
+            "title": "Away",
+            "type": "integer"
+          },
+          "home": {
+            "title": "Home",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "home",
+          "away"
+        ],
+        "title": "FeedScoreOut",
         "type": "object"
       },
       "FeedbackOption": {
@@ -715,12 +916,162 @@
         "title": "HTTPValidationError",
         "type": "object"
       },
+      "IntroducedIn": {
+        "description": "The concepts the viewer has now had a First look at, by key.",
+        "properties": {
+          "concepts": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Concepts",
+            "type": "array"
+          }
+        },
+        "required": [
+          "concepts"
+        ],
+        "title": "IntroducedIn",
+        "type": "object"
+      },
+      "LevelRowOut": {
+        "description": "The viewer's level on one active concept, for a level list.\n\n``waits_for`` names the askable prerequisites not yet unlocked (locked while not empty);\n``moved`` says whether the band rose over the last match.",
+        "properties": {
+          "band": {
+            "$ref": "#/components/schemas/Band"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "level": {
+            "title": "Level",
+            "type": "string"
+          },
+          "mastered": {
+            "title": "Mastered",
+            "type": "boolean"
+          },
+          "mastery": {
+            "title": "Mastery",
+            "type": "number"
+          },
+          "moved": {
+            "title": "Moved",
+            "type": "boolean"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "strand": {
+            "title": "Strand",
+            "type": "string"
+          },
+          "strand_name": {
+            "title": "Strand Name",
+            "type": "string"
+          },
+          "waits_for": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Waits For",
+            "type": "array"
+          }
+        },
+        "required": [
+          "key",
+          "name",
+          "strand",
+          "strand_name",
+          "mastery",
+          "level",
+          "band",
+          "mastered",
+          "waits_for",
+          "moved"
+        ],
+        "title": "LevelRowOut",
+        "type": "object"
+      },
+      "LevelUpOut": {
+        "description": "A concept whose band rose over the viewer's last match: before and after.",
+        "properties": {
+          "after": {
+            "title": "After",
+            "type": "number"
+          },
+          "band": {
+            "$ref": "#/components/schemas/Band"
+          },
+          "band_before": {
+            "$ref": "#/components/schemas/Band"
+          },
+          "before": {
+            "title": "Before",
+            "type": "number"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "level": {
+            "title": "Level",
+            "type": "string"
+          },
+          "level_before": {
+            "title": "Level Before",
+            "type": "string"
+          },
+          "mastered": {
+            "title": "Mastered",
+            "type": "boolean"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "strand": {
+            "title": "Strand",
+            "type": "string"
+          },
+          "strand_name": {
+            "title": "Strand Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "name",
+          "strand",
+          "strand_name",
+          "before",
+          "after",
+          "level_before",
+          "level",
+          "band_before",
+          "band",
+          "mastered"
+        ],
+        "title": "LevelUpOut",
+        "type": "object"
+      },
       "MapConceptOut": {
-        "description": "A concept on the map. ``mastery`` and ``level`` are null for one coming later.",
+        "description": "A concept on the map. ``mastery``, ``level`` and ``band`` are null for one coming later.\n\n``waits_for`` names the askable prerequisites the viewer hasn't unlocked yet: the concept\nis locked while it isn't empty.",
         "properties": {
           "askable": {
             "title": "Askable",
             "type": "boolean"
+          },
+          "band": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Band"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "key": {
             "title": "Key",
@@ -770,6 +1121,13 @@
           "tier": {
             "title": "Tier",
             "type": "integer"
+          },
+          "waits_for": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Waits For",
+            "type": "array"
           }
         },
         "required": [
@@ -781,7 +1139,9 @@
           "prerequisites",
           "askable",
           "mastery",
-          "level"
+          "level",
+          "band",
+          "waits_for"
         ],
         "title": "MapConceptOut",
         "type": "object"
@@ -972,15 +1332,26 @@
         "type": "object"
       },
       "Movement": {
-        "description": "How one concept's mastery moved: before and after, from 0 to 1.",
+        "description": "How one concept's mastery moved: before and after, from 0 to 1, and its level now.",
         "properties": {
           "after": {
             "title": "After",
             "type": "number"
           },
+          "band": {
+            "$ref": "#/components/schemas/Band"
+          },
           "before": {
             "title": "Before",
             "type": "number"
+          },
+          "level": {
+            "title": "Level",
+            "type": "string"
+          },
+          "mastered": {
+            "title": "Mastered",
+            "type": "boolean"
           },
           "name": {
             "title": "Name",
@@ -990,7 +1361,10 @@
         "required": [
           "name",
           "before",
-          "after"
+          "after",
+          "level",
+          "band",
+          "mastered"
         ],
         "title": "Movement",
         "type": "object"
@@ -1145,11 +1519,18 @@
         "type": "object"
       },
       "PlayByPlayOut": {
-        "description": "Who had the ball between the viewer's last question and the next, for the page to play.\n\nTimes are seconds on the match clock: ``start`` where the viewer left off (0 at kick-off),\n``end`` when the next question is asked. The spells stop at ``names_until``, the moment the\nquestion is about, so they say nothing of how that play turned out; a question saved for a\nstoppage has play between it and ``end`` that goes unnamed.",
+        "description": "Who had the ball between the viewer's last question and the next, for the page to play.\n\nTimes are seconds on the match clock: ``start`` where the viewer left off (0 at kick-off),\n``end`` when the next question is asked. The spells stop at ``names_until``, the moment the\nquestion is about, so they say nothing of how that play turned out; a question saved for a\nstoppage has play between it and ``end`` that goes unnamed. ``feed`` runs from kick-off and\n``stats`` from ``start`` (or from ``names_until``, when the viewer left off after it), and\nboth stop at ``names_until`` too.",
         "properties": {
           "end": {
             "title": "End",
             "type": "number"
+          },
+          "feed": {
+            "items": {
+              "$ref": "#/components/schemas/FeedEntryOut"
+            },
+            "title": "Feed",
+            "type": "array"
           },
           "names_until": {
             "title": "Names Until",
@@ -1165,13 +1546,22 @@
           "start": {
             "title": "Start",
             "type": "number"
+          },
+          "stats": {
+            "items": {
+              "$ref": "#/components/schemas/StatsOut"
+            },
+            "title": "Stats",
+            "type": "array"
           }
         },
         "required": [
           "start",
           "end",
           "names_until",
-          "spells"
+          "spells",
+          "feed",
+          "stats"
         ],
         "title": "PlayByPlayOut",
         "type": "object"
@@ -1535,7 +1925,7 @@
         "type": "object"
       },
       "SheetPlayerOut": {
-        "description": "A starter on the team sheet.\n\n``at_kickoff`` is where they stood at kick-off, with the sheet's first team attacking left\nto right. ``numbers`` is null before stage 3, or if the viewer hasn't\nseen them play.",
+        "description": "A starter on the team sheet.\n\n``at_kickoff`` is where they stood at kick-off, with the sheet's first team attacking left\nto right. ``numbers`` is null before stage 3, or if the viewer hasn't\nseen them play. ``surname`` is the name on their shirt; it may have more than one word.",
         "properties": {
           "at_kickoff": {
             "maxItems": 2,
@@ -1575,11 +1965,16 @@
           "shirt": {
             "title": "Shirt",
             "type": "integer"
+          },
+          "surname": {
+            "title": "Surname",
+            "type": "string"
           }
         },
         "required": [
           "shirt",
           "name",
+          "surname",
           "role",
           "position",
           "at_kickoff",
@@ -1654,6 +2049,50 @@
         "title": "SheetTeamOut",
         "type": "object"
       },
+      "SideStatsOut": {
+        "description": "One team's numbers so far; ``possession`` is its share of time on the ball, in %.\n\n``attempts`` are its shots at goal; the name keeps clear of the outcome facts' \"shots\".",
+        "properties": {
+          "attempts": {
+            "title": "Attempts",
+            "type": "integer"
+          },
+          "corners": {
+            "title": "Corners",
+            "type": "integer"
+          },
+          "fouls": {
+            "title": "Fouls",
+            "type": "integer"
+          },
+          "goals": {
+            "title": "Goals",
+            "type": "integer"
+          },
+          "possession": {
+            "title": "Possession",
+            "type": "integer"
+          },
+          "red_cards": {
+            "title": "Red Cards",
+            "type": "integer"
+          },
+          "yellow_cards": {
+            "title": "Yellow Cards",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "goals",
+          "possession",
+          "attempts",
+          "corners",
+          "fouls",
+          "yellow_cards",
+          "red_cards"
+        ],
+        "title": "SideStatsOut",
+        "type": "object"
+      },
       "SpellOut": {
         "description": "One side's spell on the ball, as the play-by-play covers it.",
         "properties": {
@@ -1714,6 +2153,33 @@
           "viewer_id"
         ],
         "title": "StartIn",
+        "type": "object"
+      },
+      "StatsOut": {
+        "description": "Both teams' numbers as they stand from ``at`` seconds on the match clock, in ``period``.",
+        "properties": {
+          "at": {
+            "title": "At",
+            "type": "number"
+          },
+          "away": {
+            "$ref": "#/components/schemas/SideStatsOut"
+          },
+          "home": {
+            "$ref": "#/components/schemas/SideStatsOut"
+          },
+          "period": {
+            "title": "Period",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "at",
+          "period",
+          "home",
+          "away"
+        ],
+        "title": "StatsOut",
         "type": "object"
       },
       "StatusOut": {
@@ -1935,8 +2401,12 @@
         "type": "object"
       },
       "TouchOut": {
-        "description": "A player on the ball, at ``at`` seconds on the match clock.",
+        "description": "A player on the ball, at ``at`` seconds on the match clock.\n\n``surname`` is what the commentary calls them by; a surname may have more than one word.\n``action`` is what they did, e.g. \"crosses\", and ``where`` where, seen by their own team;\n``zone`` is that place as a key, for the page's strip of thirds.",
         "properties": {
+          "action": {
+            "title": "Action",
+            "type": "string"
+          },
           "at": {
             "title": "At",
             "type": "number"
@@ -1948,12 +2418,34 @@
           "player": {
             "title": "Player",
             "type": "string"
+          },
+          "surname": {
+            "title": "Surname",
+            "type": "string"
+          },
+          "where": {
+            "title": "Where",
+            "type": "string"
+          },
+          "zone": {
+            "enum": [
+              "own_third",
+              "middle_third",
+              "final_third",
+              "box"
+            ],
+            "title": "Zone",
+            "type": "string"
           }
         },
         "required": [
           "at",
           "player",
-          "number"
+          "surname",
+          "number",
+          "action",
+          "where",
+          "zone"
         ],
         "title": "TouchOut",
         "type": "object"
@@ -2177,6 +2669,46 @@
         "summary": "Answer"
       }
     },
+    "/api/viewers/{viewer_id}/before-match": {
+      "get": {
+        "description": "The First looks and Level-ups to run before the viewer's next match, and their levels.",
+        "operationId": "get_before_match_api_viewers__viewer_id__before_match_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "viewer_id",
+            "required": true,
+            "schema": {
+              "title": "Viewer Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BeforeMatchOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Before Match"
+      }
+    },
     "/api/viewers/{viewer_id}/club": {
       "put": {
         "description": "Choose the team to support, before answering anything.",
@@ -2265,6 +2797,56 @@
           }
         },
         "summary": "Get Concept Map"
+      }
+    },
+    "/api/viewers/{viewer_id}/introduced": {
+      "post": {
+        "description": "Record that the viewer has had a First look at these concepts.",
+        "operationId": "post_introduced_api_viewers__viewer_id__introduced_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "viewer_id",
+            "required": true,
+            "schema": {
+              "title": "Viewer Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IntroducedIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Post Introduced"
       }
     },
     "/api/viewers/{viewer_id}/matches": {

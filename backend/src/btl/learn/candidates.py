@@ -31,7 +31,11 @@ from btl.sim.shape import FOUR_FOUR_TWO
 MATCH_DESIGN = PlantRequest(
     tuple(
         MomentSpec(concept, level)
-        for concept in (ConceptId.LINE_BREAKING_PASS, ConceptId.COUNTER_PRESS)
+        for concept in (
+            ConceptId.LINE_BREAKING_PASS,
+            ConceptId.COUNTER_PRESS,
+            ConceptId.COUNTER_ATTACK,
+        )
         for level in LEVELS
     )
 )
@@ -159,8 +163,10 @@ def _after_a_foul(tag: ConceptTag) -> AskedWhen:
     return AskedWhen.AFTERWARDS if tag.evidence["advantage"] else AskedWhen.AT_THE_STOPPAGE
 
 
-# When each concept's moments may be asked, for those not asked in play.
+# When each concept's moments may be asked, for those not asked in play. A shot is only ever
+# reviewed: asked live, the stoppage after it would say how it ended.
 ASKED_WHEN: Mapping[ConceptId, Callable[[ConceptTag], AskedWhen]] = {
     ConceptId.RESTART: lambda tag: AskedWhen.AT_THE_STOPPAGE,
     ConceptId.FOUL: _after_a_foul,
+    ConceptId.SHOT: lambda tag: AskedWhen.AFTERWARDS,
 }

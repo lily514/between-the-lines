@@ -13,7 +13,10 @@ from statistics import mean
 import numpy as np
 import pytest
 
+from btl.concepts.base import match_context
+from btl.concepts.counter_attack import CounterAttack
 from btl.league.league import generate_league, season_fixtures
+from btl.schema.match import Match
 from btl.schema.vocab import ActionType
 from btl.sim.engine import simulate_match
 from btl.sim.stats import MatchStats, match_stats
@@ -25,15 +28,18 @@ LONGEST_THROW = 45.0
 
 
 @cache
-def all_stats() -> tuple[MatchStats, ...]:
+def all_matches() -> tuple[Match, ...]:
     league = generate_league(np.random.default_rng(0))
     fixtures = season_fixtures(league)
     return tuple(
-        match_stats(
-            simulate_match(league.club(home), league.club(away), seed, with_snapshots=False)
-        )
+        simulate_match(league.club(home), league.club(away), seed, with_snapshots=False)
         for seed, (home, away) in zip(SEEDS, fixtures, strict=False)
     )
+
+
+@cache
+def all_stats() -> tuple[MatchStats, ...]:
+    return tuple(match_stats(match) for match in all_matches())
 
 
 MEASURES: dict[str, Callable[[MatchStats], float]] = {
@@ -99,6 +105,16 @@ def test_mean_goals_fall_in_the_band() -> None:
 def test_penalties_are_rare() -> None:
     # Real: 0.28 a match.
     assert 0.1 <= mean(stats.penalties for stats in all_stats()) <= 0.6
+
+
+def test_counter_attacks_a_match_fall_in_the_band() -> None:
+    # Breaks from a ball won in the team's own half that reach the box within 12 s. The
+    # simulator's open play gives under one a match (mean 0.7 over these seeds, most matches
+    # none), fewer than real football's few; the designed matches plant three more.
+    counts = [len(CounterAttack().detect(match_context(match))) for match in all_matches()]
+
+    assert 0.3 <= mean(counts) <= 4
+    assert max(counts) <= 8
 
 
 def test_every_kind_of_restart_happens() -> None:

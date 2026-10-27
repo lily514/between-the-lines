@@ -55,6 +55,19 @@ ESCAPE_ANGLE = 0.6 * math.pi
 CUT_OUT_ALONG = (0.4, 0.8)
 PASSES_BEFORE_LOSING: Mapping[int, int] = {1: 0, 2: 1, 3: 2}
 
+# Where the ball is won for a counter-attack: in the team's own half, far enough from its own
+# goal that two passes reach the box with time to spare at the quickest level.
+COUNTER_ZONE = (22.0, 50.0)
+# How long the team takes from winning the ball to having it in the box, per level: the
+# quickest is unmistakable, the slowest is on the edge of an ordinary attack.
+SECONDS_TO_BOX: Mapping[int, tuple[float, float]] = {1: (7.0, 8.0), 2: (9.0, 10.0), 3: (11.0, 12.0)}
+FIRST_PASS_FORWARD = (20.0, 30.0)
+FIRST_PASS_ACROSS = 8.0
+INTO_THE_BOX_X = (89.0, 94.0)
+INTO_THE_BOX_ACROSS = 8.0
+TOUCH_IN_THE_BOX = 2.0
+TOUCH_IN_THE_BOX_SECONDS = 0.5
+
 
 class Template(Protocol):
     """Writes the opening of a possession that holds one teachable moment."""
@@ -230,9 +243,109 @@ class CounterPressTemplate:
         )
 
 
+@dataclass(frozen=True, slots=True)
+class CounterAttackTemplate:
+    """The team wins the ball in its own half and goes straight for the other box.
+
+    The ball is won in open play, played forward at once to a teammate ahead, then into the
+    penalty area, where the receiver takes a touch; play carries on from there. How long the
+    run to the box takes is set by the level: 7 to 8 seconds at level 1, when it is plainly a
+    counter-attack, 9 to 10 at level 2, and 11 to 12 at level 3, when it is on the edge of an
+    ordinary fast attack. The passes' flight is fixed by the distance, so the time is made up
+    with how long each player holds the ball before passing.
+
+    The answer is the touch in the box: the first action there, which is what a counter-attack
+    is measured to.
+    """
+
+    def fits(self, start: Start) -> bool:
+        """Whether the ball was won in open play, in the team's own half."""
+        return (
+            start.won_with in WINNING_ACTIONS and COUNTER_ZONE[0] <= start.ball.x <= COUNTER_ZONE[1]
+        )
+
+    def write(
+        self,
+        attack: Side,
+        defence: Side,
+        start: Start,
+        difficulty: int,
+        rng: Generator,
+        params: SimParams,
+    ) -> Script:
+        """Win, a pass forward, a pass into the box, and a touch there."""
+        if start.won_with is None:
+            raise ValueError("a counter-attack starts by winning the ball")
+        outfield = {Role.DEFENDER, Role.MIDFIELDER, Role.FORWARD}
+        ball, slot = start.ball, start.slot
+        ahead = Point(
+            ball.x + rng.uniform(*FIRST_PASS_FORWARD),
+            _clamp(
+                ball.y + rng.uniform(-FIRST_PASS_ACROSS, FIRST_PASS_ACROSS),
+                _MARGIN,
+                PITCH_WIDTH - _MARGIN,
+            ),
+        )
+        in_box = Point(
+            rng.uniform(*INTO_THE_BOX_X),
+            PITCH_WIDTH / 2 + rng.uniform(-INTO_THE_BOX_ACROSS, INTO_THE_BOX_ACROSS),
+        )
+        runner = _nearest(
+            attack.formation,
+            team_shape(attack.formation, ahead, in_possession=True),
+            ahead,
+            outfield,
+            {slot},
+        )
+        finisher = _nearest(
+            attack.formation,
+            team_shape(attack.formation, in_box, in_possession=True),
+            in_box,
+            outfield,
+            {slot, runner},
+        )
+        won_for = rng.uniform(*QUICK_TOUCH)
+        flights = (distance(ball, ahead) + distance(ahead, in_box)) / params.pass_speed
+        held = (rng.uniform(*SECONDS_TO_BOX[difficulty]) - won_for - flights) / 2
+        steps = (
+            Step(
+                slot,
+                start.won_with,
+                Result.SUCCESS,
+                BodyPart.FOOT,
+                ball,
+                ball,
+                won_for,
+                Phase.TRANSITION,
+            ),
+            _pass(slot, ball, ahead, (held, held), rng, params),
+            _pass(runner, ahead, in_box, (held, held), rng, params),
+            Step(
+                finisher,
+                ActionType.DRIBBLE,
+                Result.SUCCESS,
+                BodyPart.FOOT,
+                in_box,
+                Point(in_box.x + TOUCH_IN_THE_BOX, in_box.y),
+                TOUCH_IN_THE_BOX_SECONDS,
+                Phase.TRANSITION,
+            ),
+        )
+        return Script(
+            steps=steps,
+            then=PlayOn(steps[-1].end, finisher),
+            shapes={},
+            concept=ConceptId.COUNTER_ATTACK,
+            difficulty=difficulty,
+            pause=0,
+            answer=len(steps) - 1,
+        )
+
+
 TEMPLATES: Mapping[ConceptId, Template] = {
     ConceptId.LINE_BREAKING_PASS: LineBreakingTemplate(),
     ConceptId.COUNTER_PRESS: CounterPressTemplate(),
+    ConceptId.COUNTER_ATTACK: CounterAttackTemplate(),
 }
 
 

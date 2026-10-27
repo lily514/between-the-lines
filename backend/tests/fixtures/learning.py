@@ -17,7 +17,10 @@ COUNTER_PRESS = ConceptKey("counter_press")
 RESTARTS = ConceptKey("restarts")
 OFFSIDE = ConceptKey("offside")
 FOULS = ConceptKey("fouls_and_cards")
-ACTIVE = (RESTARTS, OFFSIDE, FOULS, LINE_BREAKING, COUNTER_PRESS)
+TRANSITIONS = ConceptKey("transitions")
+TACKLES = ConceptKey("tackles")
+SHOTS = ConceptKey("shots_and_goals")
+ACTIVE = (TACKLES, SHOTS, RESTARTS, OFFSIDE, FOULS, TRANSITIONS, LINE_BREAKING, COUNTER_PRESS)
 
 
 @cache

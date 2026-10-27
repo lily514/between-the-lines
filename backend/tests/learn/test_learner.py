@@ -58,6 +58,19 @@ def test_a_session_is_three_matches_and_remembers_what_was_asked() -> None:
     assert state.finished and state.match_number == 4
 
 
+def test_introduced_concepts_are_kept_in_the_order_first_met_without_repeats() -> None:
+    state = LearnerState("lily", 7).with_introduced([LINE_BREAKING, COUNTER_PRESS])
+
+    again = state.with_introduced([COUNTER_PRESS, LINE_BREAKING, ACTIVE[0]])
+
+    assert state.introduced == (LINE_BREAKING, COUNTER_PRESS)
+    assert again.introduced == (LINE_BREAKING, COUNTER_PRESS, ACTIVE[0])
+    assert state.not_yet_introduced(ACTIVE) == tuple(
+        key for key in ACTIVE if key not in (LINE_BREAKING, COUNTER_PRESS)
+    )
+    assert LearnerState("new", 7).introduced == ()
+
+
 def test_a_pace_set_before_any_answer_applies_at_once() -> None:
     state = LearnerState("lily", 7).with_pace(Pace.RARELY)
 

@@ -1,0 +1,71 @@
+/* The stream view's match feed: it fills the column, and the feed list scrolls inside it. */
+
+.match-feed {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+	height: 100%;
+	min-height: 0;
+}
+
+.match-feed__top {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--s-3);
+	color: var(--text-muted);
+}
+
+.match-feed__stand-in {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	font-size: var(--fs-body-s);
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.match-feed__note {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	font-size: var(--fs-body-s);
+}
+
+/* How fast the clock plays the match: a fast-forward mark and the multiple. */
+.match-feed__speed {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 3px 8px;
+	border: 1.5px solid var(--border-strong);
+	border-radius: var(--r-pill);
+	font-family: var(--font-data);
+	font-size: var(--fs-caption);
+	font-weight: 500;
+	font-variant-numeric: tabular-nums;
+	color: var(--text);
+}
+
+.match-feed__speed-icon {
+	width: 12px;
+	height: 12px;
+	fill: currentColor;
+}
+
+.match-feed__tv {
+	width: 20px;
+	height: 20px;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 1.8;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+
+.match-feed .feed-list {
+	flex: 1;
+	overflow-y: auto;
+}

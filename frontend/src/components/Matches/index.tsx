@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef } from 'react'
 import type { MatchSummary, Status } from '../../api/client.ts'
 import Crest from '../Shared/Crest.tsx'
+import LevelWord from '../Shared/LevelWord.tsx'
 import StartOver from '../Shared/StartOver.tsx'
 import { featured, scoreLine } from './index.support.ts'
 import './index.css'
@@ -102,7 +103,14 @@ const Matches = ({ status, matches, onWatch, onRejoin, onChangeTeam, onMap, onRe
 					{status.concepts.map(concept => (
 						<li key={concept.name}>
 							<span>{concept.name}</span>
-							<span className="matches__level">{concept.level}</span>
+							<span className="matches__level">
+								<LevelWord
+									level={concept.level}
+									band={concept.band}
+									mastered={concept.value >= status.thresholds.mastery}
+									waitsFor={concept.waits_for}
+								/>
+							</span>
 						</li>
 					))}
 				</ul>

@@ -1,15 +1,18 @@
 """The whole curriculum as the viewer's map: every concept, and where the viewer stands on it.
 
 The map shows all of the concept map's concepts by strand and tier, with their prerequisites.
-The concepts the app can ask about carry the viewer's mastery and level word; the others are
-"coming later" and carry neither, since nothing has measured them.
+The concepts the app can ask about carry the viewer's mastery, level word and band; the others
+are "coming later" and carry none, since nothing has measured them. An askable concept also
+says which askable prerequisites it still waits for: those the viewer hasn't unlocked yet, by
+the knowledge model's threshold. Without a viewer, a new viewer's priors stand in.
 """
 
 from dataclasses import dataclass
 
+from btl.learn.bkt import BktState
 from btl.learn.concept_map import ConceptKey
 from btl.learn.learner import LearnerState
-from btl.learn.levels import level_word
+from btl.learn.levels import Band, band_for, level_word
 from btl.learn.session import Course
 
 
@@ -24,7 +27,11 @@ class Strand:
 
 @dataclass(frozen=True, slots=True)
 class MapConcept:
-    """A concept on the map. ``mastery`` and ``level`` are None for one coming later."""
+    """A concept on the map. ``mastery``, ``level`` and ``band`` are None for one coming later.
+
+    ``waits_for`` names the askable prerequisites the viewer hasn't unlocked yet; empty when
+    the concept is open to them, and always empty for one coming later.
+    """
 
     key: ConceptKey
     name: str
@@ -35,6 +42,8 @@ class MapConcept:
     askable: bool
     mastery: float | None
     level: str | None
+    band: Band | None
+    waits_for: tuple[str, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -51,17 +60,35 @@ def strand_name(key: str) -> str:
     return key.replace("_", " ").capitalize()
 
 
+def waits_on(course: Course, known: BktState, key: ConceptKey) -> tuple[ConceptKey, ...]:
+    """The askable prerequisites of a concept the viewer hasn't unlocked yet, in map order."""
+    model = course.model
+    in_force = course.concept_map.prerequisites_in_force(key, course.active)
+    return tuple(
+        concept.key
+        for concept in course.concept_map.concepts
+        if concept.key in in_force and model.mastery(known, concept.key) < model.thresholds.unlock
+    )
+
+
+def waits_for(course: Course, known: BktState, key: ConceptKey) -> tuple[str, ...]:
+    """The names of the askable prerequisites a concept still waits for; empty once unlocked."""
+    return tuple(course.concept_map.concept(k).name for k in waits_on(course, known, key))
+
+
 def curriculum(course: Course, state: LearnerState | None) -> Curriculum:
     """The viewer's map of the whole curriculum, or the map alone, with no values, for no viewer."""
     concept_map = course.concept_map
     model = course.model
     replayed = None if state is None else state.model_state(model, course.active)
+    known = model.initial_state(course.active) if replayed is None else replayed
     concepts: list[MapConcept] = []
     for concept in concept_map.concepts:
         askable = concept.key in course.active
         mastery = None
         if askable and replayed is not None:
             mastery = model.mastery(replayed, concept.key)
+        waiting = waits_for(course, known, concept.key) if askable else ()
         concepts.append(
             MapConcept(
                 key=concept.key,
@@ -73,6 +100,8 @@ def curriculum(course: Course, state: LearnerState | None) -> Curriculum:
                 askable=askable,
                 mastery=mastery,
                 level=None if mastery is None else level_word(mastery, model.thresholds),
+                band=None if mastery is None else band_for(mastery),
+                waits_for=waiting,
             )
         )
     return Curriculum(

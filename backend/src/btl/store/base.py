@@ -16,7 +16,16 @@ from btl.schema.ids import TeamId
 VIEWER_ID = re.compile(r"[a-z0-9][a-z0-9_-]{0,63}")
 # Version 1 records have no club; they read as a viewer who hasn't chosen one. Version 2
 # attempts don't say which period they were asked in. Records without a pace read as normal.
-READABLE_VERSIONS = (1, 2, LEARNER_VERSION)
+# Version 3 records don't say which concepts the viewer has met: they read as the five concepts
+# askable before Milestone 5, so a returning viewer gets a First look at exactly the new ones.
+READABLE_VERSIONS = (1, 2, 3, LEARNER_VERSION)
+INTRODUCED_BEFORE_VERSION_4 = (
+    ConceptKey("restarts"),
+    ConceptKey("offside"),
+    ConceptKey("fouls_and_cards"),
+    ConceptKey("line_breaking_pass"),
+    ConceptKey("counter_press"),
+)
 
 
 class LearnerExistsError(Exception):
@@ -86,6 +95,7 @@ def to_document(state: LearnerState) -> dict[str, object]:
         "club": state.club,
         "pace": state.pace.value,
         "pace_next": None if state.pace_next is None else state.pace_next.value,
+        "introduced": list(state.introduced),
         "match_number": state.match_number,
         "attempts": [asdict(attempt) for attempt in state.attempts],
     }
@@ -105,6 +115,7 @@ def from_document(document: Mapping[str, object]) -> LearnerState:
     attempts = cast(list[dict[str, object]], document["attempts"])
     club = document.get("club")
     pace_next = document.get("pace_next")
+    introduced = document.get("introduced")
     return LearnerState(
         viewer_id=str(document["viewer_id"]),
         seed=cast(int, document["seed"]),
@@ -113,6 +124,9 @@ def from_document(document: Mapping[str, object]) -> LearnerState:
         club=None if club is None else TeamId(cast(int, club)),
         pace=Pace(document.get("pace", Pace.NORMAL)),
         pace_next=None if pace_next is None else Pace(pace_next),
+        introduced=INTRODUCED_BEFORE_VERSION_4
+        if introduced is None
+        else tuple(ConceptKey(str(key)) for key in cast(list[object], introduced)),
     )
 
 

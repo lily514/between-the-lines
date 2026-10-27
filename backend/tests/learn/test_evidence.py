@@ -43,6 +43,21 @@ OUTCOME_NAMES = {
     "box_position",
     "foul_outcome",
     "booking_note",
+    "recovery_type",
+    "pitch_third",
+    "metres_from_own_goal",
+    "high_recoveries",
+    "avg_high_recoveries",
+    "shot_outcome",
+    "shot_zone",
+    "chance_from",
+    "shots",
+    "shots_on_target",
+    "opp_shots",
+    "seconds_to_box",
+    "won_metres_from_own_goal",
+    "transition_shots",
+    "settled_shots",
 }
 ASKED_LATER = Delivered(Delivery.DEFERRED, 1, 2000.0, PhaseOfPlay.DEAD_BALL, "goal kick")
 

@@ -1,0 +1,631 @@
+{
+  "concept": "counter_press",
+  "detector": "counter_press",
+  "evidence_fields": [
+    "team",
+    "seconds_to_regain",
+    "pressers",
+    "metres_from_goal"
+  ],
+  "match": {
+    "away": "Penrith Sentinels",
+    "away_code": "PEN",
+    "home": "Hexham Anchors",
+    "home_code": "HEX",
+    "seed": 7003
+  },
+  "moment": {
+    "action_id": 912,
+    "clock": "58:10",
+    "difficulty": 0.49,
+    "evidence": {
+      "metres from goal": 46.7,
+      "seconds to win back": 2.5
+    },
+    "phase": "transition",
+    "span": [
+      909,
+      912
+    ]
+  },
+  "name": "Counter-pressing",
+  "pack": {
+    "asks": "what they did",
+    "concept": {
+      "analyst": "{team} regained possession {seconds_to_regain} s after losing it, {metres_from_goal} m from goal. A press that wins the ball this high starts an attack close to goal, but it leaves space behind if it fails.",
+      "beginner": "After losing the ball, {team} hunted it straight back instead of retreating. Winning it back quickly catches the opponent before they can spread out.",
+      "intermediate": "{team} won the ball back {seconds_to_regain} seconds after losing it, with {pressers} players close to the ball. A counter-press works as a group, while the opponent is still turning to play forward.",
+      "key": "counter_press",
+      "misconceptions": [
+        "Pressing means everyone sprints at the ball.",
+        "A team that loses the ball should always drop back first."
+      ],
+      "name": "Counter-pressing",
+      "objective": "Recognize a counter-press: winning the ball straight back after losing it, before the opponent can organize."
+    },
+    "context": {
+      "away_team": {
+        "display": "Penrith Sentinels",
+        "value": "Penrith Sentinels"
+      },
+      "home_team": {
+        "display": "Hexham Anchors",
+        "value": "Hexham Anchors"
+      },
+      "minute": {
+        "display": "58:10",
+        "value": "58:10"
+      },
+      "opponent": {
+        "display": "Penrith Sentinels",
+        "value": "Penrith Sentinels"
+      },
+      "score": {
+        "display": "0–0",
+        "value": "0–0"
+      },
+      "team": {
+        "display": "Hexham Anchors",
+        "value": "Hexham Anchors"
+      }
+    },
+    "correct_key": "B",
+    "form": "identify",
+    "level": 1,
+    "options": [
+      {
+        "correct": false,
+        "key": "A",
+        "label": "Stopped the attack with a foul",
+        "neutral": {},
+        "outcome": {},
+        "target_at": null
+      },
+      {
+        "correct": true,
+        "key": "B",
+        "label": "Hunted the ball straight back and won it",
+        "neutral": {},
+        "outcome": {},
+        "target_at": null
+      },
+      {
+        "correct": false,
+        "key": "C",
+        "label": "Dropped back into their shape",
+        "neutral": {},
+        "outcome": {},
+        "target_at": null
+      }
+    ],
+    "outcome": {
+      "metres_from_goal": {
+        "display": "46.7",
+        "value": 46.7
+      },
+      "player": {
+        "display": "#10 Alexis Marchet",
+        "value": "#10 Alexis Marchet"
+      },
+      "pressers": {
+        "display": "two",
+        "value": 2
+      },
+      "seconds_to_regain": {
+        "display": "2.5",
+        "value": 2.5
+      }
+    },
+    "pack_id": "b9ab71917ec1230c",
+    "pack_version": 4,
+    "picture": {
+      "action_id": 912,
+      "ball": [
+        58.3,
+        30.7
+      ],
+      "mark": null,
+      "markers": [
+        {
+          "home": true,
+          "role": "keeper",
+          "shirt": 1,
+          "side": "attacking",
+          "x": 8.6,
+          "y": 30.8
+        },
+        {
+          "home": true,
+          "role": "player",
+          "shirt": 2,
+          "side": "attacking",
+          "x": 40.0,
+          "y": 18.7
+        },
+        {
+          "home": true,
+          "role": "player",
+          "shirt": 3,
+          "side": "attacking",
+          "x": 42.5,
+          "y": 27.6
+        },
+        {
+          "home": true,
+          "role": "player",
+          "shirt": 4,
+          "side": "attacking",
+          "x": 41.0,
+          "y": 38.5
+        },
+        {
+          "home": true,
+          "role": "player",
+          "shirt": 5,
+          "side": "attacking",
+          "x": 38.8,
+          "y": 47.2
+        },
+        {
+          "home": true,
+          "role": "player",
+          "shirt": 8,
+          "side": "attacking",
+          "x": 52.2,
+          "y": 16.6
+        },
+        {
+          "home": true,
+          "role": "on the ball",
+          "shirt": 10,
+          "side": "attacking",
+          "x": 58.3,
+          "y": 30.7
+        },
+        {
+          "home": true,
+          "role": "player",
+          "shirt": 14,
+          "side": "attacking",
+          "x": 57.7,
+          "y": 39.1
+        },
+        {
+          "home": true,
+          "role": "player",
+          "shirt": 16,
+          "side": "attacking",
+          "x": 55.1,
+          "y": 45.8
+        },
+        {
+          "home": true,
+          "role": "player",
+          "shirt": 7,
+          "side": "attacking",
+          "x": 68.0,
+          "y": 21.3
+        },
+        {
+          "home": true,
+          "role": "player",
+          "shirt": 9,
+          "side": "attacking",
+          "x": 66.2,
+          "y": 41.7
+        },
+        {
+          "home": false,
+          "role": "keeper",
+          "shirt": 1,
+          "side": "defending",
+          "x": 102.3,
+          "y": 34.0
+        },
+        {
+          "home": false,
+          "role": "player",
+          "shirt": 2,
+          "side": "defending",
+          "x": 88.0,
+          "y": 53.8
+        },
+        {
+          "home": false,
+          "role": "player",
+          "shirt": 3,
+          "side": "defending",
+          "x": 88.9,
+          "y": 38.4
+        },
+        {
+          "home": false,
+          "role": "player",
+          "shirt": 4,
+          "side": "defending",
+          "x": 86.7,
+          "y": 27.6
+        },
+        {
+          "home": false,
+          "role": "player",
+          "shirt": 5,
+          "side": "defending",
+          "x": 88.0,
+          "y": 11.2
+        },
+        {
+          "home": false,
+          "role": "player",
+          "shirt": 8,
+          "side": "defending",
+          "x": 68.0,
+          "y": 54.7
+        },
+        {
+          "home": false,
+          "role": "player",
+          "shirt": 10,
+          "side": "defending",
+          "x": 67.2,
+          "y": 39.5
+        },
+        {
+          "home": false,
+          "role": "player",
+          "shirt": 14,
+          "side": "defending",
+          "x": 67.5,
+          "y": 26.5
+        },
+        {
+          "home": false,
+          "role": "player",
+          "shirt": 16,
+          "side": "defending",
+          "x": 69.6,
+          "y": 11.9
+        },
+        {
+          "home": false,
+          "role": "player",
+          "shirt": 7,
+          "side": "defending",
+          "x": 49.8,
+          "y": 48.2
+        },
+        {
+          "home": false,
+          "role": "player",
+          "shirt": 9,
+          "side": "defending",
+          "x": 48.1,
+          "y": 20.9
+        }
+      ],
+      "path": [
+        [
+          57.5,
+          27.8
+        ],
+        [
+          59.5,
+          27.8
+        ],
+        [
+          59.5,
+          27.8
+        ],
+        [
+          58.3,
+          30.7
+        ],
+        [
+          58.3,
+          30.7
+        ]
+      ]
+    },
+    "reveal_line": null,
+    "reveal_path": [
+      [
+        57.5,
+        27.8
+      ],
+      [
+        59.5,
+        27.8
+      ],
+      [
+        59.5,
+        27.8
+      ],
+      [
+        58.3,
+        30.7
+      ],
+      [
+        58.3,
+        30.7
+      ]
+    ],
+    "timing": {
+      "delivered_at": "59:10",
+      "delivered_phase": "dead ball",
+      "delivery": "deferred",
+      "occurred_at": "58:10",
+      "occurred_phase": "transition",
+      "restart": null
+    }
+  },
+  "path": [
+    {
+      "action": "pass",
+      "action_id": 909,
+      "at": 0.0,
+      "result": "fail",
+      "shirt": 7,
+      "side": "attacking",
+      "x": 57.5,
+      "y": 27.8
+    },
+    {
+      "action": "interception",
+      "action_id": 910,
+      "at": 1.51,
+      "result": "success",
+      "shirt": 14,
+      "side": "defending",
+      "x": 59.5,
+      "y": 27.8
+    },
+    {
+      "action": "dribble",
+      "action_id": 911,
+      "at": 2.44,
+      "result": "fail",
+      "shirt": 14,
+      "side": "defending",
+      "x": 59.5,
+      "y": 27.8
+    },
+    {
+      "action": "tackle",
+      "action_id": 912,
+      "at": 3.97,
+      "result": "success",
+      "shirt": 10,
+      "side": "attacking",
+      "x": 58.3,
+      "y": 30.7
+    },
+    {
+      "action": "end",
+      "action_id": 912,
+      "at": 4.64,
+      "x": 58.3,
+      "y": 30.7
+    }
+  ],
+  "questions": {
+    "1": {
+      "asks": "what they did",
+      "correct": "B",
+      "form": "identify",
+      "options": [
+        "Stopped the attack with a foul",
+        "Hunted the ball straight back and won it",
+        "Dropped back into their shape"
+      ],
+      "text": "Play has stopped. Hexham Anchors lost the ball to Penrith Sentinels. What did they do next?"
+    },
+    "2": {
+      "asks": "seconds to win back",
+      "correct": "B",
+      "form": "identify",
+      "options": [
+        "Under 2 s",
+        "2 to 3.5 s",
+        "3.5 s or more"
+      ],
+      "text": "Play has stopped. Hexham Anchors lost the ball to Penrith Sentinels and won it back. How long did that take?"
+    },
+    "3": {
+      "asks": "seconds to win back",
+      "correct": "A",
+      "form": "identify",
+      "options": [
+        "2 to 3 s",
+        "4 to 5 s",
+        "3 to 4 s"
+      ],
+      "text": "Play has stopped. Hexham Anchors lost the ball to Penrith Sentinels and won it back. How long did that take?"
+    }
+  },
+  "snapshot": {
+    "action_id": 912,
+    "ball": [
+      58.3,
+      30.7
+    ],
+    "markers": [
+      {
+        "home": true,
+        "role": "keeper",
+        "shirt": 1,
+        "side": "attacking",
+        "x": 8.6,
+        "y": 30.8
+      },
+      {
+        "home": true,
+        "role": "player",
+        "shirt": 2,
+        "side": "attacking",
+        "x": 40.0,
+        "y": 18.7
+      },
+      {
+        "home": true,
+        "role": "player",
+        "shirt": 3,
+        "side": "attacking",
+        "x": 42.5,
+        "y": 27.6
+      },
+      {
+        "home": true,
+        "role": "player",
+        "shirt": 4,
+        "side": "attacking",
+        "x": 41.0,
+        "y": 38.5
+      },
+      {
+        "home": true,
+        "role": "player",
+        "shirt": 5,
+        "side": "attacking",
+        "x": 38.8,
+        "y": 47.2
+      },
+      {
+        "home": true,
+        "role": "player",
+        "shirt": 8,
+        "side": "attacking",
+        "x": 52.2,
+        "y": 16.6
+      },
+      {
+        "home": true,
+        "role": "on the ball",
+        "shirt": 10,
+        "side": "attacking",
+        "x": 58.3,
+        "y": 30.7
+      },
+      {
+        "home": true,
+        "role": "player",
+        "shirt": 14,
+        "side": "attacking",
+        "x": 57.7,
+        "y": 39.1
+      },
+      {
+        "home": true,
+        "role": "player",
+        "shirt": 16,
+        "side": "attacking",
+        "x": 55.1,
+        "y": 45.8
+      },
+      {
+        "home": true,
+        "role": "player",
+        "shirt": 7,
+        "side": "attacking",
+        "x": 68.0,
+        "y": 21.3
+      },
+      {
+        "home": true,
+        "role": "player",
+        "shirt": 9,
+        "side": "attacking",
+        "x": 66.2,
+        "y": 41.7
+      },
+      {
+        "home": false,
+        "role": "keeper",
+        "shirt": 1,
+        "side": "defending",
+        "x": 102.3,
+        "y": 34.0
+      },
+      {
+        "home": false,
+        "role": "player",
+        "shirt": 2,
+        "side": "defending",
+        "x": 88.0,
+        "y": 53.8
+      },
+      {
+        "home": false,
+        "role": "player",
+        "shirt": 3,
+        "side": "defending",
+        "x": 88.9,
+        "y": 38.4
+      },
+      {
+        "home": false,
+        "role": "player",
+        "shirt": 4,
+        "side": "defending",
+        "x": 86.7,
+        "y": 27.6
+      },
+      {
+        "home": false,
+        "role": "player",
+        "shirt": 5,
+        "side": "defending",
+        "x": 88.0,
+        "y": 11.2
+      },
+      {
+        "home": false,
+        "role": "player",
+        "shirt": 8,
+        "side": "defending",
+        "x": 68.0,
+        "y": 54.7
+      },
+      {
+        "home": false,
+        "role": "player",
+        "shirt": 10,
+        "side": "defending",
+        "x": 67.2,
+        "y": 39.5
+      },
+      {
+        "home": false,
+        "role": "player",
+        "shirt": 14,
+        "side": "defending",
+        "x": 67.5,
+        "y": 26.5
+      },
+      {
+        "home": false,
+        "role": "player",
+        "shirt": 16,
+        "side": "defending",
+        "x": 69.6,
+        "y": 11.9
+      },
+      {
+        "home": false,
+        "role": "player",
+        "shirt": 7,
+        "side": "defending",
+        "x": 49.8,
+        "y": 48.2
+      },
+      {
+        "home": false,
+        "role": "player",
+        "shirt": 9,
+        "side": "defending",
+        "x": 48.1,
+        "y": 20.9
+      }
+    ]
+  },
+  "strand": "pressure"
+}

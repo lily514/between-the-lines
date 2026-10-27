@@ -32,6 +32,9 @@ from tests.fixtures.learning import (
     LINE_BREAKING,
     OFFSIDE,
     RESTARTS,
+    SHOTS,
+    TACKLES,
+    TRANSITIONS,
     designed_with_candidates,
 )
 from tests.fixtures.matches import HOME, HOME_MIDFIELDER, make_event
@@ -44,6 +47,9 @@ DETECTORS = {
     RESTARTS: ConceptId.RESTART,
     OFFSIDE: ConceptId.OFFSIDE,
     FOULS: ConceptId.FOUL,
+    TACKLES: ConceptId.BALL_WIN,
+    SHOTS: ConceptId.SHOT,
+    TRANSITIONS: ConceptId.COUNTER_ATTACK,
 }
 MINUTE = 60.0
 
@@ -55,11 +61,15 @@ class Scenario:
     candidates: list[Candidate] = field(default_factory=list[Candidate])
     segments: list[Segment] = field(default_factory=list[Segment])
     events: list[Event] = field(default_factory=list[Event])
-    # The basics start mastered, so only the two concepts under test are on the frontier.
+    # The basics start mastered, so only the two concepts under test are on the frontier, and
+    # counter-pressing, which waits for tackles, is open.
     mastery: dict[ConceptKey, float] = field(
         default_factory=lambda: {
             LINE_BREAKING: 0.15,
             COUNTER_PRESS: 0.15,
+            TACKLES: 0.99,
+            SHOTS: 0.99,
+            TRANSITIONS: 0.99,
             RESTARTS: 0.99,
             OFFSIDE: 0.99,
             FOULS: 0.99,
@@ -271,6 +281,41 @@ def test_with_everything_mastered_review_is_occasional_and_hard() -> None:
     assert [(p.level, minutes([p])[0]) for p in prompts] == [(3, 10)]
 
 
+def test_a_queued_basic_gives_up_its_place_to_a_rarer_concepts_moment() -> None:
+    scene = Scenario()
+    # Tackles stays high enough to keep counter-pressing open, so its moment is a hard one.
+    scene.mastery |= {TACKLES: 0.85, SHOTS: 0.15}
+    scene.moment(10, 0.8, TRANSITION, TACKLES)
+    scene.moment(11, 0.2, SETTLED, SHOTS, asked_when=AskedWhen.AFTERWARDS)
+    # The queue is full of basics when the match's one line-breaking review comes along.
+    scene.moment(12, 0.2, TRANSITION, LINE_BREAKING)
+    scene.moment(13, 0.2, TRANSITION, COUNTER_PRESS)
+    scene.dead_ball(20)
+    scene.dead_ball(30)
+    scene.dead_ball(40)
+
+    prompts = scene.run()
+
+    assert [p.candidate.concept for p in prompts] == [LINE_BREAKING, COUNTER_PRESS]
+
+
+def test_a_queued_moment_no_longer_wanted_gives_up_its_place() -> None:
+    scene = Scenario()
+    scene.mastery |= {TACKLES: 0.15}
+    scene.moment(10, 0.2, TRANSITION, TACKLES)
+    scene.moment(11, 0.2, TRANSITION, LINE_BREAKING)
+    scene.dead_ball(20)
+    scene.dead_ball(30)
+
+    def master_tackles_first(prompt: Prompt) -> bool:
+        scene.mastery[TACKLES] = 0.97
+        return True
+
+    prompts = scene.run(master_tackles_first)
+
+    assert [p.candidate.concept for p in prompts] == [TACKLES, LINE_BREAKING]
+
+
 def test_a_question_that_could_not_be_asked_does_not_count() -> None:
     scene = Scenario()
     scene.moment(10, difficulty=0.2)
@@ -368,18 +413,27 @@ def test_play_that_went_on_after_a_foul_is_only_reviewed_later() -> None:
 
 def test_each_basic_concept_is_capped_and_so_are_all_of_them_together() -> None:
     scene = beginner_on_the_basics()
-    stoppage = AskedWhen.AT_THE_STOPPAGE
+    stoppage, afterwards = AskedWhen.AT_THE_STOPPAGE, AskedWhen.AFTERWARDS
+    # Four restarts: two are asked, then the concept is capped.
     for minute in (5, 14, 23, 32):
         scene.moment(minute, 0.1, SETTLED, RESTARTS, asked_when=stoppage)
-    scene.moment(50, 0.1, SETTLED, OFFSIDE, period=2)
-    scene.moment(60, 0.1, SETTLED, FOULS, period=2, asked_when=stoppage)
+    # Two offside calls live, which fills the in-play cap, and a third saved for the break.
+    scene.moment(23.5, 0.1, SETTLED, OFFSIDE)
+    scene.moment(32.5, 0.1, SETTLED, OFFSIDE)
+    scene.moment(40, 0.1, TRANSITION, OFFSIDE)
+    # Advantage after a foul, reviewed at half-time: the fifth basic question of the match.
+    scene.moment(42, 0.1, SETTLED, FOULS, asked_when=afterwards)
+    scene.moment(50, 0.1, SETTLED, FOULS, period=2, asked_when=afterwards)
+    scene.breaks()
 
     prompts = scene.run()
 
     concepts = [p.candidate.concept for p in prompts]
     assert concepts.count(RESTARTS) == TIER0_CAP
-    assert len(concepts) == TIER0_MATCH_CAP
-    assert FOULS not in concepts
+    assert concepts.count(OFFSIDE) == TIER0_CAP
+    assert len(concepts) == TIER0_MATCH_CAP == 5
+    assert concepts.count(FOULS) == 1
+    assert prompts[-1].delivered.phase is PhaseOfPlay.HALF_TIME
 
 
 def test_a_review_at_the_stoppage_its_moment_caused_names_no_restart() -> None:
@@ -395,6 +449,20 @@ def test_a_review_at_the_stoppage_its_moment_caused_names_no_restart() -> None:
 
     assert named_not.delivered.restart is None
     assert named.delivered.restart == "free kick"
+
+
+def test_a_shot_review_never_names_the_stoppage_it_is_asked_at() -> None:
+    scene = Scenario()
+    scene.mastery |= {SHOTS: 0.15}
+    scene.moment(10, 0.2, SETTLED, SHOTS, asked_when=AskedWhen.AFTERWARDS)
+    # The kickoff after a later goal, which the shot had nothing to do with.
+    scene.dead_ball(20, seconds=40, restart=ActionType.PASS)
+
+    (prompt,) = scene.run()
+
+    assert prompt.candidate.concept == SHOTS
+    assert prompt.delivered.delivery is Delivery.DEFERRED
+    assert prompt.delivered.restart is None
 
 
 def test_a_stoppage_asks_only_its_own_restart_and_the_review_waits() -> None:

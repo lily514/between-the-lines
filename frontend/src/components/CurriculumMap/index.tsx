@@ -1,7 +1,18 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
 import type { ConceptMap, MapConcept } from '../../api/client.ts'
+import LevelWord from '../Shared/LevelWord.tsx'
 import { percent } from '../Shared/ProgressBar.support.ts'
-import { BAND, buildsOn, FOOT, MAP_WIDTH, place, startingConcept, type PlacedConcept } from './index.support.ts'
+import {
+	BAND,
+	buildsOn,
+	FOOT,
+	levelText,
+	MAP_WIDTH,
+	place,
+	startingConcept,
+	stateOf,
+	type PlacedConcept
+} from './index.support.ts'
 import './index.css'
 
 export interface CurriculumMapProps {
@@ -17,7 +28,8 @@ const RING = 2 * Math.PI * NODE_R
 
 /** "Your pitch" (CM-A): every concept there is to learn, by strand across and tier up the pitch, deepest at the top.
  *
- * Concepts asked about now show the viewer's level; the rest are coming later, drawn dashed. Choosing one (tap, or
+ * Concepts asked about now show the viewer's level, or what they unlock after while they wait on another concept; the
+ * rest are coming later, drawn dashed. Choosing one (tap, or
  * focus and Enter) fills the card below and draws what it builds on; choosing one from the list opens its card in a
  * dialog, so the viewer need not scroll back up. It opens over whatever screen the viewer was on; Back or Esc closes
  * it. */
@@ -102,7 +114,9 @@ const CurriculumMap = ({ map, error, onBack }: CurriculumMapProps) => {
 													}}>
 													{concept.name}
 												</button>{' '}
-												<span className="curriculum-map__level">{levelText(concept)}</span>
+												<span className="curriculum-map__level">
+													<Level map={map} concept={concept} />
+												</span>
 											</li>
 										))}
 								</ul>
@@ -124,8 +138,23 @@ const CurriculumMap = ({ map, error, onBack }: CurriculumMapProps) => {
 	)
 }
 
-/** A concept's level in words, or that it is coming later. */
-const levelText = (concept: MapConcept) => (concept.askable ? (concept.level ?? 'Asked now') : 'Coming later')
+interface LevelProps {
+	map: ConceptMap
+	concept: MapConcept
+}
+
+/** The level word with its icon for a concept asked now, the locked state while it waits, or "Coming later". */
+const Level = ({ map, concept }: LevelProps) =>
+	concept.level === null || concept.band === null ? (
+		<>{levelText(concept)}</>
+	) : (
+		<LevelWord
+			level={concept.level}
+			band={concept.band}
+			mastered={stateOf(concept, map.thresholds.mastery) === 'mastered'}
+			waitsFor={concept.waits_for}
+		/>
+	)
 
 interface PitchProps {
 	map: ConceptMap
@@ -258,7 +287,7 @@ const Node = ({ node, selected, onChoose }: NodeProps) => {
 			onKeyDown={onKeyDown}>
 			{selected && <circle cx={x} cy={y} r={NODE_R + 1.4} className="curriculum-map__halo" />}
 			<circle cx={x} cy={y} r={NODE_R} className="curriculum-map__dot" />
-			{state === 'asked' && (
+			{(state === 'asked' || state === 'locked') && (
 				<circle
 					cx={x}
 					cy={y}
@@ -294,6 +323,10 @@ const Legend = () => (
 			Asked now, with your level
 		</li>
 		<li>
+			<span className="curriculum-map__key curriculum-map__key--locked" aria-hidden="true" />
+			Unlocks after another concept
+		</li>
+		<li>
 			<span className="curriculum-map__key curriculum-map__key--later" aria-hidden="true" />
 			Coming later
 		</li>
@@ -319,7 +352,7 @@ const ConceptCard = ({ map, concept, nameId }: ConceptCardProps) => {
 				{strand?.name} · Tier {concept.tier}, {map.tiers[concept.tier]}
 			</p>
 			<p className="curriculum-map__card-level">
-				{levelText(concept)}
+				<Level map={map} concept={concept} />
 				{concept.mastery !== null && (
 					<span className="curriculum-map__percent"> {percent(concept.mastery)}%</span>
 				)}

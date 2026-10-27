@@ -20,6 +20,7 @@ Built for the "Inside the Game" hackathon.
 | 2e. Getting started | Pick a team to support, with club crests; a team sheet before each match that grows with you: names and positions in plain words, then the formation and kick-off shape, then players' numbers from matches you've watched | Done |
 | 3. Deploy it properly | A public demo on Azure Container Apps: one `azd up` builds the container and creates every resource from Bicep; managed identity and no keys anywhere; progress kept in Blob Storage; daily limits on the model; events and queries in Log Analytics | Done |
 | 4. Match day | Matches as home base, with dates and a match to rejoin; the curriculum map from any screen; halftime and full-time scouting reports with a radar; asking rules for stoppages and the whistle; Preferences | In review |
+| 5. More to ask | Three more concepts (tackles and turnovers, shots and goals, transitions and counter-attacks); level icons and locked states; animated scenes of real moments, one per concept and level; the welcome as a story, and First look and Level-up flows before a match | In review |
 
 Work in progress lives on milestone branches and is merged to `main` when each milestone is complete. 2c, 2d and then 2e were built before 2b, while Azure wasn't set up yet.
 
@@ -106,13 +107,23 @@ uv run btl serve      # then open http://127.0.0.1:8000
 The first screen says what the questions cover. Press Continue, then pick a team to support, or let the page pick one for you. Your three matches are that club's fixtures, and **Matches** is home base: the next match with its date, a match you left part-way through to rejoin, your level on each concept in words, and the reports of matches you've finished. Before each match, "Who's playing" shows both elevens, your team first. There is no sign-in: the page gives you a random id and keeps it in this browser, so a reload, or a visit another day, brings you back to Matches. "Start over" forgets it, after asking. Your answers are saved in the same kind of record `btl learn` writes.
 
 <p>
-  <img src="docs/milestone-4/screenshots/matches-phone.png" alt="Matches on a phone: a match part-way through at 0–0, with Rejoin, and the five concepts asked now with a level word each" width="260">
-  <img src="docs/milestone-4/screenshots/map-phone.png" alt="Your pitch, the curriculum map: twenty concepts by strand and tier, the five asked now ringed with the viewer's progress, the rest dashed as coming later" width="260">
+  <img src="docs/milestone-4/screenshots/matches-phone.png" alt="Matches on a phone: a match part-way through at 0–0, with Rejoin, and the concepts asked now with a level word each" width="260">
+  <img src="docs/milestone-4/screenshots/map-phone.png" alt="Your pitch, the curriculum map: twenty concepts by strand and tier, the eight asked now ringed with the viewer's progress, the rest dashed as coming later" width="260">
   <img src="docs/milestone-4/screenshots/report-phone.png" alt="The full-time scouting report: the score and goals, and a radar of the four strands with Chances marked Not yet" width="260">
 </p>
 <p>
   <img src="docs/milestone-4/screenshots/preferences-phone-light.png" alt="Preferences in the light theme: questions set to Rarely, the viewer's team with Change, and the theme choice" width="260">
   <img src="docs/milestone-4/screenshots/matches-desktop.png" alt="Matches on a desktop, in the side panel beside the viewer's own match" width="520">
+</p>
+
+<p>
+  <img src="docs/milestone-5/screenshots/welcome-step-phone.png" alt="The welcome's first step on a phone: a scene of the ball going out for a corner, the Game flow strand's concepts, and a question you might get" width="260">
+  <img src="docs/milestone-5/screenshots/level-up-phone.png" alt="A Level-up step before match 2: the line-breaking scene at Solid with the defending lines named, 15% to 53%, Now Solid" width="260">
+  <img src="docs/milestone-5/screenshots/level-up-summary-phone.png" alt="The Level-up summary before match 3: every concept with its level word and icon, the ones that moved marked New, two of them Mastered" width="260">
+</p>
+<p>
+  <img src="docs/milestone-5/screenshots/first-look-phone.png" alt="A First look at Tackles and turnovers: the scene at Getting there with the word A tackle where the ball was won" width="260">
+  <img src="docs/milestone-5/screenshots/matches-phone.png" alt="Matches with the eight concepts: a level icon beside each level word, and two concepts shown as Unlocks after Tackles and turnovers" width="260">
 </p>
 
 <p>
@@ -127,10 +138,12 @@ The first screen says what the questions cover. Press Continue, then pick a team
 </p>
 <img src="docs/milestone-2c/screenshots/review-question-desktop.png" alt="A review question at a free kick on a desktop, in the side panel beside the viewer's own match" width="720">
 
-- **The team sheet grows with you.** A beginner sees each player's shirt number, name and position in plain words ("Left back: defends the left side, and joins attacks down it"). Get to level 2 in any concept and it adds the formation and where everyone stood at kick-off; at level 3 it adds each player's passes, line-breaking passes and threat added, counted only from matches you have finished, so it never hints at what you'll be asked. Your team is marked on the pitch with a dashed ring and on every screen with "You", never by colour alone.
+- **The welcome is a story.** One step per strand, each with an animated scene of a real moment from the data and a question you might get, then where everyone starts. Before a match, a **First look** introduces any concept new to you, and a **Level-up** shows each concept that moved up (Solid, Sharp, Mastered) with its scene at the new level, your levels, and what the team sheet now shows. Every scene has a Pause motion button, and with reduced motion it is a still frame.
+- **Eight concepts are asked about:** restarts, offside, fouls and cards, tackles and turnovers, shots and goals, line-breaking passes, counter-pressing, and transitions and counter-attacks. A concept that waits on another says so ("Unlocks after Tackles and turnovers") wherever levels are listed, and every level word has an icon beside it.
+- **The team sheet grows with you.** A beginner sees each player's shirt number, name and position in plain words ("Left back: defends the left side, and joins attacks down it"). Get to Solid in any concept and it adds the formation and where everyone stood at kick-off; at Sharp it adds each player's passes, line-breaking passes and threat added, counted only from matches you have finished, so it never hints at what you'll be asked. Your team is marked on the pitch with a dashed ring and on every screen with "You", never by colour alone.
 - **Questions in settled play** are asked straight away ("Your read"), and so are restarts and fouls, in the stoppage they cause. Moments from a transition wait for the next stoppage or the break, which the page says when it asks. A throw-in question marks where the ball went out, and an offside reveal draws the offside line.
 - **Lock in, then the reveal.** The real pass is drawn on the pitch, then the verdict and the explanation appear. Every number on the page comes from the match's evidence. The browser computes nothing itself, and it is never sent the answer before you lock in.
-- **The map from anywhere.** The map button in every header opens "Your pitch": all 20 concepts by strand and tier, the five asked now with your level, the rest coming later. Choose one to see what it builds on. Back (or Esc) returns you to the same screen and scroll position, with a half-answered question just as you left it.
+- **The map from anywhere.** The map button in every header opens "Your pitch": all 20 concepts by strand and tier, the eight asked now with your level and its icon (or what they unlock after), the rest coming later. Choose one to see what it builds on. Back (or Esc) returns you to the same screen and scroll position, with a half-answered question just as you left it.
 - **Scouting reports** come at halftime and full time: the score and goals, a radar of the four strands from kick-off to now (Chances says "Not yet" rather than zero), a scout's note in words, and the questions you answered. Finished matches keep their report on Matches.
 - **Asking rules.** One question per stoppage: a restart's own question wins and a saved one waits. Nothing is asked in the last 30 seconds of a half; a settled moment there waits for the break. After you answer, the next step says what happened while you were answering.
 - **Preferences** (the ⚙ in the header): questions normal, rarely or off (a change made during a match starts with the next one), your team while it can still change, and light, dark or your device's theme.
@@ -276,7 +289,7 @@ ContainerAppConsoleLogs
 - **The online demo sleeps.** It scales to zero when idle, so the first visit after a quiet spell waits about 30 seconds. While judges are likely to visit, one replica is kept warm.
 - **Every club plays 4-4-2,** so the team sheet's formation never changes. Giving clubs their own shape would change every match, and the simulator's realism checks with it.
 - **Line-breaking passes are counted generously on the team sheet.** The simulator's flat midfield lines let short passes between level players count, so a central midfielder makes about 17–19 a match. Questions only use the clearer ones.
-- **The learner model's numbers are set by hand,** per tier of the curriculum, not fitted to real learners' answers, and five concepts are askable so far.
+- **The learner model's numbers are set by hand,** per tier of the curriculum, not fitted to real learners' answers, and eight concepts are askable so far.
 
 ## Walkthrough: the data engine
 

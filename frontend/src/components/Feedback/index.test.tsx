@@ -65,6 +65,14 @@ test('the learner model’s move is shown as words, numbers and a bar with both 
 	expect(screen.getByText('95 mastered')).toBeInTheDocument()
 })
 
+test('the move ends with the level word and its icon, as the API sends them', () => {
+	render(<Feedback feedback={identifyFeedback} question={identifyQuestion} onContinue={vi.fn()} />)
+	const understanding = within(screen.getByRole('region', { name: 'Your understanding' }))
+	const level = understanding.getByText('Solid')
+	expect(level.querySelector('.level-icon')?.getAttribute('data-band')).toBe('solid')
+	expect(understanding.getByText(/^Line-breaking passes:/)).toHaveTextContent('15% → 42% · Solid')
+})
+
 test('the real play is drawn as a reveal', () => {
 	render(<Feedback feedback={predictFeedback} question={predictQuestion} onContinue={vi.fn()} />)
 	expect(screen.getByTestId('pitch-path')).toBeInTheDocument()

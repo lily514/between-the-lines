@@ -1,0 +1,14 @@
+.level-word {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	color: var(--know);
+}
+
+.level-word--locked {
+	padding: 1px var(--s-2);
+	border: 1.5px dashed var(--border-strong);
+	border-radius: var(--r-chip);
+	font-weight: 500;
+	color: var(--text-muted);
+}

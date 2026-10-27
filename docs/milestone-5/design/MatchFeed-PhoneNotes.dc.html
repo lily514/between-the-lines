@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<title>Phone earlier notes sheet</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style></style>
+<style>
+body{margin:0}
+a{color:#8C2440}a:hover{color:#6E1C32}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; font-family: 'DM Sans', system-ui, sans-serif; color: {{c.text}}">
+<div aria-hidden="true" style="position: absolute; inset: 0">
+<dc-import name="PhoneLive" dark="{{dark}}" hint-size="390px,844px"></dc-import>
+</div>
+<div aria-hidden="true" style="position: absolute; inset: 0; background: {{c.scrim}}"></div>
+
+<section role="dialog" aria-labelledby="notes-h" style="position: absolute; left: 0; right: 0; bottom: 0; top: 112px; box-sizing: border-box; background: {{c.bg}}; border-radius: 20px 20px 0 0; border-top: 1px solid {{c.border}}; padding: 8px 16px 16px; display: flex; flex-direction: column; gap: 12px">
+<div aria-hidden="true" style="align-self: center; width: 40px; height: 4px; border-radius: 2px; background: {{c.borderStrong}}"></div>
+
+<div style="display: flex; align-items: center; justify-content: space-between">
+<div style="display: flex; flex-direction: column; gap: 2px">
+<h2 id="notes-h" style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-size: 22px; font-weight: 700">Earlier notes</h2>
+<span style="font-size: 14px; color: {{c.muted}}">Whitby Kestrels v Bakewell Badgers · <span style="font-family: 'JetBrains Mono', monospace">00:29</span></span>
+</div>
+<a href="PhoneLive.dc.html" aria-label="Close notes and go back to the match" style="width: 44px; height: 44px; border-radius: 10px; border: 1px solid {{c.border}}; background: {{c.raised}}; color: {{c.text}}; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></a>
+</div>
+
+<div aria-label="Match stats" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+<sc-for list="{{stats}}" as="s" hint-placeholder-count="4">
+<div style="background: {{c.surface}}; border: 1px solid {{c.border}}; border-radius: 12px; padding: 8px 12px; display: flex; flex-direction: column; gap: 4px">
+<span style="font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: {{c.muted}}">{{s.label}}</span>
+<div style="display: flex; align-items: center; justify-content: space-between; font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 500">
+<span style="display: inline-flex; align-items: center; gap: 6px"><span aria-hidden="true" style="width: 9px; height: 9px; border-radius: 50%; background: {{c.text}}; display: inline-block"></span>{{s.home}}</span>
+<span style="display: inline-flex; align-items: center; gap: 6px">{{s.away}}<span aria-hidden="true" style="width: 9px; height: 9px; box-sizing: border-box; border-radius: 50%; border: 2px solid {{c.text}}; display: inline-block"></span></span>
+</div>
+</div>
+</sc-for>
+</div>
+
+<div style="display: flex; align-items: baseline; justify-content: space-between; padding-top: 4px">
+<h3 style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase">Match feed</h3>
+<span style="font-size: 14px; color: {{c.muted}}">Newest first</span>
+</div>
+
+<ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column">
+<li style="display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 8px; padding: 10px 10px; margin: 0 -10px; border: 2px solid {{c.text}}; border-radius: 12px; background: {{c.raised}}">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 15px; padding-top: 2px">00:29</span>
+<div style="display: flex; flex-direction: column; gap: 3px">
+<span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase"><span aria-hidden="true" style="width: 9px; height: 9px; border-radius: 50%; background: {{c.text}}; display: inline-block"></span>WHI · Now</span>
+<span style="font-size: 17px"><span style="font-family: 'JetBrains Mono', monospace">#7</span> Ekerafor passes, in midfield.</span>
+</div>
+</li>
+<li style="display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 8px; padding: 10px 0">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 15px; padding-top: 2px">00:15</span>
+<div style="display: flex; flex-direction: column; gap: 3px">
+<span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: {{c.muted}}"><span aria-hidden="true" style="width: 9px; height: 9px; border-radius: 50%; background: {{c.text}}; display: inline-block"></span>WHI · Passing move · 3 players</span>
+<span style="font-size: 17px">Zieličić <span aria-label="to" style="color: {{c.muted}}">→</span> Fourchet <span aria-label="to" style="color: {{c.muted}}">→</span> Ekerafor</span>
+</div>
+</li>
+<li style="display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 8px; padding: 10px 0; border-top: 1px solid {{c.border}}">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 15px; padding-top: 2px">00:08</span>
+<div style="display: flex; flex-direction: column; gap: 3px">
+<span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: {{c.muted}}"><span aria-hidden="true" style="width: 9px; height: 9px; box-sizing: border-box; border-radius: 50%; border: 2px solid {{c.text}}; display: inline-block"></span>BAK · Passing move · 2 players</span>
+<span style="font-size: 17px">Lindby <span aria-label="to" style="color: {{c.muted}}">→</span> Ekegbe</span>
+</div>
+</li>
+<li style="display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 8px; padding: 10px 0; border-top: 1px solid {{c.border}}">
+<span style="font-family: 'JetBrains Mono', monospace; font-size: 15px; padding-top: 2px">00:00</span>
+<div style="display: flex; flex-direction: column; gap: 3px">
+<span style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: {{c.muted}}"><svg width="14" height="14" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18"></path></svg>Kick-off · WHI</span>
+<span style="font-size: 17px">Fourchet <span aria-label="to" style="color: {{c.muted}}">→</span> Zieličić</span>
+</div>
+</li>
+</ol>
+<div style="padding: 8px 0 0; border-top: 1px dashed {{c.border}}; font-size: 14px; color: {{c.muted}}; text-align: center">Start of the match</div>
+</section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script="" data-props="{&quot;dark&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false},&quot;$preview&quot;:{&quot;width&quot;:390,&quot;height&quot;:844}}">
+class Component extends DCLogic {
+  renderVals() {
+    const dark = this.props.dark ?? false;
+    const light = { bg: '#F5EDE0', surface: '#FFFAF3', raised: '#EFE5D8', border: '#DCCAB6', borderStrong: '#8E7563', text: '#2B1018', muted: '#664B51', scrim: 'rgba(43,16,24,.45)' };
+    const darkC = { bg: '#2B1018', surface: '#3B1A24', raised: '#48242E', border: '#5C3842', borderStrong: '#A3828A', text: '#F6EDE4', muted: '#C9B3AE', scrim: 'rgba(10,3,6,.6)' };
+    return {
+      dark,
+      c: dark ? darkC : light,
+      stats: [
+        { label: 'Shots', home: '0', away: '0' },
+        { label: 'Corners', home: '0', away: '0' },
+        { label: 'Fouls', home: '0', away: '0' },
+        { label: 'Yellow cards', home: '0', away: '0' }
+      ]
+    };
+  }
+}
+</script>
+
+
+</body></html>

@@ -104,6 +104,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/viewers/{viewer_id}/before-match": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Before Match
+         * @description The First looks and Level-ups to run before the viewer's next match, and their levels.
+         */
+        get: operations["get_before_match_api_viewers__viewer_id__before_match_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/viewers/{viewer_id}/club": {
         parameters: {
             query?: never;
@@ -138,6 +158,26 @@ export interface paths {
         get: operations["get_concept_map_api_viewers__viewer_id__concept_map_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/viewers/{viewer_id}/introduced": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Post Introduced
+         * @description Record that the viewer has had a First look at these concepts.
+         */
+        post: operations["post_introduced_api_viewers__viewer_id__introduced_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -271,16 +311,49 @@ export interface components {
             correct: boolean;
         };
         /**
+         * Band
+         * @description A viewer's level on a concept, as the page keys its scenes and icons.
+         * @enum {string}
+         */
+        Band: "getting_there" | "solid" | "sharp";
+        /**
          * Bar
-         * @description One concept's mastery, from 0 to 1, and the level word for it ("Solid").
+         * @description One concept's mastery, from 0 to 1, with the level word ("Solid") and band for it.
+         *
+         *     The band is the level as a key the page switches on; "Mastered" is the Sharp band.
          */
         Bar: {
+            band: components["schemas"]["Band"];
+            /** Key */
+            key: string;
             /** Level */
             level: string;
             /** Name */
             name: string;
             /** Value */
             value: number;
+            /** Waits For */
+            waits_for: string[];
+        };
+        /**
+         * BeforeMatchOut
+         * @description What the page runs before the viewer's next match: First looks, then Level-ups.
+         *
+         *     ``first_looks`` are the active concepts the viewer hasn't been introduced to; ``level_ups``
+         *     the concepts whose band rose over their last match; ``levels`` a row per active concept;
+         *     ``unlock_note`` what the team sheet newly shows, if their stage rose, else null.
+         */
+        BeforeMatchOut: {
+            /** First Looks */
+            first_looks: components["schemas"]["LevelRowOut"][];
+            /** Level Ups */
+            level_ups: components["schemas"]["LevelUpOut"][];
+            /** Levels */
+            levels: components["schemas"]["LevelRowOut"][];
+            /** Match Number */
+            match_number: number;
+            /** Unlock Note */
+            unlock_note: string | null;
         };
         /**
          * Break
@@ -325,13 +398,17 @@ export interface components {
         };
         /**
          * ConceptMoveOut
-         * @description A concept asked about now: mastery and level word at kick-off and at the break.
+         * @description A concept asked about now: mastery, level word and band at kick-off and at the break.
          */
         ConceptMoveOut: {
             /** After */
             after: number;
+            band: components["schemas"]["Band"];
+            band_before: components["schemas"]["Band"];
             /** Before */
             before: number;
+            /** Key */
+            key: string;
             /** Level */
             level: string;
             /** Level Before */
@@ -342,6 +419,8 @@ export interface components {
             name: string;
             /** Strand */
             strand: string;
+            /** Waits For */
+            waits_for: string[];
         };
         /**
          * DeliveredTime
@@ -373,6 +452,44 @@ export interface components {
             display: string;
             /** Value */
             value: number | string;
+        };
+        /**
+         * FeedEntryOut
+         * @description One entry of the match feed, worded for the page.
+         *
+         *     ``at`` is when it happened, in seconds on the match clock; the page shows it once the clock
+         *     reaches ``until``, a move's last touch. ``label`` names it, e.g. "Shot · saved"; ``text`` is
+         *     its line. A move's ``names`` are its players in turn; ``side`` is null only at halftime.
+         */
+        FeedEntryOut: {
+            /** At */
+            at: number;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "kick_off" | "move" | "goal" | "own_goal" | "shot" | "corner" | "throw_in" | "goal_kick" | "foul" | "yellow_card" | "red_card" | "offside" | "halftime";
+            /** Label */
+            label: string;
+            /** Names */
+            names: string[];
+            score: components["schemas"]["FeedScoreOut"] | null;
+            /** Side */
+            side: ("home" | "away") | null;
+            /** Text */
+            text: string;
+            /** Until */
+            until: number;
+        };
+        /**
+         * FeedScoreOut
+         * @description The score after a goal, or at halftime.
+         */
+        FeedScoreOut: {
+            /** Away */
+            away: number;
+            /** Home */
+            home: number;
         };
         /**
          * FeedbackOption
@@ -537,12 +654,78 @@ export interface components {
             detail?: components["schemas"]["ValidationError"][];
         };
         /**
+         * IntroducedIn
+         * @description The concepts the viewer has now had a First look at, by key.
+         */
+        IntroducedIn: {
+            /** Concepts */
+            concepts: string[];
+        };
+        /**
+         * LevelRowOut
+         * @description The viewer's level on one active concept, for a level list.
+         *
+         *     ``waits_for`` names the askable prerequisites not yet unlocked (locked while not empty);
+         *     ``moved`` says whether the band rose over the last match.
+         */
+        LevelRowOut: {
+            band: components["schemas"]["Band"];
+            /** Key */
+            key: string;
+            /** Level */
+            level: string;
+            /** Mastered */
+            mastered: boolean;
+            /** Mastery */
+            mastery: number;
+            /** Moved */
+            moved: boolean;
+            /** Name */
+            name: string;
+            /** Strand */
+            strand: string;
+            /** Strand Name */
+            strand_name: string;
+            /** Waits For */
+            waits_for: string[];
+        };
+        /**
+         * LevelUpOut
+         * @description A concept whose band rose over the viewer's last match: before and after.
+         */
+        LevelUpOut: {
+            /** After */
+            after: number;
+            band: components["schemas"]["Band"];
+            band_before: components["schemas"]["Band"];
+            /** Before */
+            before: number;
+            /** Key */
+            key: string;
+            /** Level */
+            level: string;
+            /** Level Before */
+            level_before: string;
+            /** Mastered */
+            mastered: boolean;
+            /** Name */
+            name: string;
+            /** Strand */
+            strand: string;
+            /** Strand Name */
+            strand_name: string;
+        };
+        /**
          * MapConceptOut
-         * @description A concept on the map. ``mastery`` and ``level`` are null for one coming later.
+         * @description A concept on the map. ``mastery``, ``level`` and ``band`` are null for one coming later.
+         *
+         *     ``waits_for`` names the askable prerequisites the viewer hasn't unlocked yet: the concept
+         *     is locked while it isn't empty.
          */
         MapConceptOut: {
             /** Askable */
             askable: boolean;
+            band: components["schemas"]["Band"] | null;
             /** Key */
             key: string;
             /** Level */
@@ -559,6 +742,8 @@ export interface components {
             strand: string;
             /** Tier */
             tier: number;
+            /** Waits For */
+            waits_for: string[];
         };
         /**
          * MarkerOut
@@ -636,13 +821,18 @@ export interface components {
         };
         /**
          * Movement
-         * @description How one concept's mastery moved: before and after, from 0 to 1.
+         * @description How one concept's mastery moved: before and after, from 0 to 1, and its level now.
          */
         Movement: {
             /** After */
             after: number;
+            band: components["schemas"]["Band"];
             /** Before */
             before: number;
+            /** Level */
+            level: string;
+            /** Mastered */
+            mastered: boolean;
             /** Name */
             name: string;
         };
@@ -712,17 +902,23 @@ export interface components {
          *     Times are seconds on the match clock: ``start`` where the viewer left off (0 at kick-off),
          *     ``end`` when the next question is asked. The spells stop at ``names_until``, the moment the
          *     question is about, so they say nothing of how that play turned out; a question saved for a
-         *     stoppage has play between it and ``end`` that goes unnamed.
+         *     stoppage has play between it and ``end`` that goes unnamed. ``feed`` runs from kick-off and
+         *     ``stats`` from ``start`` (or from ``names_until``, when the viewer left off after it), and
+         *     both stop at ``names_until`` too.
          */
         PlayByPlayOut: {
             /** End */
             end: number;
+            /** Feed */
+            feed: components["schemas"]["FeedEntryOut"][];
             /** Names Until */
             names_until: number;
             /** Spells */
             spells: components["schemas"]["SpellOut"][];
             /** Start */
             start: number;
+            /** Stats */
+            stats: components["schemas"]["StatsOut"][];
         };
         /**
          * PlayerNumbersOut
@@ -868,7 +1064,7 @@ export interface components {
          *
          *     ``at_kickoff`` is where they stood at kick-off, with the sheet's first team attacking left
          *     to right. ``numbers`` is null before stage 3, or if the viewer hasn't
-         *     seen them play.
+         *     seen them play. ``surname`` is the name on their shirt; it may have more than one word.
          */
         SheetPlayerOut: {
             /** At Kickoff */
@@ -884,6 +1080,8 @@ export interface components {
             role: string;
             /** Shirt */
             shirt: number;
+            /** Surname */
+            surname: string;
         };
         /**
          * SheetTeamOut
@@ -908,6 +1106,28 @@ export interface components {
             team_id: number;
             /** Yours */
             yours: boolean;
+        };
+        /**
+         * SideStatsOut
+         * @description One team's numbers so far; ``possession`` is its share of time on the ball, in %.
+         *
+         *     ``attempts`` are its shots at goal; the name keeps clear of the outcome facts' "shots".
+         */
+        SideStatsOut: {
+            /** Attempts */
+            attempts: number;
+            /** Corners */
+            corners: number;
+            /** Fouls */
+            fouls: number;
+            /** Goals */
+            goals: number;
+            /** Possession */
+            possession: number;
+            /** Red Cards */
+            red_cards: number;
+            /** Yellow Cards */
+            yellow_cards: number;
         };
         /**
          * SpellOut
@@ -936,6 +1156,18 @@ export interface components {
             seed?: number | null;
             /** Viewer Id */
             viewer_id: string;
+        };
+        /**
+         * StatsOut
+         * @description Both teams' numbers as they stand from ``at`` seconds on the match clock, in ``period``.
+         */
+        StatsOut: {
+            /** At */
+            at: number;
+            away: components["schemas"]["SideStatsOut"];
+            home: components["schemas"]["SideStatsOut"];
+            /** Period */
+            period: number;
         };
         /**
          * StatusOut
@@ -1023,14 +1255,29 @@ export interface components {
         /**
          * TouchOut
          * @description A player on the ball, at ``at`` seconds on the match clock.
+         *
+         *     ``surname`` is what the commentary calls them by; a surname may have more than one word.
+         *     ``action`` is what they did, e.g. "crosses", and ``where`` where, seen by their own team;
+         *     ``zone`` is that place as a key, for the page's strip of thirds.
          */
         TouchOut: {
+            /** Action */
+            action: string;
             /** At */
             at: number;
             /** Number */
             number: number;
             /** Player */
             player: string;
+            /** Surname */
+            surname: string;
+            /** Where */
+            where: string;
+            /**
+             * Zone
+             * @enum {string}
+             */
+            zone: "own_third" | "middle_third" | "final_third" | "box";
         };
         /** ValidationError */
         ValidationError: {
@@ -1193,6 +1440,37 @@ export interface operations {
             };
         };
     };
+    get_before_match_api_viewers__viewer_id__before_match_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                viewer_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BeforeMatchOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     put_club_api_viewers__viewer_id__club_put: {
         parameters: {
             query?: never;
@@ -1246,6 +1524,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ConceptMapOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_introduced_api_viewers__viewer_id__introduced_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                viewer_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IntroducedIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatusOut"];
                 };
             };
             /** @description Validation Error */

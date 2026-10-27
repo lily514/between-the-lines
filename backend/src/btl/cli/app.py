@@ -61,6 +61,7 @@ from btl.io import (
 from btl.league.league import Club, League, generate_league, season_fixtures
 from btl.learn.learner import MATCHES_PER_SESSION
 from btl.learn.samples import sample_packs
+from btl.learn.scenes import fixture_course, scene_fixtures, to_text
 from btl.learn.session import (
     LEAGUE_SEED,
     Asked,
@@ -132,6 +133,7 @@ DEFAULT_MODEL = Path("data/models/expected-threat.json")
 DEFAULT_MATCHES = Path("data/matches")
 DEFAULT_LEARNERS = Path("data/learners")
 DEFAULT_FRONTEND = Path("../frontend/dist")
+DEFAULT_SCENE_FIXTURES = Path("../frontend/src/scenes/fixtures")
 DEFAULT_PORT = 8000
 DEFAULT_TUTOR_LOG = Path("data/tutor-log.jsonl")
 
@@ -551,8 +553,9 @@ def learn(
     store = JsonLearnerStore(learners)
     if reset:
         (learners / f"{viewer}.json").unlink(missing_ok=True)
-    stored = start_session(store, viewer, seed_for_viewer(viewer) if seed is None else seed)
     course = Course(_threat_model_or_fit(model), _tutor(tutor, tutor_log))
+    chosen_seed = seed_for_viewer(viewer) if seed is None else seed
+    stored = start_session(store, viewer, chosen_seed, course.active)
     if club is not None:
         stored = _choose_club(course, store, viewer, club)
     if stored.state.club is not None:
@@ -610,7 +613,7 @@ def demo_viewer(
     """
     course = Course(_threat_model_or_fit(model), _tutor(tutor, tutor_log))
     store = MemoryLearnerStore()
-    start_session(store, "demo", seed)
+    start_session(store, "demo", seed, course.active)
 
     def show_answer(asked: Asked, key: str) -> None:
         show_question(console, asked)
@@ -892,6 +895,27 @@ def tutor_eval(
     if recording is not None and record is not None:
         save_replies(record, PROMPT_VERSION, model_name, recording.replies)
         console.print(f"Saved {len(recording.replies)} replies to {record}.")
+
+
+@app.command(name="scene-fixtures")
+def scene_fixtures_command(
+    out: Annotated[
+        Path, typer.Option(help="Folder to write one JSON file per active concept into.")
+    ] = DEFAULT_SCENE_FIXTURES,
+    seed: Annotated[int, typer.Option(help="Whose three matches the moments come from.")] = 7,
+) -> None:
+    """Write the page's scene fixtures: a real moment per active concept, with its evidence.
+
+    Each file holds the evidence pack, the snapshot at the key frame, the play's path with its
+    timings, and the question each level would ask. A test fails when the committed files are
+    out of date, as it does for the API schema.
+    """
+    with console.status("Choosing a moment for each concept…"):
+        fixtures = scene_fixtures(fixture_course(), seed)
+    out.mkdir(parents=True, exist_ok=True)
+    for key, fixture in fixtures.items():
+        (out / f"{key}.json").write_text(to_text(fixture), encoding="utf-8")
+    console.print(f"Wrote {len(fixtures)} scene fixtures to {out}: {', '.join(fixtures)}.")
 
 
 @app.command()

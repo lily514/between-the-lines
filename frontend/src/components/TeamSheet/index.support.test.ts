@@ -65,11 +65,11 @@ test('the pitch label adds the position tag from stage two, and stays on the pit
 	expect(farRight.y + farRight.height).toBeLessThan(50)
 })
 
-test('a player’s shirt name is their last name', () => {
+test('a player’s shirt name is their surname from the server, all of it', () => {
 	const player = sheetStage1.teams[0]?.players[1]
 	if (player === undefined) throw new Error('no player')
 	expect(shirtName(player)).toBe('Hafkamp')
-	expect(shirtName({ ...player, name: 'Teodoro' })).toBe('Teodoro')
+	expect(shirtName({ ...player, name: 'Joost de Witkamp', surname: 'de Witkamp' })).toBe('de Witkamp')
 })
 
 test('the viewer’s side comes from the team marked as theirs', () => {

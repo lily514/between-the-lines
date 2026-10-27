@@ -1,5 +1,6 @@
-import { useEffect, useId, useRef } from 'react'
+import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import type { Question } from '../../api/client.ts'
+import { DEFAULT_PLAYBACK, type Playback } from '../Preferences/index.support.ts'
 import './index.css'
 import { movedOn, stepHeading, stepPhase, whyNow } from './index.support.ts'
 import PhasePill from '../Shared/PhasePill.tsx'
@@ -9,6 +10,8 @@ import { matchClock, type PlayByPlay } from './Commentary.support.ts'
 export interface MatchStepProps {
 	home: string
 	away: string
+	homeCode: string
+	awayCode: string
 	matchNumber: number
 	/** Who had the ball from where the last question left the viewer, or from kick-off, up to this one. */
 	play: PlayByPlay
@@ -22,14 +25,20 @@ export interface MatchStepProps {
 	catchUp: string | null
 	/** Which side is the viewer's team, tagged "You" in the fixture. */
 	yours: 'home' | 'away' | null
+	/** How fast the match feed plays, and whether demo mode caps each run. */
+	playback?: Playback
+	/** Where the stream view shows the match feed on a wide screen. */
+	streamSlot?: HTMLElement | null
 	onArrive: () => void
 }
 
 /** Between two questions: the match moves on to the next moment worth asking about, its clock running on and who has
- * the ball called as on the radio. */
+ * the ball called as on the radio. The question shows once the clock reaches it, or when the viewer skips ahead. */
 const MatchStep = ({
 	home,
 	away,
+	homeCode,
+	awayCode,
 	matchNumber,
 	play,
 	to,
@@ -37,14 +46,21 @@ const MatchStep = ({
 	score,
 	catchUp,
 	yours,
+	streamSlot = null,
+	playback = DEFAULT_PLAYBACK,
 	onArrive
 }: MatchStepProps) => {
 	const heading = useRef<HTMLHeadingElement>(null)
 	const headingId = useId()
+	const [reached, setReached] = useState(false)
+	const reach = useCallback(() => {
+		setReached(true)
+	}, [])
 
+	// The heading changes to the question when the clock reaches it, so focus goes there again to announce it.
 	useEffect(() => {
 		heading.current?.focus()
-	}, [])
+	}, [reached])
 
 	const live = to.delivery === 'live'
 	// The server's clock starts at 0 only at kick-off: the match's first question has no question before it.
@@ -67,15 +83,30 @@ const MatchStep = ({
 				</p>
 			)}
 			<p className="match-step__moved">{movedOn(from, to)}</p>
-			<Commentary play={play} home={home} away={away} />
-			<PhasePill phase={stepPhase(to)} detail={live ? null : to.restart} />
+			<Commentary
+				play={play}
+				teams={{ home, away, homeCode, awayCode, yours }}
+				streamSlot={streamSlot}
+				onReached={reach}
+				atQuestion={reached}
+				playback={playback}
+			/>
+			{reached && <PhasePill phase={stepPhase(to)} detail={live ? null : to.restart} />}
 			<h2 id={headingId} ref={heading} tabIndex={-1} className="match-step__heading screen-heading">
-				{stepHeading(to)}
+				{reached ? stepHeading(to) : 'The match plays on'}
 			</h2>
-			<p className="match-step__why">{whyNow(to, occurred)}</p>
-			<button type="button" className="primary-button" onClick={onArrive}>
-				{live ? 'Make your read' : 'See the question'}
-			</button>
+			{reached ? (
+				<>
+					<p className="match-step__why">{whyNow(to, occurred)}</p>
+					<button type="button" className="primary-button" onClick={onArrive}>
+						{live ? 'Make your read' : 'See the question'}
+					</button>
+				</>
+			) : (
+				<button type="button" className="text-button match-step__skip" onClick={reach}>
+					Skip to the question
+				</button>
+			)}
 		</section>
 	)
 }

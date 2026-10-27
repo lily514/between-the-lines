@@ -1,0 +1,614 @@
+{
+  "concept": "transitions",
+  "detector": "counter_attack",
+  "evidence_fields": [
+    "team",
+    "seconds_to_box",
+    "transition_shots",
+    "settled_shots"
+  ],
+  "match": {
+    "away": "Ludlow Ferrymen",
+    "away_code": "LUD",
+    "home": "Ripon Wardens",
+    "home_code": "RIP",
+    "seed": 7001
+  },
+  "moment": {
+    "action_id": 860,
+    "clock": "55:12",
+    "difficulty": 0.53,
+    "evidence": {
+      "seconds to the box": 9.6,
+      "won (m from own goal)": 44.7
+    },
+    "phase": "transition",
+    "span": [
+      860,
+      863
+    ]
+  },
+  "name": "Transitions and counterattacks",
+  "pack": {
+    "asks": "what next after winning it",
+    "concept": {
+      "analyst": "{team} have created {transition_shots} shots from transitions against {settled_shots} from settled possession, so their danger comes from turnovers, not build-up.",
+      "beginner": "Right after a team wins the ball, the other team is out of position. Attacking fast before they recover is called a counterattack.",
+      "intermediate": "{team} reached the opponent's box {seconds_to_box} seconds after winning the ball. Counterattacks are dangerous because defenders have not had time to get back.",
+      "key": "transitions",
+      "misconceptions": [
+        "Teams with less possession cannot be dangerous.",
+        "A counterattack is any fast attack."
+      ],
+      "name": "Transitions and counterattacks",
+      "objective": "Recognize the moment after a turnover, when both teams are briefly out of shape, and spot a counterattack."
+    },
+    "context": {
+      "away_team": {
+        "display": "Ludlow Ferrymen",
+        "value": "Ludlow Ferrymen"
+      },
+      "home_team": {
+        "display": "Ripon Wardens",
+        "value": "Ripon Wardens"
+      },
+      "minute": {
+        "display": "55:12",
+        "value": "55:12"
+      },
+      "opponent": {
+        "display": "Ludlow Ferrymen",
+        "value": "Ludlow Ferrymen"
+      },
+      "score": {
+        "display": "0–2",
+        "value": "0–2"
+      },
+      "team": {
+        "display": "Ripon Wardens",
+        "value": "Ripon Wardens"
+      }
+    },
+    "correct_key": "B",
+    "form": "identify",
+    "level": 1,
+    "options": [
+      {
+        "correct": false,
+        "key": "A",
+        "label": "Lost it again",
+        "neutral": {},
+        "outcome": {},
+        "target_at": null
+      },
+      {
+        "correct": true,
+        "key": "B",
+        "label": "Went straight for goal",
+        "neutral": {},
+        "outcome": {},
+        "target_at": null
+      },
+      {
+        "correct": false,
+        "key": "C",
+        "label": "Built up slowly",
+        "neutral": {},
+        "outcome": {},
+        "target_at": null
+      }
+    ],
+    "outcome": {
+      "player": {
+        "display": "#16 Bohdan Miloković",
+        "value": "#16 Bohdan Miloković"
+      },
+      "seconds_to_box": {
+        "display": "9.6",
+        "value": 9.6
+      },
+      "settled_shots": {
+        "display": "3",
+        "value": 3
+      },
+      "transition_shots": {
+        "display": "2",
+        "value": 2
+      },
+      "won_metres_from_own_goal": {
+        "display": "44.7",
+        "value": 44.7
+      }
+    },
+    "pack_id": "8da1a46af7b49e12",
+    "pack_version": 4,
+    "picture": {
+      "action_id": 860,
+      "ball": [
+        44.7,
+        54.0
+      ],
+      "mark": null,
+      "markers": [
+        {
+          "home": true,
+          "role": "keeper",
+          "shirt": 1,
+          "side": "attacking",
+          "x": 8.5,
+          "y": 39.1
+        },
+        {
+          "home": true,
+          "role": "player",
+          "shirt": 2,
+          "side": "attacking",
+          "x": 27.5,
+          "y": 27.6
+        },
+        {
+          "home": true,
+          "role": "player",
+          "shirt": 3,
+          "side": "attacking",
+          "x": 27.3,
+          "y": 37.5
+        },
+        {
+          "home": true,
+          "role": "player",
+          "shirt": 4,
+          "side": "attacking",
+          "x": 26.8,
+          "y": 47.0
+        },
+        {
+          "home": true,
+          "role": "player",
+          "shirt": 5,
+          "side": "attacking",
+          "x": 26.7,
+          "y": 58.2
+        },
+        {
+          "home": true,
+          "role": "player",
+          "shirt": 8,
+          "side": "attacking",
+          "x": 39.8,
+          "y": 26.8
+        },
+        {
+          "home": true,
+          "role": "player",
+          "shirt": 10,
+          "side": "attacking",
+          "x": 40.5,
+          "y": 37.5
+        },
+        {
+          "home": true,
+          "role": "player",
+          "shirt": 14,
+          "side": "attacking",
+          "x": 40.2,
+          "y": 47.3
+        },
+        {
+          "home": true,
+          "role": "on the ball",
+          "shirt": 16,
+          "side": "attacking",
+          "x": 44.7,
+          "y": 54.0
+        },
+        {
+          "home": true,
+          "role": "player",
+          "shirt": 7,
+          "side": "attacking",
+          "x": 53.0,
+          "y": 33.4
+        },
+        {
+          "home": true,
+          "role": "player",
+          "shirt": 9,
+          "side": "attacking",
+          "x": 56.2,
+          "y": 51.1
+        },
+        {
+          "home": false,
+          "role": "keeper",
+          "shirt": 1,
+          "side": "defending",
+          "x": 96.1,
+          "y": 36.9
+        },
+        {
+          "home": false,
+          "role": "player",
+          "shirt": 2,
+          "side": "defending",
+          "x": 74.5,
+          "y": 60.3
+        },
+        {
+          "home": false,
+          "role": "player",
+          "shirt": 3,
+          "side": "defending",
+          "x": 73.0,
+          "y": 44.4
+        },
+        {
+          "home": false,
+          "role": "player",
+          "shirt": 4,
+          "side": "defending",
+          "x": 77.4,
+          "y": 29.9
+        },
+        {
+          "home": false,
+          "role": "player",
+          "shirt": 5,
+          "side": "defending",
+          "x": 74.3,
+          "y": 20.5
+        },
+        {
+          "home": false,
+          "role": "player",
+          "shirt": 8,
+          "side": "defending",
+          "x": 56.1,
+          "y": 58.6
+        },
+        {
+          "home": false,
+          "role": "player",
+          "shirt": 10,
+          "side": "defending",
+          "x": 56.9,
+          "y": 46.7
+        },
+        {
+          "home": false,
+          "role": "player",
+          "shirt": 14,
+          "side": "defending",
+          "x": 57.1,
+          "y": 33.0
+        },
+        {
+          "home": false,
+          "role": "player",
+          "shirt": 16,
+          "side": "defending",
+          "x": 52.6,
+          "y": 18.6
+        },
+        {
+          "home": false,
+          "role": "player",
+          "shirt": 7,
+          "side": "defending",
+          "x": 33.6,
+          "y": 51.9
+        },
+        {
+          "home": false,
+          "role": "player",
+          "shirt": 9,
+          "side": "defending",
+          "x": 32.8,
+          "y": 27.6
+        }
+      ],
+      "path": []
+    },
+    "reveal_line": null,
+    "reveal_path": [
+      [
+        44.7,
+        54.0
+      ],
+      [
+        44.7,
+        54.0
+      ],
+      [
+        72.8,
+        60.3
+      ],
+      [
+        93.0,
+        41.2
+      ],
+      [
+        95.0,
+        41.2
+      ]
+    ],
+    "timing": {
+      "delivered_at": "56:12",
+      "delivered_phase": "dead ball",
+      "delivery": "deferred",
+      "occurred_at": "55:12",
+      "occurred_phase": "transition",
+      "restart": null
+    }
+  },
+  "path": [
+    {
+      "action": "interception",
+      "action_id": 860,
+      "at": 0.0,
+      "result": "success",
+      "shirt": 16,
+      "side": "attacking",
+      "x": 44.7,
+      "y": 54.0
+    },
+    {
+      "action": "pass",
+      "action_id": 861,
+      "at": 0.64,
+      "result": "success",
+      "shirt": 16,
+      "side": "attacking",
+      "x": 44.7,
+      "y": 54.0
+    },
+    {
+      "action": "pass",
+      "action_id": 862,
+      "at": 5.17,
+      "result": "success",
+      "shirt": 9,
+      "side": "attacking",
+      "x": 72.8,
+      "y": 60.3
+    },
+    {
+      "action": "dribble",
+      "action_id": 863,
+      "at": 9.64,
+      "result": "success",
+      "shirt": 14,
+      "side": "attacking",
+      "x": 93.0,
+      "y": 41.2
+    },
+    {
+      "action": "end",
+      "action_id": 863,
+      "at": 10.14,
+      "x": 95.0,
+      "y": 41.2
+    }
+  ],
+  "questions": {
+    "1": {
+      "asks": "what next after winning it",
+      "correct": "B",
+      "form": "identify",
+      "options": [
+        "Lost it again",
+        "Went straight for goal",
+        "Built up slowly"
+      ],
+      "text": "Play has stopped. Ripon Wardens have just won the ball in their own half. What did they do next?"
+    },
+    "2": {
+      "asks": "seconds to the box",
+      "correct": "B",
+      "form": "identify",
+      "options": [
+        "Under 8 s",
+        "8 to 10 s",
+        "10 s or more"
+      ],
+      "text": "Play has stopped. Ripon Wardens won the ball in their own half and went forward. How long did they take to reach the Ludlow Ferrymen box?"
+    },
+    "3": {
+      "asks": "why a counter-attack",
+      "correct": "A",
+      "form": "identify",
+      "options": [
+        "They went for goal at once, while the defence was still out of shape",
+        "A counterattack is any fast attack",
+        "They had most of the possession before the chance came"
+      ],
+      "text": "Play has stopped. Ripon Wardens won the ball in their own half and were in the Ludlow Ferrymen box within seconds. What made that a counter-attack?"
+    }
+  },
+  "snapshot": {
+    "action_id": 860,
+    "ball": [
+      44.7,
+      54.0
+    ],
+    "markers": [
+      {
+        "home": true,
+        "role": "keeper",
+        "shirt": 1,
+        "side": "attacking",
+        "x": 8.5,
+        "y": 39.1
+      },
+      {
+        "home": true,
+        "role": "player",
+        "shirt": 2,
+        "side": "attacking",
+        "x": 27.5,
+        "y": 27.6
+      },
+      {
+        "home": true,
+        "role": "player",
+        "shirt": 3,
+        "side": "attacking",
+        "x": 27.3,
+        "y": 37.5
+      },
+      {
+        "home": true,
+        "role": "player",
+        "shirt": 4,
+        "side": "attacking",
+        "x": 26.8,
+        "y": 47.0
+      },
+      {
+        "home": true,
+        "role": "player",
+        "shirt": 5,
+        "side": "attacking",
+        "x": 26.7,
+        "y": 58.2
+      },
+      {
+        "home": true,
+        "role": "player",
+        "shirt": 8,
+        "side": "attacking",
+        "x": 39.8,
+        "y": 26.8
+      },
+      {
+        "home": true,
+        "role": "player",
+        "shirt": 10,
+        "side": "attacking",
+        "x": 40.5,
+        "y": 37.5
+      },
+      {
+        "home": true,
+        "role": "player",
+        "shirt": 14,
+        "side": "attacking",
+        "x": 40.2,
+        "y": 47.3
+      },
+      {
+        "home": true,
+        "role": "on the ball",
+        "shirt": 16,
+        "side": "attacking",
+        "x": 44.7,
+        "y": 54.0
+      },
+      {
+        "home": true,
+        "role": "player",
+        "shirt": 7,
+        "side": "attacking",
+        "x": 53.0,
+        "y": 33.4
+      },
+      {
+        "home": true,
+        "role": "player",
+        "shirt": 9,
+        "side": "attacking",
+        "x": 56.2,
+        "y": 51.1
+      },
+      {
+        "home": false,
+        "role": "keeper",
+        "shirt": 1,
+        "side": "defending",
+        "x": 96.1,
+        "y": 36.9
+      },
+      {
+        "home": false,
+        "role": "player",
+        "shirt": 2,
+        "side": "defending",
+        "x": 74.5,
+        "y": 60.3
+      },
+      {
+        "home": false,
+        "role": "player",
+        "shirt": 3,
+        "side": "defending",
+        "x": 73.0,
+        "y": 44.4
+      },
+      {
+        "home": false,
+        "role": "player",
+        "shirt": 4,
+        "side": "defending",
+        "x": 77.4,
+        "y": 29.9
+      },
+      {
+        "home": false,
+        "role": "player",
+        "shirt": 5,
+        "side": "defending",
+        "x": 74.3,
+        "y": 20.5
+      },
+      {
+        "home": false,
+        "role": "player",
+        "shirt": 8,
+        "side": "defending",
+        "x": 56.1,
+        "y": 58.6
+      },
+      {
+        "home": false,
+        "role": "player",
+        "shirt": 10,
+        "side": "defending",
+        "x": 56.9,
+        "y": 46.7
+      },
+      {
+        "home": false,
+        "role": "player",
+        "shirt": 14,
+        "side": "defending",
+        "x": 57.1,
+        "y": 33.0
+      },
+      {
+        "home": false,
+        "role": "player",
+        "shirt": 16,
+        "side": "defending",
+        "x": 52.6,
+        "y": 18.6
+      },
+      {
+        "home": false,
+        "role": "player",
+        "shirt": 7,
+        "side": "defending",
+        "x": 33.6,
+        "y": 51.9
+      },
+      {
+        "home": false,
+        "role": "player",
+        "shirt": 9,
+        "side": "defending",
+        "x": 32.8,
+        "y": 27.6
+      }
+    ]
+  },
+  "strand": "game_flow"
+}

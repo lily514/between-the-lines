@@ -288,12 +288,18 @@
 		{
 			"name": "Line-breaking passes",
 			"before": 0.15,
-			"after": 0.15
+			"after": 0.15,
+			"level": "Getting there",
+			"band": "getting_there",
+			"mastered": false
 		},
 		{
 			"name": "Counter-pressing",
 			"before": 0.15,
-			"after": 0.17191977077363899
+			"after": 0.17191977077363899,
+			"level": "Getting there",
+			"band": "getting_there",
+			"mastered": false
 		}
 	],
 	"thresholds": {

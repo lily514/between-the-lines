@@ -1,79 +1,42 @@
-/* The match between questions, as a radio listener follows it. */
+/* The match between questions in the panel: the phone's compact scorebug, the latest action, the note before it,
+   and the way into earlier notes. */
 
 .commentary {
 	display: flex;
 	flex-direction: column;
 	gap: var(--s-2);
 	width: 100%;
-	padding: var(--s-4);
-	border: 1px solid var(--border);
-	border-radius: var(--r-tile);
-	background: var(--surface);
 }
 
-.commentary__clocks {
+/* On a wide screen the stream view shows the match feed; the panel keeps this copy for screen readers only. */
+@media (min-width: 900px) {
+	.commentary--streamed {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
+	}
+}
+
+.commentary__older {
 	display: flex;
 	flex-wrap: wrap;
-	align-items: baseline;
-	justify-content: space-between;
-	gap: var(--s-1) var(--s-3);
-}
-
-.commentary__clock {
-	font-family: var(--font-data);
-	font-size: var(--fs-display-xl);
-	line-height: var(--lh-display-xl);
-	font-variant-numeric: tabular-nums;
-	color: var(--text);
-}
-
-.commentary__countdown {
-	font-family: var(--font-data);
-	font-size: var(--fs-data);
-	font-variant-numeric: tabular-nums;
-	color: var(--text-muted);
-}
-
-.commentary__on-ball {
+	align-items: center;
+	gap: 6px;
 	margin: 0;
-	font-size: var(--fs-body-l);
-	line-height: var(--lh-body-l);
-	color: var(--text-2);
-}
-
-.commentary__team {
-	font-weight: 700;
-}
-
-.commentary__team--home {
-	color: var(--home);
-}
-
-.commentary__team--away {
-	color: var(--away);
-}
-
-.commentary__player {
-	font-weight: 600;
-	color: var(--text);
-}
-
-.commentary__log {
-	display: flex;
-	flex-direction: column;
-	gap: var(--s-1);
-	margin: 0;
-	padding: 0;
-	list-style: none;
+	padding: 0 var(--s-1);
 	font-size: var(--fs-body-s);
 	color: var(--text-muted);
 }
 
-.commentary__log li:first-child {
-	color: var(--text-2);
-}
-
-.commentary__log-clock {
+.commentary__older-clock {
 	font-family: var(--font-data);
 	font-variant-numeric: tabular-nums;
+}
+
+.commentary .commentary__notes {
+	align-self: center;
+	font-size: var(--fs-body);
 }

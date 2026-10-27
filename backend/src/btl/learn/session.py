@@ -12,7 +12,7 @@ same place.
 """
 
 import zlib
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Collection, Sequence
 from dataclasses import dataclass, field, replace
 from typing import Protocol
 
@@ -131,11 +131,16 @@ class Course:
         """Each active concept's name, for progress bars."""
         return {key: self.concept_map.concept(key).name for key in self.active}
 
-    def bars(self, state: LearnerState) -> dict[str, float]:
-        """Mastery of each active concept after the viewer's answers, by concept name."""
+    def mastery(self, state: LearnerState) -> dict[ConceptKey, float]:
+        """Mastery of each active concept after the viewer's answers, by concept key."""
         model = self.model
         replayed = state.model_state(model, self.active)
-        return {name: model.mastery(replayed, key) for key, name in self.names().items()}
+        return {key: model.mastery(replayed, key) for key in self.active}
+
+    def bars(self, state: LearnerState) -> dict[str, float]:
+        """Mastery of each active concept after the viewer's answers, by concept name."""
+        names = self.names()
+        return {names[key]: value for key, value in self.mastery(state).items()}
 
     def fixture(
         self, seed: int, match_number: int, club: TeamId | None = None
@@ -194,13 +199,36 @@ def seed_for_viewer(viewer_id: str) -> int:
     return zlib.crc32(viewer_id.encode()) % 10_000
 
 
-def start_session(store: LearnerStore, viewer_id: str, seed: int) -> Stored:
-    """The viewer's record: read it, or create it with this seed if it is new."""
+def start_session(
+    store: LearnerStore, viewer_id: str, seed: int, introduced: Collection[ConceptKey] = ()
+) -> Stored:
+    """The viewer's record: read it, or create it with this seed if it is new.
+
+    ``introduced`` is what a new viewer has already met: the welcome covers every active
+    concept, so the page passes them all; a record that exists keeps its own.
+    """
     stored = store.get(viewer_id)
     if stored is None:
-        state = LearnerState(viewer_id, seed)
+        state = LearnerState(viewer_id, seed).with_introduced(introduced)
         stored = Stored(state, store.create(state))
     return stored
+
+
+def mark_introduced(
+    store: LearnerStore, viewer_id: str, concepts: Collection[ConceptKey]
+) -> Stored:
+    """Record that the viewer has had a First look at these concepts.
+
+    Raises:
+        ValueError: If there is no such viewer.
+    """
+    stored = store.get(viewer_id)
+    if stored is None:
+        raise ValueError(f"no learner {viewer_id!r}; start a session first")
+    state = stored.state.with_introduced(concepts)
+    if state == stored.state:
+        return stored
+    return Stored(state, store.put(state, stored.etag))
 
 
 class ClubLockedError(Exception):

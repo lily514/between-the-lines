@@ -1,0 +1,120 @@
+/* The latest action: who and what in large type, and where as a strip of thirds. */
+
+.now-card {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+	padding: var(--s-4) 18px;
+	border: 1px solid var(--border);
+	border-radius: var(--r-tile);
+	background: var(--surface);
+}
+
+.now-card__top {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--s-2) 10px;
+}
+
+.now-card__now,
+.now-card__asked {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	font-size: var(--fs-caption);
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.now-card__icon {
+	width: 16px;
+	height: 16px;
+}
+
+.now-card__clock {
+	font-family: var(--font-data);
+	font-size: var(--fs-body-s);
+	font-variant-numeric: tabular-nums;
+	color: var(--text-muted);
+}
+
+.now-card__side {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	font-size: var(--fs-body-s);
+	color: var(--text-muted);
+}
+
+.now-card__asked {
+	margin-left: auto;
+	padding: 5px 10px;
+	border: 1.5px dashed var(--border-strong);
+	border-radius: var(--r-pill);
+}
+
+.now-card__line {
+	margin: 0;
+	font-family: var(--font-display);
+	font-size: 28px;
+	font-weight: 600;
+	line-height: 1.2;
+}
+
+.now-card__number {
+	font-family: var(--font-data);
+	font-weight: 500;
+}
+
+.now-card__thirds {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.now-card__strip {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: var(--s-1);
+}
+
+.now-card__third {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	height: 34px;
+	border: 1.5px dashed var(--border-strong);
+	border-radius: var(--r-btn);
+	font-size: var(--fs-body-s);
+	color: var(--text-muted);
+}
+
+.now-card__third--here {
+	border: 2px solid var(--text);
+	background: var(--surface-raised);
+	font-weight: 700;
+	color: var(--text);
+}
+
+.now-card__ball {
+	width: 14px;
+	height: 14px;
+}
+
+.now-card__caption {
+	font-size: var(--fs-caption);
+	color: var(--text-muted);
+}
+
+/* The phone's caption: smaller type, no strip. */
+.now-card--compact {
+	gap: var(--s-2);
+	padding: var(--s-3) 14px;
+}
+
+.now-card--compact .now-card__line {
+	font-size: var(--fs-display-m);
+}

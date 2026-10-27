@@ -83,11 +83,17 @@ def test_the_demo_viewer_learns_over_three_matches() -> None:
     # Questions get harder across matches...
     by_match = {n: [a.level for a in attempts if a.match_number == n] for n in (1, 2, 3)}
     assert sum(by_match[3]) / len(by_match[3]) > sum(by_match[1]) / len(by_match[1])
-    # ...and within a match, as answers come in.
+    # ...and within a match, as answers come in: a concept asked again in the same match is
+    # asked at a higher level somewhere.
+    levels_by_concept: dict[tuple[int, str], list[int]] = {}
+    for attempt in attempts:
+        levels_by_concept.setdefault((attempt.match_number, attempt.concept), []).append(
+            attempt.level
+        )
     assert any(
-        later.level > earlier.level
-        for earlier, later in pairwise(attempts)
-        if earlier.match_number == later.match_number and earlier.concept == later.concept
+        later > earlier
+        for levels in levels_by_concept.values()
+        for earlier, later in pairwise(levels)
     )
 
 

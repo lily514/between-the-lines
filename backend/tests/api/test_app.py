@@ -113,6 +113,11 @@ def test_the_feedback_shows_the_answer_the_evidence_and_how_mastery_moved() -> N
     assert feedback["reveal_path"]
     before = {bar["name"]: bar["value"] for bar in status["concepts"]}
     assert {c["name"]: c["before"] for c in feedback["concepts"]} == before
+    after = api.get("/api/viewers/demo").json()["concepts"]
+    assert {c["name"]: (c["after"], c["level"], c["band"]) for c in feedback["concepts"]} == {
+        bar["name"]: (bar["value"], bar["level"], bar["band"]) for bar in after
+    }
+    assert all(c["mastered"] is False for c in feedback["concepts"])
     assert feedback["thresholds"] == status["thresholds"] == {"unlock": 0.8, "mastery": 0.95}
     assert feedback["match_seed"] == SEED * 1000 + 1
 
@@ -259,3 +264,13 @@ def test_each_question_carries_the_score_and_a_catch_up_after_the_first() -> Non
         assert second["catch_up"].endswith(
             f"{second['score']['home']}\N{EN DASH}{second['score']['away']}."
         )
+
+
+def test_a_question_comes_compressed_to_a_browser_that_accepts_it() -> None:
+    api = client(MemoryLearnerStore())
+    started(api)
+
+    response = api.post("/api/viewers/demo/next", headers={"Accept-Encoding": "gzip"})
+
+    assert response.status_code == 200
+    assert response.headers["content-encoding"] == "gzip"

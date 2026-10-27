@@ -1,29 +1,44 @@
 import { useEffect, useId, useRef } from 'react'
 import type { Status } from '../../api/client.ts'
 import Crest from '../Shared/Crest.tsx'
-import { PACES, THEMES, type Pace, type Theme } from './index.support.ts'
+import { DEMO_OPTIONS, FEED_SPEEDS, PACES, THEMES, type Pace, type Playback, type Theme } from './index.support.ts'
 import './index.css'
 
 export interface PreferencesProps {
 	/** The viewer's record; null while it loads. */
 	status: Status | null
 	theme: Theme
+	playback: Playback
 	/** True while a change of pace is being saved. */
 	busy: boolean
 	onPace: (pace: Pace) => void
 	onTheme: (theme: Theme) => void
+	onPlayback: (playback: Playback) => void
 	/** Go to the club picker; only offered while the team can still change. */
 	onChangeTeam: () => void
 	/** Close and go back to the screen underneath, as it was. */
 	onBack: () => void
 }
 
-/** Preferences (S8), over any screen: how often questions come, your team, and the theme. */
-const Preferences = ({ status, theme, busy, onPace, onTheme, onChangeTeam, onBack }: PreferencesProps) => {
+/** Preferences (S8), over any screen: how often questions come, your team, the theme, and how the match feed
+ * plays. */
+const Preferences = ({
+	status,
+	theme,
+	playback,
+	busy,
+	onPace,
+	onTheme,
+	onPlayback,
+	onChangeTeam,
+	onBack
+}: PreferencesProps) => {
 	const heading = useRef<HTMLHeadingElement>(null)
 	const headingId = useId()
 	const questionsId = useId()
 	const themeId = useId()
+	const speedId = useId()
+	const demoId = useId()
 
 	useEffect(() => {
 		heading.current?.focus()
@@ -127,6 +142,52 @@ const Preferences = ({ status, theme, busy, onPace, onTheme, onChangeTeam, onBac
 						</div>
 						<p id={themeId} className="preferences__help">
 							Kept in this browser. Match device follows your phone or computer.
+						</p>
+					</fieldset>
+
+					<fieldset className="preferences__group" aria-describedby={speedId}>
+						<legend className="preferences__legend">Feed speed</legend>
+						<div className="segments">
+							{FEED_SPEEDS.map(option => (
+								<label key={option.value} className="segments__option">
+									<input
+										type="radio"
+										name="feed-speed"
+										value={option.value}
+										checked={playback.speed === option.value}
+										onChange={() => {
+											onPlayback({ ...playback, speed: option.value })
+										}}
+									/>
+									<span>{option.label}</span>
+								</label>
+							))}
+						</div>
+						<p id={speedId} className="preferences__help">
+							How fast the match feed plays between questions. 1× is real time. Kept in this browser.
+						</p>
+					</fieldset>
+
+					<fieldset className="preferences__group" aria-describedby={demoId}>
+						<legend className="preferences__legend">Demo mode</legend>
+						<div className="segments">
+							{DEMO_OPTIONS.map(option => (
+								<label key={option.label} className="segments__option">
+									<input
+										type="radio"
+										name="demo"
+										value={option.label}
+										checked={playback.demo === option.value}
+										onChange={() => {
+											onPlayback({ ...playback, demo: option.value })
+										}}
+									/>
+									<span>{option.label}</span>
+								</label>
+							))}
+						</div>
+						<p id={demoId} className="preferences__help">
+							On, no wait between questions is longer than 20 seconds: a long one plays faster to fit.
 						</p>
 					</fieldset>
 				</>

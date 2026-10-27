@@ -33,7 +33,30 @@ OUTCOME_NAMES = {
     "seconds_to_regain",
     "metres_from_goal",
     "pressers",
+    "recovery_type",
+    "pitch_third",
+    "metres_from_own_goal",
+    "high_recoveries",
+    "avg_high_recoveries",
+    "shot_outcome",
+    "shot_zone",
+    "chance_from",
+    "shots",
+    "shots_on_target",
+    "opp_shots",
+    "seconds_to_box",
+    "won_metres_from_own_goal",
+    "transition_shots",
+    "settled_shots",
 }
+# The concepts whose every question is checked for leaks; the basics have their own tests.
+LEAK_CHECKED = (
+    ConceptId.LINE_BREAKING_PASS,
+    ConceptId.COUNTER_PRESS,
+    ConceptId.BALL_WIN,
+    ConceptId.SHOT,
+    ConceptId.COUNTER_ATTACK,
+)
 HIDDEN = {
     "correct",
     "correct_key",
@@ -89,7 +112,7 @@ def threat_displays(pack: EvidencePack) -> set[str]:
 @pytest.mark.parametrize("seed", range(40))
 def test_a_question_payload_never_holds_the_answer_or_an_outcome(seed: int) -> None:
     _, _, candidates = designed_with_candidates(seed)
-    for concept in (ConceptId.LINE_BREAKING_PASS, ConceptId.COUNTER_PRESS):
+    for concept in LEAK_CHECKED:
         for candidate in [c for c in candidates if c.tag.concept is concept][:2]:
             for level in (1, 2, 3):
                 for delivery in Delivery:
@@ -148,8 +171,18 @@ def test_the_play_by_play_runs_from_the_last_question_and_stops_before_the_momen
     touches = [touch for spell in play.spells for touch in spell.touches]
     assert touches
     assert all(play.start < touch.at < play.names_until for touch in touches)
-    names = {player.full_name: player.shirt_number for player in (*HOME.squad, *AWAY.squad)}
-    assert all(names[touch.player] == touch.number for touch in touches)
+    names = {
+        player.full_name: (player.last_name, player.shirt_number)
+        for player in (*HOME.squad, *AWAY.squad)
+    }
+    assert all(names[touch.player] == (touch.surname, touch.number) for touch in touches)
+    assert all(touch.action and touch.where for touch in touches)
+    assert play.feed[0].kind == "kick_off"
+    assert all(entry.at <= entry.until < play.names_until for entry in play.feed)
+    assert all(touch.zone for touch in touches)
+    assert play.stats[0].at == play.start
+    assert all(play.start <= entry.at < play.names_until for entry in play.stats)
+    assert all(entry.home.possession + entry.away.possession == 100 for entry in play.stats)
 
 
 def test_the_first_question_s_play_by_play_starts_at_kick_off() -> None:

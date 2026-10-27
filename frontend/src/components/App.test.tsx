@@ -3,6 +3,9 @@ import userEvent from '@testing-library/user-event'
 import App from './App.tsx'
 import type { MatchSummary } from '../api/client.ts'
 import {
+	beforeMatchFirstLook,
+	beforeMatchLevelUp,
+	beforeMatchNothing,
 	conceptMap,
 	identifyFeedback,
 	identifyQuestion,
@@ -46,12 +49,14 @@ test('a new viewer gets a random id, lands on Matches, and plays a question thro
 		'/matches': [reply(200, upcoming), reply(200, matchesAfterOne)],
 		'/next': [reply(200, identifyQuestion), reply(200, fullTime)],
 		'/answers': [reply(200, identifyFeedback)],
+		'/before-match': [reply(200, beforeMatchNothing)],
 		'/team-sheet': [reply(200, sheetStage1)],
 		'/report': [reply(200, reportFullTime)]
 	})
 	const user = userEvent.setup()
 	render(<App />)
 
+	await user.click(screen.getByRole('button', { name: 'Skip the tour' }))
 	await user.click(screen.getByRole('button', { name: 'Continue' }))
 	const post = spy.mock.calls.find(([input, init]) => input === '/api/viewers' && init?.method === 'POST')
 	expect(JSON.parse(post?.[1]?.body as string)).toEqual({
@@ -62,7 +67,8 @@ test('a new viewer gets a random id, lands on Matches, and plays a question thro
 	expect(await screen.findByRole('heading', { name: "Who's playing" })).toHaveFocus()
 	await user.click(screen.getByRole('button', { name: 'Kick off' }))
 
-	await user.click(await screen.findByRole('button', { name: 'See the question' }))
+	await user.click(await screen.findByRole('button', { name: 'Skip to the question' }))
+	await user.click(screen.getByRole('button', { name: 'See the question' }))
 	expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(identifyQuestion.text)
 	await user.keyboard('1{Enter}')
 
@@ -87,7 +93,8 @@ test('a remembered viewer comes back to Matches and rejoins the match part-way t
 	const user = userEvent.setup()
 	render(<App />)
 	await user.click(await screen.findByRole('button', { name: 'Rejoin the match' }))
-	expect(await screen.findByRole('heading', { name: /Play has stopped for a free kick/ })).toBeInTheDocument()
+	await user.click(await screen.findByRole('button', { name: 'Skip to the question' }))
+	expect(screen.getByRole('heading', { name: /Play has stopped for a free kick/ })).toBeInTheDocument()
 })
 
 test('done for this match goes back to Matches', async () => {
@@ -118,9 +125,11 @@ test('an answer to a question the server is no longer waiting on fetches the one
 	const user = userEvent.setup()
 	render(<App />)
 	await user.click(await screen.findByRole('button', { name: 'Rejoin the match' }))
-	await user.click(await screen.findByRole('button', { name: 'See the question' }))
+	await user.click(await screen.findByRole('button', { name: 'Skip to the question' }))
+	await user.click(screen.getByRole('button', { name: 'See the question' }))
 	await user.keyboard('1{Enter}')
-	await user.click(await screen.findByRole('button', { name: 'See the question' }))
+	await user.click(await screen.findByRole('button', { name: 'Skip to the question' }))
+	await user.click(screen.getByRole('button', { name: 'See the question' }))
 	expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('The question the server is waiting on')
 })
 
@@ -136,7 +145,8 @@ test('the map opens from the header over a question, and Back returns to it as i
 	const user = userEvent.setup()
 	render(<App />)
 	await user.click(await screen.findByRole('button', { name: 'Rejoin the match' }))
-	await user.click(await screen.findByRole('button', { name: 'See the question' }))
+	await user.click(await screen.findByRole('button', { name: 'Skip to the question' }))
+	await user.click(screen.getByRole('button', { name: 'See the question' }))
 	await user.keyboard('2')
 	const picked = screen.getByRole('radio', { checked: true })
 
@@ -154,6 +164,7 @@ test('onboarding has no map button, but the welcome opens the whole map', async 
 	const user = userEvent.setup()
 	render(<App />)
 	expect(screen.queryByRole('button', { name: 'Curriculum map' })).toBeNull()
+	await user.click(await screen.findByRole('button', { name: 'Skip the tour' }))
 	await user.click(await screen.findByRole('button', { name: /See all 20 concepts/ }))
 	expect(await screen.findByRole('heading', { name: 'Your pitch' })).toBeInTheDocument()
 	await user.keyboard('{Escape}')
@@ -207,7 +218,7 @@ test('starting over asks first, then forgets the viewer', async () => {
 	await user.click(await screen.findByRole('button', { name: 'Start over' }))
 	expect(localStorage.getItem('btl.viewer')).toBe('lily')
 	await user.click(screen.getByRole('button', { name: 'Yes, start over' }))
-	expect(screen.getByRole('button', { name: 'Continue' })).toBeInTheDocument()
+	expect(screen.getByRole('button', { name: 'Show me what I’ll learn' })).toBeInTheDocument()
 	expect(localStorage.getItem('btl.viewer')).toBeNull()
 })
 
@@ -223,6 +234,7 @@ test('a new viewer picks a team before anything else, and can change it from Mat
 	const user = userEvent.setup()
 	render(<App />)
 
+	await user.click(screen.getByRole('button', { name: 'Skip the tour' }))
 	await user.click(screen.getByRole('button', { name: 'Continue' }))
 	await user.click(await screen.findByRole('radio', { name: /Hexham Anchors/ }))
 	await user.click(screen.getByRole('button', { name: 'Continue with Hexham Anchors' }))
@@ -252,6 +264,7 @@ test('a team refused because watching has started shows Matches with the team se
 	})
 	const user = userEvent.setup()
 	render(<App />)
+	await user.click(screen.getByRole('button', { name: 'Skip the tour' }))
 	await user.click(screen.getByRole('button', { name: 'Continue' }))
 	await user.click(await screen.findByRole('button', { name: 'Pick one for me' }))
 	await user.click(screen.getByRole('button', { name: 'Continue with Hexham Anchors' }))
@@ -278,7 +291,8 @@ test('the first question of the second half comes after the halftime report', as
 		.find(path => path.includes('/report'))
 	expect(asked).toBe('/api/viewers/lily/matches/1/report?at=halftime')
 	await user.click(screen.getByRole('button', { name: 'Ready for the second half' }))
-	expect(await screen.findByRole('heading', { name: /Settled possession/ })).toBeInTheDocument()
+	await user.click(await screen.findByRole('button', { name: 'Skip to the question' }))
+	expect(screen.getByRole('heading', { name: /Settled possession/ })).toBeInTheDocument()
 })
 
 test('Preferences open from the header over Matches, and a change of pace is saved', async () => {
@@ -300,4 +314,33 @@ test('Preferences open from the header over Matches, and a change of pace is sav
 	await user.keyboard('{Escape}')
 	expect(screen.getByRole('heading', { name: 'Matches' })).toBeInTheDocument()
 	expect(screen.getByRole('button', { name: 'Preferences' })).toHaveFocus()
+})
+
+test('before a match, a First look at new concepts comes first, then the Level-ups, then Who’s playing', async () => {
+	localStorage.setItem('btl.viewer', 'lily')
+	const both = { ...beforeMatchFirstLook, level_ups: beforeMatchLevelUp.level_ups, match_number: 2 }
+	const spy = serve({
+		'/api/viewers': [reply(200, startStatus)],
+		'/api/viewers/lily': [reply(200, startStatus)],
+		'/matches': [reply(200, upcoming)],
+		'/before-match': [reply(200, both)],
+		'/introduced': [reply(200, startStatus)],
+		'/team-sheet': [reply(200, sheetStage1)]
+	})
+	const user = userEvent.setup()
+	render(<App />)
+	await user.click(await screen.findByRole('button', { name: 'See who’s playing' }))
+	expect(await screen.findAllByText('First look')).toHaveLength(2)
+	expect(screen.getByRole('button', { name: 'Curriculum map' })).toBeInTheDocument()
+	await user.click(screen.getByRole('button', { name: 'Skip' }))
+	await user.click(screen.getByRole('button', { name: 'On to Who’s playing' }))
+	const marked = spy.mock.calls.find(([input]) => typeof input === 'string' && input.endsWith('/introduced'))
+	expect(JSON.parse(marked?.[1]?.body as string)).toEqual({
+		concepts: ['tackles', 'shots_and_goals', 'transitions']
+	})
+	expect(await screen.findByText('Before match 2')).toBeInTheDocument()
+	expect(screen.getByRole('heading', { level: 2, name: 'Count the lines' })).toHaveFocus()
+	await user.click(screen.getByRole('button', { name: 'Next' }))
+	await user.click(screen.getByRole('button', { name: 'On to Who’s playing' }))
+	expect(await screen.findByRole('heading', { name: "Who's playing" })).toHaveFocus()
 })

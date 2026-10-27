@@ -39,7 +39,7 @@ NUMBER_WORDS = frozenset((
 FOOTBALL_PHRASES = re.compile(
     r"\b(?:second[- ]last defender|second[- ]last|half[- ]?time|half[- ]?way|first half|"
     r"second half|(?:own|other|opposing|opposition'?s?|team'?s|their|his|its|the attacking|"
-    r"the defending) half)\b",
+    r"the defending) half|(?:own|middle|attacking|defensive|final) thirds?)\b",
     re.IGNORECASE,
 )
 # Capitalised words any wording may use mid-sentence, besides the pack's own names.
@@ -59,9 +59,9 @@ VERDICT_PHRASES = re.compile(
 # words that join a label's other words, and words any question about football uses.
 LABEL_STOPWORDS = frozenset((
     "a", "an", "the", "to", "of", "for", "in", "on", "at", "by", "and", "or", "with", "from", "is",
-    "was", "are", "it", "its", "be", "they", "their", "his", "her", "when", "where", "what", "why",
-    "how", "only", "so", "would", "have", "has", "had", "did", "do", "ball", "back", "play",
-    "played", "stopped", "player", "players", "team", "referee", "pitch", "match", "game",
+    "was", "are", "it", "its", "be", "they", "their", "his", "her", "you", "your", "when", "where",
+    "what", "why", "how", "only", "so", "would", "have", "has", "had", "did", "do", "ball", "back",
+    "play", "played", "stopped", "player", "players", "team", "referee", "pitch", "match", "game",
 ))  # fmt: skip
 # An option named by its letter: "option B", "(C)", "B)", or a lone B or C.
 OPTION_LETTER = re.compile(
@@ -93,6 +93,7 @@ WORD = re.compile(r"[A-Za-zÀ-ÖØ-öø-ÿ][A-Za-zÀ-ÖØ-öø-ÿ'\u2019-]*")
 # Where a sentence, or a clause after a colon, starts: its first word may be capitalised.
 SENTENCE_END = re.compile(r"(?<=[.!?:])\s+")
 FULL_STOP = re.compile(r"(?<=[.!?])\s+")
+CLAUSE_END = re.compile(r"(?<=[.!?,;:])\s+")
 
 
 @dataclass(frozen=True, slots=True)
@@ -360,7 +361,8 @@ def _echoes(text: str, values: Mapping[str, str]) -> list[Failure]:
     except SlotError:
         return []  # The slots check has already rejected it.
     failures: list[Failure] = []
-    for sentence in FULL_STOP.split(filled.strip()):
+    # A clause ends at a comma as well as a full stop: "shots, shots on target" isn't an echo.
+    for sentence in CLAUSE_END.split(filled.strip()):
         words = [word.lower() for word in re.findall(r"[\w'\u2019#%+-]+(?:\.\d+)?", sentence)]
         for size in range(1, 6):
             for start in range(len(words) - 2 * size + 1):
@@ -368,9 +370,11 @@ def _echoes(text: str, values: Mapping[str, str]) -> list[Failure]:
                 if run == words[start + size : start + 2 * size] and any(w.isalpha() for w in run):
                     failures.append(Failure("echo", f'"{" ".join(run)}" is said twice in a row'))
     # A name or phrase written out in the same sentence as its own slot ("{receiver} (#8 …)").
+    # Slots are taken in the order they appear, so the failures, and the repair prompt that
+    # lists them, read the same every time: a set's order would change from one run to the next.
     for sentence in FULL_STOP.split(text.strip()):
         literal = SLOT.sub(" ", sentence).lower()
-        for name in slot_names(sentence):
+        for name in dict.fromkeys(SLOT.findall(sentence)):
             value = values.get(name, "").lower()
             if " " in value.strip() and value in literal:
                 failures.append(Failure("echo", f"{{{name}}}'s value is also written out"))

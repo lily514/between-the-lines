@@ -19,8 +19,22 @@ export const startStatus: Status = {
 	can_choose_club: true,
 	suggested_club: 2,
 	concepts: [
-		{ name: 'Line-breaking passes', value: 0.15, level: 'Getting there' },
-		{ name: 'Counter-pressing', value: 0.17, level: 'Getting there' }
+		{
+			key: 'line_breaking_pass',
+			name: 'Line-breaking passes',
+			value: 0.15,
+			level: 'Getting there',
+			band: 'getting_there',
+			waits_for: []
+		},
+		{
+			key: 'counter_press',
+			name: 'Counter-pressing',
+			value: 0.17,
+			level: 'Getting there',
+			band: 'getting_there',
+			waits_for: ['Tackles and turnovers']
+		}
 	],
 	thresholds: { unlock: 0.8, mastery: 0.95 },
 	pace: 'normal',
@@ -55,8 +69,15 @@ export const fullTime: FullTime = {
 	your_result: 'won',
 	questions: 1,
 	concepts: [
-		{ name: 'Line-breaking passes', before: 0.15, after: 0.42 },
-		{ name: 'Counter-pressing', before: 0.17, after: 0.17 }
+		{ name: 'Line-breaking passes', before: 0.15, after: 0.42, level: 'Solid', band: 'solid', mastered: false },
+		{
+			name: 'Counter-pressing',
+			before: 0.17,
+			after: 0.17,
+			level: 'Getting there',
+			band: 'getting_there',
+			mastered: false
+		}
 	],
 	thresholds: { unlock: 0.8, mastery: 0.95 },
 	finished: false,

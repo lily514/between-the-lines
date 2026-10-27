@@ -20,9 +20,9 @@ from statistics import fmean
 from btl.league.league import League
 from btl.learn.bkt import BktState
 from btl.learn.concept_map import ConceptKey
-from btl.learn.curriculum import strand_name
+from btl.learn.curriculum import strand_name, waits_for
 from btl.learn.learner import Attempt, LearnerState
-from btl.learn.levels import level_word
+from btl.learn.levels import Band, band_for, level_word
 from btl.learn.session import Course, PreparedMatch
 from btl.schema.ids import ActionId, TeamId
 from btl.schema.match import Match
@@ -51,7 +51,7 @@ class StrandValue:
 
 @dataclass(frozen=True, slots=True)
 class ConceptMove:
-    """One concept asked about now: mastery and level word at kick-off and now."""
+    """One concept asked about now: mastery, level word and band at kick-off and now."""
 
     key: ConceptKey
     name: str
@@ -60,7 +60,11 @@ class ConceptMove:
     after: float
     level_before: str
     level: str
+    band_before: Band
+    band: Band
     mastered: bool
+    # The askable prerequisites it still waits for at the break; the page shows it locked.
+    waits_for: tuple[str, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -140,7 +144,7 @@ def report(
         home_goals=sum(goal.home for goal in goals),
         away_goals=sum(not goal.home for goal in goals),
         goals=goals,
-        strands=_strands(course, concepts),
+        strands=strand_values(course, concepts),
         concepts=concepts,
         answers=tuple(
             AnswerLine(
@@ -198,11 +202,15 @@ def _move(course: Course, kickoff: BktState, now: BktState, key: ConceptKey) -> 
         after=after,
         level_before=level_word(before, model.thresholds),
         level=level_word(after, model.thresholds),
+        band_before=band_for(before),
+        band=band_for(after),
         mastered=after >= model.thresholds.mastery,
+        waits_for=waits_for(course, now, key),
     )
 
 
-def _strands(course: Course, concepts: Sequence[ConceptMove]) -> tuple[StrandValue, ...]:
+def strand_values(course: Course, concepts: Sequence[ConceptMove]) -> tuple[StrandValue, ...]:
+    """The radar: each strand's mean mastery over the concepts given; None where it has none."""
     values: list[StrandValue] = []
     for key in course.concept_map.strands:
         inside = [c for c in concepts if c.strand == key]

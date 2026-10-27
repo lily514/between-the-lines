@@ -11,7 +11,10 @@ The form depends on the concept, the moment, the viewer's level and when the que
 - Everything else is an **identify** question about play the viewer has just seen: a
   line-breaking pass asked at level 1 or after a delay, every counter-press, since a
   counter-press happens during a transition and is never asked live, an offside call asked
-  later, and why the referee played advantage.
+  later, why the referee played advantage, every ball win, which opens a transition (how it
+  was won, then which third, then why that matters), every shot (what came of it, where from,
+  how the chance came), and every counter-attack (what the team did next, how long it took to
+  reach the box, why it counts as one).
 
 Questions get harder as the level rises. Predict questions offer closer alternatives.
 Identify questions ask for finer detail: how many lines a pass broke, then how wide its gap
@@ -28,9 +31,11 @@ from enum import StrEnum
 
 from numpy.random import Generator
 
+from btl.concepts.ball_win import THIRDS, WonWith, pitch_third
 from btl.concepts.base import MatchContext
 from btl.concepts.line_breaking import LineBreakingPass
 from btl.concepts.offside import HALFWAY, offside_line
+from btl.concepts.shot import ChanceFrom, ShotOutcome, ShotZone
 from btl.learn.candidates import AskedWhen, Candidate
 from btl.learn.concept_map import ConceptKey, ConceptMap
 from btl.learn.knowledge import Delivery
@@ -74,6 +79,55 @@ ADVANTAGE_REASONS = (
     "The referee didn't see the foul",
     "A foul in the middle of the pitch isn't punished",
 )
+# How the ball was won, as options; the right one plus the first two others.
+WON_WITH = {
+    WonWith.TACKLE: "A tackle",
+    WonWith.INTERCEPTION: "An interception",
+    WonWith.KEEPER: "The keeper gathered it",
+    WonWith.LOOSE_BALL: "A loose ball",
+}
+WHICH_THIRD = ("Their own third", "The middle third", "The attacking third")
+# Why the third a ball is won in matters, one reason per third, and the map's misconception
+# as the distractor (a test keeps it the same as the map's wording).
+WHY_THE_THIRD_MATTERS = (
+    "Won deep, so the whole pitch is still ahead of them before a chance",
+    "Won in midfield, while the opponent is still turning, with ground to cover",
+    "Won high up, so they are near goal before the defence is set",
+)
+DEEP_WINS_ARE_JUST_AS_USEFUL = (
+    "Winning the ball deep in your own half is just as useful as winning it high"
+)
+# A shot's outcome, where it was from, and what made the chance, as options.
+SHOT_OUTCOMES = {
+    ShotOutcome.SCORED: "Scored",
+    ShotOutcome.SAVED: "Saved",
+    ShotOutcome.OFF_TARGET: "Off target",
+}
+SHOT_ZONES = {
+    ShotZone.SIX_YARD_BOX: "From the six-yard box",
+    ShotZone.PENALTY_AREA: "From the penalty area",
+    ShotZone.OUTSIDE_THE_BOX: "From outside the box",
+}
+CHANCE_SOURCES = {
+    ChanceFrom.CROSS: "From a cross",
+    ChanceFrom.PASS: "From a pass",
+    ChanceFrom.DRIBBLE: "From a dribble",
+    ChanceFrom.FREE_KICK: "From a free kick",
+    ChanceFrom.LOOSE_BALL: "From a loose ball",
+}
+# What a team did after winning the ball in its own half; a counter-attack went for goal.
+AFTER_WINNING_IT = ("Went straight for goal", "Built up slowly", "Lost it again")
+# Seconds-to-the-box ranges for the level-2 identify question, around the planted levels.
+BOX_EDGES = (8.0, 10.0)
+BOX_STEP = 2.0
+# Why it was a counter-attack: the right reason, the map's misconception, and a wrong reason
+# (a test keeps the misconception the same as the map's wording).
+WHY_A_COUNTER = (
+    "They went for goal at once, while the defence was still out of shape",
+    "A counterattack is any fast attack",
+    "They had most of the possession before the chance came",
+)
+ANY_FAST_ATTACK = WHY_A_COUNTER[1]
 
 
 class Form(StrEnum):
@@ -98,6 +152,15 @@ class Asks(StrEnum):
     AFTER_THE_FOUL = "after the foul"
     WHY_BOOKED = "why booked"
     WHY_PLAY_ON = "why play on"
+    HOW_WON = "how won"
+    WHERE_WON = "where won"
+    WHY_WHERE_MATTERS = "why where matters"
+    ON_TARGET = "on target"
+    WHERE_FROM = "where from"
+    HOW_THE_CHANCE_CAME = "how the chance came"
+    WHAT_NEXT_AFTER_WINNING = "what next after winning it"
+    SECONDS_TO_BOX = "seconds to the box"
+    WHY_A_COUNTER_ATTACK = "why a counter-attack"
 
 
 @dataclass(frozen=True, slots=True)
@@ -219,7 +282,8 @@ def _line_breaking(
 
 
 def _after_the_play(candidate: Candidate, level: int, delivery: Delivery) -> Form:
-    # A counter-press happens during a transition, so it is only ever asked after the play.
+    # A counter-press, a ball win or a counter-attack happens in a transition, and a shot's
+    # result is its answer, so these are only asked after the play.
     return Form.IDENTIFY
 
 
@@ -355,6 +419,74 @@ def _foul(
     else:
         labels = ("Free kick to {opponent}", "Penalty to {opponent}", "Free kick to {team}")
     return Asks.AFTER_THE_FOUL, _labelled(labels, 0)
+
+
+def _ball_win(
+    candidate: Candidate,
+    level: int,
+    form: Form,
+    ctx: MatchContext,
+    threat: ThreatModel,
+    rng: Generator,
+) -> _Built:
+    """How the ball was won, then which third, then why the third matters."""
+    evidence = candidate.tag.evidence
+    if level == 1:
+        won_with = WonWith(int(evidence["won with"]))
+        others = [way for way in WonWith if way is not won_with][:2]
+        return Asks.HOW_WON, _labelled([WON_WITH[won_with], *(WON_WITH[w] for w in others)], 0)
+    third = THIRDS.index(pitch_third(evidence["metres from own goal"]))
+    if level == 2:
+        return Asks.WHERE_WON, _labelled(WHICH_THIRD, third)
+    another = next(i for i in range(len(THIRDS)) if i != third)
+    reasons = (
+        WHY_THE_THIRD_MATTERS[third],
+        DEEP_WINS_ARE_JUST_AS_USEFUL,
+        WHY_THE_THIRD_MATTERS[another],
+    )
+    return Asks.WHY_WHERE_MATTERS, _labelled(reasons, 0)
+
+
+def _shot(
+    candidate: Candidate,
+    level: int,
+    form: Form,
+    ctx: MatchContext,
+    threat: ThreatModel,
+    rng: Generator,
+) -> _Built:
+    """How the shot ended, then where it was from, then what made the chance."""
+    evidence = candidate.tag.evidence
+    if level == 1:
+        outcome = ShotOutcome(int(evidence["outcome"]))
+        return Asks.ON_TARGET, _labelled(
+            list(SHOT_OUTCOMES.values()), list(SHOT_OUTCOMES).index(outcome)
+        )
+    if level == 2:
+        zone = ShotZone(int(evidence["zone"]))
+        return Asks.WHERE_FROM, _labelled(list(SHOT_ZONES.values()), list(SHOT_ZONES).index(zone))
+    source = ChanceFrom(int(evidence["chance from"]))
+    others = [way for way in ChanceFrom if way is not source][:2]
+    labels = [CHANCE_SOURCES[source], *(CHANCE_SOURCES[way] for way in others)]
+    return Asks.HOW_THE_CHANCE_CAME, _labelled(labels, 0)
+
+
+def _counter_attack(
+    candidate: Candidate,
+    level: int,
+    form: Form,
+    ctx: MatchContext,
+    threat: ThreatModel,
+    rng: Generator,
+) -> _Built:
+    """What the team did next, then how long it took to reach the box, then why it counts."""
+    if level == 1:
+        return Asks.WHAT_NEXT_AFTER_WINNING, _labelled(AFTER_WINNING_IT, 0)
+    if level == 2:
+        seconds = candidate.tag.evidence["seconds to the box"]
+        ranges = _ranges(seconds, BOX_EDGES, BOX_STEP, rng)
+        return Asks.SECONDS_TO_BOX, _range_options(ranges, seconds, "s")
+    return Asks.WHY_A_COUNTER_ATTACK, _labelled(WHY_A_COUNTER, 0)
 
 
 def _where_to_pass(
@@ -493,5 +625,8 @@ QUESTIONS: Mapping[ConceptId, ConceptQuestions] = {
     ConceptId.RESTART: ConceptQuestions(_what_happens_now, _restart),
     ConceptId.OFFSIDE: ConceptQuestions(_offside_form, _offside),
     ConceptId.FOUL: ConceptQuestions(_foul_form, _foul),
+    ConceptId.BALL_WIN: ConceptQuestions(_after_the_play, _ball_win),
+    ConceptId.SHOT: ConceptQuestions(_after_the_play, _shot),
+    ConceptId.COUNTER_ATTACK: ConceptQuestions(_after_the_play, _counter_attack),
 }
 ASKABLE = frozenset(QUESTIONS)

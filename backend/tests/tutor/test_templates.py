@@ -10,7 +10,7 @@ from btl.learn.concept_map import load_concept_map
 from btl.learn.evidence import Delivered, EvidencePack, build_pack, question_view
 from btl.learn.grader import ChoiceAnswer, ChoiceGrader, Grade
 from btl.learn.knowledge import Delivery
-from btl.learn.questions import build_question
+from btl.learn.questions import Asks, build_question
 from btl.schema.vocab import ConceptId
 from btl.tutor.slots import (
     SlotError,
@@ -129,8 +129,24 @@ def test_question_wording_never_names_an_outcome() -> None:
         "box_position",
         "foul_outcome",
         "booking_note",
+        "recovery_type",
+        "pitch_third",
+        "metres_from_own_goal",
+        "high_recoveries",
+        "avg_high_recoveries",
+        "shot_outcome",
+        "shot_zone",
+        "chance_from",
+        "shots",
+        "shots_on_target",
+        "opp_shots",
+        "seconds_to_box",
+        "won_metres_from_own_goal",
+        "transition_shots",
+        "settled_shots",
     }
 
+    assert set(ASKING) == set(Asks)
     for wording in ASKING.values():
         assert not slot_names(wording) & outcome_names
 

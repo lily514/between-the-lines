@@ -3,6 +3,7 @@ import type { Feedback as FeedbackData, Question } from '../../api/client.ts'
 import AnswerGroup from '../Shared/AnswerGroup/index.tsx'
 import './index.css'
 import { askedConcept, pickedLine, sourceLine, statTiles } from './index.support.ts'
+import LevelWord from '../Shared/LevelWord.tsx'
 import Pitch from '../Shared/Pitch/index.tsx'
 import ProgressBar from '../Shared/ProgressBar.tsx'
 import { percent } from '../Shared/ProgressBar.support.ts'
@@ -90,6 +91,8 @@ const Feedback = ({ feedback, question, onContinue }: FeedbackProps) => {
 						<p className="feedback__movement">
 							{concept.name}: <span className="feedback__number">{percent(concept.before)}%</span> →{' '}
 							<span className="feedback__number feedback__number--now">{percent(concept.after)}%</span>
+							{' · '}
+							<LevelWord level={concept.level} band={concept.band} mastered={concept.mastered} />
 						</p>
 						<p className="feedback__update">{feedback.update}</p>
 						<ProgressBar

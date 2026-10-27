@@ -109,7 +109,7 @@ concepts:
     tier: 0
     prerequisites: []
     objective: "Recognize shots, shots on target, saves, and goals."
-    detector: null
+    detector: shot
     data_requirements: [events]
     question_types: [identify]
     example_prompt: "Was that shot on target?"

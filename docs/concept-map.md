@@ -101,7 +101,7 @@ Text in `{braces}` is filled in by code from the evidence pack, so the Tutor nev
 - Every prerequisite is a concept in the map, and prerequisites never form a cycle.
 - Tiers, strands, question types and data requirements (`events`, `snapshot`, `window`) are the declared ones.
 - Every placeholder is in its concept's evidence fields.
-- `detector` is a `ConceptId` (`line_breaking_pass`, `counter_press`, `counter_attack`, `switch_of_play`, `restart`, `offside`, `foul`, `ball_win`) or null, and no detector belongs to two concepts.
+- `detector` is a `ConceptId` (`line_breaking_pass`, `counter_press`, `counter_attack`, `switch_of_play`, `restart`, `offside`, `foul`, `ball_win`, `shot`) or null, and no detector belongs to two concepts.
 - No betting words anywhere (a hard rule for the project).
 
 ## Adding a concept to what the app can ask

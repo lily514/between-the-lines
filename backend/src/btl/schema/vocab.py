@@ -93,6 +93,7 @@ class ConceptId(StrEnum):
     OFFSIDE = "offside"
     FOUL = "foul"
     BALL_WIN = "ball_win"
+    SHOT = "shot"
 
     @property
     def label(self) -> str:

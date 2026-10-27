@@ -10,6 +10,7 @@ from btl.concepts.foul import FoulCommitted
 from btl.concepts.line_breaking import LineBreakingPass
 from btl.concepts.offside import OffsidePass
 from btl.concepts.restart import BallOutOfPlay
+from btl.concepts.shot import Shot
 from btl.concepts.switch_of_play import SwitchOfPlay
 
 ALL_DETECTORS: tuple[Detector, ...] = (
@@ -21,6 +22,7 @@ ALL_DETECTORS: tuple[Detector, ...] = (
     OffsidePass(),
     FoulCommitted(),
     BallWin(),
+    Shot(),
 )
 
 

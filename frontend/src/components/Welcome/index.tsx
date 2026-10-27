@@ -4,6 +4,7 @@ import LevelIcon from '../Shared/LevelIcon.tsx'
 import ExampleCard from '../Shared/StoryStep/ExampleCard.tsx'
 import SceneCard from '../Shared/StoryStep/SceneCard.tsx'
 import StoryStep from '../Shared/StoryStep/index.tsx'
+import Intro from './Intro.tsx'
 import { summaryRows, welcomeSteps } from './index.support.ts'
 import './index.css'
 
@@ -17,6 +18,9 @@ export interface WelcomeProps {
 	onSeeAll: () => void
 }
 
+/** Where the welcome starts: the intro page, before the counted steps. */
+const INTRO = -1
+
 const LEVELS = [
 	{ band: 'getting_there', word: 'Getting there', note: ' (you start here)' },
 	{ band: 'solid', word: 'Solid', note: '' },
@@ -24,27 +28,38 @@ const LEVELS = [
 ] as const
 
 /**
- * The first screen (B1): a step per strand with something asked about now, each with its scene at Getting there,
- * then a summary of what the questions cover and where everyone starts. Continue goes on to the club picker.
+ * The first screen (B1): an intro to what the app is, then a step per strand with something asked about now, each
+ * with its scene at Getting there, then a summary of what the questions cover and where everyone starts. Continue goes
+ * on to the club picker.
  *
  * There is no sign-in: the page makes the viewer a random id and keeps it in this browser. A viewer sent back here
- * with an error has seen the steps, so they land on the summary.
+ * with an error has seen the intro and the steps, so they land on the summary.
  */
 const Welcome = ({ curriculum, error, onStart, onSeeAll }: WelcomeProps) => {
 	const steps = curriculum === null ? [] : welcomeSteps(curriculum)
-	const [chosen, setChosen] = useState(error === null ? 0 : Infinity)
+	const [chosen, setChosen] = useState(error === null ? INTRO : Infinity)
 	const index = Math.min(chosen, steps.length)
 	const count = steps.length + 1
 	const step = steps[index]
 	const rows = curriculum === null ? [] : summaryRows(curriculum)
-	const back =
-		index > 0
-			? {
-					onBack: () => {
-						setChosen(index - 1)
-					}
-				}
-			: {}
+	const back = {
+		onBack: () => {
+			setChosen(index - 1)
+		}
+	}
+
+	if (index === INTRO) {
+		return (
+			<Intro
+				onNext={() => {
+					setChosen(0)
+				}}
+				onSkip={() => {
+					setChosen(Infinity)
+				}}
+			/>
+		)
+	}
 
 	if (step !== undefined) {
 		return (

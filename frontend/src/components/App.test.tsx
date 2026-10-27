@@ -56,6 +56,7 @@ test('a new viewer gets a random id, lands on Matches, and plays a question thro
 	const user = userEvent.setup()
 	render(<App />)
 
+	await user.click(screen.getByRole('button', { name: 'Skip the tour' }))
 	await user.click(screen.getByRole('button', { name: 'Continue' }))
 	const post = spy.mock.calls.find(([input, init]) => input === '/api/viewers' && init?.method === 'POST')
 	expect(JSON.parse(post?.[1]?.body as string)).toEqual({
@@ -158,7 +159,7 @@ test('onboarding has no map button, but the welcome opens the whole map', async 
 	const user = userEvent.setup()
 	render(<App />)
 	expect(screen.queryByRole('button', { name: 'Curriculum map' })).toBeNull()
-	await user.click(await screen.findByRole('button', { name: 'Skip' }))
+	await user.click(await screen.findByRole('button', { name: 'Skip the tour' }))
 	await user.click(await screen.findByRole('button', { name: /See all 20 concepts/ }))
 	expect(await screen.findByRole('heading', { name: 'Your pitch' })).toBeInTheDocument()
 	await user.keyboard('{Escape}')
@@ -212,7 +213,7 @@ test('starting over asks first, then forgets the viewer', async () => {
 	await user.click(await screen.findByRole('button', { name: 'Start over' }))
 	expect(localStorage.getItem('btl.viewer')).toBe('lily')
 	await user.click(screen.getByRole('button', { name: 'Yes, start over' }))
-	expect(screen.getByRole('button', { name: 'Continue' })).toBeInTheDocument()
+	expect(screen.getByRole('button', { name: 'Show me what I’ll learn' })).toBeInTheDocument()
 	expect(localStorage.getItem('btl.viewer')).toBeNull()
 })
 
@@ -228,6 +229,7 @@ test('a new viewer picks a team before anything else, and can change it from Mat
 	const user = userEvent.setup()
 	render(<App />)
 
+	await user.click(screen.getByRole('button', { name: 'Skip the tour' }))
 	await user.click(screen.getByRole('button', { name: 'Continue' }))
 	await user.click(await screen.findByRole('radio', { name: /Hexham Anchors/ }))
 	await user.click(screen.getByRole('button', { name: 'Continue with Hexham Anchors' }))
@@ -257,6 +259,7 @@ test('a team refused because watching has started shows Matches with the team se
 	})
 	const user = userEvent.setup()
 	render(<App />)
+	await user.click(screen.getByRole('button', { name: 'Skip the tour' }))
 	await user.click(screen.getByRole('button', { name: 'Continue' }))
 	await user.click(await screen.findByRole('button', { name: 'Pick one for me' }))
 	await user.click(screen.getByRole('button', { name: 'Continue with Hexham Anchors' }))

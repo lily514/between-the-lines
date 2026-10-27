@@ -459,3 +459,13 @@ over 8 concepts, 178 replies. Two things got in the way:
   (32 model samples, four per concept).
 **Why:** the tests must replay without the model, and a prompt's key has to be the same every time.
 **Affects:** the "Checks failed" numbers in `docs/milestone-2b/` are from the old recording; nothing else.
+
+## After T16 — An intro page before the welcome (2026-10-27)
+**Plan said:** the welcome (B1) opens straight on the first strand's scene.
+**We did:** a still intro page comes first (`Welcome/Intro.tsx`): what Between the Lines is ("from ‘what just
+happened?’ to ‘I saw that coming.’"), four lines on how it works (follow a match, answer when play stops, guess first
+then see, grow from Getting there to Sharp), then "Show me what I’ll learn" into the scenes or "Skip the tour" to the
+summary. It sits outside the step counter, and Back from the first scene returns to it. A viewer sent back with an
+error still lands on the summary; Start over lands on the intro.
+**Why:** the scenes taught the concepts before anyone was told what the app is or when it asks.
+**Affects:** nothing; the App tests click past the intro.

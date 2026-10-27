@@ -1806,7 +1806,7 @@
         "type": "object"
       },
       "SheetPlayerOut": {
-        "description": "A starter on the team sheet.\n\n``at_kickoff`` is where they stood at kick-off, with the sheet's first team attacking left\nto right. ``numbers`` is null before stage 3, or if the viewer hasn't\nseen them play.",
+        "description": "A starter on the team sheet.\n\n``at_kickoff`` is where they stood at kick-off, with the sheet's first team attacking left\nto right. ``numbers`` is null before stage 3, or if the viewer hasn't\nseen them play. ``surname`` is the name on their shirt; it may have more than one word.",
         "properties": {
           "at_kickoff": {
             "maxItems": 2,
@@ -1846,11 +1846,16 @@
           "shirt": {
             "title": "Shirt",
             "type": "integer"
+          },
+          "surname": {
+            "title": "Surname",
+            "type": "string"
           }
         },
         "required": [
           "shirt",
           "name",
+          "surname",
           "role",
           "position",
           "at_kickoff",
@@ -2206,7 +2211,7 @@
         "type": "object"
       },
       "TouchOut": {
-        "description": "A player on the ball, at ``at`` seconds on the match clock.",
+        "description": "A player on the ball, at ``at`` seconds on the match clock.\n\n``surname`` is what the commentary calls them by; a surname may have more than one word.",
         "properties": {
           "at": {
             "title": "At",
@@ -2219,11 +2224,16 @@
           "player": {
             "title": "Player",
             "type": "string"
+          },
+          "surname": {
+            "title": "Surname",
+            "type": "string"
           }
         },
         "required": [
           "at",
           "player",
+          "surname",
           "number"
         ],
         "title": "TouchOut",

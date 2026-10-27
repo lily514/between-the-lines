@@ -316,6 +316,7 @@
 					{
 						"at": 1812.0,
 						"player": "Lukas Brennhof",
+						"surname": "Brennhof",
 						"number": 9
 					}
 				]
@@ -326,16 +327,19 @@
 					{
 						"at": 1900.2,
 						"player": "Serhii Nowaković",
+						"surname": "Nowaković",
 						"number": 4
 					},
 					{
 						"at": 1904.6,
 						"player": "Stefan Jankčić",
+						"surname": "Jankčić",
 						"number": 8
 					},
 					{
 						"at": 1910.1,
 						"player": "Wout Hafhuis",
+						"surname": "Hafhuis",
 						"number": 11
 					}
 				]

@@ -25,14 +25,14 @@ test('the listener hears who is on the ball, and the spells so far newest first'
 	const heard = heardAt(counter, 152)
 	expect(heard.onBall).toEqual({ side: 'home', touch: counter.spells[2]?.touches[0] })
 	expect(heard.log.map(line => [line.clock, line.side, line.names])).toEqual([
-		['02:30', 'home', ['Vitor Fonbeira']],
-		['01:36', 'away', ['Aarav Lindqvist', 'Tomás Ferreiro']],
-		['00:00', 'home', ['Bohdan Miloković', 'José Escorrieta', 'Dennis Hafkamp']]
+		['02:30', 'home', ['Fonbeira']],
+		['01:36', 'away', ['Lindqvist', 'Ferreiro']],
+		['00:00', 'home', ['Miloković', 'Escorrieta', 'Hafkamp']]
 	])
 })
 
 test('a name is not said twice in a row, and the log keeps the last four spells', () => {
-	const touch = (at: number, player: string) => ({ at, player, number: 1 })
+	const touch = (at: number, player: string) => ({ at, player, surname: player, number: 1 })
 	const spells = Array.from({ length: 6 }, (_, i) => ({
 		side: i % 2 === 0 ? ('home' as const) : ('away' as const),
 		touches: [touch(i * 10, `P${String(i)}`), touch(i * 10 + 1, `P${String(i)}`), touch(i * 10 + 2, 'Q')]
@@ -58,7 +58,7 @@ test('the clock runs from where the viewer left off to the next question', () =>
 			vi.advanceTimersByTime(runMs(counter) / 2)
 		})
 		expect(screen.getByRole('timer')).toHaveTextContent(/^01:4[89]$/)
-		expect(screen.getByText(/on the ball:/)).toHaveTextContent('Ludlow Ferrymen on the ball: #10 Tomás Ferreiro')
+		expect(screen.getByText(/on the ball:/)).toHaveTextContent('Ludlow Ferrymen on the ball: #10 Ferreiro')
 		act(() => {
 			vi.advanceTimersByTime(runMs(counter))
 		})
@@ -67,5 +67,21 @@ test('the clock runs from where the viewer left off to the next question', () =>
 		expect(screen.getByText('Play goes on.')).toBeInTheDocument()
 	} finally {
 		vi.useRealTimers()
+	}
+})
+
+test('given a slot in the stream view, the commentary shows there too, and the panel keeps it for screen readers', () => {
+	const slot = document.createElement('div')
+	document.body.append(slot)
+	try {
+		render(<Commentary play={counter} home="Ripon Wardens" away="Ludlow Ferrymen" streamSlot={slot} />)
+		expect(slot).toHaveTextContent(/^00:00Next question in 3:39/)
+		expect(slot.querySelector('.commentary__on-ball')).not.toBeNull()
+		expect(screen.getAllByRole('timer')).toHaveLength(1)
+		expect(screen.getByRole('timer', { name: 'Match clock' }).closest('.commentary')).toHaveClass(
+			'commentary--streamed'
+		)
+	} finally {
+		slot.remove()
 	}
 })

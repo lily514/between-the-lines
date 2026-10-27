@@ -99,6 +99,15 @@
 		font-weight: 600;
 	}
 
+	.layout__commentary {
+		width: min(100%, 480px);
+		margin-top: var(--s-4);
+	}
+
+	.layout__commentary:empty {
+		display: none;
+	}
+
 	.layout__screen-icon {
 		width: 48px;
 		height: 48px;

@@ -469,3 +469,17 @@ summary. It sits outside the step counter, and Back from the first scene returns
 error still lands on the summary; Start over lands on the intro.
 **Why:** the scenes taught the concepts before anyone was told what the app is or when it asks.
 **Affects:** nothing; the App tests click past the intro.
+
+## After T16 — The commentary in the stream view, by surname (2026-10-27)
+**Plan said:** the commentary (match clock, "Next question in …", who is on the ball and the spells so far) sits in
+the panel, naming players in full.
+**We did:** on a wide screen the commentary shows in the stream view, under "Your match: TV, stream or another tab".
+It is drawn there through a portal into a slot `App` gives it, so one clock drives both places; the panel keeps its
+copy for screen readers only, since the stream view is hidden from them. Below 900 px there is no stream view, so it
+stays in the panel. It now names players by surname: each play-by-play touch carries `surname` from the server
+(`Player.last_name`) beside the full name, since a surname may have more than one word ("de Wit…") and the
+browser can't split it reliably.
+**Why:** the commentary follows the match, not the questions beside it, and shorter names read faster.
+The team sheet had the same problem: `shirtName` took the last word of the full name, so "de Witkamp" showed as
+"Witkamp". Its players now carry `surname` from the server too, and `shirtName` uses it.
+**Affects:** the API (`TouchOut.surname`, `SheetPlayerOut.surname`; `openapi.json` and `schema.d.ts` regenerated).

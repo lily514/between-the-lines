@@ -82,10 +82,14 @@ class ScoreOut(BaseModel):
 
 
 class TouchOut(BaseModel):
-    """A player on the ball, at ``at`` seconds on the match clock."""
+    """A player on the ball, at ``at`` seconds on the match clock.
+
+    ``surname`` is what the commentary calls them by; a surname may have more than one word.
+    """
 
     at: float
     player: str
+    surname: str
     number: int
 
 
@@ -329,11 +333,12 @@ class SheetPlayerOut(BaseModel):
 
     ``at_kickoff`` is where they stood at kick-off, with the sheet's first team attacking left
     to right. ``numbers`` is null before stage 3, or if the viewer hasn't
-    seen them play.
+    seen them play. ``surname`` is the name on their shirt; it may have more than one word.
     """
 
     shirt: int
     name: str
+    surname: str
     role: str
     position: PositionOut
     at_kickoff: Point

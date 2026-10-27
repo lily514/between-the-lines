@@ -1020,7 +1020,7 @@ export interface components {
          *
          *     ``at_kickoff`` is where they stood at kick-off, with the sheet's first team attacking left
          *     to right. ``numbers`` is null before stage 3, or if the viewer hasn't
-         *     seen them play.
+         *     seen them play. ``surname`` is the name on their shirt; it may have more than one word.
          */
         SheetPlayerOut: {
             /** At Kickoff */
@@ -1036,6 +1036,8 @@ export interface components {
             role: string;
             /** Shirt */
             shirt: number;
+            /** Surname */
+            surname: string;
         };
         /**
          * SheetTeamOut
@@ -1175,6 +1177,8 @@ export interface components {
         /**
          * TouchOut
          * @description A player on the ball, at ``at`` seconds on the match clock.
+         *
+         *     ``surname`` is what the commentary calls them by; a surname may have more than one word.
          */
         TouchOut: {
             /** At */
@@ -1183,6 +1187,8 @@ export interface components {
             number: number;
             /** Player */
             player: string;
+            /** Surname */
+            surname: string;
         };
         /** ValidationError */
         ValidationError: {

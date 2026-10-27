@@ -22,6 +22,8 @@ export interface MatchStepProps {
 	catchUp: string | null
 	/** Which side is the viewer's team, tagged "You" in the fixture. */
 	yours: 'home' | 'away' | null
+	/** Where the stream view shows the commentary on a wide screen. */
+	streamSlot?: HTMLElement | null
 	onArrive: () => void
 }
 
@@ -37,6 +39,7 @@ const MatchStep = ({
 	score,
 	catchUp,
 	yours,
+	streamSlot = null,
 	onArrive
 }: MatchStepProps) => {
 	const heading = useRef<HTMLHeadingElement>(null)
@@ -67,7 +70,7 @@ const MatchStep = ({
 				</p>
 			)}
 			<p className="match-step__moved">{movedOn(from, to)}</p>
-			<Commentary play={play} home={home} away={away} />
+			<Commentary play={play} home={home} away={away} streamSlot={streamSlot} />
 			<PhasePill phase={stepPhase(to)} detail={live ? null : to.restart} />
 			<h2 id={headingId} ref={heading} tabIndex={-1} className="match-step__heading screen-heading">
 				{stepHeading(to)}

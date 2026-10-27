@@ -76,6 +76,8 @@ const App = () => {
 	const [panelWidth, setPanelWidth] = useState(rememberedPanelWidth)
 	const [curriculum, setCurriculum] = useState<ConceptMap | null>(null)
 	const [theme, setTheme] = useState<Theme>(rememberedTheme)
+	// The stream view's place for the commentary; the step screen draws it there on a wide screen.
+	const [streamSlot, setStreamSlot] = useState<HTMLDivElement | null>(null)
 	const panel = useRef<HTMLElement>(null)
 	const mapButton = useRef<HTMLButtonElement>(null)
 	const preferencesButton = useRef<HTMLButtonElement>(null)
@@ -358,6 +360,7 @@ const App = () => {
 					<StreamIcon />
 					<p className="layout__screen-title">Your match: TV, stream or another tab</p>
 					<p>Between the Lines never covers it. The panel sits beside it.</p>
+					<div ref={setStreamSlot} className="layout__commentary" />
 				</div>
 			</div>
 			<PanelHandle
@@ -506,6 +509,7 @@ const App = () => {
 							score={`${String(screen.question.score.home)}–${String(screen.question.score.away)}`}
 							catchUp={screen.question.catch_up}
 							yours={screen.question.your_team}
+							streamSlot={streamSlot}
 							onArrive={() => {
 								dispatch({ type: 'open' })
 							}}

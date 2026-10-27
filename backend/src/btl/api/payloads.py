@@ -138,6 +138,7 @@ def play_by_play_payload(asked: Asked, home: Club, away: Club) -> PlayByPlayOut:
                     TouchOut(
                         at=clock_seconds(touch.period_id, touch.time_seconds),
                         player=players[touch.player_id].full_name,
+                        surname=players[touch.player_id].last_name,
                         number=players[touch.player_id].shirt_number,
                     )
                     for touch in spell.touches
@@ -262,6 +263,7 @@ def _sheet_player(player: SheetPlayer) -> SheetPlayerOut:
     return SheetPlayerOut(
         shirt=player.shirt_number,
         name=player.name,
+        surname=player.surname,
         role=player.role.value,
         position=PositionOut(
             short=player.position.short,

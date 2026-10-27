@@ -54,6 +54,7 @@ class SheetPlayer:
     player_id: PlayerId
     shirt_number: int
     name: str
+    surname: str
     role: Role
     position: Position
     at_kickoff: tuple[float, float]
@@ -197,6 +198,7 @@ def _team(
                 player.player_id,
                 player.shirt_number,
                 player.full_name,
+                player.last_name,
                 player.role,
                 positions[index],
                 kickoff[player.player_id],

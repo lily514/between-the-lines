@@ -34,6 +34,23 @@
 	color: var(--text-muted);
 }
 
+/* On a wide screen the commentary shows in the stream view; the panel keeps it for screen readers only. */
+@media (min-width: 900px) {
+	.commentary--streamed {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
+	}
+}
+
+.commentary--stream {
+	text-align: left;
+}
+
 .commentary__on-ball {
 	margin: 0;
 	font-size: var(--fs-body-l);

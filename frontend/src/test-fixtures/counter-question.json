@@ -279,16 +279,19 @@
 					{
 						"at": 0.0,
 						"player": "Bohdan Miloković",
+						"surname": "Miloković",
 						"number": 8
 					},
 					{
 						"at": 3.1,
 						"player": "José Escorrieta",
+						"surname": "Escorrieta",
 						"number": 6
 					},
 					{
 						"at": 7.4,
 						"player": "Dennis Hafkamp",
+						"surname": "Hafkamp",
 						"number": 4
 					}
 				]
@@ -299,11 +302,13 @@
 					{
 						"at": 96.2,
 						"player": "Aarav Lindqvist",
+						"surname": "Lindqvist",
 						"number": 5
 					},
 					{
 						"at": 101.0,
 						"player": "Tomás Ferreiro",
+						"surname": "Ferreiro",
 						"number": 10
 					}
 				]
@@ -314,11 +319,13 @@
 					{
 						"at": 150.3,
 						"player": "Vitor Fonbeira",
+						"surname": "Fonbeira",
 						"number": 7
 					},
 					{
 						"at": 155.8,
 						"player": "Bohdan Miloković",
+						"surname": "Miloković",
 						"number": 8
 					}
 				]

@@ -171,8 +171,11 @@ def test_the_play_by_play_runs_from_the_last_question_and_stops_before_the_momen
     touches = [touch for spell in play.spells for touch in spell.touches]
     assert touches
     assert all(play.start < touch.at < play.names_until for touch in touches)
-    names = {player.full_name: player.shirt_number for player in (*HOME.squad, *AWAY.squad)}
-    assert all(names[touch.player] == touch.number for touch in touches)
+    names = {
+        player.full_name: (player.last_name, player.shirt_number)
+        for player in (*HOME.squad, *AWAY.squad)
+    }
+    assert all(names[touch.player] == (touch.surname, touch.number) for touch in touches)
 
 
 def test_the_first_question_s_play_by_play_starts_at_kick_off() -> None:

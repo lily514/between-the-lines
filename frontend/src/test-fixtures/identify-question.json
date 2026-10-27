@@ -280,11 +280,13 @@
 					{
 						"at": 232.5,
 						"player": "Tomás Ferreiro",
+						"surname": "Ferreiro",
 						"number": 10
 					},
 					{
 						"at": 236.9,
 						"player": "Aarav Lindqvist",
+						"surname": "Lindqvist",
 						"number": 5
 					}
 				]
@@ -295,16 +297,19 @@
 					{
 						"at": 260.4,
 						"player": "Håkon Holmlie",
+						"surname": "Holmlie",
 						"number": 3
 					},
 					{
 						"at": 264.0,
 						"player": "José Escorrieta",
+						"surname": "Escorrieta",
 						"number": 6
 					},
 					{
 						"at": 270.7,
 						"player": "Vitor Fonbeira",
+						"surname": "Fonbeira",
 						"number": 7
 					}
 				]

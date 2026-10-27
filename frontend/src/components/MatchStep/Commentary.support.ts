@@ -35,7 +35,7 @@ export interface LogLine {
 	index: number
 	side: Side
 	clock: string
-	/** Who has touched the ball so far in the spell, without the same name twice in a row. */
+	/** Who has touched the ball so far in the spell, by surname, without the same name twice in a row. */
 	names: string[]
 }
 
@@ -63,7 +63,7 @@ export const heardAt = (play: PlayByPlay, at: number): Heard => {
 				index: spell.index,
 				side: spell.side,
 				clock: matchClock(spell.touches[0]?.at ?? at),
-				names: spell.touches.map(t => t.player).filter((name, i, names) => i === 0 || name !== names[i - 1])
+				names: spell.touches.map(t => t.surname).filter((name, i, names) => i === 0 || name !== names[i - 1])
 			}))
 	}
 }

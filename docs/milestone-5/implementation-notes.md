@@ -367,3 +367,42 @@ kinds; tests follow the halftime precedent.
 - The specs test now checks every fixture has a spec and copy, and nothing else does.
 **Why:** nothing to add.
 **Affects:** T15 looks at all eight scenes at three levels in the browser.
+
+## T15 — In the browser (2026-10-27)
+
+**Plan said:** refresh any captured fixtures the planting changed; Lily checks every flow, scene and level in both
+themes and with reduced motion; screenshots in `docs/milestone-5/screenshots/`.
+**We did:** the captured data fixtures were refreshed in T10 and the before-match ones captured in T13, so nothing was
+left to refresh. Every screen was driven in headless Chrome over the DevTools protocol (`tmp/cdp-shot.mjs`: a phone
+viewport, clicks by button name, screenshots) against `btl serve --store json` with three viewers set up by script:
+`lily` (Ripon fan, match 1 played, a Level-up to Solid before match 2), `old` (a record from before this milestone,
+so a First look at the three new concepts) and `hex` (Hexham fan, two matches all right, Level-ups to Sharp and
+Mastered before match 3). What that found and fixed:
+- **Scene text could leave the view** (a foul near the touchline put "25.9 m outside the penalty area" half off the
+  pitch) and **the bottom-right note sat under the Pause button**. Labels and words now shift to stay inside the view,
+  and a note along the bottom sits at the left (`edge: 'bottom'`); line labels keep the right edge.
+- **A mastered tag** ("Now Mastered") shows the tick, as the level word does.
+- The welcome summary's "See all 20 concepts" link was centred by a stale selector; it sits left as designed.
+- The "Between the lines" label on the Solid line-breaking scene sat on the defence line; it sits below the
+  receiver now.
+- Screenshots: the welcome's first step and summary, Matches with locked rows, a Level-up step (dark and light),
+  a Sharp step, a Level-up summary with Mastered and New marks, a First look (and its reduced-motion still frame,
+  which shows the end of the play), the report and the map with level icons.
+
+**What Lily should check in the browser** (none of this can be read off a screenshot):
+1. From `backend/`: `uv run btl serve --store memory --model data/models/expected-threat.json` after
+   `npm run build` in `frontend/`, then open http://127.0.0.1:8000 in a private window.
+2. The welcome: five steps, each scene looping every 5 s with the labels appearing on their beats; Pause motion
+   holds everything mid-loop and Play motion carries on; Back/Next/Skip; the summary's level track and rows.
+3. Pick a team, kick off, answer a match through; at Matches the progress rows show icons and the two locked rows.
+4. Before match 2, the Level-up for whatever rose (seed-dependent); then Who's playing. Preferences → light theme and
+   back, with the scene, tags and icons readable in both.
+5. System reduced motion on (macOS: Accessibility → Display → Reduce motion): every scene is a still frame with no
+   Pause button; Offside, Fouls and cards, Tackles, Shots and Transitions show the end of the play.
+6. A viewer from before this milestone: run `uv run btl learn --viewer NAME` from a checkout of `main` for one
+   match with `--learners data/learners`, then `uv run btl serve` (json store) here: "See who's playing" should
+   open a First look at Tackles, Shots and Transitions first, once only.
+7. The demo on Container Apps is unchanged until this branch is merged and deployed; the learner records there are
+   version 3 and will get the First look on their next visit.
+**Why:** nothing to add.
+**Affects:** nothing.

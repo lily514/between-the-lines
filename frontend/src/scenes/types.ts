@@ -100,7 +100,7 @@ export type SceneItem =
 	/** A short mono label. */
 	| ({ kind: 'label'; text: string; at: Point; anchor?: 'start' | 'middle' | 'end' } & Timed)
 	/** A label at the edge of the view; `x` (picture) sets the height of a right-edge label. */
-	| ({ kind: 'edge-label'; text: string; edge: 'right' | 'bottom-right'; x?: number } & Timed)
+	| ({ kind: 'edge-label'; text: string; edge: 'right' | 'bottom'; x?: number } & Timed)
 	/** Defenders as a shaded band across the pitch at picture x; `lit` draws it stronger, when a pass gets past. */
 	| ({ kind: 'wall'; x: number; depth?: number; lit?: boolean } & Timed)
 	/** A line across the pitch at picture x, named at the right edge. */

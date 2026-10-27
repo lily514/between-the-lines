@@ -69,7 +69,7 @@ const spec: SceneSpec = {
 			...namedLines(scene),
 			...gap(scene),
 			...brokenBadges(scene),
-			{ kind: 'label', text: 'BETWEEN THE LINES', at: [endOf(scene)[0] + 4, endOf(scene)[1]], beat: 0.6 }
+			{ kind: 'label', text: 'BETWEEN THE LINES', at: [endOf(scene)[0] - 4.5, endOf(scene)[1]], beat: 0.6 }
 		],
 		sharp: scene => {
 			const from = cellOf(start(scene), THREAT_CELLS)
@@ -80,7 +80,7 @@ const spec: SceneSpec = {
 				{ kind: 'zone', from: from.from, to: from.to, label: '{xt_before}', beat: 0.04 },
 				{ kind: 'zone', from: to.from, to: to.to, label: '{xt_after}', beat: 0.6 },
 				...brokenBadges(scene),
-				{ kind: 'edge-label', text: 'THREAT PER ZONE · xT', edge: 'bottom-right' }
+				{ kind: 'edge-label', text: 'THREAT PER ZONE · xT', edge: 'bottom' }
 			]
 		}
 	}

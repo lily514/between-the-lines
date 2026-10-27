@@ -43,7 +43,7 @@ const spec: SceneSpec = {
 			{ kind: 'ring', at: spot(scene), r: 2.4, beat: PLACED_AT },
 			...standsBack(scene),
 			...card(scene),
-			{ kind: 'edge-label', text: '{FOUL_OUTCOME}', edge: 'bottom-right', beat: GIVEN_AT }
+			{ kind: 'edge-label', text: '{FOUL_OUTCOME}', edge: 'bottom', beat: GIVEN_AT }
 		],
 		sharp: scene => [
 			{ kind: 'cross', at: spot(scene), beat: 0.05 },
@@ -65,7 +65,7 @@ const spec: SceneSpec = {
 				x: spot(scene)[0] - 8,
 				beat: beatOf(scene, 'freekick_short') - 0.02
 			},
-			{ kind: 'edge-label', text: '{FOUL_OUTCOME}', edge: 'bottom-right', beat: GIVEN_AT }
+			{ kind: 'edge-label', text: '{FOUL_OUTCOME}', edge: 'bottom', beat: GIVEN_AT }
 		]
 	}
 }

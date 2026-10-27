@@ -77,7 +77,7 @@ const spec: SceneSpec = {
 				...run(scene),
 				...flag(),
 				call(scene),
-				{ kind: 'edge-label', text: 'JUDGED AT THE PASS, NOT ON ARRIVAL', edge: 'bottom-right', beat: 0.5 }
+				{ kind: 'edge-label', text: 'JUDGED AT THE PASS, NOT ON ARRIVAL', edge: 'bottom', beat: 0.5 }
 			]
 		}
 	}

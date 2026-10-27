@@ -78,7 +78,7 @@ const spec: SceneSpec = {
 			{
 				kind: 'edge-label',
 				text: '{METRES_FROM_OWN_GOAL} m FROM OWN GOAL',
-				edge: 'bottom-right',
+				edge: 'bottom',
 				beat: win(scene).beat + 0.1
 			}
 		],
@@ -103,7 +103,7 @@ const spec: SceneSpec = {
 			{
 				kind: 'edge-label',
 				text: 'HIGH RECOVERIES {high_recoveries} · USUAL {avg_high_recoveries}',
-				edge: 'bottom-right',
+				edge: 'bottom',
 				beat: win(scene).beat + 0.15
 			}
 		]

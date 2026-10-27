@@ -94,7 +94,7 @@ const spec: SceneSpec = {
 				{ kind: 'label', text: 'OUT', at: outPoint(scene), anchor: 'start', beat: OUT_AT + 0.05 },
 				...taker(scene),
 				{ kind: 'label', text: '→ {restart_type}', at: restartSpot(scene), anchor: 'start', beat: RESTART_AT },
-				{ kind: 'edge-label', text: 'RESTART FROM THE LAST TOUCH IN THE DATA', edge: 'bottom-right', beat: 0.6 }
+				{ kind: 'edge-label', text: 'RESTART FROM THE LAST TOUCH IN THE DATA', edge: 'bottom', beat: 0.6 }
 			]
 		}
 	}

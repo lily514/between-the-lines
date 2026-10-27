@@ -62,7 +62,7 @@ const spec: SceneSpec = {
 			{
 				kind: 'edge-label',
 				text: 'WON {WON_METRES_FROM_OWN_GOAL} m FROM OWN GOAL',
-				edge: 'bottom-right',
+				edge: 'bottom',
 				beat: won(scene).beat + 0.05
 			}
 		],
@@ -85,7 +85,7 @@ const spec: SceneSpec = {
 				{
 					kind: 'edge-label',
 					text: 'SHOTS ON THE BREAK {transition_shots} · SETTLED {settled_shots}',
-					edge: 'bottom-right',
+					edge: 'bottom',
 					beat: arrives(scene) + 0.02
 				}
 			]

@@ -72,7 +72,7 @@ const spec: SceneSpec = {
 				{
 					kind: 'edge-label',
 					text: 'SHOTS {shots} · ON TARGET {shots_on_target} · THEIRS {opp_shots}',
-					edge: 'bottom-right',
+					edge: 'bottom',
 					beat: shot(scene).beat
 				}
 			]

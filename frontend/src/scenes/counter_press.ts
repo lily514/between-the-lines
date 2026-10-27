@@ -69,7 +69,7 @@ const spec: SceneSpec = {
 			halo(scene),
 			...pressers(scene),
 			...timer(scene),
-			{ kind: 'edge-label', text: '{PRESSERS} PRESSERS', edge: 'bottom-right', beat: regained(scene).beat }
+			{ kind: 'edge-label', text: '{PRESSERS} PRESSERS', edge: 'bottom', beat: regained(scene).beat }
 		],
 		sharp: scene => {
 			const won = regained(scene).at
@@ -94,7 +94,7 @@ const spec: SceneSpec = {
 				{
 					kind: 'edge-label',
 					text: '{PRESSERS} PRESSERS',
-					edge: 'bottom-right',
+					edge: 'bottom',
 					beat: beatOf(scene, 'tackle')
 				}
 			]

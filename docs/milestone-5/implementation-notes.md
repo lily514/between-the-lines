@@ -265,3 +265,33 @@ team-sheet gate copy uses Solid and Sharp.
 **Why:** one component for the level word keeps the icon rule ("never colour alone") from drifting between screens;
 sending `waits_for` on every row keeps the lock rule on the server.
 **Affects:** T13's level rows use `LevelWord` as is; T15 only re-records the question/feedback pairs if it wants to.
+
+## T11 — The scene system (2026-10-27)
+
+**Plan said:** `Shared/Scene` with a base layer and the Getting there, Solid and Sharp layers; labels as templates over
+the fixture's evidence fields; a 5 s CSS-keyframe loop; Pause motion with `animation-play-state`; a still frame for
+reduced motion; specs for the five current concepts.
+**We did:** as planned, with these choices:
+- **Specs are small programs over the fixture, not drawings.** A spec (`frontend/src/scenes/<key>.ts`) returns a list
+  of items per level (`wall`, `line`, `zone`, `label`, `word`, `bracket`, `badge`, `pill`, `flag`, `card`, `ghost`,
+  `halo`, `grid`, `move`) in picture metres, placed from the fixture's real players, path and facts; every text is a
+  template such as `GAP {gap_m} m`, and `{RESTART_TYPE}` fills in capitals. The boards' layouts were hand-placed for
+  invented moments; the fixtures are real ones, so positions have to come from the data.
+- **Keyframes are generated into a `<style>` inside the SVG**, one set per scene instance, since the ball's track and
+  each label's beat come from the fixture. They are still plain CSS keyframes, so Pause is one class on the root and
+  nothing runs on a timer. Beats come from the touches' times, with waits longer than 3 s shortened (a corner taken
+  27 s after the ball went out is shown as 3 s).
+- **The view is 5 : 4 and at least 50 × 40 m**, centred on the play and the players in it, and grows when the play is
+  longer (the Sharp counter-press bracket to goal), rather than cropping to a fixed 50 × 40 that could miss the play.
+- **Reduced motion is read in JavaScript** (`matchMedia`), so the still frame is rendered as such: no `<style>`, no
+  pause button, the ball and the movers at the start or end position. The CSS media query alone could not move the
+  ball to the end frame.
+- **Drawing choices the handoff left open:** the defending lines for Line-breaking passes are read off the key frame
+  (players within 6 m of each other along the pitch form a line); the pressers in Counter-pressing are the counted
+  number of players nearest where the ball was lost, closing in from 5 m further out; the restart taker is the player
+  who took it, if within 25 m of the spot. None of these shows a number the pack does not have.
+- **Scene text is capped at 40 characters** (a test): on-pitch text is 1.9 units, so longer sentences from the pack
+  (such as `booking_note`) belong in the step's paragraph, not the scene.
+- The specs test checks the five drawn concepts; T14 adds the three new ones and makes it every fixture.
+**Why:** real moments need positions computed from data; generated keyframes keep the no-timer rule.
+**Affects:** T12 and T13 render `Scene` inside the step layout; T14 adds specs for Tackles, Shots and Transitions.

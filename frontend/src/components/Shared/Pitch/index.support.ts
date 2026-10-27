@@ -115,9 +115,14 @@ export const isInvolved = (marker: Marker, options: readonly PitchOption[], path
 
 /** Where to draw the ball: just ahead of its carrier (upwards on screen) so the two don't overlap. */
 export const ballOnScreen = (picture: Picture): Point => {
-	const [x, y] = toScreen(picture.ball)
 	const carrier = carrierOf(picture)
-	if (carrier === undefined || Math.hypot(carrier.x - picture.ball[0], carrier.y - picture.ball[1]) > 1) {
+	return besideCarrier(picture.ball, carrier === undefined ? undefined : [carrier.x, carrier.y])
+}
+
+/** A ball in picture coordinates on the screen, moved just ahead of a carrier within 1 m of it. */
+export const besideCarrier = (ball: Point, carrier: Point | undefined): Point => {
+	const [x, y] = toScreen(ball)
+	if (carrier === undefined || Math.hypot(carrier[0] - ball[0], carrier[1] - ball[1]) > 1) {
 		return [x, y]
 	}
 	return [x + BALL_OFFSET, y - BALL_OFFSET]

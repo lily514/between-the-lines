@@ -22,3 +22,14 @@ out. A typical gap of a few minutes is far smaller.
 **Why:** the page draws players by shirt and side, as the question picture does; the size is acceptable beside the
 feed's 90 kB, and only a first question late in a half carries a whole half.
 **Affects:** if the size matters on a phone later, frames can become plain arrays.
+
+## T3 — The moving pitch (2026-10-27)
+**Plan said:** draw with the existing `Shared/Pitch` helpers and player styles, without splitting them into shared
+pieces.
+**We did:** three small extractions, so the moving pitch draws exactly what the question pitch draws without a copy:
+`Shared/Pitch/Markings.tsx`, `Shared/Pitch/PlayerMark.tsx` (used by `Pitch`), and `Shared/useReducedMotion.ts` (moved
+out of `Shared/Scene`). `besideCarrier` generalises `ballOnScreen`'s offset for a ball that isn't on a picture. The
+Pitch and Scene tests pass unchanged. `trackAt` picks the latest keyframe at or before the clock, as `heardAt` picks
+the latest touch, so across half-time the pitch and the commentary agree.
+**Why:** a second copy of the markings and player glyph would drift; the hook was private to the Scene.
+**Affects:** nothing.

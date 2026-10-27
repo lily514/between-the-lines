@@ -1,9 +1,10 @@
 import { useId } from 'react'
 import type { Picture } from '../../../api/client.ts'
 import './index.css'
+import Markings from './Markings.tsx'
+import PlayerMark from './PlayerMark.tsx'
 import {
 	FULL_VIEW,
-	MARKINGS,
 	ballOnScreen,
 	carrierOf,
 	cropTo,
@@ -86,17 +87,7 @@ const Pitch = ({
 				width={FULL_VIEW.width}
 				height={FULL_VIEW.height}
 			/>
-			<g className="pitch__markings">
-				<rect {...MARKINGS.outline} />
-				<line x1={0} y1={MARKINGS.halfway} x2={MARKINGS.outline.width} y2={MARKINGS.halfway} />
-				<circle cx={MARKINGS.centre.x} cy={MARKINGS.centre.y} r={MARKINGS.centre.r} />
-				{MARKINGS.boxes.map(box => (
-					<rect key={`${String(box.y)}-${String(box.width)}`} {...box} />
-				))}
-				{MARKINGS.spots.map(([x, y]) => (
-					<circle key={y} className="pitch__spot" cx={x} cy={y} r={0.3} />
-				))}
-			</g>
+			<Markings />
 			{line !== null && (
 				<line
 					className={`pitch__offside-line${reveal ? ' pitch__offside-line--reveal' : ''}`}
@@ -129,29 +120,16 @@ const Pitch = ({
 			)}
 			<g className="pitch__players">
 				{players.map(marker => {
-					const [x, y] = toScreen([marker.x, marker.y])
-					const dim = focused && !isInvolved(marker, options, path)
 					const shape = marker.home ? 'home' : 'away'
-					const theirs = yours === shape
 					return (
-						<g
+						<PlayerMark
 							key={`${shape}-${String(marker.shirt)}`}
-							className={`pitch__player pitch__player--${shape}${dim ? ' pitch__player--dim' : ''}`}
-							data-testid={`player-${shape}`}>
-							{theirs && (
-								<circle className="pitch__yours" data-testid="pitch-yours" cx={x} cy={y} r={3.1} />
-							)}
-							{marker.home ? (
-								<>
-									<circle cx={x} cy={y} r={2.2} />
-									<text x={x} y={y + 0.85}>
-										{marker.shirt}
-									</text>
-								</>
-							) : (
-								<circle cx={x} cy={y} r={1.8} />
-							)}
-						</g>
+							at={toScreen([marker.x, marker.y])}
+							shirt={marker.shirt}
+							home={marker.home}
+							yours={yours === shape}
+							dim={focused && !isInvolved(marker, options, path)}
+						/>
 					)
 				})}
 			</g>

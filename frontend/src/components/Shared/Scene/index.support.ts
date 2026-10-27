@@ -221,12 +221,3 @@ export const shownInStill = (item: SceneItem, still: 'start' | 'end'): boolean =
 
 /** A name CSS keyframes can use, from React's id. */
 export const cssName = (id: string, suffix: string) => `scene-${id.replace(/[^a-zA-Z0-9]/g, '')}-${suffix}`
-
-/** Whether the viewer asked for less motion. */
-export const prefersReducedMotion = (): boolean => motionQuery()?.matches ?? false
-
-/** The reduced-motion media query, where the browser has one (jsdom hasn't). */
-export const motionQuery = (): MediaQueryList | undefined => {
-	const { matchMedia } = window as { matchMedia?: Window['matchMedia'] }
-	return matchMedia === undefined ? undefined : matchMedia.call(window, '(prefers-reduced-motion: reduce)')
-}

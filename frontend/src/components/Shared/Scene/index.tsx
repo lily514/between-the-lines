@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react'
+import { useId, useState } from 'react'
 import type { Band } from '../../../api/client.ts'
 import type { Point, SceneData, SceneFixture, SceneItem, SceneMarker, SceneSpec } from '../../../scenes/types.ts'
 import {
@@ -12,6 +12,7 @@ import {
 } from '../Pitch/index.support.ts'
 import '../Pitch/index.css'
 import './index.css'
+import useReducedMotion from '../useReducedMotion.ts'
 import {
 	appearFrames,
 	ballTrack,
@@ -22,8 +23,6 @@ import {
 	isInvolved,
 	layerItems,
 	loop,
-	motionQuery,
-	prefersReducedMotion,
 	round,
 	same,
 	sceneData,
@@ -198,23 +197,6 @@ const Scene = ({ spec, fixture, band, name }: SceneProps) => {
 			)}
 		</div>
 	)
-}
-
-/** True while the viewer prefers reduced motion; follows the setting if it changes. */
-const useReducedMotion = () => {
-	const [reduced, setReduced] = useState(prefersReducedMotion)
-	useEffect(() => {
-		const query = motionQuery()
-		if (query === undefined) return
-		const follow = () => {
-			setReduced(query.matches)
-		}
-		query.addEventListener('change', follow)
-		return () => {
-			query.removeEventListener('change', follow)
-		}
-	}, [])
-	return reduced
 }
 
 /** Players under movers, home over away within each, so numbers stay readable. */

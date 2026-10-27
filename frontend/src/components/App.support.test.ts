@@ -1,4 +1,5 @@
 import {
+	beforeMatchLevelUp,
 	conceptMap,
 	identifyFeedback,
 	identifyQuestion,
@@ -125,6 +126,31 @@ test('the wide-screen header names the match being watched', () => {
 		clock: 'Full time'
 	})
 	expect(matchHeader({ kind: 'loading', message: '…' })).toBeNull()
+	const before = {
+		kind: 'before' as const,
+		before: beforeMatchLevelUp,
+		flow: 'level_up' as const,
+		status: startStatus
+	}
+	expect(matchHeader(before)).toEqual({ title: 'Ripon Wardens v Ludlow Ferrymen', clock: null })
+	expect(matchHeader({ ...before, status: null })).toBeNull()
+})
+
+test('a flow before the match is a screen of its own, with the map on offer', () => {
+	const state = reducer(watching(), {
+		type: 'before',
+		before: beforeMatchLevelUp,
+		flow: 'first_look',
+		status: startStatus
+	})
+	expect(state.screen).toEqual({
+		kind: 'before',
+		before: beforeMatchLevelUp,
+		flow: 'first_look',
+		status: startStatus
+	})
+	expect(state.last).toBeNull()
+	expect(offersMap(state)).toBe(true)
 })
 
 test('the map opens over the screen and closing it leaves the screen as it was', () => {

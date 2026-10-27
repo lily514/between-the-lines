@@ -8,7 +8,9 @@ import {
 	getMatches,
 	getReport,
 	getStatus,
+	getBeforeMatch,
 	getTeamSheet,
+	markIntroduced,
 	nextStep,
 	setPace,
 	startViewer,
@@ -24,6 +26,7 @@ import {
 	LOADING_MATCHES,
 	LOADING_NEXT,
 	LOADING_REPORT,
+	LOADING_BEFORE,
 	LOADING_SHEET,
 	LOADING_START,
 	matchHeader,
@@ -49,6 +52,7 @@ import MatchStep from './MatchStep/index.tsx'
 import PickTeam from './PickTeam/index.tsx'
 import QuestionSheet from './QuestionSheet/index.tsx'
 import Report from './Report/index.tsx'
+import BeforeMatch from './BeforeMatch/index.tsx'
 import TeamSheet from './TeamSheet/index.tsx'
 import Welcome from './Welcome/index.tsx'
 
@@ -147,6 +151,22 @@ const App = () => {
 			}
 		},
 		[fail]
+	)
+
+	// Before Who's playing: a First look at any concept new to the viewer, then their Level-ups since the last match.
+	const loadBefore = useCallback(
+		async (id: string, status: Status | null) => {
+			dispatch({ type: 'loading', message: LOADING_BEFORE })
+			try {
+				const before = await getBeforeMatch(id)
+				if (before.first_looks.length > 0) dispatch({ type: 'before', before, flow: 'first_look', status })
+				else if (before.level_ups.length > 0) dispatch({ type: 'before', before, flow: 'level_up', status })
+				else await loadSheet(id, status)
+			} catch (error) {
+				fail(error, { kind: 'before', status })
+			}
+		},
+		[fail, loadSheet]
 	)
 
 	const loadPick = useCallback(
@@ -304,6 +324,7 @@ const App = () => {
 			else if (what.kind === 'pick') void loadPick(what.status)
 			else if (what.kind === 'choose') void choose(viewer, what.club)
 			else if (what.kind === 'sheet') void loadSheet(viewer, what.status)
+			else if (what.kind === 'before') void loadBefore(viewer, what.status)
 			else void send(viewer, what.question, what.key)
 		}
 	}
@@ -415,7 +436,7 @@ const App = () => {
 						<Matches
 							status={screen.status}
 							matches={screen.matches}
-							onWatch={() => void loadSheet(viewer, screen.status)}
+							onWatch={() => void loadBefore(viewer, screen.status)}
 							onRejoin={() => void loadNext(viewer)}
 							onChangeTeam={() => void loadPick(screen.status)}
 							onMap={() => void openMap()}
@@ -430,6 +451,33 @@ const App = () => {
 							suggested={screen.status.suggested_club}
 							busy={screen.busy}
 							onChoose={club => void choose(viewer, club)}
+						/>
+					)}
+					{screen.kind === 'before' && viewer !== null && (
+						<BeforeMatch
+							key={screen.flow}
+							before={screen.before}
+							flow={screen.flow}
+							onMap={() => void openMap()}
+							onDone={() => {
+								if (screen.flow === 'first_look') {
+									// A failed mark only means the First look shows again next time.
+									markIntroduced(
+										viewer,
+										screen.before.first_looks.map(row => row.key)
+									).catch(() => undefined)
+									if (screen.before.level_ups.length > 0) {
+										dispatch({
+											type: 'before',
+											before: screen.before,
+											flow: 'level_up',
+											status: screen.status
+										})
+										return
+									}
+								}
+								void loadSheet(viewer, screen.status)
+							}}
 						/>
 					)}
 					{screen.kind === 'sheet' && viewer !== null && (

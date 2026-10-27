@@ -319,3 +319,30 @@ summary; counts from the API; rows grouped by strand at eight or more.
   at 390 px inside a wider host page (`tmp/frame.html`); the Milestone 4 screenshots were taken with an older Chrome.
 **Why:** real prompts cost nothing and never name a club that doesn't exist.
 **Affects:** T13 builds First look and Level-up from the same three parts; T14 fills the Chances card.
+
+## T13 — First look and Level-up (2026-10-27)
+
+**Plan said:** new screen kinds with `then`; `onWatch` fetches before-match and runs First look, then Level-up, then
+Who's playing, skipping an empty flow; a two-level jump gets one step; the last steps carry the level list ("new"
+marks), the unlock note, "See your full map" and "On to Who's playing"; `matchHeader` and `offersMap` cover the new
+kinds; tests follow the halftime precedent.
+**We did:** as planned, with these choices:
+- **One screen kind, `before`, with a `flow`** (`first_look` or `level_up`) instead of two kinds with `then`: the
+  payload holds both flows, so finishing a First look either re-dispatches the same payload as a Level-up or loads
+  the team sheet. `BeforeMatch` is one component for both flows, keyed by flow so each starts at its first step.
+- **The First look is marked introduced when its last step is left**, with the result ignored: a failed mark only
+  means the First look shows again next time, which is the right failure.
+- **The learner line** is `{before}% → {after}% Now {level}` with the level icon; a First look shows
+  "Everyone starts at Getting there" with the Getting there icon and no numbers. Mastery on the level list is read
+  out to screen readers as a percentage, as the boards' hidden text did.
+- **Summary copy** comes from the flow: "That's all three." / "That's the new one." for First looks;
+  "Ready for match N." with "One thing moves up to Solid…" or "…to Sharp…" when every move reached the same level,
+  else "Two things move up a level." The unlock note shows only when the API sends one (the boards' "Reach Solid…"
+  hint for a First look is the team sheet's own gate line, already on Who's playing).
+- **Captured fixtures:** `before-match-level-up.json` (the Ripon fan before match 2: Line-breaking passes to Solid)
+  and `before-match-first-look.json` (a viewer from before this milestone: three First looks), written by
+  `tmp/capture_before_match.py` from the running API.
+- Concepts without copy yet (the three new ones, until T14) fall back to the concept's name as the title, a plain
+  sentence as the body, and the fixture's question as the example.
+**Why:** one screen kind keeps the reducer and `matchHeader` small, and the flow order lives in one place.
+**Affects:** T14 adds copy and scenes for the three new concepts, which the First look then shows in full.

@@ -3,6 +3,9 @@ import userEvent from '@testing-library/user-event'
 import App from './App.tsx'
 import type { MatchSummary } from '../api/client.ts'
 import {
+	beforeMatchFirstLook,
+	beforeMatchLevelUp,
+	beforeMatchNothing,
 	conceptMap,
 	identifyFeedback,
 	identifyQuestion,
@@ -46,6 +49,7 @@ test('a new viewer gets a random id, lands on Matches, and plays a question thro
 		'/matches': [reply(200, upcoming), reply(200, matchesAfterOne)],
 		'/next': [reply(200, identifyQuestion), reply(200, fullTime)],
 		'/answers': [reply(200, identifyFeedback)],
+		'/before-match': [reply(200, beforeMatchNothing)],
 		'/team-sheet': [reply(200, sheetStage1)],
 		'/report': [reply(200, reportFullTime)]
 	})
@@ -301,4 +305,33 @@ test('Preferences open from the header over Matches, and a change of pace is sav
 	await user.keyboard('{Escape}')
 	expect(screen.getByRole('heading', { name: 'Matches' })).toBeInTheDocument()
 	expect(screen.getByRole('button', { name: 'Preferences' })).toHaveFocus()
+})
+
+test('before a match, a First look at new concepts comes first, then the Level-ups, then Who’s playing', async () => {
+	localStorage.setItem('btl.viewer', 'lily')
+	const both = { ...beforeMatchFirstLook, level_ups: beforeMatchLevelUp.level_ups, match_number: 2 }
+	const spy = serve({
+		'/api/viewers': [reply(200, startStatus)],
+		'/api/viewers/lily': [reply(200, startStatus)],
+		'/matches': [reply(200, upcoming)],
+		'/before-match': [reply(200, both)],
+		'/introduced': [reply(200, startStatus)],
+		'/team-sheet': [reply(200, sheetStage1)]
+	})
+	const user = userEvent.setup()
+	render(<App />)
+	await user.click(await screen.findByRole('button', { name: 'See who’s playing' }))
+	expect(await screen.findAllByText('First look')).toHaveLength(2)
+	expect(screen.getByRole('button', { name: 'Curriculum map' })).toBeInTheDocument()
+	await user.click(screen.getByRole('button', { name: 'Skip' }))
+	await user.click(screen.getByRole('button', { name: 'On to Who’s playing' }))
+	const marked = spy.mock.calls.find(([input]) => typeof input === 'string' && input.endsWith('/introduced'))
+	expect(JSON.parse(marked?.[1]?.body as string)).toEqual({
+		concepts: ['tackles', 'shots_and_goals', 'transitions']
+	})
+	expect(await screen.findByText('Before match 2')).toBeInTheDocument()
+	expect(screen.getByRole('heading', { level: 2, name: 'Count the lines' })).toHaveFocus()
+	await user.click(screen.getByRole('button', { name: 'Next' }))
+	await user.click(screen.getByRole('button', { name: 'On to Who’s playing' }))
+	expect(await screen.findByRole('heading', { name: "Who's playing" })).toHaveFocus()
 })

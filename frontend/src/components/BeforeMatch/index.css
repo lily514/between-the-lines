@@ -1,0 +1,89 @@
+/* The flows before a match: the learner line on each step, and the level list on the last. */
+
+.before-match__learner {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+	margin: 0;
+	font-size: var(--fs-body-s);
+	font-weight: 700;
+	color: var(--know);
+}
+
+.before-match__number {
+	font-family: var(--font-data);
+	font-weight: 500;
+}
+
+.before-match__levels {
+	display: flex;
+	flex-direction: column;
+	margin: 0;
+	padding: 0 14px;
+	list-style: none;
+	border: 1px solid var(--border);
+	border-radius: var(--r-btn);
+	background: var(--surface);
+}
+
+.before-match__row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--s-2);
+	padding: var(--s-3) 0;
+	border-bottom: 1px solid var(--border);
+	font-size: var(--fs-body-s);
+	font-weight: 600;
+}
+
+.before-match__row:last-child {
+	border-bottom: 0;
+}
+
+.before-match__name {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.before-match__new {
+	padding: 1px var(--s-2);
+	border-radius: var(--r-chip);
+	background: var(--know-tint);
+	color: var(--know);
+	font-size: var(--fs-caption);
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.before-match__unlock {
+	display: flex;
+	gap: var(--s-3);
+	align-items: flex-start;
+	margin: 0;
+	padding: 12px 14px;
+	border: 1.5px dashed var(--border-strong);
+	border-radius: var(--r-btn);
+	font-size: var(--fs-body-s);
+	line-height: 1.35;
+}
+
+.before-match__unlock-icon {
+	flex: none;
+	width: 20px;
+	height: 20px;
+	fill: none;
+	stroke: var(--act);
+	stroke-width: 1.5;
+	stroke-linecap: round;
+}
+
+.before-match .before-match__map,
+.story-step .before-match__map {
+	align-self: flex-start;
+	padding: 0;
+	font-size: var(--fs-body);
+}

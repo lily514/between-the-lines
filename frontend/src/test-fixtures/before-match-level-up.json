@@ -1,0 +1,118 @@
+{
+	"match_number": 2,
+	"first_looks": [],
+	"level_ups": [
+		{
+			"key": "line_breaking_pass",
+			"name": "Line-breaking passes",
+			"strand": "possession",
+			"strand_name": "Possession",
+			"before": 0.15,
+			"after": 0.5349195919458304,
+			"level_before": "Getting there",
+			"level": "Solid",
+			"band_before": "getting_there",
+			"band": "solid",
+			"mastered": false
+		}
+	],
+	"levels": [
+		{
+			"key": "tackles",
+			"name": "Tackles and turnovers",
+			"strand": "pressure",
+			"strand_name": "Pressure",
+			"mastery": 0.2597864768683274,
+			"level": "Getting there",
+			"band": "getting_there",
+			"mastered": false,
+			"waits_for": [],
+			"moved": false
+		},
+		{
+			"key": "shots_and_goals",
+			"name": "Shots and goals",
+			"strand": "chances",
+			"strand_name": "Chances",
+			"mastery": 0.3893577981651376,
+			"level": "Getting there",
+			"band": "getting_there",
+			"mastered": false,
+			"waits_for": [],
+			"moved": false
+		},
+		{
+			"key": "restarts",
+			"name": "Restarts",
+			"strand": "game_flow",
+			"strand_name": "Game flow",
+			"mastery": 0.2400091345055949,
+			"level": "Getting there",
+			"band": "getting_there",
+			"mastered": false,
+			"waits_for": [],
+			"moved": false
+		},
+		{
+			"key": "offside",
+			"name": "Offside",
+			"strand": "game_flow",
+			"strand_name": "Game flow",
+			"mastery": 0.35,
+			"level": "Getting there",
+			"band": "getting_there",
+			"mastered": false,
+			"waits_for": [],
+			"moved": false
+		},
+		{
+			"key": "fouls_and_cards",
+			"name": "Fouls and cards",
+			"strand": "game_flow",
+			"strand_name": "Game flow",
+			"mastery": 0.35,
+			"level": "Getting there",
+			"band": "getting_there",
+			"mastered": false,
+			"waits_for": [],
+			"moved": false
+		},
+		{
+			"key": "transitions",
+			"name": "Transitions and counterattacks",
+			"strand": "game_flow",
+			"strand_name": "Game flow",
+			"mastery": 0.25,
+			"level": "Getting there",
+			"band": "getting_there",
+			"mastered": false,
+			"waits_for": ["Tackles and turnovers", "Restarts"],
+			"moved": false
+		},
+		{
+			"key": "line_breaking_pass",
+			"name": "Line-breaking passes",
+			"strand": "possession",
+			"strand_name": "Possession",
+			"mastery": 0.5349195919458304,
+			"level": "Solid",
+			"band": "solid",
+			"mastered": false,
+			"waits_for": [],
+			"moved": true
+		},
+		{
+			"key": "counter_press",
+			"name": "Counter-pressing",
+			"strand": "pressure",
+			"strand_name": "Pressure",
+			"mastery": 0.15,
+			"level": "Getting there",
+			"band": "getting_there",
+			"mastered": false,
+			"waits_for": ["Tackles and turnovers"],
+			"moved": false
+		}
+	],
+	"unlock_note": "New on Who's playing: each team's formation and position tags."
+}

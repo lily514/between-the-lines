@@ -154,6 +154,7 @@ test('onboarding has no map button, but the welcome opens the whole map', async 
 	const user = userEvent.setup()
 	render(<App />)
 	expect(screen.queryByRole('button', { name: 'Curriculum map' })).toBeNull()
+	await user.click(await screen.findByRole('button', { name: 'Skip' }))
 	await user.click(await screen.findByRole('button', { name: /See all 20 concepts/ }))
 	expect(await screen.findByRole('heading', { name: 'Your pitch' })).toBeInTheDocument()
 	await user.keyboard('{Escape}')

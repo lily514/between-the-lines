@@ -295,3 +295,27 @@ reduced motion; specs for the five current concepts.
 - The specs test checks the five drawn concepts; T14 adds the three new ones and makes it every fixture.
 **Why:** real moments need positions computed from data; generated keyframes keep the no-timer rule.
 **Affects:** T12 and T13 render `Scene` inside the step layout; T14 adds specs for Tackles, Shots and Transitions.
+
+## T12 — The step layout and the Welcome (2026-10-27)
+
+**Plan said:** `Shared/StoryStep` (header with Skip, flow label and counter, scene with tag, strand · concept, title,
+learner line, paragraph, example card, Back/Next); the Welcome as a step per strand with an active concept, then a
+summary; counts from the API; rows grouped by strand at eight or more.
+**We did:** as planned, with these choices:
+- **`StoryStep` is the frame** (counter, segments, Skip, the scene slot, eyebrow, title, Back/Next) and two small
+  cards sit beside it: `SceneCard` (a concept's scene at a level with its tag, or a dashed "Scene coming" card when the
+  concept has no spec yet) and `ExampleCard`. The flows in T13 reuse all three.
+- **Example prompts are real.** Each step's "You might get" is the scene fixture's level-1 question, worded by the
+  template Tutor, rather than the boards' invented prompts (which named clubs that aren't in the league). The copy in
+  `frontend/src/scenes/copy.ts` keeps a fallback prompt per concept and level.
+- **Strand order.** The welcome tells Game flow first, then Possession, Pressure and Chances (the boards' order), and
+  any other strand after in the map's order; the summary rows follow the same order.
+- **Chances is a step now**, since Shots and goals is active: its copy is new (the boards had Chances as "Coming
+  later") and its scene card is the dashed placeholder until T14 adds the Shots scene.
+- **A viewer sent back with an error lands on the summary**, with the reason and Continue, since they have seen the
+  steps; a welcome that has no curriculum yet is the summary alone.
+- The old "For now they cover N things" line is gone with the old screen; the count now shows as the steps and rows.
+- **Headless Chrome here enforces a 500 px minimum viewport**, so T15's phone screenshots frame the page in an iframe
+  at 390 px inside a wider host page (`tmp/frame.html`); the Milestone 4 screenshots were taken with an older Chrome.
+**Why:** real prompts cost nothing and never name a club that doesn't exist.
+**Affects:** T13 builds First look and Level-up from the same three parts; T14 fills the Chances card.

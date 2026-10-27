@@ -85,12 +85,17 @@ class TouchOut(BaseModel):
     """A player on the ball, at ``at`` seconds on the match clock.
 
     ``surname`` is what the commentary calls them by; a surname may have more than one word.
+    ``action`` is what they did, e.g. "crosses", and ``where`` where, seen by their own team;
+    ``zone`` is that place as a key, for the page's strip of thirds.
     """
 
     at: float
     player: str
     surname: str
     number: int
+    action: str
+    where: str
+    zone: Literal["own_third", "middle_third", "final_third", "box"]
 
 
 class SpellOut(BaseModel):
@@ -100,19 +105,86 @@ class SpellOut(BaseModel):
     touches: list[TouchOut]
 
 
+class FeedScoreOut(BaseModel):
+    """The score after a goal, or at halftime."""
+
+    home: int
+    away: int
+
+
+class FeedEntryOut(BaseModel):
+    """One entry of the match feed, worded for the page.
+
+    ``at`` is when it happened, in seconds on the match clock; the page shows it once the clock
+    reaches ``until``, a move's last touch. ``label`` names it, e.g. "Shot · saved"; ``text`` is
+    its line. A move's ``names`` are its players in turn; ``side`` is null only at halftime.
+    """
+
+    at: float
+    until: float
+    side: Literal["home", "away"] | None
+    kind: Literal[
+        "kick_off",
+        "move",
+        "goal",
+        "own_goal",
+        "shot",
+        "corner",
+        "throw_in",
+        "goal_kick",
+        "foul",
+        "yellow_card",
+        "red_card",
+        "offside",
+        "halftime",
+    ]
+    label: str
+    text: str
+    names: list[str]
+    score: FeedScoreOut | None
+
+
+class SideStatsOut(BaseModel):
+    """One team's numbers so far; ``possession`` is its share of time on the ball, in %.
+
+    ``attempts`` are its shots at goal; the name keeps clear of the outcome facts' "shots".
+    """
+
+    goals: int
+    possession: int
+    attempts: int
+    corners: int
+    fouls: int
+    yellow_cards: int
+    red_cards: int
+
+
+class StatsOut(BaseModel):
+    """Both teams' numbers as they stand from ``at`` seconds on the match clock, in ``period``."""
+
+    at: float
+    period: int
+    home: SideStatsOut
+    away: SideStatsOut
+
+
 class PlayByPlayOut(BaseModel):
     """Who had the ball between the viewer's last question and the next, for the page to play.
 
     Times are seconds on the match clock: ``start`` where the viewer left off (0 at kick-off),
     ``end`` when the next question is asked. The spells stop at ``names_until``, the moment the
     question is about, so they say nothing of how that play turned out; a question saved for a
-    stoppage has play between it and ``end`` that goes unnamed.
+    stoppage has play between it and ``end`` that goes unnamed. ``feed`` runs from kick-off and
+    ``stats`` from ``start`` (or from ``names_until``, when the viewer left off after it), and
+    both stop at ``names_until`` too.
     """
 
     start: float
     end: float
     names_until: float
     spells: list[SpellOut]
+    feed: list[FeedEntryOut]
+    stats: list[StatsOut]
 
 
 class QuestionOut(BaseModel):

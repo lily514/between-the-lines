@@ -76,7 +76,7 @@ const App = () => {
 	const [panelWidth, setPanelWidth] = useState(rememberedPanelWidth)
 	const [curriculum, setCurriculum] = useState<ConceptMap | null>(null)
 	const [theme, setTheme] = useState<Theme>(rememberedTheme)
-	// The stream view's place for the commentary; the step screen draws it there on a wide screen.
+	// The stream view's place for the match feed; the step screen draws it there on a wide screen.
 	const [streamSlot, setStreamSlot] = useState<HTMLDivElement | null>(null)
 	const panel = useRef<HTMLElement>(null)
 	const mapButton = useRef<HTMLButtonElement>(null)
@@ -346,7 +346,8 @@ const App = () => {
 	const layoutStyle = panelWidth === null ? undefined : ({ '--panel-w': `${String(panelWidth)}px` } as CSSProperties)
 	return (
 		<div className="layout" style={layoutStyle}>
-			{/* Stands in for the viewer's own stream on a wide screen; the panel repeats everything in it. */}
+			{/* Stands in for the viewer's own stream on a wide screen; the panel repeats everything in it. Between
+			    questions the match feed fills it, in place of the placeholder. */}
 			<div className="layout__stream" aria-hidden="true">
 				<div className="layout__match">
 					{header !== null && (
@@ -360,8 +361,8 @@ const App = () => {
 					<StreamIcon />
 					<p className="layout__screen-title">Your match: TV, stream or another tab</p>
 					<p>Between the Lines never covers it. The panel sits beside it.</p>
-					<div ref={setStreamSlot} className="layout__commentary" />
 				</div>
+				<div ref={setStreamSlot} className="layout__feed" />
 			</div>
 			<PanelHandle
 				width={panelWidth ?? PANEL_DEFAULT}
@@ -502,6 +503,8 @@ const App = () => {
 						<MatchStep
 							home={screen.question.home}
 							away={screen.question.away}
+							homeCode={screen.question.home_code}
+							awayCode={screen.question.away_code}
 							matchNumber={screen.question.match_number}
 							play={screen.question.play_by_play}
 							to={screen.question.delivered}

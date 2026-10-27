@@ -454,6 +454,44 @@ export interface components {
             value: number | string;
         };
         /**
+         * FeedEntryOut
+         * @description One entry of the match feed, worded for the page.
+         *
+         *     ``at`` is when it happened, in seconds on the match clock; the page shows it once the clock
+         *     reaches ``until``, a move's last touch. ``label`` names it, e.g. "Shot · saved"; ``text`` is
+         *     its line. A move's ``names`` are its players in turn; ``side`` is null only at halftime.
+         */
+        FeedEntryOut: {
+            /** At */
+            at: number;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "kick_off" | "move" | "goal" | "own_goal" | "shot" | "corner" | "throw_in" | "goal_kick" | "foul" | "yellow_card" | "red_card" | "offside" | "halftime";
+            /** Label */
+            label: string;
+            /** Names */
+            names: string[];
+            score: components["schemas"]["FeedScoreOut"] | null;
+            /** Side */
+            side: ("home" | "away") | null;
+            /** Text */
+            text: string;
+            /** Until */
+            until: number;
+        };
+        /**
+         * FeedScoreOut
+         * @description The score after a goal, or at halftime.
+         */
+        FeedScoreOut: {
+            /** Away */
+            away: number;
+            /** Home */
+            home: number;
+        };
+        /**
          * FeedbackOption
          * @description An option after answering: whether it was right or picked, and every fact about it.
          */
@@ -864,17 +902,23 @@ export interface components {
          *     Times are seconds on the match clock: ``start`` where the viewer left off (0 at kick-off),
          *     ``end`` when the next question is asked. The spells stop at ``names_until``, the moment the
          *     question is about, so they say nothing of how that play turned out; a question saved for a
-         *     stoppage has play between it and ``end`` that goes unnamed.
+         *     stoppage has play between it and ``end`` that goes unnamed. ``feed`` runs from kick-off and
+         *     ``stats`` from ``start`` (or from ``names_until``, when the viewer left off after it), and
+         *     both stop at ``names_until`` too.
          */
         PlayByPlayOut: {
             /** End */
             end: number;
+            /** Feed */
+            feed: components["schemas"]["FeedEntryOut"][];
             /** Names Until */
             names_until: number;
             /** Spells */
             spells: components["schemas"]["SpellOut"][];
             /** Start */
             start: number;
+            /** Stats */
+            stats: components["schemas"]["StatsOut"][];
         };
         /**
          * PlayerNumbersOut
@@ -1064,6 +1108,28 @@ export interface components {
             yours: boolean;
         };
         /**
+         * SideStatsOut
+         * @description One team's numbers so far; ``possession`` is its share of time on the ball, in %.
+         *
+         *     ``attempts`` are its shots at goal; the name keeps clear of the outcome facts' "shots".
+         */
+        SideStatsOut: {
+            /** Attempts */
+            attempts: number;
+            /** Corners */
+            corners: number;
+            /** Fouls */
+            fouls: number;
+            /** Goals */
+            goals: number;
+            /** Possession */
+            possession: number;
+            /** Red Cards */
+            red_cards: number;
+            /** Yellow Cards */
+            yellow_cards: number;
+        };
+        /**
          * SpellOut
          * @description One side's spell on the ball, as the play-by-play covers it.
          */
@@ -1090,6 +1156,18 @@ export interface components {
             seed?: number | null;
             /** Viewer Id */
             viewer_id: string;
+        };
+        /**
+         * StatsOut
+         * @description Both teams' numbers as they stand from ``at`` seconds on the match clock, in ``period``.
+         */
+        StatsOut: {
+            /** At */
+            at: number;
+            away: components["schemas"]["SideStatsOut"];
+            home: components["schemas"]["SideStatsOut"];
+            /** Period */
+            period: number;
         };
         /**
          * StatusOut
@@ -1179,8 +1257,12 @@ export interface components {
          * @description A player on the ball, at ``at`` seconds on the match clock.
          *
          *     ``surname`` is what the commentary calls them by; a surname may have more than one word.
+         *     ``action`` is what they did, e.g. "crosses", and ``where`` where, seen by their own team;
+         *     ``zone`` is that place as a key, for the page's strip of thirds.
          */
         TouchOut: {
+            /** Action */
+            action: string;
             /** At */
             at: number;
             /** Number */
@@ -1189,6 +1271,13 @@ export interface components {
             player: string;
             /** Surname */
             surname: string;
+            /** Where */
+            where: string;
+            /**
+             * Zone
+             * @enum {string}
+             */
+            zone: "own_third" | "middle_third" | "final_third" | "box";
         };
         /** ValidationError */
         ValidationError: {

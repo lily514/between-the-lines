@@ -9,6 +9,7 @@ feedback payload is the whole pack.
 from collections.abc import Mapping, Sequence
 from typing import Literal
 
+from btl.api.commentary import ZONE_WORDS, action_words, feed_words
 from btl.api.models import (
     AnswerLineOut,
     Bar,
@@ -20,6 +21,8 @@ from btl.api.models import (
     FactOut,
     FeedbackOption,
     FeedbackOut,
+    FeedEntryOut,
+    FeedScoreOut,
     GoalOut,
     LevelRowOut,
     LevelUpOut,
@@ -38,7 +41,9 @@ from btl.api.models import (
     ScoreOut,
     SheetPlayerOut,
     SheetTeamOut,
+    SideStatsOut,
     SpellOut,
+    StatsOut,
     StrandOut,
     StrandValueOut,
     TeamSheetOut,
@@ -54,13 +59,15 @@ from btl.learn.curriculum import Curriculum
 from btl.learn.evidence import Fact, Picture, percent_points
 from btl.learn.knowledge import Delivery
 from btl.learn.levels import band_for, level_word
+from btl.learn.match_feed import FeedEntry, FeedKind, match_feed
+from btl.learn.match_stats import SideStats, stats_timeline
 from btl.learn.matches import CatchUp, MatchState, ViewerMatch, score_as_of
 from btl.learn.play_by_play import play_by_play
 from btl.learn.questions import Form
 from btl.learn.report import Break, Report
 from btl.learn.session import Asked, Told
 from btl.learn.team_sheet import NEXT_STAGE, SheetPlayer, SheetTeam, TeamSheet
-from btl.schema.ids import TeamId
+from btl.schema.ids import PlayerId, TeamId
 from btl.schema.scoreboard import clock, clock_seconds
 
 
@@ -121,31 +128,90 @@ def question_payload(
 
 
 def play_by_play_payload(asked: Asked, home: Club, away: Club) -> PlayByPlayOut:
-    """Who had the ball from where the viewer left off up to the moment the question is about."""
+    """Who had the ball from where the viewer left off up to the moment the question is about.
+
+    With the match feed from kick-off, and the match's numbers as they changed.
+    """
     previous, candidate = asked.previous, asked.prompt.candidate
     delivered = asked.prompt.delivered
     after = None if previous is None else (previous.period_id, previous.time_seconds)
     before = (candidate.period_id, candidate.time_seconds)
     players = {player.player_id: player for player in (*home.squad, *away.squad)}
+
+    def side(team_id: TeamId) -> Literal["home", "away"]:
+        return "home" if team_id == home.team_id else "away"
+
+    def surname(player_id: PlayerId) -> str:
+        return players[player_id].last_name
+
+    def club(team_id: TeamId) -> str:
+        return home.name if team_id == home.team_id else away.name
+
+    def rival(team_id: TeamId) -> str:
+        return away.name if team_id == home.team_id else home.name
+
+    def feed_entry(entry: FeedEntry) -> FeedEntryOut:
+        label, text = feed_words(entry, surname, club, rival)
+        at = clock_seconds(entry.period_id, entry.time_seconds)
+        moves = (FeedKind.MOVE, FeedKind.KICK_OFF)
+        score = None
+        if entry.score is not None:
+            score = FeedScoreOut(home=entry.score[0], away=entry.score[1])
+        return FeedEntryOut(
+            at=at,
+            until=clock_seconds(entry.period_id, entry.until_seconds),
+            side=None if entry.team_id is None else side(entry.team_id),
+            kind=entry.kind.value,
+            label=label,
+            text=text,
+            names=[surname(p) for p in entry.players] if entry.kind in moves else [],
+            score=score,
+        )
+
     return PlayByPlayOut(
         start=0.0 if after is None else clock_seconds(*after),
         end=clock_seconds(delivered.period_id, delivered.time_seconds),
         names_until=clock_seconds(*before),
         spells=[
             SpellOut(
-                side="home" if spell.team_id == home.team_id else "away",
+                side=side(spell.team_id),
                 touches=[
                     TouchOut(
                         at=clock_seconds(touch.period_id, touch.time_seconds),
                         player=players[touch.player_id].full_name,
                         surname=players[touch.player_id].last_name,
                         number=players[touch.player_id].shirt_number,
+                        action=action_words(touch.action_type, touch.result),
+                        where=ZONE_WORDS[touch.zone],
+                        zone=touch.zone.value,
                     )
                     for touch in spell.touches
                 ],
             )
             for spell in play_by_play(asked.match, after, before)
         ],
+        feed=[feed_entry(entry) for entry in match_feed(asked.match, before)],
+        stats=[
+            StatsOut(
+                at=clock_seconds(entry.period_id, entry.time_seconds),
+                period=entry.period_id,
+                home=_side_stats(entry.home),
+                away=_side_stats(entry.away),
+            )
+            for entry in stats_timeline(asked.match, after, before)
+        ],
+    )
+
+
+def _side_stats(stats: SideStats) -> SideStatsOut:
+    return SideStatsOut(
+        goals=stats.goals,
+        possession=stats.possession,
+        attempts=stats.attempts,
+        corners=stats.corners,
+        fouls=stats.fouls,
+        yellow_cards=stats.yellow_cards,
+        red_cards=stats.red_cards,
     )
 
 

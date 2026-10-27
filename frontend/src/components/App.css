@@ -52,7 +52,20 @@
 		flex-direction: column;
 		gap: var(--s-4);
 		min-width: 0;
+		height: 100dvh;
+		position: sticky;
+		top: 0;
 		padding: var(--s-6);
+	}
+
+	/* Between questions the match feed fills the stream view, in place of the placeholder. */
+	.layout__stream:has(.layout__feed:not(:empty)) {
+		padding-top: 20px;
+	}
+
+	.layout__stream:has(.layout__feed:not(:empty)) .layout__match,
+	.layout__stream:has(.layout__feed:not(:empty)) .layout__screen {
+		display: none;
 	}
 
 	.layout__match {
@@ -99,12 +112,13 @@
 		font-weight: 600;
 	}
 
-	.layout__commentary {
-		width: min(100%, 480px);
-		margin-top: var(--s-4);
+	.layout__feed {
+		flex: 1;
+		min-height: 0;
+		width: min(100%, 720px);
 	}
 
-	.layout__commentary:empty {
+	.layout__feed:empty {
 		display: none;
 	}
 

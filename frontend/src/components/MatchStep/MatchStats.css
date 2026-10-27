@@ -1,0 +1,44 @@
+/* The match's numbers as cards: the label, then home (disc) on the left and away (ring) on the right. */
+
+.match-stats {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+	gap: var(--s-2);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.match-stats__card {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	padding: 10px var(--s-3);
+	border: 1px solid var(--border);
+	border-radius: var(--r-btn);
+	background: var(--surface);
+}
+
+.match-stats__label {
+	font-size: var(--fs-caption);
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--text-muted);
+}
+
+.match-stats__values {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	font-family: var(--font-data);
+	font-size: 20px;
+	font-weight: 500;
+	font-variant-numeric: tabular-nums;
+}
+
+.match-stats__value {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}

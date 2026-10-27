@@ -179,5 +179,5 @@ cli, api, plus `replay.py`. `api` holds the HTTP routes the page calls; the page
   used by more than one screen go in `src/components/Shared/`. `App.tsx` sits at the top of `components/`.
 - Design reference: `docs/milestone-2c/design/`, plus `docs/milestone-2e/design/` and `crests/` for the picker, team
   sheet and crests, `docs/milestone-4/design/` for Matches, the map, reports and preferences, and
-  `docs/milestone-5/design/` for the welcome, First look, Level-up and the scene system. It guides the
-  look; the repo decides behaviour and data.
+  `docs/milestone-5/design/` for the welcome, First look, Level-up, the scene system and the match feed
+  (`MatchFeed-*.dc.html`). It guides the look; the repo decides behaviour and data.

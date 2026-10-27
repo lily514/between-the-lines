@@ -317,7 +317,10 @@
 						"at": 1812.0,
 						"player": "Lukas Brennhof",
 						"surname": "Brennhof",
-						"number": 9
+						"number": 9,
+						"action": "takes the goal kick",
+						"where": "in their own third",
+						"zone": "own_third"
 					}
 				]
 			},
@@ -328,21 +331,109 @@
 						"at": 1900.2,
 						"player": "Serhii Nowaković",
 						"surname": "Nowaković",
-						"number": 4
+						"number": 4,
+						"action": "intercepts",
+						"where": "in midfield",
+						"zone": "middle_third"
 					},
 					{
 						"at": 1904.6,
 						"player": "Stefan Jankčić",
 						"surname": "Jankčić",
-						"number": 8
+						"number": 8,
+						"action": "passes",
+						"where": "in midfield",
+						"zone": "middle_third"
 					},
 					{
 						"at": 1910.1,
 						"player": "Wout Hafhuis",
 						"surname": "Hafhuis",
-						"number": 11
+						"number": 11,
+						"action": "passes",
+						"where": "in the final third",
+						"zone": "final_third"
 					}
 				]
+			}
+		],
+		"stats": [
+			{
+				"at": 1800.0,
+				"period": 1,
+				"home": {
+					"goals": 1,
+					"possession": 54,
+					"attempts": 6,
+					"corners": 3,
+					"fouls": 5,
+					"yellow_cards": 1,
+					"red_cards": 0
+				},
+				"away": {
+					"goals": 0,
+					"possession": 46,
+					"attempts": 4,
+					"corners": 2,
+					"fouls": 7,
+					"yellow_cards": 2,
+					"red_cards": 0
+				}
+			}
+		],
+		"feed": [
+			{
+				"at": 0.0,
+				"until": 6.0,
+				"side": "home",
+				"kind": "kick_off",
+				"label": "Kick-off",
+				"text": "",
+				"names": ["Hafhuis", "Nowaković"],
+				"score": null
+			},
+			{
+				"at": 900.0,
+				"until": 900.0,
+				"side": "home",
+				"kind": "goal",
+				"label": "Goal",
+				"text": "Hafhuis scores.",
+				"names": [],
+				"score": {
+					"home": 1,
+					"away": 0
+				}
+			},
+			{
+				"at": 1500.0,
+				"until": 1500.0,
+				"side": "away",
+				"kind": "yellow_card",
+				"label": "Yellow card",
+				"text": "Brennhof is booked.",
+				"names": [],
+				"score": null
+			},
+			{
+				"at": 1812.0,
+				"until": 1812.0,
+				"side": "away",
+				"kind": "move",
+				"label": "Passing move · 1 player",
+				"text": "",
+				"names": ["Brennhof"],
+				"score": null
+			},
+			{
+				"at": 1900.2,
+				"until": 1910.1,
+				"side": "home",
+				"kind": "move",
+				"label": "Passing move · 3 players",
+				"text": "",
+				"names": ["Nowaković", "Jankčić", "Hafhuis"],
+				"score": null
 			}
 		]
 	}

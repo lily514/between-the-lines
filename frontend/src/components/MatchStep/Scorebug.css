@@ -1,0 +1,216 @@
+/* The score, the clock and possession: the clubs either side, home solid and away hatched in the bar. */
+
+.scorebug {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-4);
+	padding: 18px 18px 16px;
+	border: 1px solid var(--border);
+	border-radius: var(--r-tile);
+	background: var(--surface);
+}
+
+.scorebug__row {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+	align-items: center;
+	gap: var(--s-3);
+}
+
+.scorebug__team {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	min-width: 0;
+	padding: var(--s-3);
+	border: 2px solid transparent;
+	border-radius: var(--r-btn);
+}
+
+.scorebug__team--away {
+	align-items: flex-end;
+	text-align: right;
+}
+
+.scorebug__team--yours {
+	border-color: var(--text);
+	background: var(--surface-raised);
+}
+
+.scorebug__badges {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.scorebug__team--away .scorebug__badges {
+	flex-direction: row-reverse;
+}
+
+.scorebug__code {
+	padding: 3px 6px;
+	border: 1.5px solid var(--border-strong);
+	border-radius: 6px;
+	font-family: var(--font-data);
+	font-size: var(--fs-body-s);
+	font-weight: 500;
+}
+
+.scorebug__you {
+	padding: 3px 7px;
+	border-radius: 5px;
+	background: var(--text);
+	color: var(--bg);
+	font-size: var(--fs-caption);
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.scorebug__name {
+	font-family: var(--font-display);
+	font-size: 20px;
+	font-weight: 700;
+	line-height: 1.15;
+}
+
+.scorebug__legend {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: var(--fs-body-s);
+	color: var(--text-muted);
+}
+
+.scorebug__team--home .scorebug__legend {
+	flex-direction: row-reverse;
+	justify-content: flex-end;
+}
+
+.scorebug__middle {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 6px;
+	padding: 0 var(--s-1);
+}
+
+.scorebug__score {
+	display: flex;
+	align-items: baseline;
+	gap: 14px;
+	font-family: var(--font-display);
+	font-size: 56px;
+	font-weight: 700;
+	line-height: 1;
+	font-variant-numeric: tabular-nums;
+}
+
+.scorebug__dash {
+	font-size: 40px;
+	color: var(--text-muted);
+}
+
+.scorebug__clock {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.scorebug__time {
+	font-family: var(--font-data);
+	font-size: 20px;
+	font-weight: 500;
+	font-variant-numeric: tabular-nums;
+}
+
+.scorebug__half,
+.scorebug__possession-label {
+	font-size: var(--fs-caption);
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--text-muted);
+}
+
+.scorebug__countdown {
+	font-family: var(--font-data);
+	font-size: var(--fs-caption);
+	font-variant-numeric: tabular-nums;
+	color: var(--text-muted);
+}
+
+.scorebug__possession {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	padding-top: 14px;
+	border-top: 1px solid var(--border);
+}
+
+.scorebug__possession-numbers {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	font-family: var(--font-data);
+	font-size: var(--fs-body);
+	font-weight: 500;
+}
+
+.scorebug__possession-code {
+	font-size: var(--fs-caption);
+	color: var(--text-muted);
+}
+
+.scorebug__bar {
+	display: flex;
+	gap: 3px;
+	height: 12px;
+}
+
+.scorebug__bar-home {
+	border-radius: 6px 0 0 6px;
+	background: var(--text);
+}
+
+.scorebug__bar-away {
+	flex: 1;
+	border: 1.5px solid var(--text);
+	border-radius: 0 6px 6px 0;
+	background: repeating-linear-gradient(135deg, var(--text) 0 1.5px, transparent 1.5px 5px);
+}
+
+/* The phone's version: codes and marks either side of the score, then the clock and possession. */
+.scorebug--compact {
+	gap: var(--s-3);
+	padding: var(--s-3) 14px;
+}
+
+.scorebug--compact .scorebug__team {
+	padding: 0;
+}
+
+.scorebug--compact .scorebug__team--yours {
+	border-color: transparent;
+	background: none;
+}
+
+.scorebug--compact .scorebug__score {
+	font-size: 34px;
+}
+
+.scorebug--compact .scorebug__dash {
+	font-size: 26px;
+}
+
+.scorebug--compact .scorebug__time {
+	font-size: var(--fs-body);
+}
+
+.scorebug--compact .scorebug__possession {
+	padding-top: var(--s-2);
+}
+
+.scorebug--compact .scorebug__bar {
+	height: 8px;
+}

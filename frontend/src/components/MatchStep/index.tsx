@@ -9,6 +9,8 @@ import { matchClock, type PlayByPlay } from './Commentary.support.ts'
 export interface MatchStepProps {
 	home: string
 	away: string
+	homeCode: string
+	awayCode: string
 	matchNumber: number
 	/** Who had the ball from where the last question left the viewer, or from kick-off, up to this one. */
 	play: PlayByPlay
@@ -22,7 +24,7 @@ export interface MatchStepProps {
 	catchUp: string | null
 	/** Which side is the viewer's team, tagged "You" in the fixture. */
 	yours: 'home' | 'away' | null
-	/** Where the stream view shows the commentary on a wide screen. */
+	/** Where the stream view shows the match feed on a wide screen. */
 	streamSlot?: HTMLElement | null
 	onArrive: () => void
 }
@@ -32,6 +34,8 @@ export interface MatchStepProps {
 const MatchStep = ({
 	home,
 	away,
+	homeCode,
+	awayCode,
 	matchNumber,
 	play,
 	to,
@@ -70,7 +74,7 @@ const MatchStep = ({
 				</p>
 			)}
 			<p className="match-step__moved">{movedOn(from, to)}</p>
-			<Commentary play={play} home={home} away={away} streamSlot={streamSlot} />
+			<Commentary play={play} teams={{ home, away, homeCode, awayCode, yours }} streamSlot={streamSlot} />
 			<PhasePill phase={stepPhase(to)} detail={live ? null : to.restart} />
 			<h2 id={headingId} ref={heading} tabIndex={-1} className="match-step__heading screen-heading">
 				{stepHeading(to)}

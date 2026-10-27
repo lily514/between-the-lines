@@ -176,6 +176,13 @@ def test_the_play_by_play_runs_from_the_last_question_and_stops_before_the_momen
         for player in (*HOME.squad, *AWAY.squad)
     }
     assert all(names[touch.player] == (touch.surname, touch.number) for touch in touches)
+    assert all(touch.action and touch.where for touch in touches)
+    assert play.feed[0].kind == "kick_off"
+    assert all(entry.at <= entry.until < play.names_until for entry in play.feed)
+    assert all(touch.zone for touch in touches)
+    assert play.stats[0].at == play.start
+    assert all(play.start <= entry.at < play.names_until for entry in play.stats)
+    assert all(entry.home.possession + entry.away.possession == 100 for entry in play.stats)
 
 
 def test_the_first_question_s_play_by_play_starts_at_kick_off() -> None:

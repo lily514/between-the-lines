@@ -483,3 +483,43 @@ browser can't split it reliably.
 The team sheet had the same problem: `shirtName` took the last word of the full name, so "de Witkamp" showed as
 "Witkamp". Its players now carry `surname` from the server too, and `shirtName` uses it.
 **Affects:** the API (`TouchOut.surname`, `SheetPlayerOut.surname`; `openapi.json` and `schema.d.ts` regenerated).
+
+## After T16 — The match feed (2026-10-27)
+**Plan said:** nothing; the commentary named who was on the ball and the spells of possession.
+**We did:** the stream view now carries the design in `docs/milestone-5/design/MatchFeed-*.dc.html`, standing in
+for the viewer's TV between questions.
+- **What each player does, and where.** Each play-by-play touch carries `action` ("crosses", "takes the corner",
+  "shoots and scores"), `where` ("in midfield", "in the box") and `zone` as a key for the strip of thirds, worded
+  on the server (`btl/api/commentary.py`). The zone is seen by the team making the action
+  (`learn/play_by_play.zone_of`).
+- **The feed.** `learn/match_feed.py` tells the match from kick-off as entries: each passing move (the first of a
+  half is the kick-off), goals and own goals with the score after them, shots (saved, wide or deflected for a
+  corner, from the action after the shot), corners and throw-ins with their flank, goal kicks, fouls with who was
+  fouled and what it gave (free kick, penalty or advantage), cards, offsides, and the halftime break with its
+  score. The server words each entry's label and line; the page shows a move once its last touch has happened.
+  There are no substitution entries: the simulator makes none.
+- **Match stats.** Goals, possession (share of time on the ball), shots, corners, fouls and cards, as a timeline
+  of entries from where the viewer left off: one each time the ball changes hands, a number changes or a half
+  starts, with the period (`learn/match_stats.py`). The API names shots `attempts`, because the payload leak test
+  bars any field called `shots` (an outcome fact for some questions).
+- **Nothing past the moment.** The feed and the stats use only events strictly before `names_until`, as the
+  spells do. An entry that needs the next action (a shot's end, what a foul gave) says nothing about it when that
+  action is at or after the moment. The question's own action is never included: a foul question starts on the
+  foul, a restart question on the action before the restart, an offside question on the offside.
+- **The page.** On a wide screen the stream view shows the scorebug (crests, codes, You, score, clock and half,
+  "Next question in …", possession with home solid and away hatched), the latest action with its strip of
+  thirds and "Asked in the panel" at question time, the stats as cards, and the feed, newest first, ending at
+  "Start of the match". It replaces the placeholder only between questions; while a question is open the
+  placeholder is back. On a phone the panel shows the compact scorebug, the latest action, the note before it
+  and "Earlier notes and stats", a sheet with the cards and the whole feed. Teams are a filled disc (home) or a
+  ring (away) beside their code, never colour alone.
+- **Compression.** A question late in a match carries about 90 kB of JSON, most of it the feed, so the API now
+  gzips responses over 1 kB.
+- **Left out from the design:** the phone's pitch with player positions (that is the animated playback, still
+  to plan), "Adjust timing to match your TV", the "Questions: Normal" pill, the substitution entry, and the
+  clubs' colour bars under the scorebug's names.
+**Why:** the stream view had room to follow the match, and every word and number in it still comes from the
+server.
+**Affects:** the API (`TouchOut.action`/`where`/`zone`, `PlayByPlayOut.feed`/`stats`; `openapi.json` and
+`schema.d.ts` regenerated). The scorebug shows the score as of the feed, so a goal in the unnamed play before a
+saved question shows in the panel's score first.

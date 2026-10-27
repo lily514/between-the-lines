@@ -264,3 +264,13 @@ def test_each_question_carries_the_score_and_a_catch_up_after_the_first() -> Non
         assert second["catch_up"].endswith(
             f"{second['score']['home']}\N{EN DASH}{second['score']['away']}."
         )
+
+
+def test_a_question_comes_compressed_to_a_browser_that_accepts_it() -> None:
+    api = client(MemoryLearnerStore())
+    started(api)
+
+    response = api.post("/api/viewers/demo/next", headers={"Accept-Encoding": "gzip"})
+
+    assert response.status_code == 200
+    assert response.headers["content-encoding"] == "gzip"

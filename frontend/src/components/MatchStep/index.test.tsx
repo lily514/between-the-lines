@@ -9,6 +9,8 @@ const stepTo = (question: typeof identifyQuestion, onArrive = vi.fn()) =>
 		<MatchStep
 			home={question.home}
 			away={question.away}
+			homeCode={question.home_code}
+			awayCode={question.away_code}
 			matchNumber={question.match_number}
 			play={question.play_by_play}
 			to={question.delivered}
@@ -61,8 +63,10 @@ test('breaks are named as breaks, without a clock', () => {
 })
 
 test('the viewer’s team is tagged in the fixture, not by colour alone', () => {
-	stepTo({ ...identifyQuestion, your_team: 'away' })
-	expect(screen.getByText('You').parentElement).toHaveTextContent('Ludlow Ferrymen You')
+	const { container } = stepTo({ ...identifyQuestion, your_team: 'away' })
+	const fixture = container.querySelector('.match-step__fixture')
+	expect(fixture).toHaveTextContent('Ripon Wardens v Ludlow Ferrymen You')
+	expect(screen.getAllByText('You')).toHaveLength(2)
 })
 
 test('after an answer, the step says what happened while the viewer was answering', () => {

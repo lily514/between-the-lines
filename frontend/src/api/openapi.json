@@ -370,6 +370,109 @@
         "title": "FactOut",
         "type": "object"
       },
+      "FeedEntryOut": {
+        "description": "One entry of the match feed, worded for the page.\n\n``at`` is when it happened, in seconds on the match clock; the page shows it once the clock\nreaches ``until``, a move's last touch. ``label`` names it, e.g. \"Shot \u00b7 saved\"; ``text`` is\nits line. A move's ``names`` are its players in turn; ``side`` is null only at halftime.",
+        "properties": {
+          "at": {
+            "title": "At",
+            "type": "number"
+          },
+          "kind": {
+            "enum": [
+              "kick_off",
+              "move",
+              "goal",
+              "own_goal",
+              "shot",
+              "corner",
+              "throw_in",
+              "goal_kick",
+              "foul",
+              "yellow_card",
+              "red_card",
+              "offside",
+              "halftime"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "names": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Names",
+            "type": "array"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FeedScoreOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "side": {
+            "anyOf": [
+              {
+                "enum": [
+                  "home",
+                  "away"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Side"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          },
+          "until": {
+            "title": "Until",
+            "type": "number"
+          }
+        },
+        "required": [
+          "at",
+          "until",
+          "side",
+          "kind",
+          "label",
+          "text",
+          "names",
+          "score"
+        ],
+        "title": "FeedEntryOut",
+        "type": "object"
+      },
+      "FeedScoreOut": {
+        "description": "The score after a goal, or at halftime.",
+        "properties": {
+          "away": {
+            "title": "Away",
+            "type": "integer"
+          },
+          "home": {
+            "title": "Home",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "home",
+          "away"
+        ],
+        "title": "FeedScoreOut",
+        "type": "object"
+      },
       "FeedbackOption": {
         "description": "An option after answering: whether it was right or picked, and every fact about it.",
         "properties": {
@@ -1416,11 +1519,18 @@
         "type": "object"
       },
       "PlayByPlayOut": {
-        "description": "Who had the ball between the viewer's last question and the next, for the page to play.\n\nTimes are seconds on the match clock: ``start`` where the viewer left off (0 at kick-off),\n``end`` when the next question is asked. The spells stop at ``names_until``, the moment the\nquestion is about, so they say nothing of how that play turned out; a question saved for a\nstoppage has play between it and ``end`` that goes unnamed.",
+        "description": "Who had the ball between the viewer's last question and the next, for the page to play.\n\nTimes are seconds on the match clock: ``start`` where the viewer left off (0 at kick-off),\n``end`` when the next question is asked. The spells stop at ``names_until``, the moment the\nquestion is about, so they say nothing of how that play turned out; a question saved for a\nstoppage has play between it and ``end`` that goes unnamed. ``feed`` runs from kick-off and\n``stats`` from ``start`` (or from ``names_until``, when the viewer left off after it), and\nboth stop at ``names_until`` too.",
         "properties": {
           "end": {
             "title": "End",
             "type": "number"
+          },
+          "feed": {
+            "items": {
+              "$ref": "#/components/schemas/FeedEntryOut"
+            },
+            "title": "Feed",
+            "type": "array"
           },
           "names_until": {
             "title": "Names Until",
@@ -1436,13 +1546,22 @@
           "start": {
             "title": "Start",
             "type": "number"
+          },
+          "stats": {
+            "items": {
+              "$ref": "#/components/schemas/StatsOut"
+            },
+            "title": "Stats",
+            "type": "array"
           }
         },
         "required": [
           "start",
           "end",
           "names_until",
-          "spells"
+          "spells",
+          "feed",
+          "stats"
         ],
         "title": "PlayByPlayOut",
         "type": "object"
@@ -1930,6 +2049,50 @@
         "title": "SheetTeamOut",
         "type": "object"
       },
+      "SideStatsOut": {
+        "description": "One team's numbers so far; ``possession`` is its share of time on the ball, in %.\n\n``attempts`` are its shots at goal; the name keeps clear of the outcome facts' \"shots\".",
+        "properties": {
+          "attempts": {
+            "title": "Attempts",
+            "type": "integer"
+          },
+          "corners": {
+            "title": "Corners",
+            "type": "integer"
+          },
+          "fouls": {
+            "title": "Fouls",
+            "type": "integer"
+          },
+          "goals": {
+            "title": "Goals",
+            "type": "integer"
+          },
+          "possession": {
+            "title": "Possession",
+            "type": "integer"
+          },
+          "red_cards": {
+            "title": "Red Cards",
+            "type": "integer"
+          },
+          "yellow_cards": {
+            "title": "Yellow Cards",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "goals",
+          "possession",
+          "attempts",
+          "corners",
+          "fouls",
+          "yellow_cards",
+          "red_cards"
+        ],
+        "title": "SideStatsOut",
+        "type": "object"
+      },
       "SpellOut": {
         "description": "One side's spell on the ball, as the play-by-play covers it.",
         "properties": {
@@ -1990,6 +2153,33 @@
           "viewer_id"
         ],
         "title": "StartIn",
+        "type": "object"
+      },
+      "StatsOut": {
+        "description": "Both teams' numbers as they stand from ``at`` seconds on the match clock, in ``period``.",
+        "properties": {
+          "at": {
+            "title": "At",
+            "type": "number"
+          },
+          "away": {
+            "$ref": "#/components/schemas/SideStatsOut"
+          },
+          "home": {
+            "$ref": "#/components/schemas/SideStatsOut"
+          },
+          "period": {
+            "title": "Period",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "at",
+          "period",
+          "home",
+          "away"
+        ],
+        "title": "StatsOut",
         "type": "object"
       },
       "StatusOut": {
@@ -2211,8 +2401,12 @@
         "type": "object"
       },
       "TouchOut": {
-        "description": "A player on the ball, at ``at`` seconds on the match clock.\n\n``surname`` is what the commentary calls them by; a surname may have more than one word.",
+        "description": "A player on the ball, at ``at`` seconds on the match clock.\n\n``surname`` is what the commentary calls them by; a surname may have more than one word.\n``action`` is what they did, e.g. \"crosses\", and ``where`` where, seen by their own team;\n``zone`` is that place as a key, for the page's strip of thirds.",
         "properties": {
+          "action": {
+            "title": "Action",
+            "type": "string"
+          },
           "at": {
             "title": "At",
             "type": "number"
@@ -2228,13 +2422,30 @@
           "surname": {
             "title": "Surname",
             "type": "string"
+          },
+          "where": {
+            "title": "Where",
+            "type": "string"
+          },
+          "zone": {
+            "enum": [
+              "own_third",
+              "middle_third",
+              "final_third",
+              "box"
+            ],
+            "title": "Zone",
+            "type": "string"
           }
         },
         "required": [
           "at",
           "player",
           "surname",
-          "number"
+          "number",
+          "action",
+          "where",
+          "zone"
         ],
         "title": "TouchOut",
         "type": "object"

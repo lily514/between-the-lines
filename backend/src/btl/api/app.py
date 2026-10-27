@@ -45,6 +45,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse
 
 from btl.api.events import emit
@@ -138,6 +139,8 @@ def create_app(
         prepared_size: How many prepared matches to keep; the least recently used goes first.
     """
     app = FastAPI(title="Between the Lines", version="0.1.0")
+    # A question late in a match carries its feed from kick-off, tens of kB of repetitive JSON.
+    app.add_middleware(GZipMiddleware, minimum_size=1000)
     # A viewer's requests replay and save the same record, so they take turns; other viewers
     # don't wait for them, even while a model words a question. A lock lives only while a
     # request holds it, so the table doesn't grow with every visitor.

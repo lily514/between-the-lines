@@ -83,7 +83,7 @@ flowchart BT
 
 A concept is **active** when the app can ask about it: a detector finds it in a match, and questions can be built for it. Five concepts are active: `line_breaking_pass` and `counter_press` (Milestone 2a), and the tier-0 basics `restarts`, `offside` and `fouls_and_cards` (Milestone 2d). The other concepts are the curriculum still to build.
 
-Tier-0 concepts come round every few minutes in a match, so the selector asks about each at most twice a match, and about all of them at most three times. That leaves room for the others from a viewer's first match.
+Tier-0 concepts come round every few minutes in a match, so the selector asks about each at most twice a match, and about all of them at most five times. That leaves room for the others from a viewer's first match.
 
 The **frontier** is what's worth asking about now: active concepts that aren't mastered yet and whose prerequisites are unlocked. Two thresholds from the knowledge model decide this: unlock (0.8 for BKT) and mastery (0.95).
 

@@ -368,18 +368,27 @@ def test_play_that_went_on_after_a_foul_is_only_reviewed_later() -> None:
 
 def test_each_basic_concept_is_capped_and_so_are_all_of_them_together() -> None:
     scene = beginner_on_the_basics()
-    stoppage = AskedWhen.AT_THE_STOPPAGE
+    stoppage, afterwards = AskedWhen.AT_THE_STOPPAGE, AskedWhen.AFTERWARDS
+    # Four restarts: two are asked, then the concept is capped.
     for minute in (5, 14, 23, 32):
         scene.moment(minute, 0.1, SETTLED, RESTARTS, asked_when=stoppage)
-    scene.moment(50, 0.1, SETTLED, OFFSIDE, period=2)
-    scene.moment(60, 0.1, SETTLED, FOULS, period=2, asked_when=stoppage)
+    # Two offside calls live, which fills the in-play cap, and a third saved for the break.
+    scene.moment(23.5, 0.1, SETTLED, OFFSIDE)
+    scene.moment(32.5, 0.1, SETTLED, OFFSIDE)
+    scene.moment(40, 0.1, TRANSITION, OFFSIDE)
+    # Advantage after a foul, reviewed at half-time: the fifth basic question of the match.
+    scene.moment(42, 0.1, SETTLED, FOULS, asked_when=afterwards)
+    scene.moment(50, 0.1, SETTLED, FOULS, period=2, asked_when=afterwards)
+    scene.breaks()
 
     prompts = scene.run()
 
     concepts = [p.candidate.concept for p in prompts]
     assert concepts.count(RESTARTS) == TIER0_CAP
-    assert len(concepts) == TIER0_MATCH_CAP
-    assert FOULS not in concepts
+    assert concepts.count(OFFSIDE) == TIER0_CAP
+    assert len(concepts) == TIER0_MATCH_CAP == 5
+    assert concepts.count(FOULS) == 1
+    assert prompts[-1].delivered.phase is PhaseOfPlay.HALF_TIME
 
 
 def test_a_review_at_the_stoppage_its_moment_caused_names_no_restart() -> None:

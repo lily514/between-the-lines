@@ -54,7 +54,7 @@ QUEUE_LIMIT = 2
 # With everything mastered, review stays occasional.
 REVIEW_CAP = 1
 TIER0_CAP = 2
-TIER0_MATCH_CAP = 3
+TIER0_MATCH_CAP = 5
 WHISTLE_MARGIN = 30.0
 # The viewer's Preferences setting scales the caps; off asks nothing at all.
 PACE_CAPS: Mapping[Pace, Caps] = {

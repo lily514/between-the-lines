@@ -168,6 +168,49 @@ class StatsOut(BaseModel):
     away: SideStatsOut
 
 
+class TrackPlayerOut(BaseModel):
+    """A player on the moving pitch, by shirt number and side."""
+
+    shirt: int
+    home: bool
+
+
+class TrackFrameOut(BaseModel):
+    """Every player at the start of one action, ``at`` seconds on the match clock in ``period``.
+
+    ``positions`` are in the order of the track's ``players``, null where a position is unknown.
+    ``on_ball`` is the index of the player making the action, null when they aren't tracked.
+    """
+
+    period: int
+    at: float
+    positions: list[Point | None]
+    on_ball: int | None
+
+
+class BallAtOut(BaseModel):
+    """Where the ball was ``at`` seconds on the match clock, in ``period``."""
+
+    period: int
+    at: float
+    point: Point
+
+
+class TrackOut(BaseModel):
+    """Where the players and the ball were, for the page to move the pitch as the clock runs.
+
+    Points are in metres with the viewer's team (home, if they have none) attacking left to
+    right. The track runs from where the viewer left off and ends at ``names_until`` on the
+    start of the action the question is about, so it shows nothing of how that play turned
+    out; it is empty when the viewer left off after the moment. The page blends between
+    neighbouring frames of the same period, never across a period change.
+    """
+
+    players: list[TrackPlayerOut]
+    frames: list[TrackFrameOut]
+    ball: list[BallAtOut]
+
+
 class PlayByPlayOut(BaseModel):
     """Who had the ball between the viewer's last question and the next, for the page to play.
 
@@ -176,7 +219,7 @@ class PlayByPlayOut(BaseModel):
     question is about, so they say nothing of how that play turned out; a question saved for a
     stoppage has play between it and ``end`` that goes unnamed. ``feed`` runs from kick-off and
     ``stats`` from ``start`` (or from ``names_until``, when the viewer left off after it), and
-    both stop at ``names_until`` too.
+    both stop at ``names_until`` too, as ``track`` does.
     """
 
     start: float
@@ -185,6 +228,7 @@ class PlayByPlayOut(BaseModel):
     spells: list[SpellOut]
     feed: list[FeedEntryOut]
     stats: list[StatsOut]
+    track: TrackOut
 
 
 class QuestionOut(BaseModel):

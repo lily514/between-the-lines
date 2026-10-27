@@ -44,6 +44,40 @@
         "title": "AnswerLineOut",
         "type": "object"
       },
+      "BallAtOut": {
+        "description": "Where the ball was ``at`` seconds on the match clock, in ``period``.",
+        "properties": {
+          "at": {
+            "title": "At",
+            "type": "number"
+          },
+          "period": {
+            "title": "Period",
+            "type": "integer"
+          },
+          "point": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "title": "Point",
+            "type": "array"
+          }
+        },
+        "required": [
+          "period",
+          "at",
+          "point"
+        ],
+        "title": "BallAtOut",
+        "type": "object"
+      },
       "Band": {
         "description": "A viewer's level on a concept, as the page keys its scenes and icons.",
         "enum": [
@@ -1519,7 +1553,7 @@
         "type": "object"
       },
       "PlayByPlayOut": {
-        "description": "Who had the ball between the viewer's last question and the next, for the page to play.\n\nTimes are seconds on the match clock: ``start`` where the viewer left off (0 at kick-off),\n``end`` when the next question is asked. The spells stop at ``names_until``, the moment the\nquestion is about, so they say nothing of how that play turned out; a question saved for a\nstoppage has play between it and ``end`` that goes unnamed. ``feed`` runs from kick-off and\n``stats`` from ``start`` (or from ``names_until``, when the viewer left off after it), and\nboth stop at ``names_until`` too.",
+        "description": "Who had the ball between the viewer's last question and the next, for the page to play.\n\nTimes are seconds on the match clock: ``start`` where the viewer left off (0 at kick-off),\n``end`` when the next question is asked. The spells stop at ``names_until``, the moment the\nquestion is about, so they say nothing of how that play turned out; a question saved for a\nstoppage has play between it and ``end`` that goes unnamed. ``feed`` runs from kick-off and\n``stats`` from ``start`` (or from ``names_until``, when the viewer left off after it), and\nboth stop at ``names_until`` too, as ``track`` does.",
         "properties": {
           "end": {
             "title": "End",
@@ -1553,6 +1587,9 @@
             },
             "title": "Stats",
             "type": "array"
+          },
+          "track": {
+            "$ref": "#/components/schemas/TrackOut"
           }
         },
         "required": [
@@ -1561,7 +1598,8 @@
           "names_until",
           "spells",
           "feed",
-          "stats"
+          "stats",
+          "track"
         ],
         "title": "PlayByPlayOut",
         "type": "object"
@@ -2448,6 +2486,114 @@
           "zone"
         ],
         "title": "TouchOut",
+        "type": "object"
+      },
+      "TrackFrameOut": {
+        "description": "Every player at the start of one action, ``at`` seconds on the match clock in ``period``.\n\n``positions`` are in the order of the track's ``players``, null where a position is unknown.\n``on_ball`` is the index of the player making the action, null when they aren't tracked.",
+        "properties": {
+          "at": {
+            "title": "At",
+            "type": "number"
+          },
+          "on_ball": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "On Ball"
+          },
+          "period": {
+            "title": "Period",
+            "type": "integer"
+          },
+          "positions": {
+            "items": {
+              "anyOf": [
+                {
+                  "maxItems": 2,
+                  "minItems": 2,
+                  "prefixItems": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ],
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Positions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "period",
+          "at",
+          "positions",
+          "on_ball"
+        ],
+        "title": "TrackFrameOut",
+        "type": "object"
+      },
+      "TrackOut": {
+        "description": "Where the players and the ball were, for the page to move the pitch as the clock runs.\n\nPoints are in metres with the viewer's team (home, if they have none) attacking left to\nright. The track runs from where the viewer left off and ends at ``names_until`` on the\nstart of the action the question is about, so it shows nothing of how that play turned\nout; it is empty when the viewer left off after the moment. The page blends between\nneighbouring frames of the same period, never across a period change.",
+        "properties": {
+          "ball": {
+            "items": {
+              "$ref": "#/components/schemas/BallAtOut"
+            },
+            "title": "Ball",
+            "type": "array"
+          },
+          "frames": {
+            "items": {
+              "$ref": "#/components/schemas/TrackFrameOut"
+            },
+            "title": "Frames",
+            "type": "array"
+          },
+          "players": {
+            "items": {
+              "$ref": "#/components/schemas/TrackPlayerOut"
+            },
+            "title": "Players",
+            "type": "array"
+          }
+        },
+        "required": [
+          "players",
+          "frames",
+          "ball"
+        ],
+        "title": "TrackOut",
+        "type": "object"
+      },
+      "TrackPlayerOut": {
+        "description": "A player on the moving pitch, by shirt number and side.",
+        "properties": {
+          "home": {
+            "title": "Home",
+            "type": "boolean"
+          },
+          "shirt": {
+            "title": "Shirt",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "shirt",
+          "home"
+        ],
+        "title": "TrackPlayerOut",
         "type": "object"
       },
       "ValidationError": {

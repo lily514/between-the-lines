@@ -12,6 +12,7 @@ from typing import Literal
 from btl.api.commentary import ZONE_WORDS, action_words, feed_words
 from btl.api.models import (
     AnswerLineOut,
+    BallAtOut,
     Bar,
     BeforeMatchOut,
     ClubOut,
@@ -49,10 +50,13 @@ from btl.api.models import (
     TeamSheetOut,
     ThresholdsOut,
     TouchOut,
+    TrackFrameOut,
+    TrackOut,
+    TrackPlayerOut,
     YourTeam,
 )
 from btl.concepts.phase import PhaseOfPlay
-from btl.league.league import Club, League
+from btl.league.league import Club, League, Player
 from btl.learn.before_match import BeforeMatch, LevelRow
 from btl.learn.concept_map import ConceptKey, Thresholds
 from btl.learn.curriculum import Curriculum
@@ -67,6 +71,8 @@ from btl.learn.questions import Form
 from btl.learn.report import Break, Report
 from btl.learn.session import Asked, Told
 from btl.learn.team_sheet import NEXT_STAGE, SheetPlayer, SheetTeam, TeamSheet
+from btl.learn.track import Track, track_between
+from btl.schema.frames import seen_by
 from btl.schema.ids import PlayerId, TeamId
 from btl.schema.scoreboard import clock, clock_seconds
 
@@ -123,20 +129,24 @@ def question_payload(
             clock=clock(stands_at.period_id, stands_at.seconds),
         ),
         catch_up=catch_up_text(caught, home, away),
-        play_by_play=play_by_play_payload(asked, home, away),
+        play_by_play=play_by_play_payload(asked, home, away, club),
     )
 
 
-def play_by_play_payload(asked: Asked, home: Club, away: Club) -> PlayByPlayOut:
+def play_by_play_payload(
+    asked: Asked, home: Club, away: Club, yours: TeamId | None
+) -> PlayByPlayOut:
     """Who had the ball from where the viewer left off up to the moment the question is about.
 
-    With the match feed from kick-off, and the match's numbers as they changed.
+    With the match feed from kick-off, the match's numbers as they changed, and the track of
+    the players and the ball, seen by the viewer's club (``yours``) or else the home team.
     """
     previous, candidate = asked.previous, asked.prompt.candidate
     delivered = asked.prompt.delivered
     after = None if previous is None else (previous.period_id, previous.time_seconds)
     before = (candidate.period_id, candidate.time_seconds)
     players = {player.player_id: player for player in (*home.squad, *away.squad)}
+    watched = seen_by(asked.match, home.team_id if yours is None else yours)
 
     def side(team_id: TeamId) -> Literal["home", "away"]:
         return "home" if team_id == home.team_id else "away"
@@ -199,6 +209,42 @@ def play_by_play_payload(asked: Asked, home: Club, away: Club) -> PlayByPlayOut:
                 away=_side_stats(entry.away),
             )
             for entry in stats_timeline(asked.match, after, before)
+        ],
+        track=_track(
+            track_between(watched, after, before),
+            players,
+            home.team_id,
+        ),
+    )
+
+
+def _track(track: Track, players: Mapping[PlayerId, Player], home_id: TeamId) -> TrackOut:
+    index = {slot.player_id: i for i, slot in enumerate(track.slots)}
+
+    def point(x: float, y: float) -> tuple[float, float]:
+        return (round(x, 1), round(y, 1))
+
+    return TrackOut(
+        players=[
+            TrackPlayerOut(shirt=players[slot.player_id].shirt_number, home=slot.team_id == home_id)
+            for slot in track.slots
+        ],
+        frames=[
+            TrackFrameOut(
+                period=frame.period_id,
+                at=clock_seconds(frame.period_id, frame.time_seconds),
+                positions=[None if p is None else point(*p) for p in frame.positions],
+                on_ball=index.get(frame.on_ball),
+            )
+            for frame in track.frames
+        ],
+        ball=[
+            BallAtOut(
+                period=at.period_id,
+                at=clock_seconds(at.period_id, at.time_seconds),
+                point=point(at.x, at.y),
+            )
+            for at in track.ball
         ],
     )
 

@@ -18,7 +18,7 @@ from btl.learn.questions import Form, build_question
 from btl.learn.report import Goal
 from btl.learn.selector import Prompt
 from btl.learn.session import Asked
-from btl.schema.ids import ActionId
+from btl.schema.ids import ActionId, TeamId
 from btl.schema.vocab import ConceptId
 from tests.fixtures.learning import designed_with_candidates, threat_model
 
@@ -69,6 +69,8 @@ HIDDEN = {
 HOME, AWAY = generate_league(np.random.default_rng(0)).clubs[:2]
 ASKED_LATER = Delivered(Delivery.DEFERRED, 1, 2000.0, PhaseOfPlay.DEAD_BALL, "goal kick")
 NO_CATCH_UP = CatchUp(0, 0, None)
+# A track from kick-off to the end of the first half, before the API's gzip.
+TRACK_BUDGET_BYTES = 400_000
 
 
 def asked_for(candidate: Candidate, level: int, delivery: Delivery, seed: int) -> Asked | None:
@@ -128,6 +130,11 @@ def test_a_question_payload_never_holds_the_answer_or_an_outcome(seed: int) -> N
                     assert not any(display in text for display in threat_displays(asked.pack))
                     if asked.pack.form is Form.PREDICT:
                         assert payload.picture.path == []
+                    track = payload.play_by_play.track
+                    until = payload.play_by_play.names_until
+                    assert all(frame.at < until for frame in track.frames[:-1])
+                    assert track.frames[-1].at == until
+                    assert all(at.at <= until for at in track.ball)
 
 
 def test_a_question_payload_says_when_the_moment_happened_and_when_it_is_asked() -> None:
@@ -194,6 +201,76 @@ def test_the_first_question_s_play_by_play_starts_at_kick_off() -> None:
 
     assert play.start == 0.0
     assert play.spells[0].touches[0].at == asked.match.events[0].time_seconds
+
+
+def test_the_track_ends_on_the_question_picture_when_the_viewer_s_team_is_on_the_ball() -> None:
+    match, _, candidates = designed_with_candidates(0)
+    checked = 0
+    for candidate in candidates[:60]:
+        team = match.events[candidate.tag.action_id].team_id
+        asked = asked_for(candidate, 1, Delivery.LIVE, 0)
+        if asked is None:
+            continue
+
+        payload = question_payload(asked, 1, HOME, AWAY, team, NO_CATCH_UP)
+
+        track = payload.play_by_play.track
+        last = track.frames[-1]
+        on_pitch = {
+            (player.shirt, player.home): point
+            for player, point in zip(track.players, last.positions, strict=True)
+            if point is not None
+        }
+        pictured = {(m.shirt, m.home): (m.x, m.y) for m in payload.picture.markers}
+        assert on_pitch == pictured
+        assert track.ball[-1].point == payload.picture.ball
+        checked += 1
+    assert checked > 20
+
+
+def test_the_track_is_seen_by_the_viewer_s_team_or_else_the_home_team() -> None:
+    _, _, candidates = designed_with_candidates(0)
+    asked = asked_for(candidates[3], 1, Delivery.LIVE, 0)
+    assert asked is not None
+
+    def first_ball(club: TeamId | None) -> tuple[float, float]:
+        return (
+            question_payload(asked, 1, HOME, AWAY, club, NO_CATCH_UP)
+            .play_by_play.track.ball[0]
+            .point
+        )
+
+    assert first_ball(None) == first_ball(HOME.team_id)
+    x, y = first_ball(AWAY.team_id)
+    assert first_ball(HOME.team_id) == pytest.approx((105 - x, 68 - y))
+
+
+def test_the_track_names_each_player_by_shirt_and_side() -> None:
+    _, _, candidates = designed_with_candidates(0)
+    asked = asked_for(candidates[3], 1, Delivery.LIVE, 0)
+    assert asked is not None
+
+    track = question_payload(asked, 1, HOME, AWAY, None, NO_CATCH_UP).play_by_play.track
+
+    shirts = {(p.shirt_number, True) for p in HOME.squad} | {
+        (p.shirt_number, False) for p in AWAY.squad
+    }
+    assert {(player.shirt, player.home) for player in track.players} <= shirts
+    assert sum(player.home for player in track.players) == len(track.players) // 2
+    assert all(
+        frame.on_ball is None or 0 <= frame.on_ball < len(track.players) for frame in track.frames
+    )
+
+
+def test_a_whole_half_s_track_stays_small() -> None:
+    _, _, candidates = designed_with_candidates(0)
+    late = [c for c in candidates if c.period_id == 1][-1]
+    asked = asked_for(late, 1, Delivery.LIVE, 0)
+    assert asked is not None
+
+    track = question_payload(asked, 1, HOME, AWAY, None, NO_CATCH_UP).play_by_play.track
+
+    assert len(track.model_dump_json().encode()) < TRACK_BUDGET_BYTES
 
 
 @pytest.mark.parametrize(

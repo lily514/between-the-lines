@@ -568,3 +568,6 @@ A change of speed mid-run carries on from where the clock has got to.
   zone's top edge, drawn above the players, or on its bottom edge when the level tag covers the top-left corner.
   A note along the bottom (`edge: 'bottom'`) was still drawn at the right, under Pause motion, although T15 says it
   moved; it now starts at the left.
+- **Stat tiles wrap between words.** In the desktop side panel three tiles a row and `overflow-wrap: anywhere` split
+  "Bakewell Badgers" into "Bakewe / ll / Badger / s". The row now fits as many tiles as its width allows (at least
+  136 px each) and a value breaks only between words, unless one word is wider than its tile.

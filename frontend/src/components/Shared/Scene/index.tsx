@@ -47,6 +47,9 @@ const BALL_R = 0.95
 /** On-pitch text is at least 1.9 units (about 13 px at 350 px wide). */
 const LABEL_SIZE = 1.9
 const CHAR_WIDTH = LABEL_SIZE * 0.62
+/** The level tag ("Now Sharp") covers the scene's top-left corner, in scene units. */
+const TAG_DEPTH = 6
+const TAG_WIDTH = 20
 
 /**
  * A concept's scene (B1 to B4): the key frame of a real moment, the play's path, and the layer for the viewer's level
@@ -91,7 +94,9 @@ const Scene = ({ spec, fixture, band, name }: SceneProps) => {
 		return { animation: loop(key(`i${String(index)}`)), opacity: 0 }
 	}
 
-	const drawn = shown.map((item, index) => drawItem(item, index, scene, view, edge, beatStyle, still, key, frames))
+	const drawn = shown.flatMap((item, index) =>
+		[drawItem(item, index, scene, view, edge, beatStyle, still, key, frames)].flat()
+	)
 	const under = drawn.filter(part => part?.layer === 'under').map(part => part?.node)
 	const over = drawn.filter(part => part?.layer === 'over').map(part => part?.node)
 
@@ -277,7 +282,7 @@ const drawItem = (
 	still: Still,
 	key: (suffix: string) => string,
 	frames: string[]
-): Drawn | null => {
+): Drawn | Drawn[] | null => {
 	const k = `item-${String(n)}`
 	switch (item.kind) {
 		case 'word': {
@@ -304,13 +309,15 @@ const drawItem = (
 		}
 		case 'edge-label': {
 			const y = item.edge === 'right' && item.x !== undefined ? PITCH_LENGTH - item.x - 0.8 : edge.bottom
+			// A note along the bottom sits at the left: the Pause motion button holds the bottom right.
+			const bottom = item.edge === 'bottom'
 			return over(
 				<text
 					key={k}
 					className="scene__label"
-					x={edge.right}
+					x={bottom ? edge.left : edge.right}
 					y={y}
-					textAnchor="end"
+					textAnchor={bottom ? 'start' : 'end'}
 					style={beatStyle(n, item.beat, item.until)}>
 					{item.text}
 				</text>
@@ -348,22 +355,35 @@ const drawItem = (
 			const [x2, y2] = toScreen(item.to)
 			const [x, y] = [Math.min(x1, x2), Math.min(y1, y2)]
 			const [w, h] = [Math.abs(x2 - x1), Math.abs(y2 - y1)]
-			return under(
-				<g key={k} style={beatStyle(n, item.beat, item.until)}>
-					<rect
-						className={`scene__zone${item.fill ? ' scene__zone--fill' : ''}`}
-						x={x}
-						y={y}
-						width={w}
-						height={h}
-					/>
-					{item.label !== undefined && (
-						<text className="scene__label" x={x + w / 2} y={y + h / 2 + 0.7} textAnchor="middle">
+			const style = beatStyle(n, item.beat, item.until)
+			const zone = under(
+				<rect
+					key={k}
+					className={`scene__zone${item.fill ? ' scene__zone--fill' : ''}`}
+					x={x}
+					y={y}
+					width={w}
+					height={h}
+					style={style}
+				/>
+			)
+			if (item.label === undefined) return zone
+			// The ball is in the zone, so a player stands there: the value sits on the zone's top edge, above them.
+			const width = item.label.length * CHAR_WIDTH + 2
+			const left = Math.min(Math.max(x + w / 2 - width / 2, view.x + 0.4), view.x + view.width - width - 0.4)
+			const underTag = y - 1.6 < view.y + TAG_DEPTH && left < view.x + TAG_WIDTH
+			const top = Math.min((underTag ? y + h : y) - 1.6, view.y + view.height - 3.6)
+			return [
+				zone,
+				over(
+					<g key={`${k}-label`} className="scene__pill" style={style}>
+						<rect x={left} y={top} width={width} height={3.2} rx={1.6} />
+						<text x={left + width / 2} y={top + 2.25} textAnchor="middle">
 							{item.label}
 						</text>
-					)}
-				</g>
-			)
+					</g>
+				)
+			]
 		}
 		case 'ring': {
 			const [x, y] = toScreen(item.at)

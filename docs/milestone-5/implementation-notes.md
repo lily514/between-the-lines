@@ -563,3 +563,8 @@ A change of speed mid-run carries on from where the clock has got to.
   Tutor replies still match.
 **Why:** one rule where slots are filled fixes every such sentence, the model's wording included.
 **Affects:** nothing.
+- **Scene labels stay in sight.** A zone's value was drawn at the zone's centre, under the players, and the ball (so a
+  player) is always in that zone: the Sharp line-breaking scene hid "2.4%" under #2. It is now a small pill on the
+  zone's top edge, drawn above the players, or on its bottom edge when the level tag covers the top-left corner.
+  A note along the bottom (`edge: 'bottom'`) was still drawn at the right, under Pause motion, although T15 says it
+  moved; it now starts at the left.

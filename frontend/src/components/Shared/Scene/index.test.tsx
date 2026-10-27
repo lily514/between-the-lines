@@ -154,3 +154,18 @@ test('the view is at least 50 × 40, grows to fit the play, and stays on the pit
 	expect(wide.height).toBeGreaterThan(70)
 	expect(wide.width / wide.height).toBeCloseTo(1.25)
 })
+
+test('a zone’s value is drawn after the players, so the player standing in the zone never hides it', () => {
+	const svg = show('line_breaking_pass', 'sharp')
+	const players = svg.querySelector('.pitch__players')
+	const values = [...svg.querySelectorAll('.scene__pill text')].filter(text => text.textContent.endsWith('%'))
+	expect(values.map(text => text.textContent)).toEqual(['1.6%', '2.4%'])
+	for (const value of values) expect(players?.compareDocumentPosition(value)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+})
+
+test('a note along the bottom starts at the left, clear of the Pause motion button', () => {
+	const note = [...show('line_breaking_pass', 'sharp').querySelectorAll('text')].find(
+		text => text.textContent === 'THREAT PER ZONE · xT'
+	)
+	expect(note).toHaveAttribute('text-anchor', 'start')
+})

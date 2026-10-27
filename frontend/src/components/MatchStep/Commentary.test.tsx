@@ -2,7 +2,16 @@ import { act, cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { counterQuestion, identifyQuestion, predictQuestion } from '../../test-fixtures/index.ts'
 import Commentary from './Commentary.tsx'
-import { clockAt, entrySummary, heardAt, matchClock, runMs, timeLeft, type Teams } from './Commentary.support.ts'
+import {
+	clockAt,
+	entrySummary,
+	heardAt,
+	matchClock,
+	playbackSpeed,
+	runMs,
+	timeLeft,
+	type Teams
+} from './Commentary.support.ts'
 import MatchStats from './MatchStats.tsx'
 
 const counter = counterQuestion.play_by_play
@@ -168,4 +177,19 @@ test('the numbers show home and away for each count, and red cards only once the
 	cleanup()
 	render(<MatchStats stats={{ ...first, away: { ...first.away, red_cards: 1 } }} teams={teamsOf(predictQuestion)} />)
 	expect(screen.getByText('Red cards')).toBeInTheDocument()
+})
+
+test('the stream view says how fast the clock plays the match: 40× at most, faster for a long run', () => {
+	expect(playbackSpeed(predictQuestion.play_by_play)).toBe(40)
+	expect(playbackSpeed(identifyQuestion.play_by_play)).toBe(42)
+	expect(playbackSpeed({ ...identify, start: identify.end })).toBeNull()
+	const slot = document.createElement('div')
+	slot.setAttribute('aria-hidden', 'true')
+	document.body.append(slot)
+	try {
+		render(<Commentary play={predictQuestion.play_by_play} teams={teamsOf(predictQuestion)} streamSlot={slot} />)
+		expect(within(slot).getByLabelText('Playing at 40 times real speed')).toHaveTextContent('40×')
+	} finally {
+		slot.remove()
+	}
 })

@@ -542,3 +542,10 @@ to the heading so a screen reader says it. "Skip to the question" gets there at 
 run (up to 20 s).
 **Why:** the question came before the feed had shown the play it was about.
 **Affects:** nothing; tests skip ahead.
+
+## After T16 — How fast the feed plays (2026-10-27)
+**Plan said:** nothing.
+**We did:** the stream view's header shows how fast the clock plays the match, e.g. "40×" (`playbackSpeed`): a match
+minute every 1.5 s is 40×, and a long run squeezed into 20 s is faster. It isn't configurable.
+**Why:** a viewer couldn't tell the feed runs far faster than a real match.
+**Affects:** nothing.

@@ -6,6 +6,7 @@ import {
 	entrySummary,
 	heardAt,
 	matchClock,
+	playbackSpeed,
 	runMs,
 	timeLeft,
 	type PlayByPlay,
@@ -95,7 +96,14 @@ const Commentary = ({ play, teams, streamSlot = null, onReached }: CommentaryPro
 			</div>
 			{streamSlot !== null &&
 				createPortal(
-					<MatchFeed teams={teams} heard={heard} clock={clock} countdown={countdown} asked={asked} />,
+					<MatchFeed
+						teams={teams}
+						heard={heard}
+						clock={clock}
+						countdown={countdown}
+						asked={asked}
+						speed={playbackSpeed(play)}
+					/>,
 					streamSlot
 				)}
 		</>

@@ -14,6 +14,12 @@ const LONGEST_RUN_MS = 20_000
 export const runMs = (play: PlayByPlay): number =>
 	Math.min(LONGEST_RUN_MS, (Math.max(0, play.end - play.start) / 60) * MS_PER_MATCH_MINUTE)
 
+/** How many times faster than real time the run plays the match, e.g. 40; null when there is nothing to play. */
+export const playbackSpeed = (play: PlayByPlay): number | null => {
+	const run = runMs(play)
+	return run <= 0 ? null : Math.round((play.end - play.start) / (run / 1000))
+}
+
 /** Seconds on the match clock after `elapsed` ms of a run that takes `run` ms. */
 export const clockAt = (play: PlayByPlay, elapsed: number, run: number): number =>
 	run <= 0 ? play.end : play.start + (play.end - play.start) * Math.min(1, elapsed / run)

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { conceptMap, curriculum } from '../../test-fixtures/index.ts'
 import CurriculumMap from './index.tsx'
@@ -57,12 +57,25 @@ test('the map opens on a concept asked now, and choosing another by keyboard fil
 	expect(screen.getByRole('button', { name: /^Fouls and cards: / })).toHaveAttribute('aria-pressed', 'true')
 })
 
-test('coming-later concepts say so, and the list gives the same choices as plain buttons', async () => {
+test('coming-later concepts say so, and the list opens a concept’s card in a dialog', async () => {
 	render(<CurriculumMap map={curriculum} error={null} onBack={vi.fn()} />)
 	expect(screen.getByRole('button', { name: 'Game state: Coming later' })).toBeInTheDocument()
 	await userEvent.click(screen.getByText('All 20 concepts as a list'))
 	await userEvent.click(screen.getByRole('button', { name: 'Game state' }))
-	expect(screen.getByText('Game flow · Tier 2, Engaged fan')).toBeInTheDocument()
+	const dialog = screen.getByRole('dialog', { name: 'Game state' })
+	expect(within(dialog).getByText('Game flow · Tier 2, Engaged fan')).toBeInTheDocument()
+	expect(screen.getByRole('button', { name: 'Game state: Coming later' })).toHaveAttribute('aria-pressed', 'true')
+	await userEvent.click(within(dialog).getByRole('button', { name: 'Close' }))
+	expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+})
+
+test('Esc in the concept dialog leaves the map open', async () => {
+	const onBack = vi.fn()
+	render(<CurriculumMap map={curriculum} error={null} onBack={onBack} />)
+	await userEvent.click(screen.getByText('All 20 concepts as a list'))
+	await userEvent.click(screen.getByRole('button', { name: 'Game state' }))
+	await userEvent.keyboard('{Escape}')
+	expect(onBack).not.toHaveBeenCalled()
 })
 
 test('Back and Esc close the map', async () => {

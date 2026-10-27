@@ -75,6 +75,13 @@
           "value": {
             "title": "Value",
             "type": "number"
+          },
+          "waits_for": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Waits For",
+            "type": "array"
           }
         },
         "required": [
@@ -82,7 +89,8 @@
           "name",
           "value",
           "level",
-          "band"
+          "band",
+          "waits_for"
         ],
         "title": "Bar",
         "type": "object"
@@ -261,6 +269,13 @@
           "strand": {
             "title": "Strand",
             "type": "string"
+          },
+          "waits_for": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Waits For",
+            "type": "array"
           }
         },
         "required": [
@@ -273,7 +288,8 @@
           "level",
           "band_before",
           "band",
-          "mastered"
+          "mastered",
+          "waits_for"
         ],
         "title": "ConceptMoveOut",
         "type": "object"
@@ -1213,15 +1229,26 @@
         "type": "object"
       },
       "Movement": {
-        "description": "How one concept's mastery moved: before and after, from 0 to 1.",
+        "description": "How one concept's mastery moved: before and after, from 0 to 1, and its level now.",
         "properties": {
           "after": {
             "title": "After",
             "type": "number"
           },
+          "band": {
+            "$ref": "#/components/schemas/Band"
+          },
           "before": {
             "title": "Before",
             "type": "number"
+          },
+          "level": {
+            "title": "Level",
+            "type": "string"
+          },
+          "mastered": {
+            "title": "Mastered",
+            "type": "boolean"
           },
           "name": {
             "title": "Name",
@@ -1231,7 +1258,10 @@
         "required": [
           "name",
           "before",
-          "after"
+          "after",
+          "level",
+          "band",
+          "mastered"
         ],
         "title": "Movement",
         "type": "object"

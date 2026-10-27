@@ -32,7 +32,9 @@
 			"prerequisites": [],
 			"askable": false,
 			"mastery": null,
-			"level": null
+			"level": null,
+			"band": null,
+			"waits_for": []
 		},
 		{
 			"key": "tackles",
@@ -41,9 +43,11 @@
 			"tier": 0,
 			"objective": "Recognize how a team wins the ball back: tackles, interceptions, and loose balls.",
 			"prerequisites": [],
-			"askable": false,
+			"askable": true,
 			"mastery": null,
-			"level": null
+			"level": null,
+			"band": null,
+			"waits_for": []
 		},
 		{
 			"key": "shots_and_goals",
@@ -52,9 +56,11 @@
 			"tier": 0,
 			"objective": "Recognize shots, shots on target, saves, and goals.",
 			"prerequisites": [],
-			"askable": false,
+			"askable": true,
 			"mastery": null,
-			"level": null
+			"level": null,
+			"band": null,
+			"waits_for": []
 		},
 		{
 			"key": "restarts",
@@ -65,7 +71,9 @@
 			"prerequisites": [],
 			"askable": true,
 			"mastery": null,
-			"level": null
+			"level": null,
+			"band": null,
+			"waits_for": []
 		},
 		{
 			"key": "offside",
@@ -76,7 +84,9 @@
 			"prerequisites": [],
 			"askable": true,
 			"mastery": null,
-			"level": null
+			"level": null,
+			"band": null,
+			"waits_for": []
 		},
 		{
 			"key": "fouls_and_cards",
@@ -87,7 +97,9 @@
 			"prerequisites": [],
 			"askable": true,
 			"mastery": null,
-			"level": null
+			"level": null,
+			"band": null,
+			"waits_for": []
 		},
 		{
 			"key": "passing",
@@ -98,7 +110,9 @@
 			"prerequisites": ["possession"],
 			"askable": false,
 			"mastery": null,
-			"level": null
+			"level": null,
+			"band": null,
+			"waits_for": []
 		},
 		{
 			"key": "pressing",
@@ -109,7 +123,9 @@
 			"prerequisites": ["tackles"],
 			"askable": false,
 			"mastery": null,
-			"level": null
+			"level": null,
+			"band": null,
+			"waits_for": []
 		},
 		{
 			"key": "chance_quality",
@@ -120,7 +136,9 @@
 			"prerequisites": ["shots_and_goals", "passing"],
 			"askable": false,
 			"mastery": null,
-			"level": null
+			"level": null,
+			"band": null,
+			"waits_for": []
 		},
 		{
 			"key": "transitions",
@@ -129,9 +147,11 @@
 			"tier": 1,
 			"objective": "Recognize the moment after a turnover, when both teams are briefly out of shape, and spot a counterattack.",
 			"prerequisites": ["restarts", "tackles"],
-			"askable": false,
+			"askable": true,
 			"mastery": null,
-			"level": null
+			"level": null,
+			"band": null,
+			"waits_for": ["Tackles and turnovers", "Restarts"]
 		},
 		{
 			"key": "phase_of_play",
@@ -142,7 +162,9 @@
 			"prerequisites": ["possession"],
 			"askable": false,
 			"mastery": null,
-			"level": null
+			"level": null,
+			"band": null,
+			"waits_for": []
 		},
 		{
 			"key": "line_breaking_pass",
@@ -153,7 +175,9 @@
 			"prerequisites": ["passing"],
 			"askable": true,
 			"mastery": null,
-			"level": null
+			"level": null,
+			"band": null,
+			"waits_for": []
 		},
 		{
 			"key": "counter_press",
@@ -164,7 +188,9 @@
 			"prerequisites": ["pressing"],
 			"askable": true,
 			"mastery": null,
-			"level": null
+			"level": null,
+			"band": null,
+			"waits_for": ["Tackles and turnovers"]
 		},
 		{
 			"key": "press_triggers",
@@ -175,7 +201,9 @@
 			"prerequisites": ["pressing"],
 			"askable": false,
 			"mastery": null,
-			"level": null
+			"level": null,
+			"band": null,
+			"waits_for": []
 		},
 		{
 			"key": "expected_goals",
@@ -186,7 +214,9 @@
 			"prerequisites": ["chance_quality"],
 			"askable": false,
 			"mastery": null,
-			"level": null
+			"level": null,
+			"band": null,
+			"waits_for": []
 		},
 		{
 			"key": "game_state",
@@ -197,7 +227,9 @@
 			"prerequisites": ["transitions"],
 			"askable": false,
 			"mastery": null,
-			"level": null
+			"level": null,
+			"band": null,
+			"waits_for": []
 		},
 		{
 			"key": "expected_threat",
@@ -208,7 +240,9 @@
 			"prerequisites": ["line_breaking_pass", "chance_quality"],
 			"askable": false,
 			"mastery": null,
-			"level": null
+			"level": null,
+			"band": null,
+			"waits_for": []
 		},
 		{
 			"key": "pressure_shifts",
@@ -219,7 +253,9 @@
 			"prerequisites": ["press_triggers"],
 			"askable": false,
 			"mastery": null,
-			"level": null
+			"level": null,
+			"band": null,
+			"waits_for": []
 		},
 		{
 			"key": "variance",
@@ -230,7 +266,9 @@
 			"prerequisites": ["expected_goals"],
 			"askable": false,
 			"mastery": null,
-			"level": null
+			"level": null,
+			"band": null,
+			"waits_for": []
 		},
 		{
 			"key": "control_vs_chaos",
@@ -241,7 +279,9 @@
 			"prerequisites": ["game_state", "pressing"],
 			"askable": false,
 			"mastery": null,
-			"level": null
+			"level": null,
+			"band": null,
+			"waits_for": []
 		}
 	],
 	"thresholds": {

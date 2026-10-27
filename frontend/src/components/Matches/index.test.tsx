@@ -22,7 +22,7 @@ const show = (matches: MatchSummary[], status: Status = startStatus) => {
 test('a match part-way through leads, with the score at the last answer and Rejoin', async () => {
 	const { onRejoin } = show(matchesInProgress)
 	const card = screen.getByRole('region', { name: 'Match part-way through' })
-	expect(within(card).getByText('at 08:29')).toBeInTheDocument()
+	expect(within(card).getByText('at 12:15')).toBeInTheDocument()
 	expect(within(card).getByText('0–0')).toBeInTheDocument()
 	expect(within(card).getByText('You')).toBeInTheDocument()
 	await userEvent.click(within(card).getByRole('button', { name: 'Rejoin the match' }))
@@ -42,11 +42,13 @@ test('after a match, the next one leads with its date, and the finished one is l
 	expect(onReport).toHaveBeenCalledWith(1)
 })
 
-test('progress shows each concept asked now with its level in words, and opens the map', async () => {
+test('progress shows each concept asked now with its level in words and icon, or what it unlocks after', async () => {
 	const { onMap } = show(matchesAfterOne)
 	const progress = screen.getByRole('region', { name: 'Your progress' })
 	expect(within(progress).getByText('2 concepts asked now')).toBeInTheDocument()
-	expect(within(progress).getAllByText('Getting there')).toHaveLength(2)
+	const level = within(progress).getByText('Getting there')
+	expect(level.querySelector('.level-icon')?.getAttribute('data-band')).toBe('getting_there')
+	expect(within(progress).getByText('Unlocks after Tackles and turnovers')).toBeInTheDocument()
 	await userEvent.click(within(progress).getByRole('button', { name: 'See your full map' }))
 	expect(onMap).toHaveBeenCalledOnce()
 })

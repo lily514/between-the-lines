@@ -187,7 +187,7 @@
 
 .matches__level {
 	font-weight: 600;
-	color: var(--know);
+	text-align: right;
 }
 
 .matches .matches__map {

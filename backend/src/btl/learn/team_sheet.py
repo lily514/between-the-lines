@@ -32,8 +32,8 @@ NUMBERS_STAGE = 3
 ROLE_ORDER = (Role.GOALKEEPER, Role.DEFENDER, Role.MIDFIELDER, Role.FORWARD)
 # What opens the next stage, shown under the sheet so the viewer knows it will grow.
 NEXT_STAGE: dict[int, str] = {
-    1: "Get to level 2 in any concept to see formations and position tags.",
-    2: "Get to level 3 in any concept to see players' numbers from matches you've watched.",
+    1: "Get to Solid in any concept to see formations and position tags.",
+    2: "Get to Sharp in any concept to see players' numbers from matches you've watched.",
 }
 # What a stage newly shows, told before the match when the viewer's best concept reaches it.
 STAGE_OPENED: dict[int, str] = {

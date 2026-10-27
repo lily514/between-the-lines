@@ -332,6 +332,8 @@ export interface components {
             name: string;
             /** Value */
             value: number;
+            /** Waits For */
+            waits_for: string[];
         };
         /**
          * BeforeMatchOut
@@ -417,6 +419,8 @@ export interface components {
             name: string;
             /** Strand */
             strand: string;
+            /** Waits For */
+            waits_for: string[];
         };
         /**
          * DeliveredTime
@@ -779,13 +783,18 @@ export interface components {
         };
         /**
          * Movement
-         * @description How one concept's mastery moved: before and after, from 0 to 1.
+         * @description How one concept's mastery moved: before and after, from 0 to 1, and its level now.
          */
         Movement: {
             /** After */
             after: number;
+            band: components["schemas"]["Band"];
             /** Before */
             before: number;
+            /** Level */
+            level: string;
+            /** Mastered */
+            mastered: boolean;
             /** Name */
             name: string;
         };

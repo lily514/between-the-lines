@@ -113,6 +113,11 @@ def test_the_feedback_shows_the_answer_the_evidence_and_how_mastery_moved() -> N
     assert feedback["reveal_path"]
     before = {bar["name"]: bar["value"] for bar in status["concepts"]}
     assert {c["name"]: c["before"] for c in feedback["concepts"]} == before
+    after = api.get("/api/viewers/demo").json()["concepts"]
+    assert {c["name"]: (c["after"], c["level"], c["band"]) for c in feedback["concepts"]} == {
+        bar["name"]: (bar["value"], bar["level"], bar["band"]) for bar in after
+    }
+    assert all(c["mastered"] is False for c in feedback["concepts"])
     assert feedback["thresholds"] == status["thresholds"] == {"unlock": 0.8, "mastery": 0.95}
     assert feedback["match_seed"] == SEED * 1000 + 1
 

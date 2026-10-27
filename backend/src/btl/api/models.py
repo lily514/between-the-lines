@@ -153,14 +153,19 @@ class Bar(BaseModel):
     value: float
     level: str
     band: Band
+    # The askable prerequisites it still waits for; the page shows it locked while any remain.
+    waits_for: list[str]
 
 
 class Movement(BaseModel):
-    """How one concept's mastery moved: before and after, from 0 to 1."""
+    """How one concept's mastery moved: before and after, from 0 to 1, and its level now."""
 
     name: str
     before: float
     after: float
+    level: str
+    band: Band
+    mastered: bool
 
 
 class ThresholdsOut(BaseModel):
@@ -449,6 +454,7 @@ class ConceptMoveOut(BaseModel):
     band_before: Band
     band: Band
     mastered: bool
+    waits_for: list[str]
 
 
 class GoalOut(BaseModel):

@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef } from 'react'
 import type { Report as ReportData } from '../../api/client.ts'
+import LevelWord from '../Shared/LevelWord.tsx'
 import PhasePill from '../Shared/PhasePill.tsx'
 import ProgressBar from '../Shared/ProgressBar.tsx'
 import { percent } from '../Shared/ProgressBar.support.ts'
@@ -80,8 +81,12 @@ const Report = ({ report, onContinue, onMap }: ReportProps) => {
 										<p className="report__concept">
 											<span>{concept.name}</span>
 											<span className="report__level">
-												{concept.mastered && <span aria-hidden="true">✓ </span>}
-												{concept.level}{' '}
+												<LevelWord
+													level={concept.level}
+													band={concept.band}
+													mastered={concept.mastered}
+													waitsFor={concept.waits_for}
+												/>{' '}
 												<span className="report__number">{percent(concept.after)}%</span>
 											</span>
 										</p>

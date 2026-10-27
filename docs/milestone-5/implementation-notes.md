@@ -238,3 +238,30 @@ freshness test; the command in `docs/setup.md` and `CLAUDE.md`.
 - The fixtures are generated, so they join `.prettierignore` beside `openapi.json`.
 **Why:** a test that regenerates the fixtures exactly is worth more than numbers from a model the test can't fit.
 **Affects:** T11 and T14 draw from these; T15 regenerates them if planting changes again.
+
+## T10 — Level icons and locked states (2026-10-27)
+
+**Plan said:** `Shared/LevelIcon` beside every level word (Matches, Report, the map and its card, list and dialog,
+Feedback); a locked state, "Unlocks after {prerequisite}", dashed, with no icon, on the map and in level rows; the
+team-sheet gate copy uses Solid and Sharp.
+**We did:** as planned, with these additions:
+- **`Shared/LevelWord`** wraps the icon: it takes the level word, band, mastered flag and `waits_for`, and draws either
+  the icon with the word or the locked line. Every screen uses it, so the locked state is written once. The map's
+  nodes get a fourth state, `locked` (a dashed ring in the asked-now colour), with its own legend entry.
+- **The API carries what each row needs.** `Movement` (feedback and the full-time summary) now has `level`, `band`
+  and `mastered`; `Bar` (status) and `ConceptMoveOut` (reports) have `waits_for`, computed by the same
+  `curriculum.waits_for` the map and the before-match rows use. The browser still computes no level: it only
+  compares a mastery to the mastery threshold it is sent, as the map already did.
+- **Locked rows keep their number.** A locked row in the report shows "Unlocks after …" in place of the level word
+  and keeps the percentage and bar beside it, so the viewer can still see it moving.
+- **Captured fixtures refreshed now, not in T15.** The data fixtures (`curriculum`, `concept-map`, `matches*`,
+  `report-*`, `sheet-stage-*`) were re-captured from the running API with the saved threat model
+  (`tmp/capture_fixtures.py`), since the tests for this task need the eight concepts and `waits_for`. The three
+  hand-tuned question/feedback pairs were left as they are, with the new `level`, `band` and `mastered` fields added
+  by script; T15 decides whether to re-record them.
+- Tests that read the old fixtures were updated to the new values (the in-progress clock, 8 answers with 3 right,
+  Chances no longer coming later); the "coming later" and "Not yet" cases are now exercised with a report whose
+  Chances strand is emptied by hand, since no live strand is empty any more.
+**Why:** one component for the level word keeps the icon rule ("never colour alone") from drifting between screens;
+sending `waits_for` on every row keeps the lock rule on the server.
+**Affects:** T13's level rows use `LevelWord` as is; T15 only re-records the question/feedback pairs if it wants to.

@@ -24,12 +24,12 @@
 					"at_kickoff": [8.3, 34.6],
 					"numbers": {
 						"matches": 2,
-						"passes_completed": 17,
+						"passes_completed": 18,
 						"passes_tried": 30,
-						"line_breaking_passes": 3,
+						"line_breaking_passes": 1,
 						"threat_added": {
-							"value": 0.025861218345011327,
-							"display": "+2.6%"
+							"value": 0.016679324269592122,
+							"display": "+1.7%"
 						}
 					}
 				},
@@ -45,12 +45,12 @@
 					"at_kickoff": [33.2, 50.3],
 					"numbers": {
 						"matches": 2,
-						"passes_completed": 9,
-						"passes_tried": 12,
+						"passes_completed": 7,
+						"passes_tried": 10,
 						"line_breaking_passes": 0,
 						"threat_added": {
-							"value": 0.0026270421825961795,
-							"display": "+0.26%"
+							"value": 0.0023654487419434798,
+							"display": "+0.24%"
 						}
 					}
 				},
@@ -66,12 +66,12 @@
 					"at_kickoff": [36.1, 38.9],
 					"numbers": {
 						"matches": 2,
-						"passes_completed": 20,
+						"passes_completed": 22,
 						"passes_tried": 24,
-						"line_breaking_passes": 3,
+						"line_breaking_passes": 6,
 						"threat_added": {
-							"value": 0.014163752426130466,
-							"display": "+1.4%"
+							"value": 0.027575370107510037,
+							"display": "+2.8%"
 						}
 					}
 				},
@@ -87,12 +87,12 @@
 					"at_kickoff": [34.4, 27.9],
 					"numbers": {
 						"matches": 2,
-						"passes_completed": 24,
-						"passes_tried": 28,
-						"line_breaking_passes": 2,
+						"passes_completed": 22,
+						"passes_tried": 25,
+						"line_breaking_passes": 1,
 						"threat_added": {
-							"value": 0.020633374085566293,
-							"display": "+2.1%"
+							"value": 0.008920817209440884,
+							"display": "+0.89%"
 						}
 					}
 				},
@@ -108,12 +108,12 @@
 					"at_kickoff": [34.5, 17.2],
 					"numbers": {
 						"matches": 2,
-						"passes_completed": 10,
-						"passes_tried": 12,
-						"line_breaking_passes": 1,
+						"passes_completed": 18,
+						"passes_tried": 21,
+						"line_breaking_passes": 2,
 						"threat_added": {
-							"value": 0.006128173014665621,
-							"display": "+0.61%"
+							"value": 0.010203904157818623,
+							"display": "+1%"
 						}
 					}
 				},
@@ -129,12 +129,12 @@
 					"at_kickoff": [49.8, 46.9],
 					"numbers": {
 						"matches": 2,
-						"passes_completed": 65,
-						"passes_tried": 88,
-						"line_breaking_passes": 17,
+						"passes_completed": 53,
+						"passes_tried": 70,
+						"line_breaking_passes": 15,
 						"threat_added": {
-							"value": 0.27315421623451275,
-							"display": "+27%"
+							"value": 0.11845486680830117,
+							"display": "+12%"
 						}
 					}
 				},
@@ -150,12 +150,12 @@
 					"at_kickoff": [47.3, 42.7],
 					"numbers": {
 						"matches": 2,
-						"passes_completed": 113,
-						"passes_tried": 150,
-						"line_breaking_passes": 40,
+						"passes_completed": 103,
+						"passes_tried": 133,
+						"line_breaking_passes": 41,
 						"threat_added": {
-							"value": 0.39940082821145284,
-							"display": "+40%"
+							"value": 0.31120425198471197,
+							"display": "+31%"
 						}
 					}
 				},
@@ -171,12 +171,12 @@
 					"at_kickoff": [44.6, 27.7],
 					"numbers": {
 						"matches": 2,
-						"passes_completed": 106,
-						"passes_tried": 154,
-						"line_breaking_passes": 38,
+						"passes_completed": 122,
+						"passes_tried": 165,
+						"line_breaking_passes": 40,
 						"threat_added": {
-							"value": 0.34969897330287686,
-							"display": "+35%"
+							"value": 0.25824596323778753,
+							"display": "+26%"
 						}
 					}
 				},
@@ -192,12 +192,12 @@
 					"at_kickoff": [49.0, 18.4],
 					"numbers": {
 						"matches": 2,
-						"passes_completed": 51,
-						"passes_tried": 72,
-						"line_breaking_passes": 15,
+						"passes_completed": 72,
+						"passes_tried": 99,
+						"line_breaking_passes": 17,
 						"threat_added": {
-							"value": 0.4393465705063182,
-							"display": "+44%"
+							"value": 0.20555444595490813,
+							"display": "+21%"
 						}
 					}
 				},
@@ -213,12 +213,12 @@
 					"at_kickoff": [51.5, 44.3],
 					"numbers": {
 						"matches": 2,
-						"passes_completed": 74,
-						"passes_tried": 110,
-						"line_breaking_passes": 20,
+						"passes_completed": 73,
+						"passes_tried": 115,
+						"line_breaking_passes": 18,
 						"threat_added": {
-							"value": 0.38852271142631806,
-							"display": "+39%"
+							"value": 0.4861524891367208,
+							"display": "+49%"
 						}
 					}
 				},
@@ -234,12 +234,12 @@
 					"at_kickoff": [51.5, 23.5],
 					"numbers": {
 						"matches": 2,
-						"passes_completed": 69,
-						"passes_tried": 100,
-						"line_breaking_passes": 18,
+						"passes_completed": 68,
+						"passes_tried": 101,
+						"line_breaking_passes": 14,
 						"threat_added": {
-							"value": 0.2899735858711216,
-							"display": "+29%"
+							"value": 0.29695445618223004,
+							"display": "+30%"
 						}
 					}
 				}

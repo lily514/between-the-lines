@@ -20,7 +20,7 @@ from statistics import fmean
 from btl.league.league import League
 from btl.learn.bkt import BktState
 from btl.learn.concept_map import ConceptKey
-from btl.learn.curriculum import strand_name
+from btl.learn.curriculum import strand_name, waits_for
 from btl.learn.learner import Attempt, LearnerState
 from btl.learn.levels import Band, band_for, level_word
 from btl.learn.session import Course, PreparedMatch
@@ -63,6 +63,8 @@ class ConceptMove:
     band_before: Band
     band: Band
     mastered: bool
+    # The askable prerequisites it still waits for at the break; the page shows it locked.
+    waits_for: tuple[str, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -203,6 +205,7 @@ def _move(course: Course, kickoff: BktState, now: BktState, key: ConceptKey) -> 
         band_before=band_for(before),
         band=band_for(after),
         mastered=after >= model.thresholds.mastery,
+        waits_for=waits_for(course, now, key),
     )
 
 

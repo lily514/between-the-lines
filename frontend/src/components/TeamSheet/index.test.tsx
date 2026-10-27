@@ -31,7 +31,7 @@ test('a beginner sees both clubs and all 22 starters on the pitch, their team fi
 	expect(card()).toHaveTextContent('Striker Plays furthest forward, closest to goal: there to score.')
 	expect(screen.queryByText('ST')).toBeNull()
 	expect(screen.queryByText('4-4-2')).toBeNull()
-	expect(screen.getByText('Get to level 2 in any concept to see formations and position tags.')).toBeInTheDocument()
+	expect(screen.getByText('Get to Solid in any concept to see formations and position tags.')).toBeInTheDocument()
 
 	await userEvent.click(screen.getByRole('button', { name: 'Not your team? Change it' }))
 	expect(on.onChangeTeam).toHaveBeenCalledOnce()
@@ -71,23 +71,23 @@ test('the line-ups list chooses the same player as the pitch', async () => {
 	expect(within(list).getByRole('button', { name })).toHaveTextContent('1MarteiroGK')
 })
 
-test('stage two adds formations and position tags, and says what level three adds', () => {
+test('stage two adds formations and position tags, and says what Sharp adds', () => {
 	show(sheetStage2)
 	expect(screen.getAllByText('4-4-2')).toHaveLength(2)
 	expect(within(card()).getByTitle('Striker')).toHaveTextContent('ST')
 	expect(within(card()).queryByText('Passes completed')).toBeNull()
 	expect(
-		screen.getByText("Get to level 3 in any concept to see players' numbers from matches you've watched.")
+		screen.getByText("Get to Sharp in any concept to see players' numbers from matches you've watched.")
 	).toBeInTheDocument()
 })
 
 test('stage three shows numbers for players the viewer has seen, and says who they haven’t', async () => {
 	show(sheetStage3)
 	expect(card()).toHaveTextContent('Niels Meiner')
-	expect(within(card()).getByText('Passes completed').nextSibling).toHaveTextContent('74/110')
-	expect(within(card()).getByText('+39%')).toBeInTheDocument()
+	expect(within(card()).getByText('Passes completed').nextSibling).toHaveTextContent('73/115')
+	expect(within(card()).getByText('+49%')).toBeInTheDocument()
 	expect(card()).toHaveTextContent("From the 2 matches of theirs you've watched.")
-	expect(screen.queryByText(/Get to level/)).toBeNull()
+	expect(screen.queryByText(/Get to (Solid|Sharp)/)).toBeNull()
 
 	await userEvent.click(within(pitch()).getByRole('button', { name: /Ousmane Ekekunle/ }))
 	expect(within(card()).getByText("First time you've seen them")).toBeInTheDocument()

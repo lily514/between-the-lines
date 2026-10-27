@@ -103,9 +103,7 @@ def test_a_beginner_s_team_sheet_lists_both_elevens_their_team_first() -> None:
     sheet = api.get("/api/viewers/lily/team-sheet").json()
 
     assert sheet["match_number"] == 1 and sheet["stage"] == 1
-    assert (
-        sheet["next_stage"] == "Get to level 2 in any concept to see formations and position tags."
-    )
+    assert sheet["next_stage"] == "Get to Solid in any concept to see formations and position tags."
     yours, theirs = sheet["teams"]
     assert (yours["code"], yours["yours"], theirs["yours"]) == ("HEX", True, False)
     assert len(yours["players"]) == len(theirs["players"]) == 11

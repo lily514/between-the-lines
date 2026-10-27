@@ -64,3 +64,11 @@ def test_after_full_time_both_reports_agree_with_the_summary() -> None:
     chances = next(s for s in whole["strands"] if s["key"] == "chances")
     assert chances["now"] is not None and chances["concepts"] == 1
     assert whole["note"]
+    # The level rows lock the same concepts the map does, and the summary's moves carry a level.
+    status = api.get("/api/viewers/demo").json()
+    assert {c["key"]: c["waits_for"] for c in whole["concepts"]} == {
+        bar["key"]: bar["waits_for"] for bar in status["concepts"]
+    }
+    assert {c["name"]: (c["level"], c["band"], c["mastered"]) for c in full_time["concepts"]} == {
+        bar["name"]: (bar["level"], bar["band"], bar["value"] >= 0.95) for bar in status["concepts"]
+    }

@@ -1,4 +1,5 @@
 import type { ConceptMap, MapConcept } from '../../api/client.ts'
+import { unlocksAfter } from '../Shared/LevelWord.support.ts'
 
 /** The map's pitch, in its own units: one column per strand, one band per tier, the deepest tier at the top. */
 export const MAP_WIDTH = 68
@@ -15,7 +16,7 @@ export interface PlacedConcept {
 	y: number
 	/** The name, broken into short lines for under the node. */
 	lines: string[]
-	state: 'mastered' | 'asked' | 'later'
+	state: 'mastered' | 'asked' | 'locked' | 'later'
 }
 
 /** Where each concept sits: in its strand's column and tier's band, stacked evenly when a cell holds more than one. */
@@ -37,10 +38,18 @@ export const place = (map: ConceptMap): PlacedConcept[] => {
 	})
 }
 
-/** Mastered, asked about now, or coming later: the three ways a node is drawn. */
+/** Mastered, asked about now, locked behind another concept, or coming later: the four ways a node is drawn. */
 export const stateOf = (concept: MapConcept, mastery: number): PlacedConcept['state'] => {
 	if (!concept.askable) return 'later'
-	return concept.mastery !== null && concept.mastery >= mastery ? 'mastered' : 'asked'
+	if (concept.mastery !== null && concept.mastery >= mastery) return 'mastered'
+	return concept.waits_for.length > 0 ? 'locked' : 'asked'
+}
+
+/** A concept's level in words, or what it unlocks after, or that it is coming later. */
+export const levelText = (concept: MapConcept): string => {
+	if (!concept.askable) return 'Coming later'
+	if (stateOf(concept, Infinity) === 'locked') return unlocksAfter(concept.waits_for)
+	return concept.level ?? 'Asked now'
 }
 
 /** A name in lines of about ten characters, at most three, dropping a bracketed short form such as "(xT)". */

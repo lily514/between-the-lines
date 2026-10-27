@@ -1,7 +1,7 @@
 {
 	"match_number": 1,
 	"stage": 1,
-	"next_stage": "Get to level 2 in any concept to see formations and position tags.",
+	"next_stage": "Get to Solid in any concept to see formations and position tags.",
 	"teams": [
 		{
 			"team_id": 1,

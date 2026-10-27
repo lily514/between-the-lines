@@ -6,7 +6,7 @@ answers. Its play-by-play comes from the match, and stops before the moment aske
 feedback payload is the whole pack.
 """
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import Literal
 
 from btl.api.models import (
@@ -205,7 +205,7 @@ def feedback_payload(
         picture=_picture(pack.picture),
         reveal_path=list(pack.reveal_path),
         reveal_line=pack.reveal_line,
-        concepts=movements(before, told.mastery),
+        concepts=movements(before, told.mastery, thresholds),
         thresholds=thresholds_payload(thresholds),
     )
 
@@ -357,6 +357,7 @@ def report_payload(
                 band_before=move.band_before,
                 band=move.band,
                 mastered=move.mastered,
+                waits_for=list(move.waits_for),
             )
             for move in made.concepts
         ],
@@ -370,15 +371,30 @@ def report_payload(
     )
 
 
-def movements(before: Mapping[str, float], after: Mapping[str, float]) -> list[Movement]:
-    """Each concept's mastery before and after, in the order of ``after``."""
-    return [Movement(name=name, before=before[name], after=value) for name, value in after.items()]
+def movements(
+    before: Mapping[str, float], after: Mapping[str, float], thresholds: Thresholds
+) -> list[Movement]:
+    """Each concept's mastery before and after, in the order of ``after``, with its level now."""
+    return [
+        Movement(
+            name=name,
+            before=before[name],
+            after=value,
+            level=level_word(value, thresholds),
+            band=band_for(value),
+            mastered=value >= thresholds.mastery,
+        )
+        for name, value in after.items()
+    ]
 
 
 def bars(
-    mastery: Mapping[ConceptKey, float], names: Mapping[ConceptKey, str], thresholds: Thresholds
+    mastery: Mapping[ConceptKey, float],
+    names: Mapping[ConceptKey, str],
+    thresholds: Thresholds,
+    waits_for: Mapping[ConceptKey, Sequence[str]],
 ) -> list[Bar]:
-    """Each concept's mastery now, with its level word and band."""
+    """Each concept's mastery now, with its level word and band, and what it still waits for."""
     return [
         Bar(
             key=key,
@@ -386,6 +402,7 @@ def bars(
             value=value,
             level=level_word(value, thresholds),
             band=band_for(value),
+            waits_for=list(waits_for.get(key, ())),
         )
         for key, value in mastery.items()
     ]

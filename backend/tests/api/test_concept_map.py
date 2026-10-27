@@ -36,6 +36,15 @@ def test_the_map_moves_with_the_viewer_s_answers() -> None:
         bar["key"]: (bar["value"], bar["level"], bar["band"]) for bar in status["concepts"]
     }
     assert {bar["band"] for bar in status["concepts"]} <= {"getting_there", "solid", "sharp"}
+    # The status carries what each concept waits for, as the map does, so progress rows can lock.
+    assert {c["key"]: c["waits_for"] for c in body["concepts"] if c["askable"]} == {
+        bar["key"]: bar["waits_for"] for bar in status["concepts"]
+    }
+    locked = {bar["key"]: bar["waits_for"] for bar in status["concepts"] if bar["waits_for"]}
+    assert locked == {
+        "transitions": ["Tackles and turnovers", "Restarts"],
+        "counter_press": ["Tackles and turnovers"],
+    }
 
 
 def test_an_unknown_viewer_has_no_map() -> None:

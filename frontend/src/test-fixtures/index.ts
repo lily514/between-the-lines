@@ -35,7 +35,7 @@ export const sheetStage3 = sheetStage3Json as unknown as TeamSheet
 export const sheetStage2: TeamSheet = {
 	...sheetStage3,
 	stage: 2,
-	next_stage: "Get to level 3 in any concept to see players' numbers from matches you've watched.",
+	next_stage: "Get to Sharp in any concept to see players' numbers from matches you've watched.",
 	teams: sheetStage3.teams.map(team => ({
 		...team,
 		matches_watched: null,
@@ -43,9 +43,9 @@ export const sheetStage2: TeamSheet = {
 	}))
 }
 
-/** The curriculum before there is a viewer: all 20 concepts, five asked about now, no values. */
+/** The curriculum before there is a viewer: all 20 concepts, eight asked about now, no values. */
 export const curriculum = curriculumJson as unknown as ConceptMap
-/** A Ripon Wardens fan's map after match 1: levels on the five concepts asked about now. */
+/** A Ripon Wardens fan's map after match 1: levels on the eight concepts asked about now. */
 export const conceptMap = conceptMapJson as unknown as ConceptMap
 /** The same fan's matches with two answers in match 1: it is in progress, 0–0 at the last answer. */
 export const matchesInProgress = matchesInProgressJson as unknown as MatchSummary[]

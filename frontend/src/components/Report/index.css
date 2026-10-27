@@ -151,7 +151,12 @@
 }
 
 .report__level {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+	gap: var(--s-1);
 	color: var(--know);
+	text-align: right;
 }
 
 .report .report__map {

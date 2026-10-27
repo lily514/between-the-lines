@@ -71,6 +71,11 @@ def waits_on(course: Course, known: BktState, key: ConceptKey) -> tuple[ConceptK
     )
 
 
+def waits_for(course: Course, known: BktState, key: ConceptKey) -> tuple[str, ...]:
+    """The names of the askable prerequisites a concept still waits for; empty once unlocked."""
+    return tuple(course.concept_map.concept(k).name for k in waits_on(course, known, key))
+
+
 def curriculum(course: Course, state: LearnerState | None) -> Curriculum:
     """The viewer's map of the whole curriculum, or the map alone, with no values, for no viewer."""
     concept_map = course.concept_map
@@ -83,11 +88,7 @@ def curriculum(course: Course, state: LearnerState | None) -> Curriculum:
         mastery = None
         if askable and replayed is not None:
             mastery = model.mastery(replayed, concept.key)
-        waits_for = ()
-        if askable:
-            waits_for = tuple(
-                concept_map.concept(key).name for key in waits_on(course, known, concept.key)
-            )
+        waiting = waits_for(course, known, concept.key) if askable else ()
         concepts.append(
             MapConcept(
                 key=concept.key,
@@ -100,7 +101,7 @@ def curriculum(course: Course, state: LearnerState | None) -> Curriculum:
                 mastery=mastery,
                 level=None if mastery is None else level_word(mastery, model.thresholds),
                 band=None if mastery is None else band_for(mastery),
-                waits_for=waits_for,
+                waits_for=waiting,
             )
         )
     return Curriculum(

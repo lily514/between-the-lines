@@ -94,7 +94,7 @@ from btl.api.viewer import (
 )
 from btl.learn.before_match import before_match
 from btl.learn.concept_map import ConceptKey
-from btl.learn.curriculum import curriculum
+from btl.learn.curriculum import curriculum, waits_for
 from btl.learn.learner import MATCHES_PER_SESSION, LearnerState
 from btl.learn.matches import catch_up, score_as_of, viewer_matches
 from btl.learn.report import Break, match_goals, report
@@ -206,6 +206,8 @@ def create_app(
                 away_code=away.short_name,
                 your_team=your_team(state.club, home, away),
             )
+        known = state.model_state(course().model, course().active)
+        waiting = {key: waits_for(course(), known, key) for key in course().active}
         return StatusOut(
             viewer_id=state.viewer_id,
             match_number=state.match_number,
@@ -215,7 +217,9 @@ def create_app(
             club=None if state.club is None else club_payload(league.club(state.club)),
             can_choose_club=state.can_choose_club,
             suggested_club=league.clubs[state.seed % len(league.clubs)].team_id,
-            concepts=bars(course().mastery(state), course().names(), course().model.thresholds),
+            concepts=bars(
+                course().mastery(state), course().names(), course().model.thresholds, waiting
+            ),
             thresholds=thresholds_payload(course().model.thresholds),
             pace=state.pace,
             pace_next=state.pace_next,
@@ -428,7 +432,7 @@ def create_app(
             away_goals=away_goals,
             your_result=your_result(side, home_goals, away_goals),
             questions=asked,
-            concepts=movements(start.mastery, mastery),
+            concepts=movements(start.mastery, mastery, course().model.thresholds),
             thresholds=thresholds_payload(course().model.thresholds),
             finished=finished,
             next_match=None if finished else start.match_number + 1,

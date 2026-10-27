@@ -17,7 +17,7 @@ from dataclasses import dataclass
 
 from btl.learn.bkt import BktState
 from btl.learn.concept_map import ConceptKey
-from btl.learn.curriculum import strand_name, waits_on
+from btl.learn.curriculum import strand_name, waits_for
 from btl.learn.learner import LearnerState
 from btl.learn.levels import Band, band_for, band_rose, level_word
 from btl.learn.report import Break, report
@@ -143,7 +143,7 @@ def _row(course: Course, now: BktState, key: ConceptKey, moved: bool) -> LevelRo
         level=level_word(mastery, model.thresholds),
         band=band_for(mastery),
         mastered=mastery >= model.thresholds.mastery,
-        waits_for=tuple(course.concept_map.concept(k).name for k in waits_on(course, now, key)),
+        waits_for=waits_for(course, now, key),
         moved=moved,
     )
 

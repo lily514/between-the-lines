@@ -5,11 +5,17 @@ import numpy as np
 import pytest
 
 from btl.league.league import Role
-from btl.plant.templates import GAP_WIDTHS, CounterPressTemplate, LineBreakingTemplate
+from btl.plant.templates import (
+    GAP_WIDTHS,
+    SECONDS_TO_BOX,
+    CounterAttackTemplate,
+    CounterPressTemplate,
+    LineBreakingTemplate,
+)
 from btl.schema.vocab import ActionType, Result
 from btl.sim.chain import Restart, Side, Start
 from btl.sim.params import DEFAULT_PARAMS
-from btl.sim.pitch import PITCH_LENGTH, Point, distance, mirror
+from btl.sim.pitch import PITCH_LENGTH, Point, distance, in_penalty_area, mirror
 from btl.sim.script import PlayOn, Script
 from btl.sim.shape import FOUR_FOUR_TWO, FOUR_THREE_THREE
 
@@ -163,3 +169,58 @@ def test_the_ball_is_won_back_quickly_in_the_opponents_half(seed: int) -> None:
     assert script.then.ball.x > PITCH_LENGTH / 2
     assert sum(step.duration for step in script.steps) < 5
     assert (script.pause, script.answer) == (0, len(script.steps))
+
+
+WON_IN_OWN_HALF = Start(Point(35, 40), 7, ActionType.INTERCEPTION)
+
+
+def write_counter(difficulty: int, seed: int = 0) -> Script:
+    return CounterAttackTemplate().write(
+        ATTACK, DEFENCE, WON_IN_OWN_HALF, difficulty, np.random.default_rng(seed), DEFAULT_PARAMS
+    )
+
+
+@pytest.mark.parametrize(
+    ("start", "fits"),
+    [
+        (WON_IN_OWN_HALF, True),
+        (Start(Point(25, 20), 2, ActionType.TACKLE), True),
+        (Start(Point(20, 30), 2, ActionType.TACKLE), False),
+        (Start(Point(60, 30), 6, ActionType.INTERCEPTION), False),
+        (Start(Point(35, 0), 2, restart=Restart.THROW_IN), False),
+    ],
+)
+def test_a_counter_attack_needs_the_ball_won_in_open_play_in_the_teams_own_half(
+    start: Start, fits: bool
+) -> None:
+    assert CounterAttackTemplate().fits(start) is fits
+
+
+def test_the_ball_is_won_played_forward_into_the_box_and_touched_there() -> None:
+    script = write_counter(1)
+    won, forward, into_the_box, touch = script.steps
+
+    assert won.action_type is ActionType.INTERCEPTION
+    assert forward.start == won.end and forward.end.x > forward.start.x
+    assert into_the_box.start == forward.end and in_penalty_area(into_the_box.end)
+    assert touch.action_type is ActionType.DRIBBLE and touch.start == into_the_box.end
+    # The winner plays it forward, a runner plays it into the box, and a third player is there.
+    assert won.slot == forward.slot
+    assert len({won.slot, into_the_box.slot, touch.slot}) == 3
+    assert (script.pause, script.answer) == (0, 3)
+    assert isinstance(script.then, PlayOn) and script.then.ball == touch.end
+
+
+@pytest.mark.parametrize("difficulty", [1, 2, 3])
+@pytest.mark.parametrize("seed", range(10))
+def test_the_run_to_the_box_takes_as_long_as_the_level_says(difficulty: int, seed: int) -> None:
+    script = write_counter(difficulty, seed)
+
+    low, high = SECONDS_TO_BOX[difficulty]
+    to_the_box = sum(step.duration for step in script.steps[:-1])
+    assert low <= to_the_box <= high
+    assert all(step.duration > 0 for step in script.steps)
+
+
+def test_the_same_random_stream_writes_the_same_counter_attack() -> None:
+    assert write_counter(2, seed=5) == write_counter(2, seed=5)

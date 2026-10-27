@@ -34,6 +34,18 @@ def test_winning_it_in_your_own_half_and_in_the_box_9_seconds_later_is_a_counter
     assert tag.action_id == 1
     assert tag.span == (1, 3)
     assert tag.evidence == {"seconds to the box": 9.0, "won (m from own goal)": 30.0}
+    assert tag.difficulty == 0.4
+
+
+@pytest.mark.parametrize(
+    ("seconds", "difficulty"), [(3, 0.0), (7, 0.0), (8, 0.2), (9.5, 0.5), (11, 0.8), (12, 1.0)]
+)
+def test_the_slower_the_break_reaches_the_box_the_harder_it_is_to_tell_from_an_attack(
+    seconds: float, difficulty: float
+) -> None:
+    (tag,) = detect(won_and_carried(seconds, OWN_HALF))
+
+    assert tag.difficulty == pytest.approx(difficulty)
 
 
 def test_reaching_the_box_after_15_seconds_is_too_slow() -> None:
@@ -78,6 +90,7 @@ def test_in_simulated_play_every_tag_goes_from_own_half_to_the_box_quickly(seed:
         assert abs(in_box.start_x - goal_x) <= BOX_DEPTH
         assert 0 <= tag.evidence["seconds to the box"] <= 12
         assert in_box.period_id == win.period_id
+        assert tag.difficulty is not None and 0 <= tag.difficulty <= 1
 
 
 def test_simulated_matches_have_some_counter_attacks() -> None:

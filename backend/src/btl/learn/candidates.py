@@ -31,7 +31,11 @@ from btl.sim.shape import FOUR_FOUR_TWO
 MATCH_DESIGN = PlantRequest(
     tuple(
         MomentSpec(concept, level)
-        for concept in (ConceptId.LINE_BREAKING_PASS, ConceptId.COUNTER_PRESS)
+        for concept in (
+            ConceptId.LINE_BREAKING_PASS,
+            ConceptId.COUNTER_PRESS,
+            ConceptId.COUNTER_ATTACK,
+        )
         for level in LEVELS
     )
 )

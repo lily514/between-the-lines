@@ -26,7 +26,8 @@ class Planter:
 
     The moments' target times are spread evenly over both halves, leaving out each half's first
     and last ``QUIET_START`` and ``QUIET_END`` seconds. Each is planted at the first possession
-    on or after its target that its template can use.
+    on or after its target that its template can use. Targets sit at the start of their share
+    of the match, not its middle, so the last moment has its whole share to find a possession.
     """
 
     request: PlantRequest
@@ -45,7 +46,7 @@ class Planter:
         count = len(self.request.moments)
         targets: list[tuple[int, float]] = []
         for index in range(count):
-            into_play = (index + 0.5) / count * 2 * half
+            into_play = index / count * 2 * half
             period, into_half = divmod(into_play, half)
             targets.append((int(period) + 1, QUIET_START + into_half))
         return tuple(targets)

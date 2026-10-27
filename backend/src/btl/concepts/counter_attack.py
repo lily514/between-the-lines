@@ -10,6 +10,8 @@ from btl.schema.possession import changes_hands_in_open_play
 from btl.schema.vocab import ConceptId
 
 MAX_SECONDS = 12.0
+# Reaching the box this fast is unmistakably a counter-attack; at MAX_SECONDS it is a close call.
+QUICK_BREAK = 7.0
 HALFWAY = PITCH_LENGTH / 2
 BOX_DEPTH = 16.5
 BOX_HALF_WIDTH = 20.16
@@ -30,11 +32,14 @@ class CounterAttack:
     that is cleared before anyone touches it doesn't count, because the team never has the ball
     in the box. Possessions come from `btl.schema.possession`.
 
-    No difficulty is given. The tag's key action is the one that wins the ball, and its span
-    runs to the first action in the box.
+    Difficulty is how hard the counter-attack is to tell from an ordinary fast attack: 0 when
+    the team is in the box within ``quick_break`` seconds, rising to 1 at ``max_seconds``. The
+    tag's key action is the one that wins the ball, and its span runs to the first action in
+    the box.
     """
 
     max_seconds: float = MAX_SECONDS
+    quick_break: float = QUICK_BREAK
     concept: ConceptId = field(default=ConceptId.COUNTER_ATTACK, init=False)
     needs_snapshots: bool = field(default=False, init=False)
 
@@ -65,7 +70,7 @@ class CounterAttack:
                         game_id=win.game_id,
                         action_id=win.action_id,
                         span=(win.action_id, in_box.action_id),
-                        difficulty=None,
+                        difficulty=self._difficulty(seconds),
                         evidence={
                             "seconds to the box": round(seconds, 1),
                             "won (m from own goal)": round(win.start_x, 1),
@@ -73,6 +78,10 @@ class CounterAttack:
                     )
                 )
         return tuple(tags)
+
+    def _difficulty(self, seconds: float) -> float:
+        slow = (seconds - self.quick_break) / (self.max_seconds - self.quick_break)
+        return round(min(max(slow, 0.0), 1.0), 2)
 
 
 def _in_box(event: Event) -> bool:

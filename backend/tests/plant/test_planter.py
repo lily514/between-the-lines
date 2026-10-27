@@ -4,12 +4,14 @@ import numpy as np
 import pytest
 
 from btl.concepts.base import match_context
+from btl.concepts.counter_attack import CounterAttack
 from btl.concepts.counter_press import CounterPress
 from btl.concepts.line_breaking import LineBreakingPass
 from btl.league.league import Club, generate_league
 from btl.plant import templates
 from btl.plant.planter import QUIET_END, QUIET_START, Planter, simulate_with_moments
 from btl.plant.spec import MomentSpec, PlantRequest, parse_plant
+from btl.plant.templates import SECONDS_TO_BOX
 from btl.schema.match import Match
 from btl.schema.vocab import ActionType, ConceptId
 from btl.sim.chain import Side, Start
@@ -164,3 +166,21 @@ def test_says_so_when_a_moment_could_not_be_planted(monkeypatch: pytest.MonkeyPa
 
     with pytest.raises(RuntimeError, match="0 of 3 moments"):
         simulate_with_moments(*clubs(), 0, ONE_TWO_THREE, with_snapshots=False)
+
+
+@pytest.mark.parametrize("seed", range(6))
+def test_every_planted_counter_attack_reaches_the_box_in_its_levels_time(seed: int) -> None:
+    request = parse_plant(["counter_attack:1,2,3", "line_breaking_pass:2"])
+    match = simulate_with_moments(*clubs(), seed, request, with_snapshots=False)
+    found = {tag.span[1]: tag for tag in CounterAttack().detect(match_context(match))}
+
+    counters = [m for m in match.planted if m.concept is ConceptId.COUNTER_ATTACK]
+
+    assert [moment.difficulty for moment in counters] == [1, 2, 3]
+    for moment in counters:
+        tag = found[moment.answer_action_id]
+        low, high = SECONDS_TO_BOX[moment.difficulty]
+        assert low <= tag.evidence["seconds to the box"] <= high
+        assert match.events[tag.action_id].planted_moment_id == match.planted.index(moment)
+    difficulties = [found[m.answer_action_id].difficulty or 0 for m in counters]
+    assert difficulties == sorted(difficulties) and len(set(difficulties)) == 3

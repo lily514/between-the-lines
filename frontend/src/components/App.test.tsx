@@ -67,7 +67,8 @@ test('a new viewer gets a random id, lands on Matches, and plays a question thro
 	expect(await screen.findByRole('heading', { name: "Who's playing" })).toHaveFocus()
 	await user.click(screen.getByRole('button', { name: 'Kick off' }))
 
-	await user.click(await screen.findByRole('button', { name: 'See the question' }))
+	await user.click(await screen.findByRole('button', { name: 'Skip to the question' }))
+	await user.click(screen.getByRole('button', { name: 'See the question' }))
 	expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(identifyQuestion.text)
 	await user.keyboard('1{Enter}')
 
@@ -92,7 +93,8 @@ test('a remembered viewer comes back to Matches and rejoins the match part-way t
 	const user = userEvent.setup()
 	render(<App />)
 	await user.click(await screen.findByRole('button', { name: 'Rejoin the match' }))
-	expect(await screen.findByRole('heading', { name: /Play has stopped for a free kick/ })).toBeInTheDocument()
+	await user.click(await screen.findByRole('button', { name: 'Skip to the question' }))
+	expect(screen.getByRole('heading', { name: /Play has stopped for a free kick/ })).toBeInTheDocument()
 })
 
 test('done for this match goes back to Matches', async () => {
@@ -123,9 +125,11 @@ test('an answer to a question the server is no longer waiting on fetches the one
 	const user = userEvent.setup()
 	render(<App />)
 	await user.click(await screen.findByRole('button', { name: 'Rejoin the match' }))
-	await user.click(await screen.findByRole('button', { name: 'See the question' }))
+	await user.click(await screen.findByRole('button', { name: 'Skip to the question' }))
+	await user.click(screen.getByRole('button', { name: 'See the question' }))
 	await user.keyboard('1{Enter}')
-	await user.click(await screen.findByRole('button', { name: 'See the question' }))
+	await user.click(await screen.findByRole('button', { name: 'Skip to the question' }))
+	await user.click(screen.getByRole('button', { name: 'See the question' }))
 	expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('The question the server is waiting on')
 })
 
@@ -141,7 +145,8 @@ test('the map opens from the header over a question, and Back returns to it as i
 	const user = userEvent.setup()
 	render(<App />)
 	await user.click(await screen.findByRole('button', { name: 'Rejoin the match' }))
-	await user.click(await screen.findByRole('button', { name: 'See the question' }))
+	await user.click(await screen.findByRole('button', { name: 'Skip to the question' }))
+	await user.click(screen.getByRole('button', { name: 'See the question' }))
 	await user.keyboard('2')
 	const picked = screen.getByRole('radio', { checked: true })
 
@@ -286,7 +291,8 @@ test('the first question of the second half comes after the halftime report', as
 		.find(path => path.includes('/report'))
 	expect(asked).toBe('/api/viewers/lily/matches/1/report?at=halftime')
 	await user.click(screen.getByRole('button', { name: 'Ready for the second half' }))
-	expect(await screen.findByRole('heading', { name: /Settled possession/ })).toBeInTheDocument()
+	await user.click(await screen.findByRole('button', { name: 'Skip to the question' }))
+	expect(screen.getByRole('heading', { name: /Settled possession/ })).toBeInTheDocument()
 })
 
 test('Preferences open from the header over Matches, and a change of pace is saved', async () => {

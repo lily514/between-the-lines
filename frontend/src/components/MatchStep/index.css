@@ -99,3 +99,8 @@
 	font-weight: 500;
 	color: var(--text-2);
 }
+
+.match-step .match-step__skip {
+	align-self: center;
+	font-size: var(--fs-body);
+}

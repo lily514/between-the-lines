@@ -533,3 +533,12 @@ steps are titles only.
 Picking a team keeps the side panel, since Matches and Preferences open it later too.
 **Why:** before the first match there is no match to sit beside, so "Your match" was empty space.
 **Affects:** nothing.
+
+## After T16 — The question waits for the feed (2026-10-27)
+**Plan said:** the step shows the question's heading and its button at once, while the clock runs on.
+**We did:** the step reads "The match plays on" until the commentary's clock reaches the moment the question is
+asked (`Commentary`'s `onReached`); then the phase pill, the heading, why now and the button appear, and focus moves
+to the heading so a screen reader says it. "Skip to the question" gets there at once, so nobody has to wait out the
+run (up to 20 s).
+**Why:** the question came before the feed had shown the play it was about.
+**Affects:** nothing; tests skip ahead.

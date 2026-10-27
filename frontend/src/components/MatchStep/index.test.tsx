@@ -1,11 +1,12 @@
-import { render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { identifyQuestion, predictQuestion } from '../../test-fixtures/index.ts'
 import MatchStep from './index.tsx'
 import { movedOn, stepHeading, whyNow } from './index.support.ts'
+import { runMs } from './Commentary.support.ts'
 
-const stepTo = (question: typeof identifyQuestion, onArrive = vi.fn()) =>
-	render(
+const stepTo = (question: typeof identifyQuestion, onArrive = vi.fn(), skip = true) => {
+	const rendered = render(
 		<MatchStep
 			home={question.home}
 			away={question.away}
@@ -21,6 +22,9 @@ const stepTo = (question: typeof identifyQuestion, onArrive = vi.fn()) =>
 			onArrive={onArrive}
 		/>
 	)
+	if (skip) fireEvent.click(screen.getByRole('button', { name: 'Skip to the question' }))
+	return rendered
+}
 
 test('a review question’s step says play has stopped, and why the question comes now', () => {
 	stepTo(identifyQuestion)
@@ -78,4 +82,26 @@ test('after an answer, the step says what happened while the viewer was answerin
 test('the first question of a match has nothing to catch up on', () => {
 	stepTo(identifyQuestion)
 	expect(screen.queryByText('While you were answering:')).not.toBeInTheDocument()
+})
+
+test('the question waits until the match feed reaches its moment, and the viewer can skip ahead', () => {
+	vi.useFakeTimers({ toFake: ['requestAnimationFrame', 'cancelAnimationFrame', 'performance'] })
+	try {
+		stepTo(identifyQuestion, vi.fn(), false)
+		expect(screen.getByRole('heading', { level: 2, name: 'The match plays on' })).toHaveFocus()
+		expect(screen.queryByRole('button', { name: 'See the question' })).toBeNull()
+		act(() => {
+			vi.advanceTimersByTime(runMs(identifyQuestion.play_by_play) / 2)
+		})
+		expect(screen.queryByRole('button', { name: 'See the question' })).toBeNull()
+		act(() => {
+			vi.advanceTimersByTime(runMs(identifyQuestion.play_by_play))
+		})
+		expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Play has stopped for a free kick at 13:59')
+		expect(screen.getByRole('heading', { level: 2 })).toHaveFocus()
+		expect(screen.getByRole('button', { name: 'See the question' })).toBeInTheDocument()
+		expect(screen.queryByRole('button', { name: 'Skip to the question' })).toBeNull()
+	} finally {
+		vi.useRealTimers()
+	}
 })

@@ -24,12 +24,15 @@ export interface CommentaryProps {
 	/** Where the stream view shows the match feed on a wide screen; the panel's own copy is then for screen readers
 	 * only. */
 	streamSlot?: HTMLElement | null
+	/** Called once, when the clock reaches the moment the next question is asked. Keep it stable: a new one restarts
+	 * the clock. */
+	onReached?: () => void
 }
 
 /** The match between questions, as a text feed follows it: the clock running on to the next question, the score and
  * numbers, who is on the ball and what they do with it, and the feed from kick-off. Everything it says comes from the
  * play-by-play the server sent. In the panel it is the phone's compact version, with the rest in a sheet. */
-const Commentary = ({ play, teams, streamSlot = null }: CommentaryProps) => {
+const Commentary = ({ play, teams, streamSlot = null, onReached }: CommentaryProps) => {
 	const [at, setAt] = useState(play.start)
 	const [notesOpen, setNotesOpen] = useState(false)
 
@@ -41,12 +44,13 @@ const Commentary = ({ play, teams, streamSlot = null }: CommentaryProps) => {
 			const next = clockAt(play, now - began, run)
 			setAt(next)
 			if (next < play.end) frame = requestAnimationFrame(tick)
+			else onReached?.()
 		}
 		frame = requestAnimationFrame(tick)
 		return () => {
 			cancelAnimationFrame(frame)
 		}
-	}, [play])
+	}, [play, onReached])
 
 	const heard = heardAt(play, at)
 	const clock = matchClock(at)

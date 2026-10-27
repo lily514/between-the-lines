@@ -185,6 +185,7 @@ def test_options_are_shuffled_but_the_same_seed_gives_the_same_order() -> None:
 
 def test_the_active_concepts_are_those_with_questions() -> None:
     assert active_concepts(load_concept_map()) == (
+        "tackles",
         "restarts",
         "offside",
         "fouls_and_cards",

@@ -11,7 +11,8 @@ The form depends on the concept, the moment, the viewer's level and when the que
 - Everything else is an **identify** question about play the viewer has just seen: a
   line-breaking pass asked at level 1 or after a delay, every counter-press, since a
   counter-press happens during a transition and is never asked live, an offside call asked
-  later, and why the referee played advantage.
+  later, why the referee played advantage, and every ball win, which opens a transition: how
+  it was won, then which third it was won in, then why that matters.
 
 Questions get harder as the level rises. Predict questions offer closer alternatives.
 Identify questions ask for finer detail: how many lines a pass broke, then how wide its gap
@@ -28,6 +29,7 @@ from enum import StrEnum
 
 from numpy.random import Generator
 
+from btl.concepts.ball_win import THIRDS, WonWith, pitch_third
 from btl.concepts.base import MatchContext
 from btl.concepts.line_breaking import LineBreakingPass
 from btl.concepts.offside import HALFWAY, offside_line
@@ -74,6 +76,24 @@ ADVANTAGE_REASONS = (
     "The referee didn't see the foul",
     "A foul in the middle of the pitch isn't punished",
 )
+# How the ball was won, as options; the right one plus the first two others.
+WON_WITH = {
+    WonWith.TACKLE: "A tackle",
+    WonWith.INTERCEPTION: "An interception",
+    WonWith.KEEPER: "The keeper gathered it",
+    WonWith.LOOSE_BALL: "A loose ball",
+}
+WHICH_THIRD = ("Their own third", "The middle third", "The attacking third")
+# Why the third a ball is won in matters, one reason per third, and the map's misconception
+# as the distractor (a test keeps it the same as the map's wording).
+WHY_THE_THIRD_MATTERS = (
+    "Won deep, so the whole pitch is still ahead of them before a chance",
+    "Won in midfield, while the opponent is still turning, with ground to cover",
+    "Won high up, so they are near goal before the defence is set",
+)
+DEEP_WINS_ARE_JUST_AS_USEFUL = (
+    "Winning the ball deep in your own half is just as useful as winning it high"
+)
 
 
 class Form(StrEnum):
@@ -98,6 +118,9 @@ class Asks(StrEnum):
     AFTER_THE_FOUL = "after the foul"
     WHY_BOOKED = "why booked"
     WHY_PLAY_ON = "why play on"
+    HOW_WON = "how won"
+    WHERE_WON = "where won"
+    WHY_WHERE_MATTERS = "why where matters"
 
 
 @dataclass(frozen=True, slots=True)
@@ -219,7 +242,7 @@ def _line_breaking(
 
 
 def _after_the_play(candidate: Candidate, level: int, delivery: Delivery) -> Form:
-    # A counter-press happens during a transition, so it is only ever asked after the play.
+    # A counter-press or a ball win happens in a transition, so it is only asked after the play.
     return Form.IDENTIFY
 
 
@@ -355,6 +378,32 @@ def _foul(
     else:
         labels = ("Free kick to {opponent}", "Penalty to {opponent}", "Free kick to {team}")
     return Asks.AFTER_THE_FOUL, _labelled(labels, 0)
+
+
+def _ball_win(
+    candidate: Candidate,
+    level: int,
+    form: Form,
+    ctx: MatchContext,
+    threat: ThreatModel,
+    rng: Generator,
+) -> _Built:
+    """How the ball was won, then which third, then why the third matters."""
+    evidence = candidate.tag.evidence
+    if level == 1:
+        won_with = WonWith(int(evidence["won with"]))
+        others = [way for way in WonWith if way is not won_with][:2]
+        return Asks.HOW_WON, _labelled([WON_WITH[won_with], *(WON_WITH[w] for w in others)], 0)
+    third = THIRDS.index(pitch_third(evidence["metres from own goal"]))
+    if level == 2:
+        return Asks.WHERE_WON, _labelled(WHICH_THIRD, third)
+    another = next(i for i in range(len(THIRDS)) if i != third)
+    reasons = (
+        WHY_THE_THIRD_MATTERS[third],
+        DEEP_WINS_ARE_JUST_AS_USEFUL,
+        WHY_THE_THIRD_MATTERS[another],
+    )
+    return Asks.WHY_WHERE_MATTERS, _labelled(reasons, 0)
 
 
 def _where_to_pass(
@@ -493,5 +542,6 @@ QUESTIONS: Mapping[ConceptId, ConceptQuestions] = {
     ConceptId.RESTART: ConceptQuestions(_what_happens_now, _restart),
     ConceptId.OFFSIDE: ConceptQuestions(_offside_form, _offside),
     ConceptId.FOUL: ConceptQuestions(_foul_form, _foul),
+    ConceptId.BALL_WIN: ConceptQuestions(_after_the_play, _ball_win),
 }
 ASKABLE = frozenset(QUESTIONS)

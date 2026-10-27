@@ -32,6 +32,7 @@ from tests.fixtures.learning import (
     LINE_BREAKING,
     OFFSIDE,
     RESTARTS,
+    TACKLES,
     designed_with_candidates,
 )
 from tests.fixtures.matches import HOME, HOME_MIDFIELDER, make_event
@@ -44,6 +45,7 @@ DETECTORS = {
     RESTARTS: ConceptId.RESTART,
     OFFSIDE: ConceptId.OFFSIDE,
     FOULS: ConceptId.FOUL,
+    TACKLES: ConceptId.BALL_WIN,
 }
 MINUTE = 60.0
 
@@ -55,11 +57,13 @@ class Scenario:
     candidates: list[Candidate] = field(default_factory=list[Candidate])
     segments: list[Segment] = field(default_factory=list[Segment])
     events: list[Event] = field(default_factory=list[Event])
-    # The basics start mastered, so only the two concepts under test are on the frontier.
+    # The basics start mastered, so only the two concepts under test are on the frontier, and
+    # counter-pressing, which waits for tackles, is open.
     mastery: dict[ConceptKey, float] = field(
         default_factory=lambda: {
             LINE_BREAKING: 0.15,
             COUNTER_PRESS: 0.15,
+            TACKLES: 0.99,
             RESTARTS: 0.99,
             OFFSIDE: 0.99,
             FOULS: 0.99,

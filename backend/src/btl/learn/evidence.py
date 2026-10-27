@@ -21,6 +21,7 @@ import re
 from collections.abc import Callable, Mapping
 from dataclasses import asdict, dataclass, replace
 
+from btl.concepts.ball_win import THIRDS, BallWin, WonWith, pitch_third
 from btl.concepts.base import MatchContext
 from btl.concepts.phase import PhaseOfPlay
 from btl.league.league import League
@@ -430,6 +431,31 @@ def _foul_facts(
     return {"fouler": _text(fouler), "fouled_team": _text(fouled)}, outcome
 
 
+def _ball_win_facts(
+    question: Question, ctx: MatchContext, threat: ThreatModel, names: _Names
+) -> tuple[dict[str, Fact], dict[str, Fact]]:
+    tag = question.candidate.tag
+    win = ctx.events[tag.action_id]
+    metres = tag.evidence["metres from own goal"]
+    # Recoveries in the attacking third so far in the match, this one included, for each side.
+    high: dict[TeamId, int] = {ctx.match.home_team_id: 0, ctx.match.away_team_id: 0}
+    for earlier in BallWin().detect(ctx):
+        if earlier.action_id > tag.action_id:
+            break
+        if pitch_third(earlier.evidence["metres from own goal"]) == THIRDS[2]:
+            high[ctx.events[earlier.action_id].team_id] += 1
+    outcome = {
+        "recovery_type": _text(WonWith(int(tag.evidence["won with"])).label),
+        "pitch_third": _text(pitch_third(metres)),
+        "metres_from_own_goal": _metres(metres),
+        "high_recoveries": _measured(high[win.team_id]),
+        "avg_high_recoveries": _measured(sum(high.values()) / len(high)),
+        # Who won it is part of how it was won.
+        "player": _text(names.player(win.player_id)),
+    }
+    return {}, outcome
+
+
 def _box_position(metres: float) -> Fact:
     if metres < 0:
         return Fact(metres, "inside the penalty area")
@@ -606,6 +632,7 @@ FACTS: Mapping[
     ConceptId.RESTART: _restart_facts,
     ConceptId.OFFSIDE: _offside_facts,
     ConceptId.FOUL: _foul_facts,
+    ConceptId.BALL_WIN: _ball_win_facts,
 }
 # The stretch of play a question shows before the viewer answers, for each concept that
 # doesn't follow the rule: the whole play for an identify question, none for a predict one.

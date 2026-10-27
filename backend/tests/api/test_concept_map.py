@@ -12,7 +12,7 @@ def test_the_concept_map_lists_all_twenty_with_levels_for_those_asked_now() -> N
     body = response.json()
     assert len(body["concepts"]) == 20
     asked_now = [c for c in body["concepts"] if c["askable"]]
-    assert len(asked_now) == 5
+    assert len(asked_now) == 6
     assert {c["level"] for c in asked_now} == {"Getting there"}
     later = [c for c in body["concepts"] if not c["askable"]]
     assert all(c["mastery"] is None and c["level"] is None for c in later)
@@ -41,5 +41,5 @@ def test_the_map_without_a_viewer_names_what_is_asked_and_measures_nothing() -> 
     body = client(MemoryLearnerStore()).get("/api/concept-map").json()
 
     assert len(body["concepts"]) == 20
-    assert sum(c["askable"] for c in body["concepts"]) == 5
+    assert sum(c["askable"] for c in body["concepts"]) == 6
     assert all(c["mastery"] is None and c["level"] is None for c in body["concepts"])

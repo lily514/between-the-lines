@@ -7,7 +7,14 @@ from btl.tutor.templates import TemplateTutor
 from tests.api.test_app import SEED, demo_attempts
 from tests.fixtures.learning import threat_model
 
-ASKED_NOW = {"Restarts", "Offside", "Fouls and cards", "Line-breaking passes", "Counter-pressing"}
+ASKED_NOW = {
+    "Tackles and turnovers",
+    "Restarts",
+    "Offside",
+    "Fouls and cards",
+    "Line-breaking passes",
+    "Counter-pressing",
+}
 
 
 @cache

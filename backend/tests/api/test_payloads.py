@@ -33,7 +33,14 @@ OUTCOME_NAMES = {
     "seconds_to_regain",
     "metres_from_goal",
     "pressers",
+    "recovery_type",
+    "pitch_third",
+    "metres_from_own_goal",
+    "high_recoveries",
+    "avg_high_recoveries",
 }
+# The concepts whose every question is checked for leaks; the basics have their own tests.
+LEAK_CHECKED = (ConceptId.LINE_BREAKING_PASS, ConceptId.COUNTER_PRESS, ConceptId.BALL_WIN)
 HIDDEN = {
     "correct",
     "correct_key",
@@ -89,7 +96,7 @@ def threat_displays(pack: EvidencePack) -> set[str]:
 @pytest.mark.parametrize("seed", range(40))
 def test_a_question_payload_never_holds_the_answer_or_an_outcome(seed: int) -> None:
     _, _, candidates = designed_with_candidates(seed)
-    for concept in (ConceptId.LINE_BREAKING_PASS, ConceptId.COUNTER_PRESS):
+    for concept in LEAK_CHECKED:
         for candidate in [c for c in candidates if c.tag.concept is concept][:2]:
             for level in (1, 2, 3):
                 for delivery in Delivery:

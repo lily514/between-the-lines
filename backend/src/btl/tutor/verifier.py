@@ -39,7 +39,7 @@ NUMBER_WORDS = frozenset((
 FOOTBALL_PHRASES = re.compile(
     r"\b(?:second[- ]last defender|second[- ]last|half[- ]?time|half[- ]?way|first half|"
     r"second half|(?:own|other|opposing|opposition'?s?|team'?s|their|his|its|the attacking|"
-    r"the defending) half)\b",
+    r"the defending) half|(?:own|middle|attacking|defensive|final) thirds?)\b",
     re.IGNORECASE,
 )
 # Capitalised words any wording may use mid-sentence, besides the pack's own names.

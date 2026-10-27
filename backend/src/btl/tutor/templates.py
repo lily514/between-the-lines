@@ -39,6 +39,11 @@ ASKING: Mapping[Asks, str] = {
     Asks.WHY_BOOKED: "{fouler} has been booked for fouling a {fouled_team} player. Why?",
     Asks.WHY_PLAY_ON: "{fouler} fouled a {fouled_team} player, but the referee let play go on. "
     "Why?",
+    Asks.HOW_WON: "{team} have just taken the ball off {opponent}. How did they win it?",
+    Asks.WHERE_WON: "{team} have just taken the ball off {opponent}. Where on the pitch did they "
+    "win it?",
+    Asks.WHY_WHERE_MATTERS: "{team} have the ball back from {opponent}. Why does where they took "
+    "it matter?",
 }
 # How a question asked after the play opens, by where play is when it is asked.
 LOOKING_BACK: Mapping[str, str] = {
@@ -75,6 +80,12 @@ SETTLED_BY: Mapping[Asks, str] = {
     Asks.AFTER_THE_FOUL: "{foul_outcome} {booking_note}",
     Asks.WHY_BOOKED: "{booking_note}",
     Asks.WHY_PLAY_ON: "{foul_outcome}",
+    Asks.HOW_WON: "{player} won it by {recovery_type}, in the {pitch_third}.",
+    Asks.WHERE_WON: "{player} won it {metres_from_own_goal} m from their own goal line, in the "
+    "{pitch_third}.",
+    Asks.WHY_WHERE_MATTERS: "{player} won it in the {pitch_third}; {team} have won it in the "
+    "attacking third {high_recoveries} times so far, against a match average of "
+    "{avg_high_recoveries}.",
 }
 
 

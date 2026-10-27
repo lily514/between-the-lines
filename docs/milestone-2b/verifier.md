@@ -24,7 +24,7 @@ The examples come from a pass question ("Where should the pass go?") unless they
 
 Number words are "two" to "ninety", "hundred", "thousand", "million", "dozen", "half", "quarter", "twice", "double", "triple", and the ordinals "second" to "tenth". "One", "first", "last" and "once" aren't on the list, because they are nearly always a pronoun or an adverb ("this one", "drop back first", "at once").
 
-Football phrases that contain number words are allowed whole: "second-last defender", "half-time", "halfway", "first half", "second half", and a side's half ("their own half", "the other team's half").
+Football phrases that contain number words are allowed whole: "second-last defender", "half-time", "halfway", "first half", "second half", a side's half ("their own half", "the other team's half"), and the thirds of the pitch ("own third", "middle third", "attacking third", "defensive third", "final third").
 
 - Rejected: "… with 3 defenders close." and "… with two defenders close."
 - Passes: "{player} has the ball for {team} in their own half, just before half-time."

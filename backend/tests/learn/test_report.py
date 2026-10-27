@@ -81,7 +81,7 @@ def test_the_radar_averages_each_strand_s_concepts_and_leaves_chances_empty() ->
     assert list(strands) == ["possession", "pressure", "chances", "game_flow"]
     assert strands["chances"].concepts == 0
     assert strands["chances"].kickoff is None and strands["chances"].now is None
-    assert [strands[k].concepts for k in ("possession", "pressure", "game_flow")] == [1, 1, 3]
+    assert [strands[k].concepts for k in ("possession", "pressure", "game_flow")] == [1, 2, 3]
     flow = [c.after for c in made.concepts if c.strand == "game_flow"]
     assert strands["game_flow"].now == pytest.approx(sum(flow) / len(flow))
 

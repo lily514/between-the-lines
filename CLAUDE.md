@@ -106,7 +106,8 @@ with an animated welcome, a First look at each new concept and pre-match Level-u
 - Lint/format: `uv run ruff check --fix && uv run ruff format`
 - Types: `uv run pyright`
 - CLI: `uv run btl --help` · learning loop: `uv run btl learn --viewer NAME`, `uv run btl demo-viewer`
-- Web page: `uv run btl serve` (serves the API and the built page)
+- Web page: `uv run btl serve` (serves the API and the built page) · scene fixtures: `uv run btl scene-fixtures`
+  (regenerate after any change to detectors, questions or evidence facts; a test checks them)
 - AI Tutor: add `--tutor foundry` to `btl learn`, `btl demo-viewer` or `btl serve` · `uv run btl tutor-ping` ·
   `uv run btl tutor-eval`
 - Opt-in tests: `uv run pytest -m blob` (needs Azurite in Docker and `BTL_AZURITE_KEY`) ·

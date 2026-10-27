@@ -616,7 +616,7 @@ def _out_point(question: Question, ctx: MatchContext) -> tuple[float, float] | N
     if restart.action_type is not ActionType.THROW_IN:
         return None
     team = ctx.events[question.picture].team_id
-    return _turned(restart.start_x, restart.start_y, restart.team_id, team)
+    return turned(restart.start_x, restart.start_y, restart.team_id, team)
 
 
 def _play_path(
@@ -631,12 +631,12 @@ def _play_path(
     team = ctx.events[picture].team_id
     played = [ctx.events[a] for a in range(first, last + 1)]
     return (
-        *(_turned(e.start_x, e.start_y, e.team_id, team) for e in played),
-        _turned(played[-1].end_x, played[-1].end_y, played[-1].team_id, team),
+        *(turned(e.start_x, e.start_y, e.team_id, team) for e in played),
+        turned(played[-1].end_x, played[-1].end_y, played[-1].team_id, team),
     )
 
 
-def _turned(x: float, y: float, team_id: TeamId, towards: TeamId) -> tuple[float, float]:
+def turned(x: float, y: float, team_id: TeamId, towards: TeamId) -> tuple[float, float]:
     """A point in ``team_id``'s direction, seen in ``towards``'s, rounded for the pack."""
     if team_id != towards:
         x, y = PITCH_LENGTH - x, PITCH_WIDTH - y

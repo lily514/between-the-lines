@@ -217,3 +217,24 @@ the level rows; `LearnerState.introduced` with version 4 and the store's fallbac
   and `band`. The captured JSON fixtures stay as they are until T15 (they are cast, so the types don't bite).
 **Why:** the browser never applies a cut-off, so every level it shows arrives as a band from the API.
 **Affects:** T10 (icons switch on `band`, locks on `waits_for`), T13 (the flows), T15 (fixtures).
+
+## T9 — Scene fixtures (2026-10-27)
+
+**Plan said:** `btl scene-fixtures` writes one JSON per active concept from a real moment in seed 7's matches: the
+evidence pack with every evidence field filled, the snapshot at the key frame, the play's path with timestamps; a
+freshness test; the command in `docs/setup.md` and `CLAUDE.md`.
+**We did:** as planned, with these choices:
+- **A fixed threat fit.** The pack's threat facts depend on the model, so the fixtures are scored with the same
+  deterministic 20-match fit the tests use (`fixture_course`), not the saved 200-match model; otherwise the
+  freshness test could only check them by fitting 200 matches. The numbers are real for that fit and serve as
+  illustrations on the page, which is what the handoff asked for in place of its made-up ones.
+- **Which moment.** The candidate nearest difficulty 0.5, among those that tell the story best: an offside call
+  for Offside, a goal-line restart for Restarts, a foul that stopped play, a ball won in the middle third, and a
+  counter-attack won by an outfield player (the first pick was the keeper gathering a metre from goal).
+- **What a fixture holds**, beyond the plan: the concept's evidence field list, the match and the moment's
+  evidence, and `questions`: the template Tutor's wording at each level with its options and the right key, so
+  the example card on a step can show the question that moment really gets.
+- `evidence.turned` is public now (the fixtures' timed path uses it).
+- The fixtures are generated, so they join `.prettierignore` beside `openapi.json`.
+**Why:** a test that regenerates the fixtures exactly is worth more than numbers from a model the test can't fit.
+**Affects:** T11 and T14 draw from these; T15 regenerates them if planting changes again.

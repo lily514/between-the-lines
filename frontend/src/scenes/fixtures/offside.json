@@ -1,0 +1,575 @@
+{
+  "concept": "offside",
+  "detector": "offside",
+  "evidence_fields": [
+    "attacker",
+    "margin_m",
+    "beyond_or_behind",
+    "offside_call"
+  ],
+  "match": {
+    "away": "Sherborne Kingfishers",
+    "away_code": "SHE",
+    "home": "Whitby Kestrels",
+    "home_code": "WHI",
+    "seed": 7002
+  },
+  "moment": {
+    "action_id": 758,
+    "clock": "52:21",
+    "difficulty": 0.486,
+    "evidence": {
+      "line (m)": 95.7,
+      "margin (m)": 2.3,
+      "offside": 1.0,
+      "player id": 1017.0
+    },
+    "phase": "settled",
+    "span": [
+      758,
+      758
+    ]
+  },
+  "name": "Offside",
+  "pack": {
+    "asks": "flag or not",
+    "concept": {
+      "analyst": "Offside is judged the moment the pass is played, not when the ball arrives. At that moment {attacker} was {margin_m} m {beyond_or_behind}: {offside_call}.",
+      "beginner": "An attacker is offside if, when the pass is played, they are in the other team's half and nearer the goal than both the ball and the second-last defender. Level counts as onside.",
+      "intermediate": "When the pass was played, {attacker} was {margin_m} m {beyond_or_behind}, so they were {offside_call}.",
+      "key": "offside",
+      "misconceptions": [
+        "Being in an offside position is always an offence.",
+        "Offside is judged when the player receives the ball, not when the pass is played.",
+        "You can be offside from a throw-in."
+      ],
+      "name": "Offside",
+      "objective": "Tell whether an attacker is offside when the ball is played to them."
+    },
+    "context": {
+      "attacker": {
+        "display": "#9 Jake Kelmere",
+        "value": "#9 Jake Kelmere"
+      },
+      "away_team": {
+        "display": "Sherborne Kingfishers",
+        "value": "Sherborne Kingfishers"
+      },
+      "home_team": {
+        "display": "Whitby Kestrels",
+        "value": "Whitby Kestrels"
+      },
+      "minute": {
+        "display": "52:21",
+        "value": "52:21"
+      },
+      "opponent": {
+        "display": "Sherborne Kingfishers",
+        "value": "Sherborne Kingfishers"
+      },
+      "player": {
+        "display": "#7 Abdoulaye Ekerafor",
+        "value": "#7 Abdoulaye Ekerafor"
+      },
+      "score": {
+        "display": "2–2",
+        "value": "2–2"
+      },
+      "team": {
+        "display": "Whitby Kestrels",
+        "value": "Whitby Kestrels"
+      }
+    },
+    "correct_key": "B",
+    "form": "predict",
+    "level": 1,
+    "options": [
+      {
+        "correct": false,
+        "key": "A",
+        "label": "No: offside only counts where #9 Jake Kelmere is when the ball arrives",
+        "neutral": {},
+        "outcome": {},
+        "target_at": null
+      },
+      {
+        "correct": true,
+        "key": "B",
+        "label": "Yes: #9 Jake Kelmere is past the second-last defender",
+        "neutral": {},
+        "outcome": {},
+        "target_at": null
+      },
+      {
+        "correct": false,
+        "key": "C",
+        "label": "No: #9 Jake Kelmere is level with or behind the second-last defender",
+        "neutral": {},
+        "outcome": {},
+        "target_at": null
+      }
+    ],
+    "outcome": {
+      "beyond_or_behind": {
+        "display": "beyond the second-last defender",
+        "value": "beyond the second-last defender"
+      },
+      "margin_m": {
+        "display": "2.3",
+        "value": 2.3
+      },
+      "offside_call": {
+        "display": "offside",
+        "value": "offside"
+      }
+    },
+    "pack_id": "10e898acc6220a47",
+    "pack_version": 4,
+    "picture": {
+      "action_id": 758,
+      "ball": [
+        95.6,
+        23.4
+      ],
+      "mark": null,
+      "markers": [
+        {
+          "home": true,
+          "role": "keeper",
+          "shirt": 1,
+          "side": "attacking",
+          "x": 15.1,
+          "y": 30.7
+        },
+        {
+          "home": true,
+          "role": "player",
+          "shirt": 2,
+          "side": "attacking",
+          "x": 54.2,
+          "y": 10.3
+        },
+        {
+          "home": true,
+          "role": "player",
+          "shirt": 3,
+          "side": "attacking",
+          "x": 53.2,
+          "y": 25.8
+        },
+        {
+          "home": true,
+          "role": "player",
+          "shirt": 4,
+          "side": "attacking",
+          "x": 54.7,
+          "y": 37.4
+        },
+        {
+          "home": true,
+          "role": "player",
+          "shirt": 5,
+          "side": "attacking",
+          "x": 56.4,
+          "y": 49.6
+        },
+        {
+          "home": true,
+          "role": "player",
+          "shirt": 8,
+          "side": "attacking",
+          "x": 73.6,
+          "y": 10.4
+        },
+        {
+          "home": true,
+          "role": "player",
+          "shirt": 10,
+          "side": "attacking",
+          "x": 77.5,
+          "y": 23.0
+        },
+        {
+          "home": true,
+          "role": "player",
+          "shirt": 14,
+          "side": "attacking",
+          "x": 73.5,
+          "y": 39.9
+        },
+        {
+          "home": true,
+          "role": "player",
+          "shirt": 16,
+          "side": "attacking",
+          "x": 73.2,
+          "y": 50.1
+        },
+        {
+          "home": true,
+          "role": "on the ball",
+          "shirt": 7,
+          "side": "attacking",
+          "x": 95.6,
+          "y": 23.4
+        },
+        {
+          "home": true,
+          "role": "player",
+          "shirt": 9,
+          "side": "attacking",
+          "x": 98.0,
+          "y": 33.6
+        },
+        {
+          "home": false,
+          "role": "keeper",
+          "shirt": 1,
+          "side": "defending",
+          "x": 99.7,
+          "y": 32.5
+        },
+        {
+          "home": false,
+          "role": "player",
+          "shirt": 2,
+          "side": "defending",
+          "x": 95.7,
+          "y": 43.5
+        },
+        {
+          "home": false,
+          "role": "player",
+          "shirt": 3,
+          "side": "defending",
+          "x": 94.3,
+          "y": 33.8
+        },
+        {
+          "home": false,
+          "role": "player",
+          "shirt": 4,
+          "side": "defending",
+          "x": 95.4,
+          "y": 24.7
+        },
+        {
+          "home": false,
+          "role": "player",
+          "shirt": 5,
+          "side": "defending",
+          "x": 93.8,
+          "y": 13.4
+        },
+        {
+          "home": false,
+          "role": "player",
+          "shirt": 8,
+          "side": "defending",
+          "x": 79.9,
+          "y": 44.3
+        },
+        {
+          "home": false,
+          "role": "player",
+          "shirt": 10,
+          "side": "defending",
+          "x": 77.4,
+          "y": 32.2
+        },
+        {
+          "home": false,
+          "role": "player",
+          "shirt": 14,
+          "side": "defending",
+          "x": 82.4,
+          "y": 25.4
+        },
+        {
+          "home": false,
+          "role": "player",
+          "shirt": 16,
+          "side": "defending",
+          "x": 81.3,
+          "y": 16.4
+        },
+        {
+          "home": false,
+          "role": "player",
+          "shirt": 7,
+          "side": "defending",
+          "x": 68.1,
+          "y": 38.7
+        },
+        {
+          "home": false,
+          "role": "player",
+          "shirt": 9,
+          "side": "defending",
+          "x": 68.7,
+          "y": 20.4
+        }
+      ],
+      "path": []
+    },
+    "reveal_line": 95.7,
+    "reveal_path": [
+      [
+        95.6,
+        23.4
+      ],
+      [
+        104.0,
+        33.6
+      ]
+    ],
+    "timing": {
+      "delivered_at": "52:21",
+      "delivered_phase": "settled",
+      "delivery": "live",
+      "occurred_at": "52:21",
+      "occurred_phase": "settled",
+      "restart": null
+    }
+  },
+  "path": [
+    {
+      "action": "pass",
+      "action_id": 758,
+      "at": 0.0,
+      "result": "offside",
+      "shirt": 7,
+      "side": "attacking",
+      "x": 95.6,
+      "y": 23.4
+    },
+    {
+      "action": "end",
+      "action_id": 758,
+      "at": 23.67,
+      "x": 104.0,
+      "y": 33.6
+    }
+  ],
+  "questions": {
+    "1": {
+      "asks": "flag or not",
+      "correct": "B",
+      "form": "predict",
+      "options": [
+        "No: offside only counts where #9 Jake Kelmere is when the ball arrives",
+        "Yes: #9 Jake Kelmere is past the second-last defender",
+        "No: #9 Jake Kelmere is level with or behind the second-last defender"
+      ],
+      "text": "#7 Abdoulaye Ekerafor is about to pass to #9 Jake Kelmere. Will the flag go up?"
+    },
+    "2": {
+      "asks": "who is offside",
+      "correct": "A",
+      "form": "predict",
+      "options": [
+        "#9 Jake Kelmere",
+        "#10 Alexandre Fourchet",
+        "#8 Sebastian Strømstad"
+      ],
+      "text": "Which of these attackers is in an offside position as #7 Abdoulaye Ekerafor plays the pass?"
+    },
+    "3": {
+      "asks": "flag or not",
+      "correct": "A",
+      "form": "predict",
+      "options": [
+        "Yes: #9 Jake Kelmere is past the second-last defender",
+        "No: #9 Jake Kelmere is level with or behind the second-last defender",
+        "No: offside only counts where #9 Jake Kelmere is when the ball arrives"
+      ],
+      "text": "#7 Abdoulaye Ekerafor is about to pass to #9 Jake Kelmere. Will the flag go up?"
+    }
+  },
+  "snapshot": {
+    "action_id": 758,
+    "ball": [
+      95.6,
+      23.4
+    ],
+    "markers": [
+      {
+        "home": true,
+        "role": "keeper",
+        "shirt": 1,
+        "side": "attacking",
+        "x": 15.1,
+        "y": 30.7
+      },
+      {
+        "home": true,
+        "role": "player",
+        "shirt": 2,
+        "side": "attacking",
+        "x": 54.2,
+        "y": 10.3
+      },
+      {
+        "home": true,
+        "role": "player",
+        "shirt": 3,
+        "side": "attacking",
+        "x": 53.2,
+        "y": 25.8
+      },
+      {
+        "home": true,
+        "role": "player",
+        "shirt": 4,
+        "side": "attacking",
+        "x": 54.7,
+        "y": 37.4
+      },
+      {
+        "home": true,
+        "role": "player",
+        "shirt": 5,
+        "side": "attacking",
+        "x": 56.4,
+        "y": 49.6
+      },
+      {
+        "home": true,
+        "role": "player",
+        "shirt": 8,
+        "side": "attacking",
+        "x": 73.6,
+        "y": 10.4
+      },
+      {
+        "home": true,
+        "role": "player",
+        "shirt": 10,
+        "side": "attacking",
+        "x": 77.5,
+        "y": 23.0
+      },
+      {
+        "home": true,
+        "role": "player",
+        "shirt": 14,
+        "side": "attacking",
+        "x": 73.5,
+        "y": 39.9
+      },
+      {
+        "home": true,
+        "role": "player",
+        "shirt": 16,
+        "side": "attacking",
+        "x": 73.2,
+        "y": 50.1
+      },
+      {
+        "home": true,
+        "role": "on the ball",
+        "shirt": 7,
+        "side": "attacking",
+        "x": 95.6,
+        "y": 23.4
+      },
+      {
+        "home": true,
+        "role": "player",
+        "shirt": 9,
+        "side": "attacking",
+        "x": 98.0,
+        "y": 33.6
+      },
+      {
+        "home": false,
+        "role": "keeper",
+        "shirt": 1,
+        "side": "defending",
+        "x": 99.7,
+        "y": 32.5
+      },
+      {
+        "home": false,
+        "role": "player",
+        "shirt": 2,
+        "side": "defending",
+        "x": 95.7,
+        "y": 43.5
+      },
+      {
+        "home": false,
+        "role": "player",
+        "shirt": 3,
+        "side": "defending",
+        "x": 94.3,
+        "y": 33.8
+      },
+      {
+        "home": false,
+        "role": "player",
+        "shirt": 4,
+        "side": "defending",
+        "x": 95.4,
+        "y": 24.7
+      },
+      {
+        "home": false,
+        "role": "player",
+        "shirt": 5,
+        "side": "defending",
+        "x": 93.8,
+        "y": 13.4
+      },
+      {
+        "home": false,
+        "role": "player",
+        "shirt": 8,
+        "side": "defending",
+        "x": 79.9,
+        "y": 44.3
+      },
+      {
+        "home": false,
+        "role": "player",
+        "shirt": 10,
+        "side": "defending",
+        "x": 77.4,
+        "y": 32.2
+      },
+      {
+        "home": false,
+        "role": "player",
+        "shirt": 14,
+        "side": "defending",
+        "x": 82.4,
+        "y": 25.4
+      },
+      {
+        "home": false,
+        "role": "player",
+        "shirt": 16,
+        "side": "defending",
+        "x": 81.3,
+        "y": 16.4
+      },
+      {
+        "home": false,
+        "role": "player",
+        "shirt": 7,
+        "side": "defending",
+        "x": 68.1,
+        "y": 38.7
+      },
+      {
+        "home": false,
+        "role": "player",
+        "shirt": 9,
+        "side": "defending",
+        "x": 68.7,
+        "y": 20.4
+      }
+    ]
+  },
+  "strand": "game_flow"
+}

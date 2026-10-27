@@ -5,7 +5,8 @@
   M2a "The loop in the terminal": `feature/learning-loop`; M2c "The web page": `feature/web-page`;
   M2d "The basics": `feature/the-basics`; M2e "Getting started": `feature/getting-started`;
   M2b "The AI Tutor": `feature/ai-tutor`; M3 "Deploy it properly": `feature/deploy`; M4 "Match day":
-  `feature/match-day`). 2c, 2d and then 2e were built before 2b, while Azure wasn't set up yet.
+  `feature/match-day`; M5 "More to ask": `feature/more-to-ask`, from `feature/ux-improvements`). 2c, 2d and
+  then 2e were built before 2b, while Azure wasn't set up yet.
 - Each plan task is one commit on the milestone branch, made after Lily reviews the diff.
 - When a milestone is done, merge it into main with `git merge --no-ff`, so each milestone shows up as one merge in the graph.
 - Claude commits locally only; Lily pushes when ready. CI runs on every push, to any branch.
@@ -24,6 +25,8 @@ Milestone 3 deploys the page and API: one `azd up` builds the container and crea
 resource from Bicep, serving a public demo URL, with managed identity and no secrets.
 Milestone 4 gives the page a home base: a Matches screen, the curriculum map from any screen,
 halftime and full-time scouting reports, and preferences. Matches still step from moment to moment.
+Milestone 5 adds more to ask: Tackles and turnovers, Shots and goals, and Transitions become askable,
+with an animated welcome, a First look at each new concept and pre-match Level-ups built on per-concept scenes.
 
 ## Learning design rules
 - The match never depends on the viewer. Adaptation lives in which moments we ask about, when, and
@@ -174,5 +177,6 @@ cli, api, plus `replay.py`. `api` holds the HTTP routes the page calls; the page
   (its main component is `index.tsx`, with `index.css`, `index.support.ts` and tests beside it), and pieces
   used by more than one screen go in `src/components/Shared/`. `App.tsx` sits at the top of `components/`.
 - Design reference: `docs/milestone-2c/design/`, plus `docs/milestone-2e/design/` and `crests/` for the picker, team
-  sheet and crests, and `docs/milestone-4/design/` for Matches, the map, reports and preferences. It guides the
+  sheet and crests, `docs/milestone-4/design/` for Matches, the map, reports and preferences, and
+  `docs/milestone-5/design/` for the welcome, First look, Level-up and the scene system. It guides the
   look; the repo decides behaviour and data.

@@ -5,8 +5,8 @@
   M2a "The loop in the terminal": `feature/learning-loop`; M2c "The web page": `feature/web-page`;
   M2d "The basics": `feature/the-basics`; M2e "Getting started": `feature/getting-started`;
   M2b "The AI Tutor": `feature/ai-tutor`; M3 "Deploy it properly": `feature/deploy`; M4 "Match day":
-  `feature/match-day`; M5 "More to ask": `feature/more-to-ask`, from `feature/ux-improvements`). 2c, 2d and
-  then 2e were built before 2b, while Azure wasn't set up yet.
+  `feature/match-day`; M5 "More to ask": `feature/more-to-ask`, from `feature/ux-improvements`; M6 "The moving
+  pitch": `feature/moving-pitch`). 2c, 2d and then 2e were built before 2b, while Azure wasn't set up yet.
 - Each plan task is one commit on the milestone branch, made after Lily reviews the diff.
 - When a milestone is done, merge it into main with `git merge --no-ff`, so each milestone shows up as one merge in the graph.
 - Claude commits locally only; Lily pushes when ready. CI runs on every push, to any branch.
@@ -27,6 +27,8 @@ Milestone 4 gives the page a home base: a Matches screen, the curriculum map fro
 halftime and full-time scouting reports, and preferences. Matches still step from moment to moment.
 Milestone 5 adds more to ask: Tackles and turnovers, Shots and goals, and Transitions become askable,
 with an animated welcome, a First look at each new concept and pre-match Level-ups built on per-concept scenes.
+Milestone 6 moves the pitch during play: between questions, the players and the ball follow the match clock
+in the stream view, from server-sent keyframes that stop where the commentary stops.
 
 ## Learning design rules
 - The match never depends on the viewer. Adaptation lives in which moments we ask about, when, and

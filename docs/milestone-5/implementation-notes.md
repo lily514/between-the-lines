@@ -539,7 +539,7 @@ Picking a team keeps the side panel, since Matches and Preferences open it later
 **We did:** the step reads "The match plays on" until the commentary's clock reaches the moment the question is
 asked (`Commentary`'s `onReached`); then the phase pill, the heading, why now and the button appear, and focus moves
 to the heading so a screen reader says it. "Skip to the question" gets there at once, so nobody has to wait out the
-run (up to 20 s).
+run (up to 20 s), and the match feed jumps to the moment with it (`atQuestion`), so the two never disagree.
 **Why:** the question came before the feed had shown the play it was about.
 **Affects:** nothing; tests skip ahead.
 

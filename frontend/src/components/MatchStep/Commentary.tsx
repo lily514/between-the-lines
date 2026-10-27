@@ -28,16 +28,19 @@ export interface CommentaryProps {
 	/** Called once, when the clock reaches the moment the next question is asked. Keep it stable: a new one restarts
 	 * the clock. */
 	onReached?: () => void
+	/** The question is showing, so the clock stands at its moment: a skip ahead jumps the feed there too. */
+	atQuestion?: boolean
 }
 
 /** The match between questions, as a text feed follows it: the clock running on to the next question, the score and
  * numbers, who is on the ball and what they do with it, and the feed from kick-off. Everything it says comes from the
  * play-by-play the server sent. In the panel it is the phone's compact version, with the rest in a sheet. */
-const Commentary = ({ play, teams, streamSlot = null, onReached }: CommentaryProps) => {
+const Commentary = ({ play, teams, streamSlot = null, onReached, atQuestion = false }: CommentaryProps) => {
 	const [at, setAt] = useState(play.start)
 	const [notesOpen, setNotesOpen] = useState(false)
 
 	useEffect(() => {
+		if (atQuestion) return
 		const run = runMs(play)
 		const began = performance.now()
 		let frame = 0
@@ -51,12 +54,14 @@ const Commentary = ({ play, teams, streamSlot = null, onReached }: CommentaryPro
 		return () => {
 			cancelAnimationFrame(frame)
 		}
-	}, [play, onReached])
+	}, [play, onReached, atQuestion])
 
-	const heard = heardAt(play, at)
-	const clock = matchClock(at)
-	const asked = at >= play.end
-	const countdown = asked ? 'Question time' : `Next question in ${timeLeft(play.end - at)}`
+	// Once the question shows the clock stands at its moment, even if the run hadn't got there.
+	const now = atQuestion ? play.end : at
+	const heard = heardAt(play, now)
+	const clock = matchClock(now)
+	const asked = now >= play.end
+	const countdown = asked ? 'Question time' : `Next question in ${timeLeft(play.end - now)}`
 	const latest = heard.feed[0]
 	return (
 		<>

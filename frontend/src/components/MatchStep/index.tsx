@@ -84,6 +84,7 @@ const MatchStep = ({
 				teams={{ home, away, homeCode, awayCode, yours }}
 				streamSlot={streamSlot}
 				onReached={reach}
+				atQuestion={reached}
 			/>
 			{reached && <PhasePill phase={stepPhase(to)} detail={live ? null : to.restart} />}
 			<h2 id={headingId} ref={heading} tabIndex={-1} className="match-step__heading screen-heading">

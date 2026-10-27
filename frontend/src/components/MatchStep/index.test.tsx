@@ -105,3 +105,19 @@ test('the question waits until the match feed reaches its moment, and the viewer
 		vi.useRealTimers()
 	}
 })
+
+test('skipping to the question jumps the match feed to its moment too, so the two stay together', () => {
+	vi.useFakeTimers({ toFake: ['requestAnimationFrame', 'cancelAnimationFrame', 'performance'] })
+	try {
+		stepTo(identifyQuestion, vi.fn(), false)
+		act(() => {
+			vi.advanceTimersByTime(100)
+		})
+		expect(screen.getByRole('timer', { name: 'Match clock' })).not.toHaveTextContent('13:59')
+		fireEvent.click(screen.getByRole('button', { name: 'Skip to the question' }))
+		expect(screen.getByRole('timer', { name: 'Match clock' })).toHaveTextContent('13:59')
+		expect(screen.getByText('Question time')).toBeInTheDocument()
+	} finally {
+		vi.useRealTimers()
+	}
+})

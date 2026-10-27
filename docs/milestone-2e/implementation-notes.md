@@ -139,3 +139,13 @@ Milestone 2e is done, and Lily has checked it in the browser. A new viewer types
 
 **Why:** Lily's design update; the long per-player list was the T6 concern about length on a phone.
 **Affects:** README screenshots of the team sheet.
+
+## After 2e — Kick-off shape (2026-10-26)
+**Plan said:** kick-off spots come from the first action's snapshot (T2).
+**We did:** the simulator now lines both teams up properly at every kick-off. `kickoff_shape` (`sim/shape.py`) takes the usual shape with the ball on the centre spot and steps players who have strayed back to a metre inside their own half. Defenders inside the centre circle step straight out to a metre beyond it. Everyone else keeps their place. The engine uses it for the first action after any kick-off: both half starts and every restart after a goal.
+- The shape stream draws its random numbers exactly as before, so only kick-off snapshots change. `btl demo-viewer` output is byte-identical to before.
+- Over 50 seeds, 770 players stood over halfway at 191 kick-offs before; none do now.
+- The captured team sheets in `frontend/src/test-fixtures/` (`sheet-stage-1.json`, `sheet-stage-3.json`) now hold the new spots. Six players moved in each; nothing else in them changed.
+
+**Why:** Lily saw Ripon's #9 and #7 in the other half on "Who's playing". The in-play shape puts each back line 30 m (with the ball) or 18 m (without it) behind the ball. With the ball on the centre spot, that carries both front lines about 10 m over halfway.
+**Affects:** README screenshots of the team sheet.

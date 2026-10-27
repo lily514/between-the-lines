@@ -17,12 +17,12 @@ from btl.schema.match import Match
 from btl.schema.moment import PlantedMoment
 from btl.schema.snapshot import PlayerSlot, Positions
 from btl.schema.vocab import ActionType, Result
-from btl.sim.chain import Chain, Side, Step, kickoff, play_chain, play_on
+from btl.sim.chain import Chain, Restart, Side, Step, kickoff, play_chain, play_on
 from btl.sim.lineup import Lineup, pick_lineup
 from btl.sim.params import DEFAULT_PARAMS, SimParams
 from btl.sim.pitch import Point, mirror
 from btl.sim.script import Director, PlayOn, Shape
-from btl.sim.shape import FOUR_FOUR_TWO, Formation, place_receiver, place_teams
+from btl.sim.shape import FOUR_FOUR_TWO, Formation, kickoff_shape, place_receiver, place_teams
 
 HOME, AWAY = 0, 1
 
@@ -145,7 +145,8 @@ def simulate_match(
                     # Positions are at the start of the action. When it wins the ball, the
                     # other team still has it at that moment.
                     holder = 1 - team if index == 0 and start.won_with is not None else team
-                    snapshots.append(_snapshot(sides, team, holder, step, shape_rng))
+                    kicking_off = index == 0 and start.restart is Restart.KICKOFF
+                    snapshots.append(_snapshot(sides, team, holder, step, shape_rng, kicking_off))
                 clock += step.duration
             possession_id += 1
             team, start = 1 - team, chain.next_start
@@ -221,11 +222,18 @@ def _event(
 
 
 def _snapshot(
-    sides: tuple[Side, ...], team: int, holder: int, step: Step, rng: Generator
+    sides: tuple[Side, ...],
+    team: int,
+    holder: int,
+    step: Step,
+    rng: Generator,
+    kicking_off: bool = False,
 ) -> NDArray[np.float64]:
     """All 22 stored positions, home slots first, with the actor exactly on the ball."""
     ball = step.start if holder == team else mirror(step.start)
     on_ball, off_ball = place_teams(sides[holder].formation, sides[1 - holder].formation, ball, rng)
+    if kicking_off:
+        on_ball, off_ball = kickoff_shape(on_ball, off_ball)
     if step.action_type is ActionType.PASS and step.receiver is not None and holder == team:
         flagged = step.result is Result.OFFSIDE
         on_ball = place_receiver(on_ball, off_ball, ball, step.end, step.receiver, flagged, rng)

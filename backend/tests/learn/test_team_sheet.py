@@ -174,3 +174,12 @@ def test_a_viewer_on_their_first_match_or_below_stage_three_gets_no_numbers() ->
 
     assert beginner.stage == 1 and asked_for == [2]
     assert all(team.matches_watched is None for team in beginner.teams)
+
+
+@pytest.mark.parametrize("seed", range(8))
+def test_every_starter_is_in_their_own_half_at_kick_off(seed: int) -> None:
+    staged = sheet(designed(seed), 1)
+
+    first, second = staged.teams
+    assert all(player.at_kickoff[0] <= 52.5 for player in first.players)
+    assert all(player.at_kickoff[0] >= 52.5 for player in second.players)

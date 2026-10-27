@@ -129,7 +129,7 @@
 						"name": "Striker",
 						"description": "Plays furthest forward, closest to goal: there to score."
 					},
-					"at_kickoff": [61.7, 48.0],
+					"at_kickoff": [51.5, 48.0],
 					"numbers": null
 				},
 				{
@@ -141,7 +141,7 @@
 						"name": "Striker",
 						"description": "Plays furthest forward, closest to goal: there to score."
 					},
-					"at_kickoff": [60.2, 17.6],
+					"at_kickoff": [51.5, 17.6],
 					"numbers": null
 				}
 			]
@@ -236,7 +236,7 @@
 						"name": "Centre midfielder",
 						"description": "Links defence and attack in the middle: passes, tackles, runs."
 					},
-					"at_kickoff": [56.8, 30.0],
+					"at_kickoff": [60.0, 27.1],
 					"numbers": null
 				},
 				{
@@ -248,7 +248,7 @@
 						"name": "Centre midfielder",
 						"description": "Links defence and attack in the middle: passes, tackles, runs."
 					},
-					"at_kickoff": [57.5, 39.9],
+					"at_kickoff": [59.1, 41.8],
 					"numbers": null
 				},
 				{
@@ -272,7 +272,7 @@
 						"name": "Striker",
 						"description": "Plays furthest forward, closest to goal: there to score."
 					},
-					"at_kickoff": [44.0, 25.0],
+					"at_kickoff": [53.6, 23.9],
 					"numbers": null
 				},
 				{
@@ -284,7 +284,7 @@
 						"name": "Striker",
 						"description": "Plays furthest forward, closest to goal: there to score."
 					},
-					"at_kickoff": [44.8, 44.3],
+					"at_kickoff": [53.5, 44.3],
 					"numbers": null
 				}
 			]

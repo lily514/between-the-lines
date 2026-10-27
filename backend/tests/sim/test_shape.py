@@ -8,11 +8,13 @@ from hypothesis import strategies as st
 from btl.league.league import Role
 from btl.sim.pitch import PITCH_LENGTH, PITCH_WIDTH, Point
 from btl.sim.shape import (
+    CENTRE_CIRCLE_RADIUS,
     FORMATIONS,
     FOUR_FOUR_TWO,
     FOUR_THREE_THREE,
     Formation,
     Slot,
+    kickoff_shape,
     offside_line,
     place_receiver,
     place_teams,
@@ -170,3 +172,35 @@ def test_an_onside_receiver_who_isnt_flagged_stays_put() -> None:
     )
 
     assert placed == attackers
+
+
+@pytest.mark.parametrize("seed", range(20))
+def test_at_kick_off_both_teams_stand_in_their_own_halves_and_the_defence_outside_the_circle(
+    seed: int,
+) -> None:
+    centre = Point(PITCH_LENGTH / 2, PITCH_WIDTH / 2)
+    placed = place_teams(FOUR_FOUR_TWO, FOUR_THREE_THREE, centre, np.random.default_rng(seed))
+
+    attackers, defenders = kickoff_shape(*placed)
+
+    assert all(p.x < PITCH_LENGTH / 2 for p in attackers)
+    assert all(p.x > PITCH_LENGTH / 2 for p in defenders)
+    assert all(
+        ((p.x - centre.x) ** 2 + (p.y - centre.y) ** 2) ** 0.5 > CENTRE_CIRCLE_RADIUS
+        for p in defenders
+    )
+
+
+def test_players_already_in_their_own_half_keep_their_place_at_kick_off() -> None:
+    attackers = (Point(10, 34), Point(40, 20))
+    defenders = (Point(95, 34), Point(70, 50))
+
+    assert kickoff_shape(attackers, defenders) == (attackers, defenders)
+
+
+def test_a_defender_inside_the_circle_steps_straight_out_from_the_spot() -> None:
+    _, (pushed,) = kickoff_shape((), (Point(55.5, 38),))
+
+    assert pushed.x > 55.5 and pushed.y > 38
+    assert (pushed.y - 34) / (pushed.x - 52.5) == pytest.approx(4 / 3)
+    assert ((pushed.x - 52.5) ** 2 + (pushed.y - 34) ** 2) ** 0.5 == pytest.approx(10.15)

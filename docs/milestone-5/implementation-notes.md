@@ -552,3 +552,14 @@ plays at the chosen speed. Both are kept in this browser, like the theme, and st
 A change of speed mid-run carries on from where the clock has got to.
 **Why:** a viewer couldn't tell the feed runs far faster than a real match, and the 20 s cap is for demos.
 **Affects:** nothing.
+
+## After the merge — Small fixes from the screenshots (2026-10-27)
+**Plan said:** nothing; these were found in the dark-mode screenshots taken for the video.
+**We did:**
+- **A count of one takes a singular noun.** The map's wording is written for counts above one, so a pass that broke
+  one line read "Breaking one lines". `fill` (`tutor/slots.py`) now makes the noun right after a slot singular when
+  the slot's value is "one" or "1", for the nouns the map and templates count (lines, shots, seconds, times,
+  recoveries, players, defenders, passes). The map's text and the model's prompts are unchanged, so the recorded
+  Tutor replies still match.
+**Why:** one rule where slots are filled fixes every such sentence, the model's wording included.
+**Affects:** nothing.

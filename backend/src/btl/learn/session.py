@@ -29,7 +29,7 @@ from btl.learn.candidates import (
     play_designed_match,
 )
 from btl.learn.concept_map import ConceptKey, ConceptMap, load_concept_map
-from btl.learn.evidence import EvidencePack, QuestionView, build_pack, question_view
+from btl.learn.evidence import Delivered, EvidencePack, QuestionView, build_pack, question_view
 from btl.learn.grader import Answer, ChoiceAnswer, ChoiceGrader, Grade
 from btl.learn.learner import Attempt, LearnerState
 from btl.learn.pace import Pace
@@ -51,6 +51,8 @@ class Asked:
     """A question as the viewer meets it: the pack, its view, and the worded question.
 
     ``prompt`` is the selector's decision: the moment, and when and in what phase it is asked.
+    ``previous`` is when the match's previous question was asked, where the viewer left off;
+    None for its first.
     """
 
     pack: EvidencePack
@@ -58,6 +60,7 @@ class Asked:
     text: str
     match: Match
     prompt: Prompt
+    previous: Delivered | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -302,9 +305,10 @@ def watch_match(
         return {name: model.mastery(current, key) for key, name in course.names().items()}
 
     viewer.begin(MatchStart(number, home.name, away.name, bars()))
+    previous: Delivered | None = None
 
     def ask(prompt: Prompt) -> bool:
-        nonlocal state, etag
+        nonlocal state, etag, previous
         candidate = prompt.candidate
         question = build_question(
             candidate, prompt.level, prompt.delivered.delivery, ctx, course.threat, rng
@@ -314,13 +318,15 @@ def watch_match(
         if len(history) - len(earlier) < len(recorded):
             # Already answered before a stop: replay it without asking.
             history.append(recorded[len(history) - len(earlier)])
+            previous = prompt.delivered
             return True
         pack = build_pack(
             question, prompt.delivered, ctx, course.threat, course.league, course.concept_map
         )
         view = question_view(pack)
         text = fill(course.tutor.question(view).text, question_values(view))
-        answer = viewer.ask(Asked(pack, view, text, match, prompt))
+        answer = viewer.ask(Asked(pack, view, text, match, prompt, previous))
+        previous = prompt.delivered
         grade = ChoiceGrader().grade(pack, answer)
         attempt = Attempt(
             match_number=number,

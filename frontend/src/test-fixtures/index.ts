@@ -1,5 +1,6 @@
 // Real payloads captured from the API (seed 7's matches), for tests. JSON imports type pairs as number[] rather than
-// [number, number], so each is cast once here.
+// [number, number], so each is cast once here. The questions' `play_by_play` was written by hand to fit their clocks,
+// as the matches have changed since they were captured.
 import type { ConceptMap, Feedback, MatchSummary, Question, Report, TeamSheet } from '../api/client.ts'
 import conceptMapJson from './concept-map.json'
 import counterFeedbackJson from './counter-feedback.json'

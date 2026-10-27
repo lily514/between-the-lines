@@ -10,7 +10,7 @@ import type {
 	TeamSheet
 } from '../api/client.ts'
 
-/** A point in a match: where the last question left the viewer, so the next step can say how far play moved on. */
+/** A point in a match: when the last question was asked, so the page knows when the viewer reached the second half. */
 export interface Moment {
 	matchNumber: number
 	clock: string
@@ -34,7 +34,7 @@ export type Screen =
 	| { kind: 'pick'; status: Status; clubs: Club[]; busy: boolean }
 	| { kind: 'sheet'; sheet: TeamSheet; status: Status | null }
 	| { kind: 'loading'; message: string }
-	| { kind: 'step'; question: Question; from: Moment | null }
+	| { kind: 'step'; question: Question }
 	| { kind: 'question'; question: Question; busy: boolean }
 	| { kind: 'feedback'; question: Question; feedback: Feedback }
 	/** A scouting report; `then` is the question to go on to after halftime, or null to go back to Matches. */
@@ -163,10 +163,11 @@ export const reducer = (state: AppState, action: Action): AppState => {
 export const offersMap = (state: AppState) =>
 	state.viewer !== null && state.screen.kind !== 'welcome' && state.screen.kind !== 'pick'
 
-const arrived = (state: AppState, step: Question): AppState => {
-	const from = state.last?.matchNumber === step.match_number ? state.last : null
-	return { ...state, screen: { kind: 'step', question: step, from }, last: momentOf(step) }
-}
+const arrived = (state: AppState, step: Question): AppState => ({
+	...state,
+	screen: { kind: 'step', question: step },
+	last: momentOf(step)
+})
 
 /** Whether a step needs the halftime report first: it is in the second half, and the viewer hasn't had it yet. */
 export const needsHalftime = (state: AppState, step: NextStep): boolean =>

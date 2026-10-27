@@ -41,6 +41,7 @@ class AlwaysRight:
 
     stop_after: int | None = None
     told: list[Told] = field(default_factory=list[Told])
+    asked: list[Asked] = field(default_factory=list[Asked])
     started: list[MatchStart] = field(default_factory=list[MatchStart])
     answered: int = 0
 
@@ -51,6 +52,7 @@ class AlwaysRight:
         if self.stop_after is not None and self.answered == self.stop_after:
             raise StoppedError
         self.answered += 1
+        self.asked.append(asked)
         return ChoiceAnswer(asked.pack.correct_key)
 
     def tell(self, told: Told) -> None:
@@ -121,6 +123,24 @@ def test_a_stopped_match_carries_on_exactly_where_it_stopped() -> None:
     assert whole is not None and carried_on is not None
     assert carried_on.state == whole.state
     assert len(resumed.told) == len(whole.state.attempts) - 2
+
+
+def test_each_question_knows_where_the_one_before_it_was_asked_even_after_a_stop() -> None:
+    store = MemoryLearnerStore()
+    start_session(store, "lily", seed=3)
+    viewer = AlwaysRight()
+    watch_match(course(), store, "lily", viewer, lambda: NOW)
+    stopped = MemoryLearnerStore()
+    start_session(stopped, "lily", seed=3)
+    with pytest.raises(StoppedError):
+        watch_match(course(), stopped, "lily", AlwaysRight(stop_after=2), lambda: NOW)
+    resumed = AlwaysRight()
+    watch_match(course(), stopped, "lily", resumed, lambda: NOW)
+
+    assert viewer.asked[0].previous is None
+    for before, after in pairwise(viewer.asked):
+        assert after.previous == before.prompt.delivered
+    assert resumed.asked[0].previous == viewer.asked[1].prompt.delivered
 
 
 def test_a_finished_session_or_unknown_viewer_cannot_watch() -> None:

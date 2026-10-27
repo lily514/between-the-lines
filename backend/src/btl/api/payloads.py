@@ -2,7 +2,8 @@
 
 A question payload is built from the question view and the selector's timing only, never from
 the pack, so the right answer and the outcome facts can't reach the browser before the viewer
-answers. The feedback payload is the whole pack.
+answers. Its play-by-play comes from the match, and stops before the moment asked about. The
+feedback payload is the whole pack.
 """
 
 from collections.abc import Mapping
@@ -26,6 +27,7 @@ from btl.api.models import (
     Movement,
     OptionOut,
     PictureOut,
+    PlayByPlayOut,
     PlayerNumbersOut,
     PositionOut,
     QuestionOut,
@@ -33,10 +35,12 @@ from btl.api.models import (
     ScoreOut,
     SheetPlayerOut,
     SheetTeamOut,
+    SpellOut,
     StrandOut,
     StrandValueOut,
     TeamSheetOut,
     ThresholdsOut,
+    TouchOut,
     YourTeam,
 )
 from btl.concepts.phase import PhaseOfPlay
@@ -47,12 +51,13 @@ from btl.learn.evidence import Fact, Picture, percent_points
 from btl.learn.knowledge import Delivery
 from btl.learn.levels import level_word
 from btl.learn.matches import CatchUp, MatchState, ViewerMatch
+from btl.learn.play_by_play import play_by_play
 from btl.learn.questions import Form
 from btl.learn.report import Break, Report
 from btl.learn.session import Asked, Told
 from btl.learn.team_sheet import NEXT_STAGE, SheetPlayer, SheetTeam, TeamSheet
 from btl.schema.ids import TeamId
-from btl.schema.scoreboard import clock
+from btl.schema.scoreboard import clock, clock_seconds
 
 
 def question_payload(
@@ -102,6 +107,35 @@ def question_payload(
             clock=clock(delivered.period_id, delivered.time_seconds),
         ),
         catch_up=catch_up_text(caught, home, away),
+        play_by_play=play_by_play_payload(asked, home, away),
+    )
+
+
+def play_by_play_payload(asked: Asked, home: Club, away: Club) -> PlayByPlayOut:
+    """Who had the ball from where the viewer left off up to the moment the question is about."""
+    previous, candidate = asked.previous, asked.prompt.candidate
+    delivered = asked.prompt.delivered
+    after = None if previous is None else (previous.period_id, previous.time_seconds)
+    before = (candidate.period_id, candidate.time_seconds)
+    players = {player.player_id: player for player in (*home.squad, *away.squad)}
+    return PlayByPlayOut(
+        start=0.0 if after is None else clock_seconds(*after),
+        end=clock_seconds(delivered.period_id, delivered.time_seconds),
+        names_until=clock_seconds(*before),
+        spells=[
+            SpellOut(
+                side="home" if spell.team_id == home.team_id else "away",
+                touches=[
+                    TouchOut(
+                        at=clock_seconds(touch.period_id, touch.time_seconds),
+                        player=players[touch.player_id].full_name,
+                        number=players[touch.player_id].shirt_number,
+                    )
+                    for touch in spell.touches
+                ],
+            )
+            for spell in play_by_play(asked.match, after, before)
+        ],
     )
 
 

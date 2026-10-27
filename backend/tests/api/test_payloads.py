@@ -1,4 +1,5 @@
 import json
+from dataclasses import replace
 from typing import cast
 
 import numpy as np
@@ -127,6 +128,39 @@ def test_a_question_payload_says_when_the_moment_happened_and_when_it_is_asked()
         AWAY.short_name,
         "away",
     )
+
+
+def test_the_play_by_play_runs_from_the_last_question_and_stops_before_the_moment() -> None:
+    _, _, candidates = designed_with_candidates(0)
+    candidate = next(c for c in candidates if c.tag.concept is ConceptId.COUNTER_PRESS)
+    asked = asked_for(candidate, 1, Delivery.DEFERRED, 0)
+    assert asked is not None
+    left_off = Delivered(Delivery.LIVE, 1, candidate.time_seconds - 120, PhaseOfPlay.SETTLED)
+    asked = replace(asked, previous=left_off)
+
+    play = question_payload(asked, 1, HOME, AWAY, None, NO_CATCH_UP).play_by_play
+
+    assert (play.start, play.names_until, play.end) == (
+        candidate.time_seconds - 120,
+        candidate.time_seconds,
+        2000.0,
+    )
+    touches = [touch for spell in play.spells for touch in spell.touches]
+    assert touches
+    assert all(play.start < touch.at < play.names_until for touch in touches)
+    names = {player.full_name: player.shirt_number for player in (*HOME.squad, *AWAY.squad)}
+    assert all(names[touch.player] == touch.number for touch in touches)
+
+
+def test_the_first_question_s_play_by_play_starts_at_kick_off() -> None:
+    _, _, candidates = designed_with_candidates(0)
+    asked = asked_for(candidates[0], 1, Delivery.LIVE, 0)
+    assert asked is not None
+
+    play = question_payload(asked, 1, HOME, AWAY, None, NO_CATCH_UP).play_by_play
+
+    assert play.start == 0.0
+    assert play.spells[0].touches[0].at == asked.match.events[0].time_seconds
 
 
 @pytest.mark.parametrize(

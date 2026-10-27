@@ -304,5 +304,42 @@
 		"away": 0,
 		"clock": "32:45"
 	},
-	"catch_up": "No goals. It's still 1–0."
+	"catch_up": "No goals. It's still 1–0.",
+	"play_by_play": {
+		"start": 1800.0,
+		"end": 1965.2651183289806,
+		"names_until": 1965.2651183289806,
+		"spells": [
+			{
+				"side": "away",
+				"touches": [
+					{
+						"at": 1812.0,
+						"player": "Lukas Brennhof",
+						"number": 9
+					}
+				]
+			},
+			{
+				"side": "home",
+				"touches": [
+					{
+						"at": 1900.2,
+						"player": "Serhii Nowaković",
+						"number": 4
+					},
+					{
+						"at": 1904.6,
+						"player": "Stefan Jankčić",
+						"number": 8
+					},
+					{
+						"at": 1910.1,
+						"player": "Wout Hafhuis",
+						"number": 11
+					}
+				]
+			}
+		]
+	}
 }

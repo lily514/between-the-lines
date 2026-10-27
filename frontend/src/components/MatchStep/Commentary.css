@@ -1,0 +1,79 @@
+/* The match between questions, as a radio listener follows it. */
+
+.commentary {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	width: 100%;
+	padding: var(--s-4);
+	border: 1px solid var(--border);
+	border-radius: var(--r-tile);
+	background: var(--surface);
+}
+
+.commentary__clocks {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: var(--s-1) var(--s-3);
+}
+
+.commentary__clock {
+	font-family: var(--font-data);
+	font-size: var(--fs-display-xl);
+	line-height: var(--lh-display-xl);
+	font-variant-numeric: tabular-nums;
+	color: var(--text);
+}
+
+.commentary__countdown {
+	font-family: var(--font-data);
+	font-size: var(--fs-data);
+	font-variant-numeric: tabular-nums;
+	color: var(--text-muted);
+}
+
+.commentary__on-ball {
+	margin: 0;
+	font-size: var(--fs-body-l);
+	line-height: var(--lh-body-l);
+	color: var(--text-2);
+}
+
+.commentary__team {
+	font-weight: 700;
+}
+
+.commentary__team--home {
+	color: var(--home);
+}
+
+.commentary__team--away {
+	color: var(--away);
+}
+
+.commentary__player {
+	font-weight: 600;
+	color: var(--text);
+}
+
+.commentary__log {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	font-size: var(--fs-body-s);
+	color: var(--text-muted);
+}
+
+.commentary__log li:first-child {
+	color: var(--text-2);
+}
+
+.commentary__log-clock {
+	font-family: var(--font-data);
+	font-variant-numeric: tabular-nums;
+}

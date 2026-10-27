@@ -267,5 +267,62 @@
 		"away": 0,
 		"clock": "03:38"
 	},
-	"catch_up": null
+	"catch_up": null,
+	"play_by_play": {
+		"start": 0.0,
+		"end": 218.2488221241259,
+		"names_until": 182.8669409280334,
+		"spells": [
+			{
+				"side": "home",
+				"touches": [
+					{
+						"at": 0.0,
+						"player": "Bohdan Miloković",
+						"number": 8
+					},
+					{
+						"at": 3.1,
+						"player": "José Escorrieta",
+						"number": 6
+					},
+					{
+						"at": 7.4,
+						"player": "Dennis Hafkamp",
+						"number": 4
+					}
+				]
+			},
+			{
+				"side": "away",
+				"touches": [
+					{
+						"at": 96.2,
+						"player": "Aarav Lindqvist",
+						"number": 5
+					},
+					{
+						"at": 101.0,
+						"player": "Tomás Ferreiro",
+						"number": 10
+					}
+				]
+			},
+			{
+				"side": "home",
+				"touches": [
+					{
+						"at": 150.3,
+						"player": "Vitor Fonbeira",
+						"number": 7
+					},
+					{
+						"at": 155.8,
+						"player": "Bohdan Miloković",
+						"number": 8
+					}
+				]
+			}
+		]
+	}
 }

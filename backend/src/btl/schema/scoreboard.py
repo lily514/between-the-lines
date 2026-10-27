@@ -9,9 +9,14 @@ from btl.schema.vocab import Result
 PERIOD_MINUTES = 45
 
 
+def clock_seconds(period_id: int, time_seconds: float) -> float:
+    """Seconds on the match clock, which counts on from 45:00 in the second half."""
+    return time_seconds + (period_id - 1) * PERIOD_MINUTES * 60
+
+
 def clock(period_id: int, time_seconds: float) -> str:
     """Time on the match clock, e.g. ``68:12`` for 23 min 12 s into the second half."""
-    seconds = int(time_seconds) + (period_id - 1) * PERIOD_MINUTES * 60
+    seconds = int(clock_seconds(period_id, time_seconds))
     return f"{seconds // 60:02d}:{seconds % 60:02d}"
 
 

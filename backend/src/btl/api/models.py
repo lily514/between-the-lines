@@ -80,6 +80,36 @@ class ScoreOut(BaseModel):
     clock: str | None
 
 
+class TouchOut(BaseModel):
+    """A player on the ball, at ``at`` seconds on the match clock."""
+
+    at: float
+    player: str
+    number: int
+
+
+class SpellOut(BaseModel):
+    """One side's spell on the ball, as the play-by-play covers it."""
+
+    side: Literal["home", "away"]
+    touches: list[TouchOut]
+
+
+class PlayByPlayOut(BaseModel):
+    """Who had the ball between the viewer's last question and the next, for the page to play.
+
+    Times are seconds on the match clock: ``start`` where the viewer left off (0 at kick-off),
+    ``end`` when the next question is asked. The spells stop at ``names_until``, the moment the
+    question is about, so they say nothing of how that play turned out; a question saved for a
+    stoppage has play between it and ``end`` that goes unnamed.
+    """
+
+    start: float
+    end: float
+    names_until: float
+    spells: list[SpellOut]
+
+
 class QuestionOut(BaseModel):
     """The next question, built from its question view only.
 
@@ -108,6 +138,7 @@ class QuestionOut(BaseModel):
     picture: PictureOut
     score: ScoreOut
     catch_up: str | None
+    play_by_play: PlayByPlayOut
 
 
 class Bar(BaseModel):

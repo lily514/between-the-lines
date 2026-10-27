@@ -452,7 +452,7 @@ const App = () => {
 							home={screen.question.home}
 							away={screen.question.away}
 							matchNumber={screen.question.match_number}
-							from={screen.from?.clock ?? null}
+							play={screen.question.play_by_play}
 							to={screen.question.delivered}
 							occurred={screen.question.occurred}
 							score={`${String(screen.question.score.home)}–${String(screen.question.score.away)}`}

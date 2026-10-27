@@ -90,7 +90,7 @@ concepts:
     tier: 0
     prerequisites: []
     objective: "Recognize how a team wins the ball back: tackles, interceptions, and loose balls."
-    detector: null
+    detector: ball_win
     data_requirements: [events]
     question_types: [identify]
     example_prompt: "How did the defending team just win the ball back?"

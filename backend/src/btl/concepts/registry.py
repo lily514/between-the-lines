@@ -2,6 +2,7 @@
 
 from collections.abc import Sequence
 
+from btl.concepts.ball_win import BallWin
 from btl.concepts.base import ConceptTag, Detector, MatchContext
 from btl.concepts.counter_attack import CounterAttack
 from btl.concepts.counter_press import CounterPress
@@ -19,6 +20,7 @@ ALL_DETECTORS: tuple[Detector, ...] = (
     BallOutOfPlay(),
     OffsidePass(),
     FoulCommitted(),
+    BallWin(),
 )
 
 

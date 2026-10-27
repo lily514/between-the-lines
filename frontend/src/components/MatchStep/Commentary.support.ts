@@ -1,4 +1,5 @@
 import type { Question } from '../../api/client.ts'
+import { DEFAULT_PLAYBACK, type Playback } from '../Preferences/index.support.ts'
 
 export type PlayByPlay = Question['play_by_play']
 export type Side = PlayByPlay['spells'][number]['side']
@@ -6,17 +7,19 @@ export type Touch = PlayByPlay['spells'][number]['touches'][number]
 export type FeedEntry = PlayByPlay['feed'][number]
 export type Stats = PlayByPlay['stats'][number]
 
-/** The clock runs at a minute of match time per 1.5 s, sped up so no run takes longer than 20 s. */
-const MS_PER_MATCH_MINUTE = 1500
+/** In demo mode no run takes longer than this; a long gap between questions plays faster to fit. */
 const LONGEST_RUN_MS = 20_000
 
-/** How long the page takes to play the match from where the viewer left off to the next question. */
-export const runMs = (play: PlayByPlay): number =>
-	Math.min(LONGEST_RUN_MS, (Math.max(0, play.end - play.start) / 60) * MS_PER_MATCH_MINUTE)
+/** How long the page takes to play the match from where the viewer left off to the next question, at the chosen
+ * speed. */
+export const runMs = (play: PlayByPlay, playback: Playback = DEFAULT_PLAYBACK): number => {
+	const run = (Math.max(0, play.end - play.start) * 1000) / playback.speed
+	return playback.demo ? Math.min(LONGEST_RUN_MS, run) : run
+}
 
 /** How many times faster than real time the run plays the match, e.g. 40; null when there is nothing to play. */
-export const playbackSpeed = (play: PlayByPlay): number | null => {
-	const run = runMs(play)
+export const playbackSpeed = (play: PlayByPlay, playback: Playback = DEFAULT_PLAYBACK): number | null => {
+	const run = runMs(play, playback)
 	return run <= 0 ? null : Math.round((play.end - play.start) / (run / 1000))
 }
 

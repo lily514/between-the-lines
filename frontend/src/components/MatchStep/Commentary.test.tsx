@@ -193,3 +193,12 @@ test('the stream view says how fast the clock plays the match: 40× at most, fas
 		slot.remove()
 	}
 })
+
+test('the run follows the chosen speed, and only demo mode squeezes a long gap into 20 s', () => {
+	const gap = identify.end - identify.start
+	expect(runMs(identify, { speed: 40, demo: false })).toBeCloseTo((gap * 1000) / 40)
+	expect(runMs(identify, { speed: 40, demo: true })).toBe(20_000)
+	expect(runMs(identify, { speed: 1, demo: false })).toBeCloseTo(gap * 1000)
+	expect(playbackSpeed(identify, { speed: 1, demo: false })).toBe(1)
+	expect(playbackSpeed(predictQuestion.play_by_play, { speed: 80, demo: true })).toBe(80)
+})

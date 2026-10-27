@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
 	clockAt,
@@ -12,6 +12,7 @@ import {
 	type PlayByPlay,
 	type Teams
 } from './Commentary.support.ts'
+import { DEFAULT_PLAYBACK, type Playback } from '../Preferences/index.support.ts'
 import EarlierNotes from './EarlierNotes.tsx'
 import MatchFeed from './MatchFeed.tsx'
 import NowCard from './NowCard.tsx'
@@ -30,22 +31,36 @@ export interface CommentaryProps {
 	onReached?: () => void
 	/** The question is showing, so the clock stands at its moment: a skip ahead jumps the feed there too. */
 	atQuestion?: boolean
+	/** How fast the feed plays, and whether demo mode caps each run. */
+	playback?: Playback
 }
 
 /** The match between questions, as a text feed follows it: the clock running on to the next question, the score and
  * numbers, who is on the ball and what they do with it, and the feed from kick-off. Everything it says comes from the
  * play-by-play the server sent. In the panel it is the phone's compact version, with the rest in a sheet. */
-const Commentary = ({ play, teams, streamSlot = null, onReached, atQuestion = false }: CommentaryProps) => {
+const Commentary = ({
+	play,
+	teams,
+	streamSlot = null,
+	onReached,
+	atQuestion = false,
+	playback = DEFAULT_PLAYBACK
+}: CommentaryProps) => {
 	const [at, setAt] = useState(play.start)
 	const [notesOpen, setNotesOpen] = useState(false)
+	// Where the clock has got to, so a change of speed carries on from there rather than starting the run again.
+	const progress = useRef({ play, at: play.start })
 
 	useEffect(() => {
 		if (atQuestion) return
-		const run = runMs(play)
+		const from = progress.current.play === play ? progress.current.at : play.start
+		const rest = { ...play, start: from }
+		const run = runMs(rest, playback)
 		const began = performance.now()
 		let frame = 0
 		const tick = (now: number) => {
-			const next = clockAt(play, now - began, run)
+			const next = clockAt(rest, now - began, run)
+			progress.current = { play, at: next }
 			setAt(next)
 			if (next < play.end) frame = requestAnimationFrame(tick)
 			else onReached?.()
@@ -54,7 +69,7 @@ const Commentary = ({ play, teams, streamSlot = null, onReached, atQuestion = fa
 		return () => {
 			cancelAnimationFrame(frame)
 		}
-	}, [play, onReached, atQuestion])
+	}, [play, playback, onReached, atQuestion])
 
 	// Once the question shows the clock stands at its moment, even if the run hadn't got there.
 	const now = atQuestion ? play.end : at
@@ -107,7 +122,7 @@ const Commentary = ({ play, teams, streamSlot = null, onReached, atQuestion = fa
 						clock={clock}
 						countdown={countdown}
 						asked={asked}
-						speed={playbackSpeed(play)}
+						speed={playbackSpeed(play, playback)}
 					/>,
 					streamSlot
 				)}

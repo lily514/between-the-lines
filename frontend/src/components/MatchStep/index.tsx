@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import type { Question } from '../../api/client.ts'
+import { DEFAULT_PLAYBACK, type Playback } from '../Preferences/index.support.ts'
 import './index.css'
 import { movedOn, stepHeading, stepPhase, whyNow } from './index.support.ts'
 import PhasePill from '../Shared/PhasePill.tsx'
@@ -24,6 +25,8 @@ export interface MatchStepProps {
 	catchUp: string | null
 	/** Which side is the viewer's team, tagged "You" in the fixture. */
 	yours: 'home' | 'away' | null
+	/** How fast the match feed plays, and whether demo mode caps each run. */
+	playback?: Playback
 	/** Where the stream view shows the match feed on a wide screen. */
 	streamSlot?: HTMLElement | null
 	onArrive: () => void
@@ -44,6 +47,7 @@ const MatchStep = ({
 	catchUp,
 	yours,
 	streamSlot = null,
+	playback = DEFAULT_PLAYBACK,
 	onArrive
 }: MatchStepProps) => {
 	const heading = useRef<HTMLHeadingElement>(null)
@@ -85,6 +89,7 @@ const MatchStep = ({
 				streamSlot={streamSlot}
 				onReached={reach}
 				atQuestion={reached}
+				playback={playback}
 			/>
 			{reached && <PhasePill phase={stepPhase(to)} detail={live ? null : to.restart} />}
 			<h2 id={headingId} ref={heading} tabIndex={-1} className="match-step__heading screen-heading">

@@ -545,7 +545,10 @@ run (up to 20 s), and the match feed jumps to the moment with it (`atQuestion`),
 
 ## After T16 — How fast the feed plays (2026-10-27)
 **Plan said:** nothing.
-**We did:** the stream view's header shows how fast the clock plays the match, e.g. "40×" (`playbackSpeed`): a match
-minute every 1.5 s is 40×, and a long run squeezed into 20 s is faster. It isn't configurable.
-**Why:** a viewer couldn't tell the feed runs far faster than a real match.
+**We did:** the stream view's header shows how fast the clock plays the match, e.g. "40×" (`playbackSpeed`).
+Preferences set it: Feed speed (1×, 20×, 40× or 80×; 1× is real time) and Demo mode (on or off). Demo mode keeps
+the old cap, so no wait between questions is longer than 20 s and a long one plays faster to fit; off, every run
+plays at the chosen speed. Both are kept in this browser, like the theme, and start at 40× in demo mode, as before.
+A change of speed mid-run carries on from where the clock has got to.
+**Why:** a viewer couldn't tell the feed runs far faster than a real match, and the 20 s cap is for demos.
 **Affects:** nothing.

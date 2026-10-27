@@ -48,7 +48,15 @@ import { PANEL_DEFAULT, rememberedPanelWidth, rememberPanelWidth } from './Share
 import Feedback from './Feedback/index.tsx'
 import Matches from './Matches/index.tsx'
 import Preferences from './Preferences/index.tsx'
-import { applyTheme, rememberedTheme, rememberTheme, type Theme } from './Preferences/index.support.ts'
+import {
+	applyTheme,
+	rememberedPlayback,
+	rememberedTheme,
+	rememberPlayback,
+	rememberTheme,
+	type Playback,
+	type Theme
+} from './Preferences/index.support.ts'
 import MatchStep from './MatchStep/index.tsx'
 import PickTeam from './PickTeam/index.tsx'
 import QuestionSheet from './QuestionSheet/index.tsx'
@@ -77,6 +85,7 @@ const App = () => {
 	const [panelWidth, setPanelWidth] = useState(rememberedPanelWidth)
 	const [curriculum, setCurriculum] = useState<ConceptMap | null>(null)
 	const [theme, setTheme] = useState<Theme>(rememberedTheme)
+	const [playback, setPlayback] = useState<Playback>(rememberedPlayback)
 	// The stream view's place for the match feed; the step screen draws it there on a wide screen.
 	const [streamSlot, setStreamSlot] = useState<HTMLDivElement | null>(null)
 	const panel = useRef<HTMLElement>(null)
@@ -407,6 +416,7 @@ const App = () => {
 						<Preferences
 							status={state.overlay.status}
 							theme={theme}
+							playback={playback}
 							busy={state.overlay.busy}
 							onPace={pace => {
 								if (state.overlay?.kind === 'preferences' && state.overlay.status !== null) {
@@ -416,6 +426,10 @@ const App = () => {
 							onTheme={chosen => {
 								setTheme(chosen)
 								rememberTheme(chosen)
+							}}
+							onPlayback={chosen => {
+								setPlayback(chosen)
+								rememberPlayback(chosen)
 							}}
 							onChangeTeam={() => {
 								if (state.overlay?.kind === 'preferences' && state.overlay.status !== null) {
@@ -514,6 +528,7 @@ const App = () => {
 							catchUp={screen.question.catch_up}
 							yours={screen.question.your_team}
 							streamSlot={streamSlot}
+							playback={playback}
 							onArrive={() => {
 								dispatch({ type: 'open' })
 							}}

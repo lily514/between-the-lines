@@ -41,3 +41,52 @@ export const applyTheme = (theme: Theme) => {
 	if (theme === 'system') delete document.documentElement.dataset.theme
 	else document.documentElement.dataset.theme = theme
 }
+
+/** How many times faster than real time the match feed plays; 1 is real time. */
+export type FeedSpeed = 1 | 20 | 40 | 80
+
+/** How the match feed plays between questions. In demo mode no gap between questions takes longer than 20 s. */
+export interface Playback {
+	speed: FeedSpeed
+	demo: boolean
+}
+
+export const FEED_SPEEDS: { value: FeedSpeed; label: string }[] = [
+	{ value: 1, label: '1×' },
+	{ value: 20, label: '20×' },
+	{ value: 40, label: '40×' },
+	{ value: 80, label: '80×' }
+]
+
+export const DEMO_OPTIONS: { value: boolean; label: string }[] = [
+	{ value: true, label: 'On' },
+	{ value: false, label: 'Off' }
+]
+
+export const DEFAULT_PLAYBACK: Playback = { speed: 40, demo: true }
+
+const SPEED_KEY = 'btl.feedSpeed'
+const DEMO_KEY = 'btl.demo'
+
+// Kept in this browser only, like the theme; without storage the feed plays at 40× in demo mode.
+export const rememberedPlayback = (): Playback => {
+	try {
+		const speed = Number(localStorage.getItem(SPEED_KEY))
+		return {
+			speed: FEED_SPEEDS.find(option => option.value === speed)?.value ?? DEFAULT_PLAYBACK.speed,
+			demo: localStorage.getItem(DEMO_KEY) !== 'off'
+		}
+	} catch {
+		return DEFAULT_PLAYBACK
+	}
+}
+
+export const rememberPlayback = (playback: Playback) => {
+	try {
+		localStorage.setItem(SPEED_KEY, String(playback.speed))
+		if (playback.demo) localStorage.removeItem(DEMO_KEY)
+		else localStorage.setItem(DEMO_KEY, 'off')
+	} catch {
+		// Not remembered: the next visit plays at 40× in demo mode.
+	}
+}

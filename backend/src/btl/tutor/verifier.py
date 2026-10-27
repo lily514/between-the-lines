@@ -370,9 +370,11 @@ def _echoes(text: str, values: Mapping[str, str]) -> list[Failure]:
                 if run == words[start + size : start + 2 * size] and any(w.isalpha() for w in run):
                     failures.append(Failure("echo", f'"{" ".join(run)}" is said twice in a row'))
     # A name or phrase written out in the same sentence as its own slot ("{receiver} (#8 …)").
+    # Slots are taken in the order they appear, so the failures, and the repair prompt that
+    # lists them, read the same every time: a set's order would change from one run to the next.
     for sentence in FULL_STOP.split(text.strip()):
         literal = SLOT.sub(" ", sentence).lower()
-        for name in slot_names(sentence):
+        for name in dict.fromkeys(SLOT.findall(sentence)):
             value = values.get(name, "").lower()
             if " " in value.strip() and value in literal:
                 failures.append(Failure("echo", f"{{{name}}}'s value is also written out"))

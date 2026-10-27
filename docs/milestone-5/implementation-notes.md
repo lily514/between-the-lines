@@ -16,11 +16,10 @@
   new to the viewer (record version 4 remembers which) and a Level-up tells each concept that moved up, then the
   level list and the unlock note.
 
-**What was cut:** nothing from the plan. The Tutor evaluation's recorded replies could not be re-recorded without the
-model (see T5): four tests in `tests/tutor/test_evaluation.py` fail until Lily records them.
+**What was cut:** nothing from the plan. The Tutor evaluation's recorded replies were re-recorded with the model
+after the run (see "After T16" below).
 
 **What carries over:**
-- Re-record `tests/fixtures/tutor-replies.json` with the model and update the counts in `test_evaluation.py` (T5).
 - The demo viewer (seed 7, answering as the terminal demo does) never reaches Transitions or Counter-pressing in
   three matches, by the accepted gating; a viewer answering well reaches both by match 2 (T7).
 - Headless Chrome here enforces a 500 px minimum viewport; `tmp/cdp-shot.mjs` drives screenshots over the
@@ -92,11 +91,7 @@ the shot opens the possession.
 - **The Tutor evaluation's recorded replies no longer cover every prompt.** `tests/fixtures/tutor-replies.json`
   holds real model replies keyed by the exact request; the evaluation samples seed 0's designed matches, which
   have changed, so some prompts have no recorded reply and the tests in `tests/tutor/test_evaluation.py`
-  fail. Re-recording needs the Foundry model, which this run never calls. **Lily:** from `backend/`, save
-  `tests.fixtures.learning.threat_model()` to a file and run
-  `uv run btl tutor-eval --model FILE --seeds 1 --per-kind 1 --record tests/fixtures/tutor-replies.json`
-  once, after T7, since the new concepts add kinds of question too; then update the counts in
-  `test_the_recorded_replies_still_pass_as_they_did` and the report line to what the recording gives.
+  fail. Re-recording needs the Foundry model, which this run never calls. Done after T16 (see "After T16").
 - **The page's captured fixtures are stale** (`frontend/src/test-fixtures/*.json`): they are real payloads from
   seed 7's matches, which have changed. T15 refreshes them from the running API.
 - These four notes were written with their tasks but reached the file only after T5: the command that appended
@@ -445,3 +440,22 @@ concepts and the story flows under "Try the web page", five new screenshots, Sol
 line, "eight" where it said five). No merge: the branch stops here for review.
 **Why:** nothing to add.
 **Affects:** nothing.
+
+## After T16 — Re-recording the Tutor's replies (2026-10-27)
+
+**Plan said:** nothing; T5 left the recording to Lily, since it needs the model.
+**We did:** re-recorded `tests/fixtures/tutor-replies.json` with `gpt-5.4-nano` (prompt version 5): 144 wordings
+over 8 concepts, 178 replies. Two things got in the way:
+- **`--record` can't finish in one go.** Of 176 calls, 1 then 5 got no usable reply (transient service errors),
+  and `--record` writes only the replies a run got, so each run left holes the tests' `ReplayClient` can't fill.
+  A one-off script (not in the repo) replayed what was recorded and asked the model only for the gaps, merging
+  the result: 7 more calls, and every request had a reply.
+- **The repair prompt wasn't stable.** The Verifier's echo check took a sentence's slots from a set, so when two
+  slots echoed in one sentence (`{answer}` and `{chosen}` after a right pick: common for the new "where won"
+  question) the failures came out in a hash-dependent order, and the repair request, which lists them, got a
+  different key from one process to the next. The replay then missed it in about a third of runs. The check now
+  takes the slots in the order they appear; a test holds that order both ways.
+- Counts updated: `test_the_recorded_replies_still_pass_as_they_did`, the report line, and the CLI's replay test
+  (32 model samples, four per concept).
+**Why:** the tests must replay without the model, and a prompt's key has to be the same every time.
+**Affects:** the "Checks failed" numbers in `docs/milestone-2b/` are from the old recording; nothing else.

@@ -43,10 +43,11 @@ def test_the_recorded_replies_still_pass_as_they_did() -> None:
     shown = Counter((w.kind, w.shown) for w in replayed())
 
     assert shown == {
-        ("question", "first try"): 30,
-        ("feedback", "first try"): 45,
-        ("feedback", "repaired"): 9,
-        ("feedback", "template"): 6,
+        ("question", "first try"): 46,
+        ("question", "template"): 2,
+        ("feedback", "first try"): 64,
+        ("feedback", "repaired"): 25,
+        ("feedback", "template"): 7,
     }
     assert all("{" not in w.text for w in replayed())
 
@@ -54,8 +55,8 @@ def test_the_recorded_replies_still_pass_as_they_did() -> None:
 def test_the_report_gives_rates_checks_and_cost() -> None:
     text = report(replayed(), PROMPT_VERSION, "gpt-5.4-nano", price_in=0.1, price_out=0.4)
 
-    assert text.startswith(f"Prompt version {PROMPT_VERSION}, model gpt-5.4-nano: 90 wordings")
-    assert "| Questions | 30 | 30 (100%) | 0 (0%) | 0 (0%) | 30 (100%) |" in text
+    assert text.startswith(f"Prompt version {PROMPT_VERSION}, model gpt-5.4-nano: 144 wordings")
+    assert "| Questions | 48 | 46 (96%) | 0 (0%) | 2 (4%) | 46 (96%) |" in text
     assert "| Fouls and cards |" in text and "| after the foul |" in text
     assert "| grounded |" in text and "Estimated cost: $" in text
 

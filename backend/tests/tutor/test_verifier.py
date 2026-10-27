@@ -187,6 +187,29 @@ def test_a_value_written_out_beside_its_slot_is_an_echo() -> None:
     assert verify_feedback(said_twice, pack, grade).reasons == ("echo",)
 
 
+def test_two_echoes_in_one_sentence_are_reported_in_the_order_the_slots_appear() -> None:
+    # A repair request lists the failures, so their order must not change from run to run.
+    pack = restart_pack_with_a_corner()
+    grade = Grade(correct=True, chosen=pack.correct_key)
+    label = next(o.label for o in pack.options if o.correct)
+    team = pack.outcome["restart_team"].display
+    answer_first = FeedbackText(f"{{answer}} ({label}) went to {{restart_team}} ({team}).", "x", 0)
+    team_first = FeedbackText(f"{{restart_team}} ({team}) got {{answer}} ({label}).", "x", 0)
+
+    def echoes(text: FeedbackText) -> list[str]:
+        failures = verify_feedback(text, pack, grade).failures
+        return [f.reason for f in failures if f.reason.endswith("is also written out")]
+
+    assert echoes(answer_first) == [
+        "{answer}'s value is also written out",
+        "{restart_team}'s value is also written out",
+    ]
+    assert echoes(team_first) == [
+        "{restart_team}'s value is also written out",
+        "{answer}'s value is also written out",
+    ]
+
+
 def test_a_whole_sentence_fact_inside_another_sentence_is_an_echo() -> None:
     pack = first_of(Asks.AFTER_THE_FOUL)
     wrong = next(o for o in pack.options if not o.correct)

@@ -89,7 +89,8 @@ def test_tutor_eval_replays_recorded_replies_and_writes_samples(tmp_path: Path) 
 
     assert result.exit_code == 0, result.output
     assert f"Prompt version {PROMPT_VERSION}, model gpt-5.4-nano" in result.output
-    assert (tmp_path / "samples.md").read_text().count("**Model**") == 20
+    # Four samples for each of the eight concepts asked about now.
+    assert (tmp_path / "samples.md").read_text().count("**Model**") == 32
 
 
 def test_tutor_eval_refuses_replies_recorded_for_another_prompt(tmp_path: Path) -> None:

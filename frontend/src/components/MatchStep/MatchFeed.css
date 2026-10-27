@@ -8,6 +8,22 @@
 	min-height: 0;
 }
 
+/* The pitch keeps to part of the column, so the feed list below it still has room to scroll. */
+.match-feed__pitch {
+	display: flex;
+	flex: none;
+	justify-content: center;
+}
+
+.match-feed__pitch:empty {
+	display: none;
+}
+
+.match-feed__pitch .pitch {
+	width: auto;
+	height: clamp(220px, 40dvh, 440px);
+}
+
 .match-feed__top {
 	display: flex;
 	flex-wrap: wrap;

@@ -33,3 +33,12 @@ Pitch and Scene tests pass unchanged. `trackAt` picks the latest keyframe at or 
 the latest touch, so across half-time the pitch and the commentary agree.
 **Why:** a second copy of the markings and player glyph would drift; the hook was private to the Scene.
 **Affects:** nothing.
+
+## T4 — In the stream view (2026-10-27)
+**Plan said:** the moving pitch at the top of the stream view, above the scorebug.
+**We did:** as planned, with the pitch's height clamped to 220–440 px (40% of the window between), so the feed list
+below it keeps room to scroll. The three captured question fixtures gained a hand-made `track` that fits their
+clocks, as their `play_by_play` was written by hand: a keyframe at each touch and a closing frame at `names_until`
+with the picture's own players, turned so home attacks up. Not yet seen in a browser; that is T5.
+**Why:** a portrait pitch at full column width would push the feed off the screen.
+**Affects:** T5 checks the clamp on a short window.

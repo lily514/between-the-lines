@@ -130,6 +130,52 @@ test('given a slot in the stream view, the match feed shows there, and the panel
 	}
 })
 
+const ballIn = (slot: HTMLElement) => {
+	const ball = within(slot).getByTestId('moving-pitch-ball')
+	return [ball.getAttribute('cx'), ball.getAttribute('cy')]
+}
+
+test('in the stream view the pitch moves with the match clock; the panel keeps to words', () => {
+	const slot = hidden()
+	try {
+		vi.useFakeTimers({ toFake: ['requestAnimationFrame', 'cancelAnimationFrame', 'performance'] })
+		render(<Commentary play={counter} teams={teamsOf(counterQuestion)} streamSlot={slot} />)
+		expect(slot).toHaveTextContent('Pitch and feed · follow the match clock')
+		const atKickOff = ballIn(slot)
+		act(() => {
+			vi.advanceTimersByTime(runMs(counter) * 0.6)
+		})
+		expect(ballIn(slot)).not.toEqual(atKickOff)
+		expect(document.querySelectorAll('[data-testid="moving-pitch"]')).toHaveLength(1)
+		expect(screen.getByRole('timer', { name: 'Match clock' }).closest('.commentary')).not.toContainElement(
+			within(slot).getByTestId('moving-pitch')
+		)
+	} finally {
+		vi.useRealTimers()
+		slot.remove()
+	}
+})
+
+test('after a saved moment the pitch holds its last frame until the question', () => {
+	const slot = hidden()
+	try {
+		vi.useFakeTimers({ toFake: ['requestAnimationFrame', 'cancelAnimationFrame', 'performance'] })
+		render(<Commentary play={identify} teams={teamsOf(identifyQuestion)} streamSlot={slot} />)
+		// The moment is at 05:12 and the question at the stoppage at 13:59: past 40% of the run, play goes unnamed.
+		act(() => {
+			vi.advanceTimersByTime(runMs(identify) * 0.5)
+		})
+		const held = ballIn(slot)
+		act(() => {
+			vi.advanceTimersByTime(runMs(identify) * 0.4)
+		})
+		expect(ballIn(slot)).toEqual(held)
+	} finally {
+		vi.useRealTimers()
+		slot.remove()
+	}
+})
+
 test('the feed marks a goal with the score after it, and lists a move’s players in turn', () => {
 	const slot = hidden()
 	try {

@@ -1,6 +1,8 @@
 import type { Heard, Teams } from './Commentary.support.ts'
 import FeedList from './FeedList.tsx'
 import MatchStats from './MatchStats.tsx'
+import MovingPitch from './MovingPitch.tsx'
+import type { Track } from './MovingPitch.support.ts'
 import NowCard from './NowCard.tsx'
 import Scorebug from './Scorebug.tsx'
 import './MatchFeed.css'
@@ -14,11 +16,15 @@ export interface MatchFeedProps {
 	asked: boolean
 	/** How many times faster than real time the clock runs; null when it doesn't run. */
 	speed: number | null
+	/** Where the players and the ball were, from the server. */
+	track: Track
+	/** Seconds on the match clock. */
+	at: number
 }
 
-/** The match as a text feed, standing in for the viewer's TV on a wide screen: the scorebug, the latest action, the
+/** The match standing in for the viewer's TV on a wide screen: the moving pitch, the scorebug, the latest action, the
  * numbers and the feed from kick-off, all following the match clock. */
-const MatchFeed = ({ teams, heard, clock, countdown, asked, speed }: MatchFeedProps) => (
+const MatchFeed = ({ teams, heard, clock, countdown, asked, speed, track, at }: MatchFeedProps) => (
 	<div className="match-feed">
 		<div className="match-feed__top">
 			<span className="match-feed__stand-in">
@@ -26,7 +32,7 @@ const MatchFeed = ({ teams, heard, clock, countdown, asked, speed }: MatchFeedPr
 				Stand-in for your TV
 			</span>
 			<span className="match-feed__note">
-				Text feed · follows the match clock
+				Pitch and feed · follow the match clock
 				{speed !== null && (
 					<span className="match-feed__speed" aria-label={`Playing at ${String(speed)} times real speed`}>
 						<SpeedIcon />
@@ -34,6 +40,9 @@ const MatchFeed = ({ teams, heard, clock, countdown, asked, speed }: MatchFeedPr
 					</span>
 				)}
 			</span>
+		</div>
+		<div className="match-feed__pitch">
+			<MovingPitch track={track} at={at} yours={teams.yours} />
 		</div>
 		<Scorebug teams={teams} stats={heard.stats} clock={clock} countdown={countdown} />
 		<NowCard teams={teams} clock={clock} onBall={heard.onBall} asked={asked} />

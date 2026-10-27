@@ -123,6 +123,8 @@ const Commentary = ({
 						countdown={countdown}
 						asked={asked}
 						speed={playbackSpeed(play, playback)}
+						track={play.track}
+						at={now}
 					/>,
 					streamSlot
 				)}

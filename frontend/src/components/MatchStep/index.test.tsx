@@ -4,13 +4,13 @@ import { identifyQuestion, predictQuestion } from '../../test-fixtures/index.ts'
 import MatchStep from './index.tsx'
 import { movedOn, stepHeading, whyNow } from './index.support.ts'
 
-const stepTo = (question: typeof identifyQuestion, from: string | null = null, onArrive = vi.fn()) =>
+const stepTo = (question: typeof identifyQuestion, onArrive = vi.fn()) =>
 	render(
 		<MatchStep
 			home={question.home}
 			away={question.away}
 			matchNumber={question.match_number}
-			from={from}
+			play={question.play_by_play}
 			to={question.delivered}
 			occurred={question.occurred}
 			score={null}
@@ -29,10 +29,10 @@ test('a review question’s step says play has stopped, and why the question com
 })
 
 test('a live question’s step is in settled possession', () => {
-	stepTo(predictQuestion, '13:59')
+	stepTo(predictQuestion)
 	expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Settled possession at 32:45')
 	expect(screen.getByText('Settled possession')).toBeInTheDocument()
-	expect(screen.getByText('The match moves on from 13:59 to 32:45.')).toBeInTheDocument()
+	expect(screen.getByText('The match moves on from 30:00 to 32:45.')).toBeInTheDocument()
 	expect(screen.getByRole('button', { name: 'Make your read' })).toBeInTheDocument()
 })
 
@@ -47,7 +47,7 @@ test('a live question as play stops says so, with the dead ball and no restart n
 
 test('focus moves to the step’s heading, and the button arrives at the question', async () => {
 	const onArrive = vi.fn()
-	stepTo(identifyQuestion, null, onArrive)
+	stepTo(identifyQuestion, onArrive)
 	expect(screen.getByRole('heading', { level: 2 })).toHaveFocus()
 	await userEvent.click(screen.getByRole('button', { name: 'See the question' }))
 	expect(onArrive).toHaveBeenCalledOnce()
@@ -66,7 +66,7 @@ test('the viewer’s team is tagged in the fixture, not by colour alone', () => 
 })
 
 test('after an answer, the step says what happened while the viewer was answering', () => {
-	stepTo(predictQuestion, '13:59')
+	stepTo(predictQuestion)
 	expect(screen.getByText('While you were answering:')).toBeInTheDocument()
 	expect(screen.getByText(/No goals\. It's still 1–0\./)).toBeInTheDocument()
 })

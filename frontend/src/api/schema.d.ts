@@ -706,6 +706,25 @@ export interface components {
             ][];
         };
         /**
+         * PlayByPlayOut
+         * @description Who had the ball between the viewer's last question and the next, for the page to play.
+         *
+         *     Times are seconds on the match clock: ``start`` where the viewer left off (0 at kick-off),
+         *     ``end`` when the next question is asked. The spells stop at ``names_until``, the moment the
+         *     question is about, so they say nothing of how that play turned out; a question saved for a
+         *     stoppage has play between it and ``end`` that goes unnamed.
+         */
+        PlayByPlayOut: {
+            /** End */
+            end: number;
+            /** Names Until */
+            names_until: number;
+            /** Spells */
+            spells: components["schemas"]["SpellOut"][];
+            /** Start */
+            start: number;
+        };
+        /**
          * PlayerNumbersOut
          * @description A player's numbers from the watched matches they started.
          */
@@ -780,6 +799,7 @@ export interface components {
             /** Pack Id */
             pack_id: string;
             picture: components["schemas"]["PictureOut"];
+            play_by_play: components["schemas"]["PlayByPlayOut"];
             score: components["schemas"]["ScoreOut"];
             /** Text */
             text: string;
@@ -890,6 +910,19 @@ export interface components {
             yours: boolean;
         };
         /**
+         * SpellOut
+         * @description One side's spell on the ball, as the play-by-play covers it.
+         */
+        SpellOut: {
+            /**
+             * Side
+             * @enum {string}
+             */
+            side: "home" | "away";
+            /** Touches */
+            touches: components["schemas"]["TouchOut"][];
+        };
+        /**
          * StartIn
          * @description Start watching, or carry on. Without a seed, the viewer's name chooses their matches.
          *
@@ -986,6 +1019,18 @@ export interface components {
             mastery: number;
             /** Unlock */
             unlock: number;
+        };
+        /**
+         * TouchOut
+         * @description A player on the ball, at ``at`` seconds on the match clock.
+         */
+        TouchOut: {
+            /** At */
+            at: number;
+            /** Number */
+            number: number;
+            /** Player */
+            player: string;
         };
         /** ValidationError */
         ValidationError: {

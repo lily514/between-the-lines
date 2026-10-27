@@ -299,3 +299,28 @@ def test_the_picture_agrees_with_the_offside_flag_over_many_matches() -> None:
     home, away = league().clubs[:2]
 
     check_pictures_agree_with_the_flag(simulate_match(home, away, seed) for seed in range(200))
+
+
+@pytest.mark.parametrize("seed", [*SEEDS, *PLANTED_SEEDS])
+def test_at_every_kick_off_both_teams_are_in_their_own_halves(seed: int) -> None:
+    played = match(seed)
+    kickoffs = [
+        event
+        for event in played.events
+        if event.action_type is ActionType.PASS
+        and event.phase is Phase.SET_PIECE
+        and (event.start_x, event.start_y) == (CENTRE_SPOT.x, CENTRE_SPOT.y)
+    ]
+
+    assert len(kickoffs) >= 2
+    for event in kickoffs:
+        snapshot = played.snapshot(event.action_id)
+        assert snapshot is not None
+        for player in snapshot.positions:
+            if player.is_actor:
+                continue
+            # Stored: home attacks towards x = 105 in both halves.
+            home = player.team_id == played.home_team_id
+            assert player.x < PITCH_LENGTH / 2 if home else player.x > PITCH_LENGTH / 2
+            if player.team_id != event.team_id:
+                assert ((player.x - CENTRE_SPOT.x) ** 2 + (player.y - CENTRE_SPOT.y) ** 2) > 9.15**2

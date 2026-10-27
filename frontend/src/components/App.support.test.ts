@@ -60,24 +60,12 @@ test('a refused id returns to the welcome with the reason', () => {
 	expect(state.screen).toEqual({ kind: 'welcome', error: 'not a valid viewer id' })
 })
 
-test('a question arrives as a step from kick-off, then opens as the question sheet', () => {
+test('a question arrives as a step, then opens as the question sheet', () => {
 	const step = reducer(watching(), { type: 'arrived', step: identifyQuestion })
-	expect(step.screen).toEqual({ kind: 'step', question: identifyQuestion, from: null })
+	expect(step.screen).toEqual({ kind: 'step', question: identifyQuestion })
 	expect(step.last).toEqual(momentOf(identifyQuestion))
 	const open = reducer(step, { type: 'open' })
 	expect(open.screen).toEqual({ kind: 'question', question: identifyQuestion, busy: false })
-})
-
-test('the next question in the same match moves on from where the last one was asked', () => {
-	const first = reducer(watching(), { type: 'arrived', step: identifyQuestion })
-	const second = reducer(first, { type: 'arrived', step: { ...identifyQuestion, pack_id: 'next' } })
-	expect(second.screen).toMatchObject({ kind: 'step', from: momentOf(identifyQuestion) })
-})
-
-test('a question in a new match starts from kick-off again', () => {
-	const first = reducer(watching(), { type: 'arrived', step: identifyQuestion })
-	const later = reducer(first, { type: 'arrived', step: { ...predictQuestion, match_number: 2 } })
-	expect(later.screen).toMatchObject({ kind: 'step', from: null })
 })
 
 test('sending marks the sheet busy, and the answer shows the feedback for that question', () => {
@@ -128,7 +116,7 @@ test('forgetting the viewer goes back to the welcome', () => {
 })
 
 test('the wide-screen header names the match being watched', () => {
-	expect(matchHeader({ kind: 'step', question: identifyQuestion, from: null })).toEqual({
+	expect(matchHeader({ kind: 'step', question: identifyQuestion })).toEqual({
 		title: 'Ripon Wardens v Ludlow Ferrymen',
 		clock: '13:59'
 	})

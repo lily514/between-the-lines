@@ -1144,6 +1144,38 @@
         "title": "PictureOut",
         "type": "object"
       },
+      "PlayByPlayOut": {
+        "description": "Who had the ball between the viewer's last question and the next, for the page to play.\n\nTimes are seconds on the match clock: ``start`` where the viewer left off (0 at kick-off),\n``end`` when the next question is asked. The spells stop at ``names_until``, the moment the\nquestion is about, so they say nothing of how that play turned out; a question saved for a\nstoppage has play between it and ``end`` that goes unnamed.",
+        "properties": {
+          "end": {
+            "title": "End",
+            "type": "number"
+          },
+          "names_until": {
+            "title": "Names Until",
+            "type": "number"
+          },
+          "spells": {
+            "items": {
+              "$ref": "#/components/schemas/SpellOut"
+            },
+            "title": "Spells",
+            "type": "array"
+          },
+          "start": {
+            "title": "Start",
+            "type": "number"
+          }
+        },
+        "required": [
+          "start",
+          "end",
+          "names_until",
+          "spells"
+        ],
+        "title": "PlayByPlayOut",
+        "type": "object"
+      },
       "PlayerNumbersOut": {
         "description": "A player's numbers from the watched matches they started.",
         "properties": {
@@ -1288,6 +1320,9 @@
           "picture": {
             "$ref": "#/components/schemas/PictureOut"
           },
+          "play_by_play": {
+            "$ref": "#/components/schemas/PlayByPlayOut"
+          },
           "score": {
             "$ref": "#/components/schemas/ScoreOut"
           },
@@ -1330,7 +1365,8 @@
           "options",
           "picture",
           "score",
-          "catch_up"
+          "catch_up",
+          "play_by_play"
         ],
         "title": "QuestionOut",
         "type": "object"
@@ -1618,6 +1654,32 @@
         "title": "SheetTeamOut",
         "type": "object"
       },
+      "SpellOut": {
+        "description": "One side's spell on the ball, as the play-by-play covers it.",
+        "properties": {
+          "side": {
+            "enum": [
+              "home",
+              "away"
+            ],
+            "title": "Side",
+            "type": "string"
+          },
+          "touches": {
+            "items": {
+              "$ref": "#/components/schemas/TouchOut"
+            },
+            "title": "Touches",
+            "type": "array"
+          }
+        },
+        "required": [
+          "side",
+          "touches"
+        ],
+        "title": "SpellOut",
+        "type": "object"
+      },
       "StartIn": {
         "description": "Start watching, or carry on. Without a seed, the viewer's name chooses their matches.\n\nA ``club`` (team id) makes the viewer's matches that club's fixtures, if they haven't\nstarted watching.",
         "properties": {
@@ -1870,6 +1932,30 @@
           "mastery"
         ],
         "title": "ThresholdsOut",
+        "type": "object"
+      },
+      "TouchOut": {
+        "description": "A player on the ball, at ``at`` seconds on the match clock.",
+        "properties": {
+          "at": {
+            "title": "At",
+            "type": "number"
+          },
+          "number": {
+            "title": "Number",
+            "type": "integer"
+          },
+          "player": {
+            "title": "Player",
+            "type": "string"
+          }
+        },
+        "required": [
+          "at",
+          "player",
+          "number"
+        ],
+        "title": "TouchOut",
         "type": "object"
       },
       "ValidationError": {

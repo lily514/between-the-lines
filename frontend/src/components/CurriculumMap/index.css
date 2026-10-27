@@ -287,3 +287,26 @@
 	font-size: var(--fs-body-s);
 	color: var(--text-muted);
 }
+
+.curriculum-map__dialog {
+	width: min(440px, calc(100vw - 2 * var(--s-4)));
+	padding: 0;
+	border: none;
+	border-radius: var(--r-tile);
+	background: var(--surface);
+	color: var(--text);
+}
+
+.curriculum-map__dialog::backdrop {
+	background: var(--bg-deep);
+	opacity: 0.8;
+}
+
+.curriculum-map__dialog .curriculum-map__card {
+	border: none;
+}
+
+.curriculum-map__dialog .curriculum-map__dialog-close {
+	display: block;
+	margin: 0 var(--s-4) var(--s-3) auto;
+}

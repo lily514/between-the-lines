@@ -52,6 +52,7 @@ Kept outside the SPADL frame because the schema is strict:
 The positions of the tracked players at the start of an action.
 
 - **In code** (`btl/schema/snapshot.py`), a match stores them as one `Positions` array of shape `(actions, players, 2)`, indexed by action id, plus a `PlayerSlot` for each column (player, team, goalkeeper or not). `NaN` means a position is unknown, so a data source can give partial snapshots, or none at all for some actions. The simulator tracks all 22 players at every event. `Match.snapshot(action_id)` builds a readable `Snapshot` for one moment, marking the player on the ball.
+- **At a kick-off** (each half's first action, and the restart after a goal), the simulator lines both teams up in their own halves, and keeps the team not kicking off outside the centre circle (`kickoff_shape` in `btl/sim/shape.py`).
 - **As a frame** (`to_snapshot_frame`), each row is `game_id, action_id, player_id, team_id, x, y, is_actor, is_goalkeeper`, in the same direction as the events. Unknown positions are left out.
 
 ## Possessions

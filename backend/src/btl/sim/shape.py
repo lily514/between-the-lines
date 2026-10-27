@@ -176,6 +176,49 @@ def place_teams(
     return attackers, defenders
 
 
+HALFWAY = PITCH_LENGTH / 2
+CENTRE_CIRCLE_RADIUS = 9.15
+# How far inside their own half, and outside the centre circle, players stand at a kick-off.
+KICKOFF_MARGIN = 1.0
+
+
+def kickoff_shape(
+    attackers: tuple[Point, ...], defenders: tuple[Point, ...]
+) -> tuple[tuple[Point, ...], tuple[Point, ...]]:
+    """Both teams lined up for a kick-off, from their shapes with the ball on the centre spot.
+
+    At a kick-off every player stands in their own half, and the team not kicking off stays
+    outside the centre circle until the ball is played. The in-play shape pushes both front
+    lines over halfway, so players who have strayed step back to the halfway line, and
+    defenders inside the circle step straight out from the spot to its edge. Everyone else
+    keeps their place.
+
+    Args:
+        attackers: The team kicking off, as `place_teams` gives it.
+        defenders: The other team, in the same direction.
+
+    Returns:
+        ``(attacking_positions, defending_positions)``, in the same slot order.
+    """
+    centre = Point(HALFWAY, PITCH_WIDTH / 2)
+    reach = CENTRE_CIRCLE_RADIUS + KICKOFF_MARGIN
+
+    def outside_circle(point: Point) -> Point:
+        dx, dy = point.x - centre.x, point.y - centre.y
+        distance = (dx * dx + dy * dy) ** 0.5
+        if distance >= reach:
+            return point
+        if distance == 0:
+            return Point(centre.x + reach, centre.y)
+        return Point(centre.x + dx * reach / distance, centre.y + dy * reach / distance)
+
+    own_half = tuple(Point(min(p.x, HALFWAY - KICKOFF_MARGIN), p.y) for p in attackers)
+    their_half = tuple(
+        outside_circle(Point(max(p.x, HALFWAY + KICKOFF_MARGIN), p.y)) for p in defenders
+    )
+    return own_half, their_half
+
+
 # How far beyond the offside line a receiver flagged offside stands, and how far behind it an
 # unflagged receiver who would be offside is pulled back to.
 OFFSIDE_MARGIN = (0.5, 4.0)

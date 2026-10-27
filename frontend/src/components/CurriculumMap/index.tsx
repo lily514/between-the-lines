@@ -18,12 +18,14 @@ const RING = 2 * Math.PI * NODE_R
 /** "Your pitch" (CM-A): every concept there is to learn, by strand across and tier up the pitch, deepest at the top.
  *
  * Concepts asked about now show the viewer's level; the rest are coming later, drawn dashed. Choosing one (tap, or
- * focus and Enter) fills the card below and draws what it builds on. It opens over whatever screen the viewer was on;
- * Back or Esc closes it. */
+ * focus and Enter) fills the card below and draws what it builds on; choosing one from the list opens its card in a
+ * dialog, so the viewer need not scroll back up. It opens over whatever screen the viewer was on; Back or Esc closes
+ * it. */
 const CurriculumMap = ({ map, error, onBack }: CurriculumMapProps) => {
 	const heading = useRef<HTMLHeadingElement>(null)
 	const headingId = useId()
 	const [chosen, setChosen] = useState<string | null>(null)
+	const [listed, setListed] = useState<string | null>(null)
 
 	useEffect(() => {
 		heading.current?.focus()
@@ -40,6 +42,7 @@ const CurriculumMap = ({ map, error, onBack }: CurriculumMapProps) => {
 	}, [onBack])
 
 	const selected = map === null ? null : (map.concepts.find(c => c.key === chosen) ?? startingConcept(map))
+	const shown = map?.concepts.find(c => c.key === listed)
 	return (
 		<section className="curriculum-map" aria-labelledby={headingId}>
 			<button
@@ -95,6 +98,7 @@ const CurriculumMap = ({ map, error, onBack }: CurriculumMapProps) => {
 													aria-pressed={concept.key === selected.key}
 													onClick={() => {
 														setChosen(concept.key)
+														setListed(concept.key)
 													}}>
 													{concept.name}
 												</button>{' '}
@@ -105,6 +109,15 @@ const CurriculumMap = ({ map, error, onBack }: CurriculumMapProps) => {
 							</section>
 						))}
 					</details>
+					{shown !== undefined && (
+						<ConceptDialog
+							map={map}
+							concept={shown}
+							onClose={() => {
+								setListed(null)
+							}}
+						/>
+					)}
 				</>
 			)}
 		</section>
@@ -287,12 +300,21 @@ const Legend = () => (
 	</ul>
 )
 
-const ConceptCard = ({ map, concept }: { map: ConceptMap; concept: MapConcept }) => {
+interface ConceptCardProps {
+	map: ConceptMap
+	concept: MapConcept
+	/** Set when the card labels a dialog. */
+	nameId?: string
+}
+
+const ConceptCard = ({ map, concept, nameId }: ConceptCardProps) => {
 	const strand = map.strands.find(s => s.key === concept.strand)
 	const before = buildsOn(map, concept.key)
 	return (
-		<div className="curriculum-map__card" aria-live="polite">
-			<p className="curriculum-map__card-name">{concept.name}</p>
+		<div className="curriculum-map__card" aria-live={nameId === undefined ? 'polite' : undefined}>
+			<p id={nameId} className="curriculum-map__card-name">
+				{concept.name}
+			</p>
 			<p className="curriculum-map__card-where">
 				{strand?.name} · Tier {concept.tier}, {map.tiers[concept.tier]}
 			</p>
@@ -310,6 +332,45 @@ const ConceptCard = ({ map, concept }: { map: ConceptMap; concept: MapConcept })
 				</p>
 			)}
 		</div>
+	)
+}
+
+interface ConceptDialogProps {
+	map: ConceptMap
+	concept: MapConcept
+	onClose: () => void
+}
+
+/** A concept's card as a modal, closed by its button, Esc, or a click outside it. */
+const ConceptDialog = ({ map, concept, onClose }: ConceptDialogProps) => {
+	const dialog = useRef<HTMLDialogElement>(null)
+	const nameId = useId()
+
+	useEffect(() => {
+		dialog.current?.showModal()
+	}, [])
+
+	const close = () => {
+		dialog.current?.close()
+	}
+	return (
+		<dialog
+			ref={dialog}
+			className="curriculum-map__dialog"
+			aria-labelledby={nameId}
+			onClose={onClose}
+			onKeyDown={event => {
+				// Esc here closes only the dialog, not the map underneath.
+				if (event.key === 'Escape') event.stopPropagation()
+			}}
+			onClick={event => {
+				if (event.target === event.currentTarget) close()
+			}}>
+			<ConceptCard map={map} concept={concept} nameId={nameId} />
+			<button type="button" className="text-button curriculum-map__dialog-close" onClick={close}>
+				Close
+			</button>
+		</dialog>
 	)
 }
 

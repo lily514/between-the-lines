@@ -268,5 +268,47 @@
 		"away": 0,
 		"clock": "13:59"
 	},
-	"catch_up": null
+	"catch_up": null,
+	"play_by_play": {
+		"start": 0.0,
+		"end": 839.3608114444552,
+		"names_until": 312.89464155689734,
+		"spells": [
+			{
+				"side": "away",
+				"touches": [
+					{
+						"at": 232.5,
+						"player": "Tomás Ferreiro",
+						"number": 10
+					},
+					{
+						"at": 236.9,
+						"player": "Aarav Lindqvist",
+						"number": 5
+					}
+				]
+			},
+			{
+				"side": "home",
+				"touches": [
+					{
+						"at": 260.4,
+						"player": "Håkon Holmlie",
+						"number": 3
+					},
+					{
+						"at": 264.0,
+						"player": "José Escorrieta",
+						"number": 6
+					},
+					{
+						"at": 270.7,
+						"player": "Vitor Fonbeira",
+						"number": 7
+					}
+				]
+			}
+		]
+	}
 }

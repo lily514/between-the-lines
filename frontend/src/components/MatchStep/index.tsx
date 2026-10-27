@@ -3,13 +3,15 @@ import type { Question } from '../../api/client.ts'
 import './index.css'
 import { movedOn, stepHeading, stepPhase, whyNow } from './index.support.ts'
 import PhasePill from '../Shared/PhasePill.tsx'
+import Commentary from './Commentary.tsx'
+import { matchClock, type PlayByPlay } from './Commentary.support.ts'
 
 export interface MatchStepProps {
 	home: string
 	away: string
 	matchNumber: number
-	/** The clock where the last question left the viewer, or null at kick-off. */
-	from: string | null
+	/** Who had the ball from where the last question left the viewer, or from kick-off, up to this one. */
+	play: PlayByPlay
 	/** When and where the next question is asked. */
 	to: Question['delivered']
 	/** When the play the question is about happened. */
@@ -23,15 +25,13 @@ export interface MatchStepProps {
 	onArrive: () => void
 }
 
-/** Between two questions: the match moves on to the next moment worth asking about.
- *
- * It takes a span of match time (`from` → `to`) rather than a question, so a component that plays the match at speed
- * can take its place with the same props and call `onArrive` when the clock gets there. */
+/** Between two questions: the match moves on to the next moment worth asking about, its clock running on and who has
+ * the ball called as on the radio. */
 const MatchStep = ({
 	home,
 	away,
 	matchNumber,
-	from,
+	play,
 	to,
 	occurred,
 	score,
@@ -47,6 +47,8 @@ const MatchStep = ({
 	}, [])
 
 	const live = to.delivery === 'live'
+	// The server's clock starts at 0 only at kick-off: the match's first question has no question before it.
+	const from = play.start === 0 ? null : matchClock(play.start)
 	return (
 		<section className="match-step" aria-labelledby={headingId}>
 			<header className="match-step__bar">
@@ -65,6 +67,7 @@ const MatchStep = ({
 				</p>
 			)}
 			<p className="match-step__moved">{movedOn(from, to)}</p>
+			<Commentary play={play} home={home} away={away} />
 			<PhasePill phase={stepPhase(to)} detail={live ? null : to.restart} />
 			<h2 id={headingId} ref={heading} tabIndex={-1} className="match-step__heading screen-heading">
 				{stepHeading(to)}

@@ -346,3 +346,24 @@ kinds; tests follow the halftime precedent.
   sentence as the body, and the fixture's question as the example.
 **Why:** one screen kind keeps the reducer and `matchHeader` small, and the flow order lives in one place.
 **Affects:** T14 adds copy and scenes for the three new concepts, which the First look then shows in full.
+
+## T14 — Scenes for the three new concepts (2026-10-27)
+
+**Plan said:** specs and copy for each level, and an example prompt per level; the Chances card on the welcome swaps
+"Coming later" for the Shots scene.
+**We did:** as planned. The specs (`tackles.ts`, `shots_and_goals.ts`, `transitions.ts`) follow the catalogue's
+"simple pitch scene" shape, from the fixtures' real moments:
+- **Tackles and turnovers:** the winner steps in, a ring where it was won and the word for how (`{RECOVERY_TYPE}`);
+  Solid names the thirds and shades the one it was won in, with metres from own goal; Sharp shades the ground still
+  to cover and gives the high-recovery counts.
+- **Shots and goals:** the chance and the shot, then the outcome word; Solid outlines the box it was from and brackets
+  the metres to goal; Sharp adds where the chance came from and the shot counts.
+- **Transitions and counter-attacks:** the ball won, each receiver running to where they took it, and the box lit when
+  the ball arrives; Solid adds a timer to the box and where it was won; Sharp adds the defending line when it was
+  won and the shot counts on the break against settled play.
+- The copy for the three is new (the boards had none), written from the concept map's objectives and the questions
+  each level asks. Example prompts are the fixtures' real questions, as on the other steps.
+- The Chances step on the welcome now shows the Shots scene; the dashed card remains for any concept without a spec.
+- The specs test now checks every fixture has a spec and copy, and nothing else does.
+**Why:** nothing to add.
+**Affects:** T15 looks at all eight scenes at three levels in the browser.

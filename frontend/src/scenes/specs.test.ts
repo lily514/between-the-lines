@@ -1,12 +1,13 @@
 import { layerItems, sceneData, textsOf } from '../components/Shared/Scene/index.support.ts'
 import { FIXTURES } from './fixtures/index.ts'
+import { CONCEPT_COPY } from './copy.ts'
 import { SPECS } from './index.ts'
 import { crossing, defendingLines } from './helpers.ts'
 import type { SceneFixture } from './types.ts'
 
 const BANDS = ['getting_there', 'solid', 'sharp'] as const
-/** The concepts with a scene so far; T14 adds the three new ones and makes this every fixture. */
-const DRAWN = ['restarts', 'offside', 'fouls_and_cards', 'line_breaking_pass', 'counter_press']
+/** Every active concept has a fixture, and every fixture a spec. */
+const DRAWN = Object.keys(FIXTURES)
 
 const fixtureOf = (key: string): SceneFixture => {
 	const fixture = FIXTURES[key]
@@ -14,10 +15,10 @@ const fixtureOf = (key: string): SceneFixture => {
 	return fixture
 }
 
-test('every drawn concept has a spec and a fixture, and the fixtures cover the active concepts', () => {
+test('every active concept has a fixture and a spec, and nothing else does', () => {
 	expect(Object.keys(SPECS).sort()).toEqual([...DRAWN].sort())
-	for (const key of DRAWN) expect(FIXTURES).toHaveProperty(key)
 	expect(Object.keys(FIXTURES)).toHaveLength(8)
+	expect(Object.keys(CONCEPT_COPY).sort()).toEqual([...DRAWN].sort())
 	for (const [key, fixture] of Object.entries(FIXTURES)) expect(fixture.concept).toBe(key)
 })
 

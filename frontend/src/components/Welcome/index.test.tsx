@@ -35,11 +35,11 @@ test('the welcome is a step per strand asked about now, each with its scene and 
 	expect(screen.getByText('1 of 5')).toBeInTheDocument()
 })
 
-test('a strand without a scene yet shows a dashed card where it will go', async () => {
+test('Chances has its own step now, with the Shots scene', async () => {
 	show()
 	for (let i = 0; i < 3; i += 1) await userEvent.click(screen.getByRole('button', { name: 'Next' }))
 	expect(screen.getByRole('heading', { level: 2, name: 'Shots, and what comes of them' })).toBeInTheDocument()
-	expect(screen.getByTestId('scene-later')).toBeInTheDocument()
+	expect(screen.getByRole('button', { name: /Pause motion in the Shots and goals scene/ })).toBeInTheDocument()
 	expect(screen.getByText('Shots and goals')).toBeInTheDocument()
 })
 

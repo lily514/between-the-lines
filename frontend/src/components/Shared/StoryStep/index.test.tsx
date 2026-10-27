@@ -64,7 +64,7 @@ test('the scene card tags the level with its icon, or First look with none, and 
 	)
 	expect(screen.getByText('Now Solid').querySelector('.level-icon')).not.toBeNull()
 	expect(container.querySelector('.scene__svg')).toHaveAttribute('data-band', 'solid')
-	rerender(<SceneCard concept="shots_and_goals" band="getting_there" tag={{ text: 'First look', band: null }} />)
+	rerender(<SceneCard concept="phase_of_play" band="getting_there" tag={{ text: 'First look', band: null }} />)
 	expect(screen.getByText('First look').querySelector('.level-icon')).toBeNull()
 	expect(screen.getByTestId('scene-later')).toBeInTheDocument()
 })

@@ -129,5 +129,59 @@ export const CONCEPT_COPY: Record<string, Record<Band, StepCopy>> = {
 	}
 }
 
+CONCEPT_COPY.tackles = {
+	getting_there: {
+		title: 'Who won it, and how',
+		body: 'Teams get the ball back with a tackle, an interception, or by picking up a loose ball. You say which.',
+		example: 'They have just taken the ball. How did they win it?'
+	},
+	solid: {
+		title: 'Where they won it',
+		body: 'Win it in the middle third or higher and the other team is still turning. You say which third it was.',
+		example: 'Where on the pitch did they win it?'
+	},
+	sharp: {
+		title: 'Why the place matters',
+		body: 'A ball won high starts an attack with the defence out of shape; one won deep leaves the whole pitch ahead.',
+		example: 'Why does where they took it matter?'
+	}
+}
+
+CONCEPT_COPY.shots_and_goals = {
+	getting_there: {
+		title: 'What came of the shot',
+		body: 'A shot is saved, blocked, off target or in. You say what came of it.',
+		example: 'What came of that shot?'
+	},
+	solid: {
+		title: 'Where it was from',
+		body: 'The six-yard box, the penalty area or outside it: where a shot comes from says most about the chance.',
+		example: 'Where was the shot from?'
+	},
+	sharp: {
+		title: 'How the chance came',
+		body: 'A pass, a cross or a dribble made the chance. You say how it came about, with the shot count beside it.',
+		example: 'How did the chance come about?'
+	}
+}
+
+CONCEPT_COPY.transitions = {
+	getting_there: {
+		title: 'The moment after winning it',
+		body: 'Win the ball and both teams are out of shape for a moment. Some go straight for goal; some build slowly.',
+		example: 'They have just won the ball. What did they do next?'
+	},
+	solid: {
+		title: 'How fast to the box',
+		body: 'A counter-attack reaches the box in seconds, before the defence is back. You say how long it took.',
+		example: 'How long did they take to reach the box?'
+	},
+	sharp: {
+		title: 'What made it a counter',
+		body: 'Going for goal at once, while the defence is still out of shape, is what makes a counter-attack. Not speed alone.',
+		example: 'What made that a counter-attack?'
+	}
+}
+
 /** The level a band's scene and copy are keyed by, as the fixtures number them. */
 export const LEVEL_OF: Record<Band, '1' | '2' | '3'> = { getting_there: '1', solid: '2', sharp: '3' }

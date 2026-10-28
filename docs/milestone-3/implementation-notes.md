@@ -301,14 +301,18 @@ still carrying it, and sets the flag back to `true`. Tried and failed twice, onc
 through `azd provision` alone. `azd provision --preview` neither fails nor rewrites the flag, so the preview is
 no guide here: it reported `Create: between-the-lines` both times.
 
-Two routes that do work, neither tried yet:
-- **Zero downtime:** temporarily point the image lookup at the old name — in `app.bicep`, the `image` module's
-  `name: name` becomes `name: 'ca-web-oeafow3mvh7xi'` — and provision. The new app is then created already
-  running whatever the old one serves, so no `azd deploy` is needed and the two apps never compete for the tag.
-  Revert the line, check the new URL, then delete the old app.
-- **Simpler, with downtime:** delete the old app first. azd then finds nothing tagged, sets the flag false
-  honestly, and `azd up` creates the new app on the placeholder and deploys the real image over it. The demo is
-  down for the few minutes in between.
+**What worked**, with no downtime: temporarily point the image lookup at the old name — in `app.bicep`, the
+`image` module's `name: name` becomes `name: 'ca-web-oeafow3mvh7xi'` — and run `azd provision`. azd still sets
+the flag to `true`, but now it is true of the resource being read, so the lookup resolves and the new app is
+created already running whatever the old one serves. No `azd deploy` is needed, so the two apps never compete
+for the tag. Then revert the line, check the new URL, and delete the old app. Provisioning took 1 min 6 s, and
+the old URL kept answering throughout.
+
+Once the new app exists the line can go back, because the name Bicep reads and the name it deploys agree again.
+
+The alternative, not taken, was to delete the old app first: azd would then find nothing tagged, set the flag
+false honestly, and `azd up` would create the new app on the placeholder and deploy the real image over it. That
+leaves the demo down for the few minutes in between.
 
 Either way the old app has to go by hand. The preview lists it as `Skip`: Bicep deploys incrementally and never
 deletes what it no longer names. It also keeps the `azd-service-name: web` tag, which is both why azd keeps
@@ -321,7 +325,10 @@ Both previews report property-level `Modify`s on the environment (`peerAuthentic
 `azureADAuthenticationAsArmPolicy`). These are the known what-if noise from T11: defaults Azure fills in that the
 template doesn't name, unchanged by this commit.
 **Why:** a hash in front of a demo URL reads badly, and the fix costs nothing.
-**Not done:** the rename is committed but **not deployed**. The live demo is still on the old URL, untouched and
-healthy; `between-the-lines` does not exist yet. `README.md` and the table above are therefore ahead of what is
-deployed until one of the two routes above is run.
+**Checked:** the new app answers on `/`, `/api/health`, `/api/clubs` and `/api/concept-map`; `/api/clubs` hashes
+identically on both apps; a read for a viewer that doesn't exist returns the app's own 404 rather than a 500, so
+the managed identity still reaches the blob store. The page title is the real app, not the placeholder image.
+**Not done:** the old `ca-web-oeafow3mvh7xi` is still there, still tagged `azd-service-name: web`. Until it is
+deleted, two apps carry that tag and `azd deploy` has no single match — deleting it is the last step of this
+change, not optional.
 **Affects:** nothing in the app. `MIN_REPLICAS` and every other setting carry over; the new app is the same Bicep.

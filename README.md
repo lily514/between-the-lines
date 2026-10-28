@@ -24,6 +24,12 @@ Built for the "Inside the Game" hackathon.
 
 Work in progress lives on milestone branches and is merged to `main` when each milestone is complete. 2c, 2d and then 2e were built before 2b, while Azure wasn't set up yet.
 
+## Watch the demo
+
+https://github.com/user-attachments/assets/d5e81cfd-90c6-45aa-bb06-5fbde88d88d4
+
+Two minutes: a question at a stoppage and the call you make, the reveal with the numbers behind it, the concepts that move up a level before the next match, and a look at how it is built.
+
 ## Try it online
 
 **<https://between-the-lines.whitesky-8ac56dd8.eastus2.azurecontainerapps.io/>**

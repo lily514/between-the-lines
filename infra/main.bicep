@@ -111,7 +111,10 @@ module app 'modules/app.bicep' = {
   params: {
     location: location
     tags: tags
-    name: 'ca-web-${resourceToken}'
+    // Unlike the other names, not built from the resource token: this one is the first label of the public
+    // URL, so it reads as the project rather than as a hash. A container app's name need only be unique in
+    // its resource group, and every azd environment gets its own, so a fixed name can't clash.
+    name: 'between-the-lines'
     environmentId: environment.outputs.environmentId
     identityId: identity.outputs.id
     identityClientId: identity.outputs.clientId

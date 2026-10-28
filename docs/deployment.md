@@ -9,7 +9,7 @@ flowchart LR
     browser(["Visitor's browser<br/>random viewer id"]) -- HTTPS --> app
 
     subgraph group["Resource group rg-btl-demo: created by azd from infra/"]
-        app["Container app ca-web-…<br/>page + API + learning engine<br/>0 or 1 replica, never 2"]
+        app["Container app between-the-lines<br/>page + API + learning engine<br/>0 or 1 replica, never 2"]
         identity["User-assigned identity id-…"]
         registry["Container Registry cr…"]
         storage["Storage account st…<br/>container learners"]
@@ -51,7 +51,7 @@ One `azd up` builds the app's image in Azure and creates everything in `infra/` 
 
 | Resource | What it does |
 |---|---|
-| Container app `ca-web-…` | The one container: the page, the API and the learning engine. At most one replica; minimum 0 (or 1 while judges visit) |
+| Container app `between-the-lines` | The one container: the page, the API and the learning engine. At most one replica; minimum 0 (or 1 while judges visit) |
 | Container Apps environment `cae-…` | Where the app runs; sends its logs to Azure Monitor |
 | Diagnostic setting `logs-to-workspace` | Carries the environment's logs to the workspace, with no key |
 | Log Analytics workspace `log-…` | The logs, queried with KQL; 30 days, capped at 0.15 GB a day |

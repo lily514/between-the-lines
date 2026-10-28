@@ -26,7 +26,7 @@ Work in progress lives on milestone branches and is merged to `main` when each m
 
 ## Try it online
 
-**<https://ca-web-oeafow3mvh7xi.whitesky-8ac56dd8.eastus2.azurecontainerapps.io/>**
+**<https://between-the-lines.whitesky-8ac56dd8.eastus2.azurecontainerapps.io/>**
 
 Press Start, pick a team, and watch your first match. There is nothing to sign up for: the page gives you a random id and keeps it in this browser, so you can come back later and carry on. A model in Azure AI Foundry words the questions and feedback, checked by the Verifier; the source line under each piece of feedback says who wrote it. If the page takes half a minute to appear, it was asleep: it scales to zero when nobody is using it.
 

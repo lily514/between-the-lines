@@ -277,3 +277,34 @@ The README gains:
 **Not done:** the teardown test, for the reasons in the summary.
 **Why:** the plan's checklist held.
 **Affects:** nothing.
+
+## After T11 — A readable app name in the URL (2026-10-27)
+**Plan said:** nothing; T5 named the container app `ca-web-${resourceToken}` with every other resource.
+**We did:** named it `between-the-lines`, so the demo URL starts with the project instead of a hash:
+`https://between-the-lines.whitesky-8ac56dd8.eastus2.azurecontainerapps.io/`. Only the first label of the host is
+ours; the rest is the Container Apps environment's domain, which Azure generates when the environment is created
+and which can't be chosen or re-rolled. Replacing that half needs a custom DNS suffix on the environment (a domain
+we own plus a wildcard certificate), or a per-app custom domain with a free managed certificate — both wanted a
+domain purchase, so neither was done.
+
+A container app's name has to be unique only inside its resource group, and each azd environment gets its own
+(`rg-<env>`), so dropping the resource token here can't clash.
+
+**Learned:** the rename wants a particular order. `app-image.bicep` keeps the deployed image by reading the
+existing app *by name*, so with `SERVICE_WEB_RESOURCE_EXISTS=true` the new name points that lookup at a resource
+that doesn't exist yet. `azd provision --preview` passed anyway, but what-if resolves a `reference()` it can't
+follow instead of failing on it, so the preview doesn't settle whether a real provision would. Setting the flag
+false for one run sidesteps the question: `azd env set SERVICE_WEB_RESOURCE_EXISTS false`, then `azd up`
+(provision puts the new app on the placeholder image, deploy replaces it with the real one and the postdeploy
+hook sets the flag back), then delete the old `ca-web-oeafow3mvh7xi`.
+
+The old app has to go by hand. The preview lists it as `Skip`: Bicep deploys incrementally and never deletes what
+it no longer names, and it keeps the `azd-service-name: web` tag that `azd deploy` matches on, so leaving both in
+place would make a later deploy ambiguous. It serves the old URL until it is deleted, so the demo is never down.
+
+The same preview reports property-level `Modify`s on the environment (`peerAuthentication`,
+`peerTrafficConfiguration`) and the registry (`anonymousPullEnabled`, `dataEndpointEnabled`, `encryption`,
+`azureADAuthenticationAsArmPolicy`). These are the known what-if noise from T11: defaults Azure fills in that the
+template doesn't name, unchanged by this commit.
+**Why:** a hash in front of a demo URL reads badly, and the fix costs nothing.
+**Affects:** nothing. `MIN_REPLICAS` and every other setting carry over; the new app is the same Bicep.

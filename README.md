@@ -19,8 +19,8 @@ Built for the "Inside the Game" hackathon.
 | 2d. The basics | Restarts, offside, and fouls and cards as newcomer concepts, asked at the stoppage they cause; a simulator whose blocks, offside pictures and bookings agree with the Laws | Done |
 | 2e. Getting started | Pick a team to support, with club crests; a team sheet before each match that grows with you: names and positions in plain words, then the formation and kick-off shape, then players' numbers from matches you've watched | Done |
 | 3. Deploy it properly | A public demo on Azure Container Apps: one `azd up` builds the container and creates every resource from Bicep; managed identity and no keys anywhere; progress kept in Blob Storage; daily limits on the model; events and queries in Log Analytics | Done |
-| 4. Match day | Matches as home base, with dates and a match to rejoin; the curriculum map from any screen; halftime and full-time scouting reports with a radar; asking rules for stoppages and the whistle; Preferences | In review |
-| 5. More to ask | Three more concepts (tackles and turnovers, shots and goals, transitions and counter-attacks); level icons and locked states; animated scenes of real moments, one per concept and level; the welcome as a story, and First look and Level-up flows before a match | In review |
+| 4. Match day | Matches as home base, with dates and a match to rejoin; the curriculum map from any screen; halftime and full-time scouting reports with a radar; asking rules for stoppages and the whistle; Preferences | Done |
+| 5. More to ask | Three more concepts (tackles and turnovers, shots and goals, transitions and counter-attacks); level icons and locked states; animated scenes of real moments, one per concept and level; the welcome as a story, and First look and Level-up flows before a match | Done |
 
 Work in progress lives on milestone branches and is merged to `main` when each milestone is complete. 2c, 2d and then 2e were built before 2b, while Azure wasn't set up yet.
 
@@ -136,7 +136,9 @@ The first screen says what the questions cover. Press Continue, then pick a team
   <img src="docs/milestone-2c/screenshots/live-question-phone.png" alt="A live question on a phone: the pitch frozen as a pass is played, and three answers to choose from" width="260">
   <img src="docs/milestone-2c/screenshots/feedback-phone.png" alt="The reveal on a phone: the real pass drawn on the pitch, the right answer marked, the explanation, the numbers behind it, and the progress bar" width="260">
 </p>
-<img src="docs/milestone-2c/screenshots/review-question-desktop.png" alt="A review question at a free kick on a desktop, in the side panel beside the viewer's own match" width="720">
+<p>
+  <img src="docs/milestone-2c/screenshots/review-question-desktop.png" alt="A review question at a free kick on a desktop, in the side panel beside the viewer's own match" width="720">
+</p>
 
 - **The welcome is a story.** One step per strand, each with an animated scene of a real moment from the data and a question you might get, then where everyone starts. Before a match, a **First look** introduces any concept new to you, and a **Level-up** shows each concept that moved up (Solid, Sharp, Mastered) with its scene at the new level, your levels, and what the team sheet now shows. Every scene has a Pause motion button, and with reduced motion it is a still frame.
 - **Eight concepts are asked about:** restarts, offside, fouls and cards, tackles and turnovers, shots and goals, line-breaking passes, counter-pressing, and transitions and counter-attacks. A concept that waits on another says so ("Unlocks after Tackles and turnovers") wherever levels are listed, and every level word has an icon beside it.
@@ -377,3 +379,4 @@ uv run btl simulate --seed 7 --plant line_breaking_pass:1,2,3 --plant counter_pr
 - [docs/milestone-2b/plan.md](docs/milestone-2b/plan.md): what Milestone 2b set out to build, [implementation-notes.md](docs/milestone-2b/implementation-notes.md): what changed along the way, [verifier.md](docs/milestone-2b/verifier.md): each of the Verifier's checks, and [tutor-evaluation.md](docs/milestone-2b/tutor-evaluation.md) with [tutor-review.md](docs/milestone-2b/tutor-review.md): how well the model does.
 - [docs/milestone-3/plan.md](docs/milestone-3/plan.md): what Milestone 3 set out to build, and [implementation-notes.md](docs/milestone-3/implementation-notes.md): what changed along the way.
 - [docs/milestone-4/plan.md](docs/milestone-4/plan.md): what Milestone 4 set out to build, [implementation-notes.md](docs/milestone-4/implementation-notes.md): what changed along the way, and [design/](docs/milestone-4/design/): the user flow, Matches, reports and Preferences designs.
+- [docs/milestone-5/plan.md](docs/milestone-5/plan.md): what Milestone 5 set out to build, [implementation-notes.md](docs/milestone-5/implementation-notes.md): what changed along the way, and [design/](docs/milestone-5/design/): the welcome, the scenes and the match feed designs.

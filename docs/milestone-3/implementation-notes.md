@@ -328,7 +328,14 @@ template doesn't name, unchanged by this commit.
 **Checked:** the new app answers on `/`, `/api/health`, `/api/clubs` and `/api/concept-map`; `/api/clubs` hashes
 identically on both apps; a read for a viewer that doesn't exist returns the app's own 404 rather than a 500, so
 the managed identity still reaches the blob store. The page title is the real app, not the placeholder image.
-**Not done:** the old `ca-web-oeafow3mvh7xi` is still there, still tagged `azd-service-name: web`. Until it is
-deleted, two apps carry that tag and `azd deploy` has no single match — deleting it is the last step of this
-change, not optional.
+The old `ca-web-oeafow3mvh7xi` was deleted once the new app had been checked: while both existed they carried
+`azd-service-name: web` between them, and `azd deploy` has no single match in that state. Before deleting, both
+apps were confirmed to be running the identical image (`…:azd-deploy-1793154904`), so nothing was lost with it.
+Deleting needs `az`, a separate login from azd's — `az login --tenant 4130bd39-…`, the Purdue tenant — and the
+`az` default subscription is a different one, so `--subscription` is required, as it is everywhere here.
+
+Afterwards `azd provision --preview` plans no `Create`, so the committed Bicep and the deployed resources agree.
+It does report property-level `Modify`s on the app (`exposedPort`, `traffic`, `maxInactiveRevisions`,
+`runningStatus`, `registries`, `template.containers`) — the same what-if noise as elsewhere: defaults Azure fills
+in, plus values that come from a `reference()` and so can't be resolved at preview time.
 **Affects:** nothing in the app. `MIN_REPLICAS` and every other setting carry over; the new app is the same Bicep.

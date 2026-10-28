@@ -74,6 +74,24 @@ cd backend && uv run btl scene-fixtures   # writes frontend/src/scenes/fixtures/
 ```
 A backend test fails if the committed fixtures are out of date.
 
+## Optional: the demo video's clips
+
+`frontend/scripts/capture-demo.ts` records the demo video's six clips: it plays the page in headless Chromium as a fixed viewer, records each clip with the DevTools screencast at full device pixels, and writes MP4s, a still per clip and `manifest.json` to `demo-captures/` at the repo root (gitignored). Each take starts its own `btl serve` on port 8766 with a memory store.
+
+1. Install ffmpeg, and Playwright's Chromium from `frontend/`:
+   ```sh
+   brew install ffmpeg
+   cd frontend
+   npx playwright install chromium
+   ```
+2. Build the page, then record (`--only 03,05` re-records some clips, `--dry` saves a screenshot at each beat instead):
+   ```sh
+   npm run build
+   node scripts/capture-demo.ts
+   ```
+
+The threat model must already be fitted (`backend/data/models/expected-threat.json`), or the first take waits while `btl serve` fits it. In a sandbox that blocks the system temp folder, set `TMPDIR` to a folder you can write to before both commands.
+
 ## Optional: the container (Docker)
 
 The public demo runs as one container: the built page, the API and the learning engine, with the threat model fitted when the image is built. Building it locally needs [Docker Desktop](https://www.docker.com/products/docker-desktop/); deploying to Azure doesn't, since azd builds the image in Azure.

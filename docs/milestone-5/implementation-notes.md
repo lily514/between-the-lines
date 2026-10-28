@@ -575,3 +575,13 @@ A change of speed mid-run carries on from where the clock has got to.
 **Why:** each was seen in the screenshots for the video. Apart from the grammar, none changes what the page shows,
 only where it sits.
 **Affects:** nothing.
+
+## After the merge — No dark flash between screens (2026-10-27)
+**Plan said:** nothing; seen in the screen recordings for the video.
+**We did:** the question sheet, the match step and the story steps (welcome, First look, Level-up) slid in from
+`opacity: 0`. The screen before goes in the same render, so for the first frames the panel showed little but its
+background, which reads as a dark flash. They now slide in from `opacity: 0.9`, with the same 240 ms slide, and the
+reduced-motion fade starts from 0.9 too, so it is a soft 120 ms crossfade with no dip. The reveal still hides the
+verdict and copy until the path has drawn, as designed.
+**Why:** the flash showed up at "Make your read", at Level-up's Next and on the way back to the match.
+**Affects:** nothing.

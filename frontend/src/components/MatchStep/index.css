@@ -8,9 +8,10 @@
 	animation: match-step-in var(--t-sheet) var(--ease-out);
 }
 
+/* From 0.9, not 0: the screen before goes at once, so a step coming in from nothing flashes the background. */
 @keyframes match-step-in {
 	from {
-		opacity: 0;
+		opacity: 0.9;
 		transform: translateY(8px);
 	}
 }
@@ -22,7 +23,7 @@
 
 	@keyframes match-step-fade {
 		from {
-			opacity: 0;
+			opacity: 0.9;
 		}
 	}
 }

@@ -21,7 +21,7 @@ Built for the "Inside the Game" hackathon.
 | 3. Deploy it properly | A public demo on Azure Container Apps: one `azd up` builds the container and creates every resource from Bicep; managed identity and no keys anywhere; progress kept in Blob Storage; daily limits on the model; events and queries in Log Analytics | Done |
 | 4. Match day | Matches as home base, with dates and a match to rejoin; the curriculum map from any screen; halftime and full-time scouting reports with a radar; asking rules for stoppages and the whistle; Preferences | In review |
 | 5. More to ask | Three more concepts (tackles and turnovers, shots and goals, transitions and counter-attacks); level icons and locked states; animated scenes of real moments, one per concept and level; the welcome as a story, and First look and Level-up flows before a match | In review |
-| 6. The moving pitch | Between questions, the players and the ball move on the pitch in the stream view, following the match clock and stopping where the commentary stops | In progress |
+| 6. The moving pitch | Between questions, the players and the ball move on the pitch in the stream view, following the match clock and stopping where the commentary stops | Done on its branch, not merged: the pace needs work first |
 
 Work in progress lives on milestone branches and is merged to `main` when each milestone is complete. 2c, 2d and then 2e were built before 2b, while Azure wasn't set up yet.
 

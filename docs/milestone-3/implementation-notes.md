@@ -290,21 +290,38 @@ domain purchase, so neither was done.
 A container app's name has to be unique only inside its resource group, and each azd environment gets its own
 (`rg-<env>`), so dropping the resource token here can't clash.
 
-**Learned:** the rename wants a particular order. `app-image.bicep` keeps the deployed image by reading the
-existing app *by name*, so with `SERVICE_WEB_RESOURCE_EXISTS=true` the new name points that lookup at a resource
-that doesn't exist yet. `azd provision --preview` passed anyway, but what-if resolves a `reference()` it can't
-follow instead of failing on it, so the preview doesn't settle whether a real provision would. Setting the flag
-false for one run sidesteps the question: `azd env set SERVICE_WEB_RESOURCE_EXISTS false`, then `azd up`
-(provision puts the new app on the placeholder image, deploy replaces it with the real one and the postdeploy
-hook sets the flag back), then delete the old `ca-web-oeafow3mvh7xi`.
+**Learned:** renaming the app is not a plain `azd up`, and the obvious workaround doesn't work. `app-image.bicep`
+keeps the deployed image by reading the existing app *by name*, so under the new name that lookup points at a
+resource that doesn't exist yet and the deployment fails with
+`ResourceNotFound: Microsoft.App/containerApps/between-the-lines`.
 
-The old app has to go by hand. The preview lists it as `Skip`: Bicep deploys incrementally and never deletes what
-it no longer names, and it keeps the `azd-service-name: web` tag that `azd deploy` matches on, so leaving both in
-place would make a later deploy ambiguous. It serves the old URL until it is deleted, so the demo is never down.
+Setting `SERVICE_WEB_RESOURCE_EXISTS=false` first does **not** avoid it. azd rewrites that variable at the start
+of a real provision: it looks for the service's resource by the `azd-service-name: web` tag, finds the *old* app
+still carrying it, and sets the flag back to `true`. Tried and failed twice, once through `azd up` and once
+through `azd provision` alone. `azd provision --preview` neither fails nor rewrites the flag, so the preview is
+no guide here: it reported `Create: between-the-lines` both times.
 
-The same preview reports property-level `Modify`s on the environment (`peerAuthentication`,
+Two routes that do work, neither tried yet:
+- **Zero downtime:** temporarily point the image lookup at the old name — in `app.bicep`, the `image` module's
+  `name: name` becomes `name: 'ca-web-oeafow3mvh7xi'` — and provision. The new app is then created already
+  running whatever the old one serves, so no `azd deploy` is needed and the two apps never compete for the tag.
+  Revert the line, check the new URL, then delete the old app.
+- **Simpler, with downtime:** delete the old app first. azd then finds nothing tagged, sets the flag false
+  honestly, and `azd up` creates the new app on the placeholder and deploys the real image over it. The demo is
+  down for the few minutes in between.
+
+Either way the old app has to go by hand. The preview lists it as `Skip`: Bicep deploys incrementally and never
+deletes what it no longer names. It also keeps the `azd-service-name: web` tag, which is both why azd keeps
+resetting the flag and why leaving two apps in place would make a later `azd deploy` ambiguous. Deleting it needs
+`az`, which is a separate login from azd's: `az login --tenant 4130bd39-…`, the Purdue tenant, not the `az`
+default.
+
+Both previews report property-level `Modify`s on the environment (`peerAuthentication`,
 `peerTrafficConfiguration`) and the registry (`anonymousPullEnabled`, `dataEndpointEnabled`, `encryption`,
 `azureADAuthenticationAsArmPolicy`). These are the known what-if noise from T11: defaults Azure fills in that the
 template doesn't name, unchanged by this commit.
 **Why:** a hash in front of a demo URL reads badly, and the fix costs nothing.
-**Affects:** nothing. `MIN_REPLICAS` and every other setting carry over; the new app is the same Bicep.
+**Not done:** the rename is committed but **not deployed**. The live demo is still on the old URL, untouched and
+healthy; `between-the-lines` does not exist yet. `README.md` and the table above are therefore ahead of what is
+deployed until one of the two routes above is run.
+**Affects:** nothing in the app. `MIN_REPLICAS` and every other setting carry over; the new app is the same Bicep.
